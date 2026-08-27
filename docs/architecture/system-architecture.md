@@ -10,7 +10,7 @@ apps/
 packages/      # Only proven shared tooling/contracts/components
 ```
 
-This is a target, not the current filesystem. The existing root Next.js/Yarn starter and its dependency baseline must be preserved while Sprint 0 configures the monorepo deliberately.
+Storefront now exists at `apps/storefront`; Admin and API remain target boundaries until their approved bootstrap tasks. The original Next.js starter and its dependency baseline were preserved during placement, while the root owns Yarn Workspace and Turborepo orchestration.
 
 ```mermaid
 flowchart LR

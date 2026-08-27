@@ -18,7 +18,7 @@ The accepted target is a Yarn Workspaces/Turborepo monorepo containing `apps/sto
 
 ## Current stage and repository reality
 
-The project is establishing its context-engineering, architecture, security, and planning foundation before product implementation. The repository currently contains a standalone Next.js 16.3.2 App Router starter using accepted Yarn Classic 1.22.22, Tailwind CSS, and several useful preinstalled client libraries. Sprint 0 will preserve this dependency baseline, configure Yarn Workspaces, and decide how the starter fits the target layout; dependency-retention rules are canonical in the engineering standards and Sprint 0 plan.
+The project is establishing its engineering foundation before product implementation. The repository now uses Yarn Classic 1.22.22 Workspaces with Turborepo orchestration. The preserved Next.js 16.3.2 App Router starter and its dependency baseline live in `apps/storefront`; the root owns repository orchestration.
 
 Persian (`fa-IR`) and right-to-left layout are the accepted frontend language and direction. The initial browser topology communicates directly with the API; a BFF is deferred.
 
@@ -26,6 +26,6 @@ No Admin Panel, NestJS API, PostgreSQL/Prisma model, authentication flow, or pro
 
 ## Out of scope now
 
-Application bootstrapping, schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and dependency changes are out of scope. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
+Admin/API bootstrapping, schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and unapproved dependency changes require their separately approved tasks. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
 
 See [product requirements](product/requirements.md), [MVP](product/mvp.md), and [system architecture](architecture/system-architecture.md).

@@ -35,14 +35,14 @@ Add the minimal dependency-aware task graph for repository quality and build com
 
 ## S0-T05 — Place and Bootstrap Storefront
 
-Status: Current
+Status: Done
 
 Objective:
 Place or bootstrap the Storefront according to the approved starter decision while preserving existing behavior.
 
 ## S0-T06 — Bootstrap Admin Application
 
-Status: Queued
+Status: Current
 
 Objective:
 Create the independent strict-TypeScript Next.js Admin foundation without implementing authentication or other features.

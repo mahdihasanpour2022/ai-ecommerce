@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T05
+S0-T06
 
 ## Title
 
-Place and Bootstrap Storefront
+Bootstrap Admin Application
 
 ## Status
 
@@ -14,16 +14,15 @@ Current
 
 ## Goal
 
-Move the preserved root Next.js starter into `apps/storefront` as a real Yarn Workspace without changing its observable behavior or dependency versions.
+Create the independent strict-TypeScript Next.js Admin workspace foundation without implementing authentication, authorization, business features, or a speculative shared design system.
 
 ## Why This Task Exists
 
-The accepted target assigns the customer-facing Next.js application to `apps/storefront`, but the starter remains temporarily at the repository root. Yarn Workspace boundaries and Turborepo orchestration now exist, so the application can be moved deliberately while retaining its files, configuration, dependency baseline, and build behavior.
+Storefront now occupies its accepted workspace, while the separate staff application remains only a reserved target. Sprint 1 authentication work needs a buildable Admin boundary with explicit Persian RTL and application ownership before feature implementation begins.
 
 ## Required Context
 
 - `docs/sprints/sprint-00.md`
-- `docs/work/sprint-00/s0-t01-inventory.md`
 - `apps/README.md`
 - `docs/00-project-overview.md`
 - `docs/architecture/system-architecture.md`
@@ -36,70 +35,66 @@ The accepted target assigns the customer-facing Next.js application to `apps/sto
 - `docs/standards/git.md`
 - `node_modules/next/dist/docs/01-app/01-getting-started/01-installation.md`
 - `node_modules/next/dist/docs/01-app/01-getting-started/02-project-structure.md`
-- `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/public-folder.md`
 - `package.json`
 - `turbo.json`
 
 ## Scope
 
-- Create the private `apps/storefront` Yarn Workspace manifest with an unambiguous package name.
-- Move only Storefront-owned source, public assets, and application configuration from the root into `apps/storefront` using a reviewable preservation sequence.
-- Move existing Storefront dependency declarations to the child manifest without version upgrades, removals, or forced adoption.
-- Update root scripts and Turbo orchestration so repository-wide and filtered Storefront lint/build commands work from the root.
-- Preserve the current starter UI, metadata, strict TypeScript behavior, Tailwind/PostCSS setup, public assets, and useful installed dependency baseline.
-- Update concise boundary/execution documentation to match repository reality.
+- Create the private `@automotive-commerce/admin` Yarn Workspace using the repository's exact Next.js 16.3.2 and React 19.2.8 baseline.
+- Add a minimal App Router root layout and landing page that identify the Admin foundation without implementing login or operational UI.
+- Establish strict TypeScript, Next.js configuration, ESLint, and minimal application-local styling/configuration.
+- Apply the accepted `fa-IR` and RTL document baseline with semantic, accessible placeholder content.
+- Reuse existing installed dependency versions and Turbo orchestration without adding speculative packages or shared configuration.
+- Update concise application-boundary and Sprint 0 execution records.
 
 ## Out of Scope
 
-- Redesigning, localizing, or otherwise modifying Storefront behavior or visuals.
-- Bootstrapping Admin, API, shared packages, tests, environment strategy, or business features.
+- Authentication, authorization, protected routes, Admin navigation, forms, tables, catalog/order UI, or API calls.
+- Adding Ant Design or another UI dependency before a concrete approved need; the architecture choice remains planned for feature work.
+- Modifying Storefront behavior or creating Backend/shared packages.
 - Adding, removing, or upgrading dependency versions.
-- Introducing speculative shared configuration or source packages.
 - Staging, committing, pushing, branching, or other Git writes.
 
 ## Expected Changes
 
-- `apps/storefront` application files and private package manifest.
-- Root manifest/script ownership updates and only necessary Yarn lock metadata changes.
-- Turbo configuration adjustments only if relocation requires them.
-- Removal of superseded root application files after successful copy/compare validation.
-- Sprint 0 execution records and concise application-boundary status update.
+- Minimal `apps/admin` Next.js App Router workspace and package manifest.
+- Only necessary root/Turbo/lock metadata changes if workspace discovery requires them.
+- `apps/README.md` and Sprint 0 execution records.
 
 ## Testing Impact
 
 No new automated test required — validation only.
 
-This task relocates unchanged starter behavior and configuration. Validate file preservation, Yarn Workspace discovery/integrity, filtered and repository lint/build behavior, output placement, dependency/lockfile scope, and read-only Git state; do not create placeholder tests.
+This task creates framework bootstrap behavior without domain or interactive logic. Validate semantic rendered output through build artifacts or a focused smoke check, plus strict compilation, lint, build, Workspace discovery/integrity, dependency scope, and read-only Git state; do not create placeholder tests.
 
 ## Constraints
 
-- Read the listed installed Next.js 16.3.2 guides before implementation.
-- Preserve source/assets/configuration byte-for-byte where path changes do not require an edit.
-- Do not remove a root application file until its destination and behavior have been verified.
-- Keep root documentation, agent guidance, workspace orchestration, and repository-level ignore rules at the root.
-- Keep all dependencies available; relocation is not authorization to prune or upgrade them.
+- Read the listed installed Next.js 16.3.2 guides and current Context7 documentation before implementation.
+- Keep Server Components as the default and add no unnecessary client boundary.
+- Use Persian RTL document metadata/structure without designing the future Admin experience.
+- Keep configuration application-local until proven reuse justifies a package.
+- Do not add Ant Design, authentication libraries, test tooling, or unrelated dependencies.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- `apps/storefront` is a valid private Yarn Workspace containing the preserved Next.js starter and its application-owned configuration.
-- The root no longer pretends to be the Storefront package and remains the private monorepo orchestration root.
-- Existing dependency names and version ranges are preserved under correct ownership without unrelated lockfile churn.
-- Yarn discovers the Storefront workspace and integrity passes.
-- Direct filtered Storefront and repository-wide Turbo lint/build commands pass with unchanged starter output.
-- No Admin/API/shared-package scaffold, product behavior, dependency upgrade/removal, or unrelated change is introduced.
+- `apps/admin` is a valid private Yarn Workspace using the approved exact Next.js/React baseline and strict TypeScript.
+- Its App Router foundation builds and serves a semantic Persian RTL placeholder without authentication or business functionality.
+- Admin lint/build work through filtered and repository-wide Turbo commands without breaking Storefront.
+- Yarn integrity passes with no dependency upgrades/removals or unrelated lockfile churn.
+- No Client Component, API call, auth behavior, shared package, or speculative UI dependency is introduced.
 
 ## Validation
 
-- Compare source, public asset, and configuration hashes before and after relocation.
-- Inspect Workspace discovery and package ownership; run Yarn integrity.
-- Run filtered Storefront lint/build and repository-wide lint/build through Turbo.
-- Inspect generated output paths and confirm no superseded root application artifacts are tracked.
-- Review manifest/lockfile and read-only Git diff/index state for exact scope.
+- Verify Workspace discovery, manifest versions, and Yarn integrity.
+- Run filtered Admin lint/build and repository-wide lint/build.
+- Inspect the generated route and HTML/document baseline for expected Persian RTL semantics.
+- Confirm Storefront remains included and buildable in the repository-wide graph.
+- Review dependency/lockfile and read-only Git diff/index state for exact scope.
 
 ## Documentation Impact
 
-Update `apps/README.md` to distinguish the implemented Storefront workspace from still-reserved Admin/API targets, plus Sprint 0 execution records. Broader onboarding remains S0-T13.
+Update `apps/README.md` to distinguish implemented Storefront/Admin workspaces from the reserved API target, plus Sprint 0 execution records. Broader onboarding remains S0-T13.
 
 ## Approval State
 

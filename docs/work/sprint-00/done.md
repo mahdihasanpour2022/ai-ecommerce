@@ -64,4 +64,20 @@ Context7 and the installed Turbo schema were consulted for current configuration
 
 **Follow-ups:** S0-T05 is prepared for separate implementation approval; the root starter has not been moved or modified.
 
+## S0-T05 — Place and Bootstrap Storefront
+
+**Completed:** 2026-08-27
+
+**Result:** Relocated the preserved Next.js 16.3.2 starter into the private `@automotive-commerce/storefront` Yarn Workspace. The root is now the `automotive-commerce` orchestration package, and its development/start commands delegate to Storefront while build/lint run through Turbo.
+
+### Validation
+
+Context7 and all task-required installed Next.js 16.3.2 guides were read before implementation. All 13 original source, asset, and configuration blobs matched their Storefront destinations exactly before root removal and again against Git after relocation. Yarn discovered only the Storefront workspace; integrity passed. Filtered Storefront lint/build and repository-wide `yarn lint`/`yarn build` passed, producing the unchanged `/` and `/_not-found` routes. Runtime/development dependency names and ranges were preserved exactly, Turbo remained the sole root dependency, `yarn.lock` was unchanged, and nested generated output was verified ignored. No automated test was required because observable starter behavior did not change.
+
+**Important Decisions:** The workspace is named `@automotive-commerce/storefront`. No regeneration, dependency pruning/upgrades, shared package, `outputFileTracingRoot`, or `transpilePackages` configuration was needed. Root-anchored generated-output ignores were generalized for nested workspaces.
+
+**Files / Areas Changed:** Relocated the root `app/`, `public/`, ESLint, Next.js, PostCSS, and TypeScript files under `apps/storefront`; added its manifest; updated root `.gitignore`, `package.json`, `turbo.json`, application/system reality documentation, and Sprint 0 execution records. The lockfile did not change.
+
+**Follow-ups:** S0-T06 is prepared for separate implementation approval; Admin has not been bootstrapped.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

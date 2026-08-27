@@ -16,12 +16,6 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
-    },
-    "//#build": {
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "//#lint": {
-      "outputs": []
     }
   }
 }
