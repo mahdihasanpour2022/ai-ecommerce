@@ -13,4 +13,12 @@
 - If architecture or requirements are ambiguous, document the assumption instead of silently making a major architectural decision.
 - Make the smallest coherent change, avoid unrelated cleanup, and update source-of-truth documentation with contract or architecture changes.
 
+## Dependency version policy
+
+When an approved task adds or installs a new dependency, select the latest stable release that is compatible with the repository's existing runtime, framework, package-manager, peer-dependency, and related dependency constraints. Before installation, verify both that the selected release is stable and that its documented engines, peer ranges, and relevant framework/runtime support are compatible with the project.
+
+Alpha, beta, release-candidate (RC), canary, experimental, nightly, preview, development, or any other prerelease build is prohibited unless the owner explicitly approves that specific prerelease use. A prerelease must never be selected merely because its version number or publication date is newer than the latest compatible stable release.
+
+Apply this policy to newly introduced dependencies; do not upgrade, downgrade, or otherwise change existing dependency versions solely to make them latest. Existing dependencies change only when the approved task requires the change or the owner explicitly approves it. Keep the selected manifest versions intentional, review peer/engine compatibility before installation, and inspect the resulting lockfile for exact scope and unrelated resolution churn.
+
 See application-specific [frontend](frontend.md), [backend](backend.md), [testing](testing.md), and [Git](git.md) standards.
