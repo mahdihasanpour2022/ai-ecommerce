@@ -42,14 +42,14 @@ Place or bootstrap the Storefront according to the approved starter decision whi
 
 ## S0-T06 — Bootstrap Admin Application
 
-Status: Current
+Status: Done
 
 Objective:
 Create the independent strict-TypeScript Next.js Admin foundation without implementing authentication or other features.
 
 ## S0-T07 — Bootstrap NestJS API
 
-Status: Queued
+Status: Current
 
 Objective:
 Create the strict-TypeScript NestJS Modular Monolith foundation without business modules, including generated OpenAPI and environment-aware Swagger UI availability.

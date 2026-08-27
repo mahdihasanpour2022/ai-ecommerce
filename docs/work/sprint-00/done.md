@@ -80,4 +80,20 @@ Context7 and all task-required installed Next.js 16.3.2 guides were read before 
 
 **Follow-ups:** S0-T06 is prepared for separate implementation approval; Admin has not been bootstrapped.
 
+## S0-T06 — Bootstrap Admin Application
+
+**Completed:** 2026-08-28
+
+**Result:** Created the private `@automotive-commerce/admin` Next.js 16.3.2 workspace with strict TypeScript, application-local ESLint/configuration, and a minimal semantic Persian RTL Server Component foundation. No authentication, API integration, Client Component, business UI, or UI framework was introduced.
+
+### Validation
+
+Context7 and both task-required installed Next.js 16.3.2 guides were read before implementation. Yarn discovered Admin and Storefront with no workspace mismatches; offline frozen installation metadata refresh and integrity passed. Filtered Admin lint/build and repository-wide lint/build passed for both applications. Generated Admin HTML confirmed the static `/` route, `lang="fa-IR"`, `dir="rtl"`, Persian title/description/content, and the expected semantic heading. Source/dependency inspection confirmed no Client Component, API/auth behavior, Ant Design, or unapproved version range; `yarn.lock` remained unchanged. No automated test was required because the foundation contains no domain or interactive behavior.
+
+**Important Decisions:** Admin reuses only the exact existing Next.js 16.3.2, React 19.2.8, TypeScript, and ESLint ranges. Plain local CSS provides the foundation; Ant Design remains deferred until concrete approved feature work.
+
+**Files / Areas Changed:** Added seven source/configuration files under `apps/admin`; updated application, project-overview, system-reality, and Sprint 0 execution documentation. Root orchestration, Storefront source, dependencies, and lockfile were unchanged.
+
+**Follow-ups:** S0-T07 is prepared for separate implementation approval; no NestJS/API files or dependencies have been added.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

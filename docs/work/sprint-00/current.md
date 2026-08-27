@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T06
+S0-T07
 
 ## Title
 
-Bootstrap Admin Application
+Bootstrap NestJS API and OpenAPI Foundation
 
 ## Status
 
@@ -14,11 +14,11 @@ Current
 
 ## Goal
 
-Create the independent strict-TypeScript Next.js Admin workspace foundation without implementing authentication, authorization, business features, or a speculative shared design system.
+Create the strict-TypeScript NestJS Modular Monolith foundation with generated OpenAPI and environment-aware Swagger UI availability, without business modules or speculative infrastructure.
 
 ## Why This Task Exists
 
-Storefront now occupies its accepted workspace, while the separate staff application remains only a reserved target. Sprint 1 authentication work needs a buildable Admin boundary with explicit Persian RTL and application ownership before feature implementation begins.
+Storefront and Admin now have independent application boundaries, but the shared Backend API remains only a reserved target. Future features require a buildable NestJS authority with a versioned REST prefix and an OpenAPI foundation that evolves with every implemented contract.
 
 ## Required Context
 
@@ -26,75 +26,86 @@ Storefront now occupies its accepted workspace, while the separate staff applica
 - `apps/README.md`
 - `docs/00-project-overview.md`
 - `docs/architecture/system-architecture.md`
-- `docs/architecture/frontend-architecture.md`
-- `docs/architecture/adr/0004-use-nextjs-for-web-apps.md`
-- `docs/architecture/adr/0009-separate-admin-and-storefront-apps.md`
+- `docs/architecture/backend-architecture.md`
+- `docs/architecture/adr/0005-use-nestjs-for-backend.md`
+- `docs/architecture/adr/0008-start-with-modular-monolith.md`
+- `docs/architecture/adr/0012-use-openapi-swagger-for-api-documentation.md`
+- `docs/api/conventions.md`
 - `docs/standards/general.md`
-- `docs/standards/frontend.md`
+- `docs/standards/backend.md`
 - `docs/standards/testing.md`
 - `docs/standards/git.md`
-- `node_modules/next/dist/docs/01-app/01-getting-started/01-installation.md`
-- `node_modules/next/dist/docs/01-app/01-getting-started/02-project-structure.md`
+- `docs/security/baseline.md`
 - `package.json`
 - `turbo.json`
 
 ## Scope
 
-- Create the private `@automotive-commerce/admin` Yarn Workspace using the repository's exact Next.js 16.3.2 and React 19.2.8 baseline.
-- Add a minimal App Router root layout and landing page that identify the Admin foundation without implementing login or operational UI.
-- Establish strict TypeScript, Next.js configuration, ESLint, and minimal application-local styling/configuration.
-- Apply the accepted `fa-IR` and RTL document baseline with semantic, accessible placeholder content.
-- Reuse existing installed dependency versions and Turbo orchestration without adding speculative packages or shared configuration.
-- Update concise application-boundary and Sprint 0 execution records.
+- Resolve and approve exact compatible NestJS, OpenAPI, TypeScript, lint, and focused integration-test dependency versions through current official documentation.
+- Create the private `@automotive-commerce/api` Yarn Workspace and minimal strict-TypeScript NestJS application/module bootstrap.
+- Configure the versioned REST prefix `/api/v1` without adding a business endpoint merely to populate documentation.
+- Generate OpenAPI from the application and expose Swagger UI at `/api/docs` in non-production development/test contexts as explicitly configured.
+- Keep Swagger UI and its generated document routes unavailable in production until a separately approved protection mechanism exists.
+- Structure Swagger setup so future modules can document controllers/DTOs naturally within their implementation tasks.
+- Add focused automated integration coverage for Swagger availability/exposure rules and preserve safe, empty API behavior.
+- Update concise application/API reality and Sprint 0 execution documentation.
 
 ## Out of Scope
 
-- Authentication, authorization, protected routes, Admin navigation, forms, tables, catalog/order UI, or API calls.
-- Adding Ant Design or another UI dependency before a concrete approved need; the architecture choice remains planned for feature work.
-- Modifying Storefront behavior or creating Backend/shared packages.
-- Adding, removing, or upgrading dependency versions.
+- Authentication, authorization, product/catalog/order modules, Prisma, PostgreSQL, migrations, queues, Redis, or other business/infrastructure behavior.
+- Inventing endpoints solely to make Swagger non-empty.
+- Selecting the future protected production Swagger mechanism; production access remains disabled.
+- Broad environment strategy, deployment, CORS/domain decisions, advanced observability, or shared packages.
+- Modifying Storefront/Admin behavior or adding frontend dependencies.
 - Staging, committing, pushing, branching, or other Git writes.
 
 ## Expected Changes
 
-- Minimal `apps/admin` Next.js App Router workspace and package manifest.
-- Only necessary root/Turbo/lock metadata changes if workspace discovery requires them.
-- `apps/README.md` and Sprint 0 execution records.
+- Minimal `apps/api` NestJS workspace, source bootstrap, configuration, and focused tests.
+- Explicit approved root dependency/lockfile changes required by the Backend foundation.
+- API/application reality documentation and Sprint 0 execution records.
 
 ## Testing Impact
 
-No new automated test required — validation only.
+Automated tests required
 
-This task creates framework bootstrap behavior without domain or interactive logic. Validate semantic rendered output through build artifacts or a focused smoke check, plus strict compilation, lint, build, Workspace discovery/integrity, dependency scope, and read-only Git state; do not create placeholder tests.
+Add focused integration coverage proving non-production Swagger/OpenAPI availability at the documented route, production unavailability, and absence of invented business routes. Also run strict typecheck, lint, build, Workspace integrity, and repository-wide regression gates.
+
+## Swagger / OpenAPI Impact
+
+Creates the Backend documentation foundation. The application must generate an OpenAPI description, expose Swagger UI predictably at `/api/docs` only in approved non-production contexts, keep documentation unavailable in production, and allow future controllers/DTOs to extend the generated contract within their own tasks.
 
 ## Constraints
 
-- Read the listed installed Next.js 16.3.2 guides and current Context7 documentation before implementation.
-- Keep Server Components as the default and add no unnecessary client boundary.
-- Use Persian RTL document metadata/structure without designing the future Admin experience.
-- Keep configuration application-local until proven reuse justifies a package.
-- Do not add Ant Design, authentication libraries, test tooling, or unrelated dependencies.
+- Use Context7/current official NestJS documentation before selecting versions or writing framework code.
+- Keep the application a single empty Modular Monolith foundation; do not create placeholder domain modules.
+- Production Swagger remains disabled because no protection mechanism is approved.
+- OpenAPI metadata/examples must contain no secrets or sensitive implementation details.
+- Use the accepted Yarn toolchain and exact reviewed dependency versions; avoid unrelated resolution churn.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- `apps/admin` is a valid private Yarn Workspace using the approved exact Next.js/React baseline and strict TypeScript.
-- Its App Router foundation builds and serves a semantic Persian RTL placeholder without authentication or business functionality.
-- Admin lint/build work through filtered and repository-wide Turbo commands without breaking Storefront.
-- Yarn integrity passes with no dependency upgrades/removals or unrelated lockfile churn.
-- No Client Component, API call, auth behavior, shared package, or speculative UI dependency is introduced.
+- `apps/api` is a valid private Yarn Workspace with strict TypeScript and compatible exact NestJS/OpenAPI tooling.
+- The NestJS application builds and starts with `/api/v1` as its REST prefix without an invented business endpoint.
+- A generated OpenAPI document and Swagger UI are available at `/api/docs` in the approved non-production configuration.
+- Swagger UI and generated document routes are unavailable in production unless a future protection mechanism is separately approved and configured.
+- Automated integration tests cover Swagger exposure rules and pass; OpenAPI behavior matches the tested application.
+- API and repository-wide typecheck/lint/build/test-relevant gates pass without breaking Storefront or Admin.
+- No business module, database schema, auth behavior, speculative infrastructure, or unrelated dependency change is introduced.
 
 ## Validation
 
-- Verify Workspace discovery, manifest versions, and Yarn integrity.
-- Run filtered Admin lint/build and repository-wide lint/build.
-- Inspect the generated route and HTML/document baseline for expected Persian RTL semantics.
-- Confirm Storefront remains included and buildable in the repository-wide graph.
-- Review dependency/lockfile and read-only Git diff/index state for exact scope.
+- Verify Workspace discovery, exact installed versions, Yarn integrity, and reviewed lockfile scope.
+- Run focused Swagger/OpenAPI integration tests in non-production and production configurations.
+- Inspect the generated OpenAPI document/routes and confirm no business route was invented.
+- Run API typecheck, lint, and build, then repository-wide applicable quality/build gates.
+- Confirm Swagger/OpenAPI documentation and concise source-of-truth docs match implementation.
+- Review read-only Git diff/index state for exact scope.
 
 ## Documentation Impact
 
-Update `apps/README.md` to distinguish implemented Storefront/Admin workspaces from the reserved API target, plus Sprint 0 execution records. Broader onboarding remains S0-T13.
+Update `apps/README.md`, project/system/API reality documentation as directly required, and Sprint 0 execution records. Broader environment/onboarding work remains S0-T09/S0-T13.
 
 ## Approval State
 

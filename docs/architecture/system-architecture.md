@@ -10,7 +10,7 @@ apps/
 packages/      # Only proven shared tooling/contracts/components
 ```
 
-Storefront now exists at `apps/storefront`; Admin and API remain target boundaries until their approved bootstrap tasks. The original Next.js starter and its dependency baseline were preserved during placement, while the root owns Yarn Workspace and Turborepo orchestration.
+Storefront exists at `apps/storefront`, and the independent Admin foundation exists at `apps/admin`; API remains a target boundary until its approved bootstrap task. The original Next.js starter and its dependency baseline were preserved during Storefront placement, while the root owns Yarn Workspace and Turborepo orchestration.
 
 ```mermaid
 flowchart LR
