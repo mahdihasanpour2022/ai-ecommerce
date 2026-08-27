@@ -1,0 +1,31 @@
+# Project Overview
+
+## Vision
+
+Build a production-quality automotive replacement-parts commerce platform that helps customers discover parts and authorized staff manage catalog and inventory data. Initial product families include braking, lighting, glass, mirrors, and body parts.
+
+## Users and applications
+
+- Customers browse the **Storefront** at the planned `example.com` domain.
+- Authorized staff use the separate **Admin Panel** at planned `admin.example.com`.
+- Both clients use the **Backend API** at planned `api.example.com`.
+
+These are placeholder production domains; final names, environments, and DNS are open decisions.
+
+## Intended repository model
+
+The accepted target is a pnpm-workspace/Turborepo monorepo containing `apps/storefront`, `apps/admin`, `apps/api`, and only justified shared packages. It should enable atomic contract changes, consistent tooling, and selective builds without coupling application deployment.
+
+## Current stage and repository reality
+
+The project is establishing its context-engineering, architecture, security, and planning foundation before product implementation. The repository currently contains a standalone Next.js 16.3.2 App Router starter using Yarn, Tailwind CSS, and several useful preinstalled client libraries. Sprint 0 will carefully migrate the repository to accepted pnpm and decide how the starter fits the target layout; dependency-retention rules are canonical in the engineering standards and Sprint 0 plan.
+
+Persian (`fa-IR`) and right-to-left layout are the accepted frontend language and direction. The initial browser topology communicates directly with the API; a BFF is deferred.
+
+No Admin Panel, NestJS API, PostgreSQL/Prisma model, authentication flow, or product behavior described in these documents currently exists.
+
+## Out of scope now
+
+Application bootstrapping, schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and dependency changes are out of scope. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
+
+See [product requirements](product/requirements.md), [MVP](product/mvp.md), and [system architecture](architecture/system-architecture.md).
