@@ -48,4 +48,20 @@ Boundary contents and local documentation links were inspected; no child applica
 
 **Follow-ups:** S0-T04 is prepared for separate implementation approval; Turborepo has not been added or configured.
 
+## S0-T04 — Configure Minimal Turborepo Orchestration
+
+**Completed:** 2026-08-27
+
+**Result:** Added exact Turborepo `2.10.12` to the Yarn Classic root and configured a minimal dependency-aware task graph. Direct root starter commands remain intact; `build:all` and `lint:all` orchestrate the transitional root now and future workspaces without recursion. Remote caching is disabled.
+
+### Validation
+
+Context7 and the installed Turbo schema were consulted for current configuration behavior. JSON parsing, Turbo version resolution, build/lint/typecheck/test dry-run graphs, Yarn Workspace discovery, and Yarn integrity passed. `yarn lint:all` passed, and `yarn build:all` passed with the existing starter's required Google Fonts network access. The lockfile contains only Turbo and its platform-specific optional packages; starter source/configuration hashes remained unchanged. No automated test was required because runtime behavior did not change.
+
+**Important Decisions:** Turbo is pinned exactly. Build caches `.next`/`dist` outputs while excluding `.next/cache`; lint/typecheck have log-only cache output and test declares only `coverage`. Typecheck/test receive no fake root scripts and remain empty until real package scripts exist. The generated local `.turbo` cache is ignored.
+
+**Files / Areas Changed:** `.gitignore`, `package.json`, `yarn.lock`, `turbo.json`, and Sprint 0 execution records.
+
+**Follow-ups:** S0-T05 is prepared for separate implementation approval; the root starter has not been moved or modified.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

@@ -28,14 +28,14 @@ Create the approved `apps/*` and justified `packages/*` filesystem structure on 
 
 ## S0-T04 — Configure Minimal Turborepo Orchestration
 
-Status: Current
+Status: Done
 
 Objective:
 Add the minimal dependency-aware task graph for repository quality and build commands without remote caching.
 
 ## S0-T05 — Place and Bootstrap Storefront
 
-Status: Queued
+Status: Current
 
 Objective:
 Place or bootstrap the Storefront according to the approved starter decision while preserving existing behavior.
