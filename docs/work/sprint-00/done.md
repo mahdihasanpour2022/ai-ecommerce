@@ -32,4 +32,20 @@ Yarn reported an empty valid workspace graph before child packages exist. Defaul
 
 **Follow-ups:** S0-T03 may establish durable top-level application/package directory boundaries without moving or bootstrapping applications.
 
+## S0-T03 — Establish Monorepo Application and Package Layout
+
+**Completed:** 2026-08-27
+
+**Result:** Established durable `apps/` and `packages/` boundaries with concise ownership documentation. The reserved Storefront, Admin, and API targets are discoverable without scaffolding them, and the root Next.js starter remains the transitional runnable application until S0-T05.
+
+### Validation
+
+Boundary contents and local documentation links were inspected; no child application, child `package.json`, placeholder package, or `.gitkeep` was created. Yarn Workspace discovery remained valid and empty. Root manifest, dependency declarations, `yarn.lock`, starter source/configuration, Git index, and Git history remained unchanged. No automated test was required because runtime behavior did not change.
+
+**Important Decisions:** `packages/` accepts a child only after demonstrated cross-application reuse and separate approval. Application target names reserve ownership but do not claim implementation.
+
+**Files / Areas Changed:** `apps/README.md`, `packages/README.md`, and Sprint 0 execution records only.
+
+**Follow-ups:** S0-T04 is prepared for separate implementation approval; Turborepo has not been added or configured.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

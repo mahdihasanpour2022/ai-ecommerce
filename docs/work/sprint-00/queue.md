@@ -21,14 +21,14 @@ The previous Yarn-to-pnpm formulation was cancelled before completion and supers
 
 ## S0-T03 — Establish Monorepo Application and Package Layout
 
-Status: Current
+Status: Done
 
 Objective:
 Create the approved `apps/*` and justified `packages/*` filesystem structure on the configured Yarn Workspace foundation.
 
 ## S0-T04 — Configure Minimal Turborepo Orchestration
 
-Status: Queued
+Status: Current
 
 Objective:
 Add the minimal dependency-aware task graph for repository quality and build commands without remote caching.

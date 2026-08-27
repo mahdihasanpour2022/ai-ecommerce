@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T03
+S0-T04
 
 ## Title
 
-Establish Monorepo Application and Package Layout
+Configure Minimal Turborepo Orchestration
 
 ## Status
 
@@ -14,79 +14,78 @@ Current
 
 ## Goal
 
-Establish durable `apps/` and `packages/` repository boundaries for the accepted monorepo while keeping the existing root starter intact until its separately approved Storefront placement task.
+Add the smallest accurate Turborepo task graph needed to orchestrate repository quality and build commands across Yarn Workspaces without remote caching or speculative workspace behavior.
 
 ## Why This Task Exists
 
-Yarn Workspace discovery is configured, but the target application/package ownership boundaries do not yet exist in the filesystem. Later Storefront, Admin, API, and Turborepo tasks need a clear transition that does not create speculative packages or move the starter early.
+The repository has accepted Yarn Workspace discovery and durable application/package boundaries, but it has no dependency-aware repository task orchestration. Later application bootstraps need consistent commands whose dependencies, cache inputs, and outputs reflect real workspace scripts.
 
 ## Required Context
 
 - `docs/sprints/sprint-00.md`
-- `docs/work/sprint-00/s0-t01-inventory.md`
 - `docs/00-project-overview.md`
 - `docs/architecture/system-architecture.md`
-- `docs/architecture/adr/0001-use-monorepo.md`
+- `docs/architecture/adr/0003-use-turborepo.md`
 - `docs/architecture/adr/0013-use-yarn-workspaces.md`
 - `docs/standards/general.md`
+- `docs/standards/testing.md`
 - `docs/standards/git.md`
 - `package.json`
 
 ## Scope
 
-- Reconfirm the accepted `apps/storefront`, `apps/admin`, `apps/api`, and justified `packages/*` ownership model against repository reality.
-- Establish durable top-level `apps/` and `packages/` boundaries using concise boundary documentation rather than empty placeholder packages.
-- Document that the root Next.js starter remains the transitional runnable application until S0-T05 approves and performs its Storefront placement.
-- State that `packages/` receives a child package only after demonstrated cross-application reuse.
-- Preserve the configured Yarn Workspace globs and prepare the layout for later Turborepo orchestration.
+- Select and explicitly approve a Turborepo version compatible with the accepted Node/Yarn baseline.
+- Add Turborepo as a root development dependency through the accepted Yarn toolchain.
+- Add a minimal `turbo.json` task graph for only real or immediately required `build`, `typecheck`, `lint`, and `test` workspace scripts.
+- Add minimal root orchestration scripts while preserving the transitional root Next.js application commands needed before S0-T05.
+- Declare cache dependencies and outputs accurately; keep remote caching disabled.
 
 ## Out of Scope
 
-- Moving, copying, renaming, or modifying the root starter.
-- Bootstrapping Storefront, Admin, API, or any shared package.
-- Adding package manifests beneath `apps/` or `packages/`.
-- Adding or configuring Turborepo.
-- Changing dependencies, `yarn.lock`, application code, or application configuration.
+- Bootstrapping, moving, or modifying Storefront, Admin, API, or shared packages.
+- Inventing workspace scripts, fake tests, shared configuration packages, or application behavior.
+- Remote caching, CI configuration, deployment configuration, or environment strategy.
+- Changing Yarn major, replacing the package manager, or upgrading unrelated dependencies.
 - Staging, committing, pushing, branching, or other Git writes.
 
 ## Expected Changes
 
-- Concise boundary documentation under `apps/` and `packages/` that keeps those directories durable without pretending applications/packages exist.
+- Root Turborepo development dependency and reviewed `yarn.lock` update.
+- Minimal `turbo.json` and root orchestration scripts.
 - Sprint 0 execution records.
-- No package manifest, lockfile, application, dependency, or generated-installation change.
 
 ## Testing Impact
 
 No new automated test required — validation only.
 
-This task creates documentation-only repository boundaries and does not add or change runtime behavior. Validate directory contents, references, absence of package/application scaffolds, unchanged manifests/lockfile, and scoped Git state; do not create placeholder tests.
+This task changes orchestration configuration without runtime behavior. Validate configuration parsing, task discovery/graph behavior, applicable existing commands, lockfile scope, and read-only Git state; do not create placeholder tests.
 
 ## Constraints
 
-- Preserve the existing root starter and all user work.
-- Do not create empty package manifests, `.gitkeep` placeholders, or speculative shared abstractions.
-- Treat planned application names as reserved targets, not implemented applications.
-- Keep documentation concise and refer to canonical architecture rather than duplicating it.
+- Dependency and lockfile changes require explicit implementation approval for this task.
+- Keep task names, dependencies, inputs, outputs, and caching behavior truthful to repository reality.
+- Preserve direct root starter commands until its separately approved placement.
+- Do not configure or imply remote caching.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- Durable `apps/` and `packages/` boundaries exist and describe their ownership succinctly.
-- The planned Storefront, Admin, and API targets are discoverable without claiming they are implemented.
-- The root starter remains unchanged and explicitly transitional until S0-T05.
-- `packages/` prohibits speculative children and requires demonstrated reuse.
-- Yarn Workspace configuration, dependencies, `yarn.lock`, Git index, and Git history remain unchanged.
+- The approved Turborepo version is installed as a root development dependency using Yarn Classic.
+- A minimal valid task graph orchestrates only supported build and quality commands with accurate dependencies and outputs.
+- Root commands remain usable during the transitional starter layout.
+- No fake test command, speculative package, application scaffold, remote cache, or unrelated dependency change is introduced.
+- Relevant orchestration validation passes and the lockfile diff contains only the approved Turborepo dependency impact.
 
 ## Validation
 
-- Inspect the created boundaries and verify links/references resolve.
-- Confirm no child `package.json`, application scaffold, or placeholder shared package was created.
-- Compare `package.json`, dependency declarations, and `yarn.lock` against the S0-T02 completion state.
-- Run read-only Git status and inspect the final diff for scope compliance and unrelated changes.
+- Verify Yarn integrity and the resolved Turborepo version.
+- Parse/inspect the Turborepo configuration and run dry-run or graph discovery for configured tasks.
+- Run applicable existing root quality/build commands needed to prove transitional compatibility.
+- Inspect dependency and lockfile changes and read-only Git status for exact scope.
 
 ## Documentation Impact
 
-Create only the two layout-boundary documents and update Sprint 0 execution records. Canonical architecture already owns the target structure and should not be duplicated.
+Update only configuration-adjacent documentation if command usage requires it, plus Sprint 0 execution records. Broader onboarding alignment remains S0-T13.
 
 ## Approval State
 
