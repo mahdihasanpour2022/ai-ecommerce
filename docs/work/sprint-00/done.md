@@ -96,4 +96,20 @@ Context7 and both task-required installed Next.js 16.3.2 guides were read before
 
 **Follow-ups:** S0-T07 is prepared for separate implementation approval; no NestJS/API files or dependencies have been added.
 
+## S0-T07 — Bootstrap NestJS API and OpenAPI Foundation
+
+**Completed:** 2026-08-28
+
+**Result:** Created the private `@automotive-commerce/api` NestJS 12 Workspace as an empty strict-TypeScript Modular Monolith foundation. Future REST contracts use the `/api/v1` prefix. Generated Swagger UI and JSON are available at `/api/docs` and `/api/docs-json` in development/test, while production registers neither documentation route. No controller, business module, database, authentication, CORS, or speculative infrastructure was introduced.
+
+### Validation
+
+Current official NestJS guidance was reviewed through Context7 before implementation, and exact package compatibility/engine metadata was reviewed before installation. `yarn workspace @automotive-commerce/api typecheck`, `lint`, `build`, and `test` passed. The focused HTTP suite passed all 3 cases, proving development/test Swagger availability, production unavailability, and an empty generated OpenAPI `paths` object with no invented endpoint. Repository-wide typecheck, lint, build, and Turbo test gates passed across all applicable Workspaces. After the owner reported that the legacy `moduleResolution: node` alias was flagged by a TypeScript 6-aware editor, the API was aligned with the installed NestJS 12 CommonJS template's `NodeNext` module/resolution settings and exact TypeScript `6.0.3`. Direct `tsc --project ... --noEmit` checks then passed for Admin, Storefront, and all API source/build/test configurations, followed by uncached repository-wide typecheck, lint, build, and test passes. Yarn discovered Admin, API, and Storefront without mismatches, and `yarn check --integrity` passed. Generated API outputs are ignored, and the reviewed lockfile delta contains the approved Backend/test/lint toolchain plus consolidated selectors for compatible existing resolutions.
+
+**Important Decisions:** NestJS runtime packages are pinned to `12.0.1`, Swagger to `12.0.0`, and the CLI to `12.0.0`. The API pins TypeScript `6.0.3`, matching the NestJS 12 toolchain and remaining within TypeScript-ESLint `8.68.0`'s supported `<6.1.0` range. `module` and `moduleResolution` both use `NodeNext`; the deprecated `node`/`node10` resolution alias is not suppressed. Focused integration coverage uses Nest testing, Supertest, and Node's built-in test runner without adding a second general-purpose test framework. Swagger is enabled only for `development` and `test`; production protection remains a separate future decision.
+
+**Files / Areas Changed:** Added the `apps/api` manifest, strict TypeScript/Nest/ESLint configuration, root module/bootstrap, and Swagger exposure integration test; updated generated-output ignores, `yarn.lock`, application/project/system/backend/API reality documentation, and Sprint 0 execution records. Storefront and Admin source/manifests were not modified.
+
+**Follow-ups:** S0-T08 is prepared for separate implementation approval to align TypeScript, lint, and formatting conventions across the established Workspaces.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

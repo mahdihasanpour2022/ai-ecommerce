@@ -49,7 +49,7 @@ Create the independent strict-TypeScript Next.js Admin foundation without implem
 
 ## S0-T07 — Bootstrap NestJS API
 
-Status: Current
+Status: Done
 
 Objective:
 Create the strict-TypeScript NestJS Modular Monolith foundation without business modules, including generated OpenAPI and environment-aware Swagger UI availability.
@@ -62,7 +62,7 @@ The foundation generates an OpenAPI document and provides Swagger UI in developm
 
 ## S0-T08 — Align TypeScript, Lint, and Formatting
 
-Status: Queued
+Status: Current
 
 Objective:
 Establish consistent repository quality configuration, sharing configuration only where actual reuse justifies it.

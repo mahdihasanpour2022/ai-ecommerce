@@ -2,7 +2,7 @@
 
 ## Shape
 
-The planned Backend API is a TypeScript NestJS Modular Monolith. Domain-oriented modules such as auth, users, roles/permissions, products, categories, brands, vehicles, inventory, orders, customers, and media are candidates, not a directive to create empty modules.
+The Backend API foundation is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It currently contains only the root application module and shared bootstrap configuration. Domain-oriented modules such as auth, users, roles/permissions, products, categories, brands, vehicles, inventory, orders, customers, and media are candidates, not a directive to create empty modules.
 
 Each implemented module owns a cohesive capability and exposes narrow interfaces. NestJS dependency injection wires explicit dependencies; circular module relationships are a design signal. Use pragmatic domain modeling—do not add aggregates, generic repositories, or other DDD layers solely for pattern purity.
 
@@ -19,7 +19,7 @@ Frontend authorization is never trusted. Protected operations are enforced serve
 
 ## API documentation foundation
 
-The NestJS foundation generates an OpenAPI description and exposes Swagger UI at a predictable development route. Future modules add their contract documentation as part of implementing their controllers and DTOs; Swagger maintenance is never deferred to a post-feature cleanup task. Production Swagger is unavailable unless protected by an explicitly approved access control, whose exact mechanism remains Open until deployment/security planning. Detailed content and completion rules live in [API conventions](../api/conventions.md) and the accepted [OpenAPI/Swagger ADR](adr/0012-use-openapi-swagger-for-api-documentation.md).
+The NestJS foundation generates an OpenAPI description and exposes Swagger UI at `/api/docs` in development and test. The reserved public REST prefix is `/api/v1`; the empty foundation intentionally has no business controller, so its generated `paths` object is empty. Future modules add their contract documentation as part of implementing their controllers and DTOs; Swagger maintenance is never deferred to a post-feature cleanup task. Production Swagger and generated document routes are unavailable unless protected by an explicitly approved access control, whose exact mechanism remains Open until deployment/security planning. Detailed content and completion rules live in [API conventions](../api/conventions.md) and the accepted [OpenAPI/Swagger ADR](adr/0012-use-openapi-swagger-for-api-documentation.md).
 
 ## Data integrity and integrations
 

@@ -18,14 +18,14 @@ The accepted target is a Yarn Workspaces/Turborepo monorepo containing `apps/sto
 
 ## Current stage and repository reality
 
-The project is establishing its engineering foundation before product implementation. The repository now uses Yarn Classic 1.22.22 Workspaces with Turborepo orchestration. The preserved Next.js 16.3.2 App Router starter and its dependency baseline live in `apps/storefront`; `apps/admin` contains an independent Persian RTL Next.js foundation; and the root owns repository orchestration.
+The project is establishing its engineering foundation before product implementation. The repository now uses Yarn Classic 1.22.22 Workspaces with Turborepo orchestration. The preserved Next.js 16.3.2 App Router starter and its dependency baseline live in `apps/storefront`; `apps/admin` contains an independent Persian RTL Next.js foundation; `apps/api` contains the empty strict-TypeScript NestJS Modular Monolith and OpenAPI foundation; and the root owns repository orchestration.
 
 Persian (`fa-IR`) and right-to-left layout are the accepted frontend language and direction. The initial browser topology communicates directly with the API; a BFF is deferred.
 
-No Admin authentication or business UI, NestJS API, PostgreSQL/Prisma model, authentication flow, or product behavior described in these documents currently exists.
+No Admin authentication or business UI, API business module or endpoint, PostgreSQL/Prisma model, authentication flow, or product behavior described in these documents currently exists. The API reserves `/api/v1` for future REST contracts and exposes generated Swagger/OpenAPI at `/api/docs` only in development and test; production documentation remains disabled.
 
 ## Out of scope now
 
-API bootstrapping, schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and unapproved dependency changes require their separately approved tasks. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
+Schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and unapproved dependency changes require their separately approved tasks. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
 
 See [product requirements](product/requirements.md), [MVP](product/mvp.md), and [system architecture](architecture/system-architecture.md).
