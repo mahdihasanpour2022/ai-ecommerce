@@ -9,19 +9,22 @@ Status: Done
 Objective:
 Inventory the repository, existing useful dependencies, user changes, and starter constraints; propose its target placement and a reversible migration sequence.
 
-## S0-T02 — Migrate Yarn to pnpm
+## S0-T02 — Verify and Configure Yarn Workspaces
+
+Status: Done
+
+Objective:
+Use the existing Yarn setup as the monorepo package-management foundation and configure Yarn Workspaces without unnecessary dependency reinstallation.
+
+Execution History:
+The previous Yarn-to-pnpm formulation was cancelled before completion and superseded by owner decision. It is not Done.
+
+## S0-T03 — Establish Monorepo Application and Package Layout
 
 Status: Current
 
 Objective:
-Execute the accepted package-manager migration with approved version pins while preserving useful installed dependencies and reviewing the lockfile transition.
-
-## S0-T03 — Configure pnpm Workspace and Monorepo Layout
-
-Status: Queued
-
-Objective:
-Create the approved workspace structure and package boundaries without unnecessary shared packages.
+Create the approved `apps/*` and justified `packages/*` filesystem structure on the configured Yarn Workspace foundation.
 
 ## S0-T04 — Configure Minimal Turborepo Orchestration
 

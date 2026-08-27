@@ -15,7 +15,7 @@ Read only the context for the active workstream in addition to `AGENTS.md` and t
 - [Project overview](../00-project-overview.md)
 - [System architecture](../architecture/system-architecture.md)
 - [ADR 0001: Monorepo](../architecture/adr/0001-use-monorepo.md)
-- [ADR 0002: pnpm](../architecture/adr/0002-use-pnpm.md)
+- [ADR 0013: Yarn Workspaces](../architecture/adr/0013-use-yarn-workspaces.md)
 - [ADR 0003: Turborepo](../architecture/adr/0003-use-turborepo.md)
 - [General standards](../standards/general.md)
 - [Git standards](../standards/git.md)
@@ -46,8 +46,8 @@ Read only the context for the active workstream in addition to `AGENTS.md` and t
 
 ## Scope
 
-- Preserve and deliberately place the existing root Next.js 16.3.2 starter while migrating Yarn to accepted pnpm.
-- Establish a pinned pnpm workspace and minimal Turborepo task graph.
+- Preserve and deliberately place the existing root Next.js 16.3.2 starter while retaining accepted Yarn and its dependency baseline.
+- Verify and configure Yarn Workspaces and a minimal Turborepo task graph.
 - Create the approved `apps/storefront`, `apps/admin`, `apps/api`, and minimal justified package structure.
 - Bootstrap Storefront/Admin Next.js and NestJS API with strict TypeScript; establish its environment-aware OpenAPI/Swagger foundation.
 - Establish shared TypeScript, ESLint, formatting, environment-validation, and script conventions.
@@ -62,7 +62,7 @@ Authentication, RBAC implementation, catalog/inventory/orders, product schemas/m
 ## Tasks
 
 1. Inventory the starter, versions, user changes, and installed packages; approve its destination and a reversible migration sequence. Preserve useful installed dependencies unless removal is explicitly approved, without forcing their use.
-2. Execute the accepted package-manager migration with pinned pnpm/Node versions, workspace globs, reviewed lockfile transition, and contributor commands.
+2. Verify the existing Yarn Classic setup and configure the private root for `apps/*` and `packages/*` Yarn Workspaces without unnecessary dependency reinstallation or lockfile churn.
 3. Approve application bootstrapping options and exact framework versions; read installed/current framework docs before generation.
 4. Bootstrap the NestJS API foundation with generated OpenAPI, a predictable development Swagger UI route, and production disabled unless an approved protection mechanism is configured; do not add business endpoints.
 5. Configure Turborepo tasks with correct dependencies, inputs, outputs, and safe environment handling.
@@ -92,7 +92,7 @@ All approved tasks and acceptance criteria are met; dependency/lockfile and gene
 ## Risks / Open Questions
 
 - Does the current root app become Storefront, and how are its dependencies handled?
-- Exact Node/pnpm/Turborepo/framework versions and the approved migration's execution/validation sequence.
+- Exact Node/Turborepo/framework versions and the approved workspace execution/validation sequence. Changing the established Yarn major is a separate decision.
 - Bootstrap tools/options and whether HeroUI/Ant Design are installed now or in feature work.
 - Native versus Docker PostgreSQL; CI provider and remote-cache policy.
 - Test runner timing, formatter policy, deployment environments, ports, and final domains. Shared-contract generation is Deferred until a real contract-sharing need exists.

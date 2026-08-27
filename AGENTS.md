@@ -56,6 +56,7 @@ When authorized, make the smallest coherent change, follow established architect
 
 - Never stage, commit, push, merge, rebase, or create/delete branches without explicit approval. Never run destructive Git operations without explicit approval. See [Git standards](docs/standards/git.md).
 - Never add, remove, or upgrade dependencies without explicit approval.
+- Use the accepted Yarn toolchain and Yarn Workspaces; do not introduce pnpm or change the Yarn major version without an explicit owner decision.
 - Installed does not mean architecturally mandatory: preserve already-installed useful packages, do not force their use, and do not remove them merely for minimalism. Use them only when an approved task has a concrete need.
 - Do not create, modify, generate, or apply a database migration unless the approved task explicitly includes the corresponding schema change. Do not change the Prisma schema outside approved task scope. For a non-trivial schema change, present the proposed model and migration impact before implementation unless that implementation was already explicitly approved.
 - Never make unrelated changes, silently decide an ambiguous major architecture issue, expose secrets, or claim planned behavior is implemented.

@@ -14,11 +14,11 @@ These are placeholder production domains; final names, environments, and DNS are
 
 ## Intended repository model
 
-The accepted target is a pnpm-workspace/Turborepo monorepo containing `apps/storefront`, `apps/admin`, `apps/api`, and only justified shared packages. It should enable atomic contract changes, consistent tooling, and selective builds without coupling application deployment.
+The accepted target is a Yarn Workspaces/Turborepo monorepo containing `apps/storefront`, `apps/admin`, `apps/api`, and only justified shared packages. It should enable atomic contract changes, consistent tooling, and selective builds without coupling application deployment.
 
 ## Current stage and repository reality
 
-The project is establishing its context-engineering, architecture, security, and planning foundation before product implementation. The repository currently contains a standalone Next.js 16.3.2 App Router starter using Yarn, Tailwind CSS, and several useful preinstalled client libraries. Sprint 0 will carefully migrate the repository to accepted pnpm and decide how the starter fits the target layout; dependency-retention rules are canonical in the engineering standards and Sprint 0 plan.
+The project is establishing its context-engineering, architecture, security, and planning foundation before product implementation. The repository currently contains a standalone Next.js 16.3.2 App Router starter using accepted Yarn Classic 1.22.22, Tailwind CSS, and several useful preinstalled client libraries. Sprint 0 will preserve this dependency baseline, configure Yarn Workspaces, and decide how the starter fits the target layout; dependency-retention rules are canonical in the engineering standards and Sprint 0 plan.
 
 Persian (`fa-IR`) and right-to-left layout are the accepted frontend language and direction. The initial browser topology communicates directly with the API; a BFF is deferred.
 

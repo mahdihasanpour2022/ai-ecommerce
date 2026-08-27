@@ -87,7 +87,7 @@ Definitive Backend responses such as `REFRESH_TOKEN_INVALID`, `REFRESH_TOKEN_EXP
 - Access and Refresh lifetimes are configuration-driven with accepted defaults of `ACCESS_TOKEN_TTL=15m` and `REFRESH_TOKEN_TTL=7d`.
 - Passwords use an approved adaptive hash; parameters remain Open. Tokens, cookies, passwords, CSRF credentials, and credential-bearing headers are never logged.
 - Authentication endpoints require approved brute-force/abuse controls without assuming Redis.
-- The first Super Admin is provisioned through a secure administrative CLI/script workflow from a trusted environment, conceptually `pnpm admin:create-super-admin` subject to final repository naming. It accepts credentials through a secure interactive prompt or protected environment configuration, hashes the password, is explicit/auditable, exposes no public bootstrap endpoint or default/committed credentials, stores no plaintext password, and fails safely if an initial Super Admin already exists.
+- The first Super Admin is provisioned through a secure administrative CLI/script workflow from a trusted environment, conceptually `yarn admin:create-super-admin` subject to final repository naming. It accepts credentials through a secure interactive prompt or protected environment configuration, hashes the password, is explicit/auditable, exposes no public bootstrap endpoint or default/committed credentials, stores no plaintext password, and fails safely if an initial Super Admin already exists.
 
 ## Open Decisions
 

@@ -10,7 +10,7 @@ apps/
 packages/      # Only proven shared tooling/contracts/components
 ```
 
-This is a target, not the current filesystem. The existing root Next.js/Yarn starter must be preserved and deliberately migrated in Sprint 0.
+This is a target, not the current filesystem. The existing root Next.js/Yarn starter and its dependency baseline must be preserved while Sprint 0 configures the monorepo deliberately.
 
 ```mermaid
 flowchart LR
@@ -25,7 +25,7 @@ flowchart LR
 
 Storefront and Admin are separate Next.js applications because their audiences, security exposure, UI systems, performance/SEO needs, release risk, and navigation differ. They share one API so business rules, authorization, and transactional consistency have one backend authority.
 
-A pnpm-workspace/Turborepo monorepo supports coordinated contract changes, disk-efficient installation, shared quality configuration, and selective builds while retaining independent deployability. The repository is migrating from Yarn during Sprint 0. Shared packages are created only after a real cross-application need; application-specific business logic does not migrate into generic packages by default.
+A Yarn Workspaces/Turborepo monorepo supports coordinated contract changes, reuse of the existing dependency installation, shared quality configuration, and selective builds while retaining independent deployability. Sprint 0 configures the existing Yarn environment rather than replacing it. Shared packages are created only after a real cross-application need; application-specific business logic does not migrate into generic packages by default.
 
 The API begins as a domain-oriented **Modular Monolith**. Modules own cohesive behavior and expose explicit internal boundaries while sharing one deployment and database. This minimizes distributed-system cost. Microservices are deferred until measurable ownership, scale, isolation, or deployment requirements justify them.
 

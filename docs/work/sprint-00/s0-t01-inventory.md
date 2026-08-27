@@ -2,6 +2,8 @@
 
 **Completed:** 2026-08-27
 
+> **Superseded package-manager recommendation:** On 2026-08-27, the owner accepted Yarn Workspaces and superseded pnpm. The repository/placement inventory remains valid, but the pnpm migration sequence and related decisions below are historical and must not be executed. Current execution is defined by [ADR 0013](../../architecture/adr/0013-use-yarn-workspaces.md) and `current.md`.
+
 ## Repository inventory
 
 - The repository is a standalone Create Next App App Router starter at the root. It has no `src/` directory, workspace declaration, Turborepo configuration, `apps/`, `packages/`, Prisma, Backend API, Admin application, or environment files.
@@ -52,7 +54,7 @@ Use the existing root application as the future `apps/storefront` application. I
 
 Keep the starter at the repository root during S0-T02 so package-manager migration and lockfile comparison remain isolated from filesystem restructuring. Establish the workspace shell in S0-T03, then perform the Storefront cutover in S0-T05 using a copy/verify/remove sequence or another separately approved reversible move. Do not copy generated directories. Keep root-level repository documentation and agent guidance at the root; application source, public assets, app-specific configuration, and its dependency manifest ultimately belong under `apps/storefront`.
 
-## Reversible migration sequence
+## Superseded historical migration sequence
 
 1. Obtain approval for exact Node and pnpm pins and for the manifest/lockfile transition.
 2. In S0-T02, preserve dependency names and ranges, change only required package-manager metadata, generate/import a pnpm lock from the Yarn baseline, compare direct resolutions, and validate the current root starter with pnpm before removing `yarn.lock`.
@@ -61,7 +63,7 @@ Keep the starter at the repository root during S0-T02 so package-manager migrati
 5. In S0-T05, copy or move only tracked Storefront-owned files into `apps/storefront`, adjust package/config paths coherently, validate the relocated application, then remove superseded root application files only after successful comparison.
 6. Treat every step as a reviewable checkpoint. Do not stage or commit checkpoints unless separately authorized.
 
-## Risks and required owner decisions
+## Historical risks and decisions at completion
 
 - **Placement approval:** approve or reject using the existing root starter as `apps/storefront`; regeneration is not recommended.
 - **Runtime/tool pins:** choose exact supported Node and pnpm versions before S0-T02. The detected Node `24.19.0` is not a repository pin, while `@types/node` currently targets major 20.

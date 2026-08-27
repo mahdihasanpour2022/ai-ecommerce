@@ -1,6 +1,6 @@
 # 0002: Use pnpm
 
-**Status:** Accepted
+**Status:** Superseded by [ADR 0013](0013-use-yarn-workspaces.md)
 
 ## Context
 
@@ -8,7 +8,7 @@ The target monorepo needs efficient workspace dependency management and strict r
 
 ## Decision
 
-Use pnpm and pnpm workspaces for the target monorepo. Migration is an approved Sprint 0 task, not part of documentation setup.
+The original decision was to use pnpm and pnpm workspaces for the target monorepo.
 
 ## Reasons
 
@@ -20,4 +20,4 @@ Keep Yarn 1; npm workspaces; Yarn modern.
 
 ## Consequences
 
-Sprint 0 changes the package-manager field and lockfile together under explicit dependency approval. CI and contributor tooling pin a pnpm version; the pnpm lockfile is source-controlled and mixed package-manager use is prohibited after migration. Dependency retention is governed by project standards and the Sprint 0 migration plan.
+This decision was superseded before the migration completed. The project initially preferred pnpm for disk efficiency and monorepo support, but the owner chose to preserve the existing Yarn environment and avoid unnecessary dependency reinstallation/downloads under constrained network conditions. This ADR remains as architectural history and is not an executable project rule.
