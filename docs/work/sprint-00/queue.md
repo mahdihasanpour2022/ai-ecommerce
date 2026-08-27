@@ -4,14 +4,14 @@ Sprint 0 is Active. Its goal, scope, and Definition of Done remain canonical in 
 
 ## S0-T01 — Inventory Existing Starter and Propose Placement
 
-Status: Current
+Status: Done
 
 Objective:
 Inventory the repository, existing useful dependencies, user changes, and starter constraints; propose its target placement and a reversible migration sequence.
 
 ## S0-T02 — Migrate Yarn to pnpm
 
-Status: Queued
+Status: Current
 
 Objective:
 Execute the accepted package-manager migration with approved version pins while preserving useful installed dependencies and reviewing the lockfile transition.
