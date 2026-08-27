@@ -12,7 +12,8 @@
     "build:all": "turbo run build",
     "start": "yarn workspace @automotive-commerce/storefront start",
     "lint": "turbo run lint",
-    "lint:all": "turbo run lint"
+    "lint:all": "turbo run lint",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "turbo": "2.10.12"

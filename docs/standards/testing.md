@@ -36,6 +36,12 @@ Acceptance Criteria tie tests to observable outcomes and failure paths, not vagu
 
 Use the smallest level and focused command that prove behavior without excessive mocking or brittle internal assertions. During iteration, do not run the whole monorepo when a focused suite is sufficient. Before Done, run the broader tests and validation required by the task and Sprint context.
 
+## TypeScript type-checking
+
+Every workspace that owns a `tsconfig.json` and can be type-checked independently must expose `typecheck` as `tsc --project tsconfig.json --noEmit`. Do not add this script to non-TypeScript workspaces or packages without an independent TypeScript configuration. The repository root exposes `typecheck` through Turborepo so cross-workspace changes can run the relevant task graph.
+
+Any implementation task that creates or changes TypeScript code must run the relevant workspace typecheck before it can move to Done. Use the focused workspace command for an isolated change and the root command when multiple workspaces or shared TypeScript boundaries are affected. A required typecheck failure blocks Done; do not hide errors, weaken the compiler check, or omit the check to advance the task.
+
 ## Backend and API behavior
 
 Backend behavior tests cover applicable service/business rules, DTO/input validation, authentication, authorization, important persistence behavior, HTTP statuses, machine-readable error codes, failure paths, and security-sensitive outcomes.
@@ -91,22 +97,23 @@ Before moving a task from Current to Done:
 2. Confirm required tests were added or updated according to **Testing Impact**.
 3. Run the relevant focused and task/Sprint completion suites.
 4. Confirm every required test passes.
-5. Run applicable typecheck, lint, build, configuration, integration, or smoke validation.
+5. For any task affecting TypeScript code, run the relevant workspace or root typecheck. Also run applicable lint, build, configuration, integration, or smoke validation.
 6. For HTTP API changes, verify Swagger/OpenAPI matches the implemented and tested contract and contains no stale affected documentation.
 7. Inspect final scope and documentation, then mark Done only if every required gate passes.
 
-If a required test fails, do not mark Done, append a completed record, or select/implement the next task. Continue within approved scope when the change caused the failure. If an external or unresolved issue prevents progress, mark the task Blocked and report the exact blocker.
+If a required test, typecheck, or other validation fails, do not mark Done, append a completed record, or select/implement the next task. Continue within approved scope when the change caused the failure. If an external or unresolved issue prevents progress, mark the task Blocked and report the exact blocker.
 
 ## Completion records
 
-Each completed-task record in `done.md` includes a concise `### Validation` section listing only checks actually executed and their result, such as unit tests, integration tests, typecheck, lint, build, configuration validation, or smoke checks. Never claim an unexecuted test passed. When no new automated test was required, record the validation-only checks that justified completion.
+Each completed-task record in `done.md` includes a concise `### Validation` section listing only checks actually executed and their result, such as unit tests, integration tests, typecheck, lint, build, configuration validation, or smoke checks. When typecheck applies, record the actual command or scope and its pass/fail result. Never claim an unexecuted test passed. When no new automated test was required, record the validation-only checks that justified completion.
 
 ## Definition of done
 
 As applicable to the change:
 
 - Meaningful new/changed behavior has appropriate automated coverage and all required tests pass.
-- TypeScript, lint, build, configuration, and smoke checks pass where required.
+- Relevant workspace or root TypeScript typechecks pass for implementation tasks affecting TypeScript code.
+- Lint, build, configuration, and smoke checks pass where required.
 - New risk and bug fixes have practical regression coverage.
 - Loading, empty, error, retry, and success states are handled and tested where behavior changes.
 - Authorization is tested positively and negatively; `401` and `403` remain distinct.
