@@ -55,6 +55,12 @@ Yarn Workspace discovery is configured, but the target application/package owner
 - Sprint 0 execution records.
 - No package manifest, lockfile, application, dependency, or generated-installation change.
 
+## Testing Impact
+
+No new automated test required — validation only.
+
+This task creates documentation-only repository boundaries and does not add or change runtime behavior. Validate directory contents, references, absence of package/application scaffolds, unchanged manifests/lockfile, and scoped Git state; do not create placeholder tests.
+
 ## Constraints
 
 - Preserve the existing root starter and all user work.

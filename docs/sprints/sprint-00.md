@@ -78,6 +78,7 @@ Authentication, RBAC implementation, catalog/inventory/orders, product schemas/m
 
 - Fresh documented setup reproduces all three empty application foundations with one approved package manager.
 - Filtered and repository-wide typecheck, lint, and build commands are defined and pass. Test commands/checks are required only if real tests exist.
+- Runtime foundation behavior receives meaningful automated or integration-smoke coverage where warranted; configuration and documentation tasks use explicit validation instead. No placeholder test is created merely to satisfy policy.
 - No starter behavior/user work is lost; its migration is reviewable.
 - Local PostgreSQL strategy and environment contract are documented and secrets remain untracked.
 - CI runs approved quality gates; cache inputs do not leak secrets or reuse invalid output.
@@ -87,7 +88,7 @@ Authentication, RBAC implementation, catalog/inventory/orders, product schemas/m
 
 ## Definition of Done
 
-All approved tasks and acceptance criteria are met; dependency/lockfile and generated changes were explicitly reviewed; relevant checks pass from a clean install; docs match reality; no unrelated changes exist; and Git staging/commit/push has not occurred without separate approval.
+All approved tasks and acceptance criteria are met; required automated tests and task-appropriate validation pass; dependency/lockfile and generated changes were explicitly reviewed; relevant checks pass from a clean install; docs match reality; no unrelated changes exist; and Git staging/commit/push has not occurred without separate approval.
 
 ## Risks / Open Questions
 

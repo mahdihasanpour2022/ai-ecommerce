@@ -29,10 +29,11 @@ Architecture and security documents own **how** the system is intended to work. 
 
 - Sprint execution state lives under `docs/work/<sprint>/`. Only the active sprint may have one task marked `Current`; implement it only when `current.md` says `Approved for Implementation`.
 - Normal working context is this file, the active `current.md`, and only its **Required Context**. Do not load the full documentation tree.
-- After an approved task meets every Acceptance Criterion and required Validation check, mark it `Done` in `queue.md`, append a concise result to `done.md`, promote the next `Queued` task to `Current`, replace `current.md`, set its Approval State to `Awaiting Implementation Approval`, and **stop**. Preparing the next task is automatic; implementing it is not.
-- If required validation fails, do not mark the task Done. If a decision, requirement, approval, schema/dependency authorization, security choice, or repository conflict blocks progress, mark the task `Blocked`, record the exact blocker in `current.md`, report it, and do not archive, skip, reorder, or start another task without owner direction.
+- After an approved task meets every Acceptance Criterion and required Validation check, including required automated tests, mark it `Done` in `queue.md`, append a concise result to `done.md`, promote the next `Queued` task to `Current`, replace `current.md`, set its Approval State to `Awaiting Implementation Approval`, and **stop**. Preparing the next task is automatic; implementing it is not.
+- If a required test or validation fails, do not mark the task Done or select the next task. Keep working within approved scope when the implementation caused the failure; if an external or unresolved issue blocks progress, mark the task `Blocked`, record and report the exact blocker, and do not archive, skip, reorder, or start another task without owner direction.
 - Starting a planned sprint requires explicit owner approval after the active sprint is complete.
 - For a backend task that creates, removes, or modifies an HTTP API contract, `current.md` must declare **Swagger / OpenAPI Impact** with matching acceptance and validation criteria; Swagger/OpenAPI is part of that task's Definition of Done. Do not load API documentation context for tasks with no Backend HTTP API impact.
+- Every implementation `current.md` must declare **Testing Impact** as `Automated tests required`, `Existing tests must be updated`, or `No new automated test required — validation only`. Meaningful runtime behavior is not Done until relevant automated tests and validation pass; do not create placeholder tests for documentation or configuration-only work. Detailed rules live in [testing standards](docs/standards/testing.md).
 
 ## Required workflow
 
@@ -65,4 +66,4 @@ When authorized, make the smallest coherent change, follow established architect
 
 ## Definition of done
 
-Work is done only when the requested behavior and acceptance criteria are met; relevant type, lint, and test checks pass; error/loading/empty states, accessibility, authorization, and security cases are addressed where relevant; contracts and docs are current; and no unrelated or unapproved Git/dependency changes exist. See [testing standards](docs/standards/testing.md).
+Work is done only when the requested behavior and acceptance criteria are met; meaningful runtime changes have appropriate passing automated tests; relevant type, lint, build, and validation checks pass; error/loading/empty states, accessibility, authorization, and security cases are addressed where relevant; contracts and docs are current; and no unrelated or unapproved Git/dependency changes exist. See [testing standards](docs/standards/testing.md).
