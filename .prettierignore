@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+dist-test/
+.turbo/
+coverage/
+next-env.d.ts
+yarn.lock

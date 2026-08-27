@@ -4,6 +4,7 @@ import { afterEach, describe, test } from "node:test";
 import type { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import type { App } from "supertest/types";
 
 import { AppModule } from "../src/app.module";
 import {
@@ -21,40 +22,52 @@ async function createTestApplication(environment: string): Promise<INestApplicat
   return app;
 }
 
-describe("Swagger exposure", () => {
+function getHttpServer(app: INestApplication): App {
+  return app.getHttpServer() as App;
+}
+
+interface OpenApiDocumentBody {
+  info: {
+    title: string;
+  };
+  paths: Record<string, unknown>;
+}
+
+void describe("Swagger exposure", () => {
   let app: INestApplication | undefined;
 
-  afterEach(async () => {
+  void afterEach(async () => {
     await app?.close();
     app = undefined;
   });
 
   for (const environment of ["development", "test"]) {
-    test(`serves Swagger UI and an empty generated document in ${environment}`, async () => {
+    void test(`serves Swagger UI and an empty generated document in ${environment}`, async () => {
       app = await createTestApplication(environment);
 
-      await request(app.getHttpServer())
+      await request(getHttpServer(app))
         .get(`/${SWAGGER_PATH}`)
         .expect(200)
         .expect("Content-Type", /html/);
 
-      const response = await request(app.getHttpServer())
+      const response = await request(getHttpServer(app))
         .get(`/${OPENAPI_JSON_PATH}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
-      assert.equal(response.body.info.title, "Automotive Commerce API");
-      assert.deepEqual(response.body.paths, {});
-      await request(app.getHttpServer()).get(`/${API_PREFIX}`).expect(404);
+      const body = response.body as OpenApiDocumentBody;
+      assert.equal(body.info.title, "Automotive Commerce API");
+      assert.deepEqual(body.paths, {});
+      await request(getHttpServer(app)).get(`/${API_PREFIX}`).expect(404);
     });
   }
 
-  test("does not expose Swagger UI or generated document routes in production", async () => {
+  void test("does not expose Swagger UI or generated document routes in production", async () => {
     app = await createTestApplication("production");
 
-    await request(app.getHttpServer()).get(`/${SWAGGER_PATH}`).expect(404);
-    await request(app.getHttpServer()).get(`/${OPENAPI_JSON_PATH}`).expect(404);
-    await request(app.getHttpServer()).get(`/${SWAGGER_PATH}-yaml`).expect(404);
-    await request(app.getHttpServer()).get(`/${API_PREFIX}`).expect(404);
+    await request(getHttpServer(app)).get(`/${SWAGGER_PATH}`).expect(404);
+    await request(getHttpServer(app)).get(`/${OPENAPI_JSON_PATH}`).expect(404);
+    await request(getHttpServer(app)).get(`/${SWAGGER_PATH}-yaml`).expect(404);
+    await request(getHttpServer(app)).get(`/${API_PREFIX}`).expect(404);
   });
 });

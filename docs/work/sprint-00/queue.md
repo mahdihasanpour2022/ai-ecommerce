@@ -65,7 +65,7 @@ The foundation generates an OpenAPI document and provides Swagger UI in developm
 Status: Current
 
 Objective:
-Establish consistent repository quality configuration, sharing configuration only where actual reuse justifies it.
+Establish consistent TypeScript and ESLint quality configuration plus a root-owned Prettier formatting/check workflow, sharing or duplicating configuration only where actual reuse or a concrete Workspace need justifies it.
 
 ## S0-T09 — Define Environment Strategy
 

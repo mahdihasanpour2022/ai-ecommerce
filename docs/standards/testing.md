@@ -97,7 +97,7 @@ Before moving a task from Current to Done:
 2. Confirm required tests were added or updated according to **Testing Impact**.
 3. Run the relevant focused and task/Sprint completion suites.
 4. Confirm every required test passes.
-5. For any task affecting TypeScript code, run the relevant workspace or root typecheck. Also run applicable lint, build, configuration, integration, or smoke validation.
+5. For any task affecting TypeScript code, run the relevant workspace or root typecheck. Run `yarn format:check` for changes within its supported scope. Also run applicable lint, build, configuration, integration, or smoke validation.
 6. For HTTP API changes, verify Swagger/OpenAPI matches the implemented and tested contract and contains no stale affected documentation.
 7. Inspect final scope and documentation, then mark Done only if every required gate passes.
 
@@ -113,6 +113,7 @@ As applicable to the change:
 
 - Meaningful new/changed behavior has appropriate automated coverage and all required tests pass.
 - Relevant workspace or root TypeScript typechecks pass for implementation tasks affecting TypeScript code.
+- Repository formatting checks pass for changes within the configured formatting scope.
 - Lint, build, configuration, and smoke checks pass where required.
 - New risk and bug fixes have practical regression coverage.
 - Loading, empty, error, retry, and success states are handled and tested where behavior changes.

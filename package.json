@@ -13,9 +13,12 @@
     "start": "yarn workspace @automotive-commerce/storefront start",
     "lint": "turbo run lint",
     "lint:all": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts}\" --no-error-on-unmatched-pattern",
+    "format:check": "prettier --check \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts}\" --no-error-on-unmatched-pattern"
   },
   "devDependencies": {
+    "prettier": "3.9.6",
     "turbo": "2.10.12"
   },
   "packageManager": "yarn@1.22.22"

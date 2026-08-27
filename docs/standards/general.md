@@ -21,4 +21,12 @@ Alpha, beta, release-candidate (RC), canary, experimental, nightly, preview, dev
 
 Apply this policy to newly introduced dependencies; do not upgrade, downgrade, or otherwise change existing dependency versions solely to make them latest. Existing dependencies change only when the approved task requires the change or the owner explicitly approves it. Keep the selected manifest versions intentional, review peer/engine compatibility before installation, and inspect the resulting lockfile for exact scope and unrelated resolution churn.
 
+## TypeScript, lint, and formatting
+
+Every TypeScript Workspace keeps `strict` enabled and uses `noImplicitOverride`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and `forceConsistentCasingInFileNames`. Framework-specific compiler behavior remains local: Next.js applications retain the framework's generated browser/Bundler settings, while the NestJS API retains its NodeNext settings. Do not weaken compiler options or suppress diagnostics merely to make a check pass.
+
+Each Workspace exposes an explicit `lint` command using its framework-appropriate flat ESLint configuration. Next.js applications use the supported Core Web Vitals and TypeScript presets. Backend TypeScript uses type-aware recommended rules. ESLint owns code-quality diagnostics; Prettier owns formatting.
+
+Repository formatting uses the root-pinned Prettier version and root configuration. Run `yarn format` to write supported application/configuration files and `yarn format:check` to verify them without modification. Generated output, dependency trees, lockfiles, and documentation are outside the automated formatting scope. Do not introduce broad formatting churn unrelated to the approved task.
+
 See application-specific [frontend](frontend.md), [backend](backend.md), [testing](testing.md), and [Git](git.md) standards.
