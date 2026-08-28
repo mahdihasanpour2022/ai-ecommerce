@@ -28,8 +28,8 @@ The Storefront and Admin scripts pin their development and production-server por
 | --- | --- | --- | --- | --- |
 | `NODE_ENV` | API | `development`, `test`, or `production` | Optional; defaults to `development` | Server-only, non-secret |
 | `PORT` | API | Base-10 integer from 1 through 65535 | Optional; defaults to `3002` | Server-only, non-secret |
-| `DATABASE_URL` | API / future Prisma runtime | PostgreSQL connection URL for `automotive_dev` | Reserved for S0-T11; not consumed yet | Server-only; credential-bearing |
-| `TEST_DATABASE_URL` | API / future Prisma test tooling | PostgreSQL connection URL for `automotive_test` | Reserved for S0-T11; not consumed yet | Server-only; credential-bearing |
+| `DATABASE_URL` | API Prisma CLI / future runtime | PostgreSQL connection URL for `automotive_dev` | Required for Prisma configuration; not consumed by API runtime yet | Server-only; credential-bearing |
+| `TEST_DATABASE_URL` | Future API test tooling | PostgreSQL connection URL for `automotive_test` | Reserved; not consumed yet | Server-only; credential-bearing |
 
 The API parses configuration before creating the NestJS application. Invalid values stop startup with an actionable error that describes the accepted shape without echoing the supplied value.
 
@@ -46,3 +46,5 @@ Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather t
 No current environment value changes compiled output, so `turbo.json` intentionally has no environment hash inputs. Add them alongside the first real build-affecting value rather than speculating now.
 
 The safe local PostgreSQL values, lifecycle commands, isolation, and guarded reset behavior are canonical in [Local PostgreSQL Development](development/local-postgresql.md). The tracked API example contains fixed loopback-only development credentials; they are public non-production values and must never be reused for a deployed environment.
+
+Prisma CLI commands consume `DATABASE_URL` through `apps/api/prisma.config.ts`. Prisma 7 does not load the tracked example or ignored `.env` files automatically in this repository; supply the value through the invoking shell or process manager. See the [Prisma workflow](development/prisma.md).

@@ -65,7 +65,7 @@ DATABASE_URL=postgresql://automotive:automotive_local_only@localhost:5432/automo
 TEST_DATABASE_URL=postgresql://automotive:automotive_local_only@localhost:5432/automotive_test?schema=public
 ```
 
-S0-T10 reserves these names but does not make the API consume them, install Prisma, or create application schema. S0-T11 owns validation/loading of the selected URL and Prisma bootstrap behavior. Tests must use `automotive_test`, never `automotive_dev`.
+Prisma CLI commands now consume `DATABASE_URL` through the API-owned configuration, while the API runtime still does not connect to PostgreSQL. The model-free [Prisma workflow](prisma.md) owns generation and migration review. Tests must use `automotive_test`, never `automotive_dev`.
 
 ## Troubleshooting
 

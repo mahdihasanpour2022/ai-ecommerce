@@ -8,13 +8,19 @@
     "start": "node dist/main.js",
     "lint": "eslint .",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "test": "tsc --project tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\""
+    "test": "tsc --project tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\"",
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:create": "prisma migrate dev --create-only",
+    "prisma:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@nestjs/common": "12.0.1",
     "@nestjs/core": "12.0.1",
     "@nestjs/platform-express": "12.0.1",
     "@nestjs/swagger": "12.0.0",
+    "@prisma/client": "7.10.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
@@ -25,11 +31,12 @@
     "@types/node": "24.10.13",
     "@types/supertest": "7.2.1",
     "eslint": "10.9.1",
+    "prisma": "7.10.0",
     "supertest": "7.2.2",
     "typescript": "6.0.3",
     "typescript-eslint": "8.68.0"
   },
   "engines": {
-    "node": ">=20.11"
+    "node": "^20.19.0 || ^22.12.0 || >=24.0.0"
   }
 }

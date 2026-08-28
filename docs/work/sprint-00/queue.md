@@ -83,14 +83,14 @@ Implement the approved lightweight local PostgreSQL lifecycle, health, test-data
 
 ## S0-T11 — Bootstrap Prisma
 
-Status: Current
+Status: Done
 
 Objective:
 Initialize Prisma tooling and migration-review workflow without creating product, authentication, or other business schemas.
 
 ## S0-T12 — Add Minimal CI Quality Checks
 
-Status: Queued
+Status: Current
 
 Objective:
 Run approved install-integrity, typecheck, lint, and build checks in CI without fake tests or advanced infrastructure.

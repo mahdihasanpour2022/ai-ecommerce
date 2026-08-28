@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T11
+S0-T12
 
 ## Title
 
-Bootstrap Prisma
+Add Minimal CI Quality Checks
 
 ## Status
 
@@ -14,97 +14,95 @@ Current
 
 ## Goal
 
-Initialize a minimal Prisma/PostgreSQL tooling foundation for the API with an explicit migration-review workflow, without creating product, authentication, or other business schema.
+Add a minimal, deterministic CI quality workflow that installs with the frozen Yarn lockfile and runs the repository's applicable formatting, typecheck, lint, build, existing test, and Prisma foundation checks without deployment behavior or speculative infrastructure.
 
 ## Why This Task Exists
 
-PostgreSQL and the local development connection contract now exist, but the API has no typed database tooling or migration workflow. Future domain schema work needs a version-reviewed Prisma foundation whose commands and generated artifacts are predictable before any business model is approved.
+The repository now has real cross-Workspace quality commands, API tests, formatting, environment rules, and Prisma generation, but no automated pull-request/push gate proves a clean checkout can reproduce them. Sprint 0 needs one concise CI path before onboarding is finalized.
 
 ## Required Context
 
 - `docs/sprints/sprint-00.md`
 - `docs/00-project-overview.md`
 - `docs/environment.md`
-- `docs/development/local-postgresql.md`
+- `docs/development/prisma.md`
 - `docs/architecture/system-architecture.md`
-- `docs/architecture/backend-architecture.md`
-- `docs/architecture/database.md`
-- `docs/architecture/adr/0006-use-postgresql.md`
-- `docs/architecture/adr/0007-use-prisma.md`
+- `docs/architecture/adr/0003-use-turborepo.md`
+- `docs/architecture/adr/0013-use-yarn-workspaces.md`
 - `docs/security/baseline.md`
 - `docs/standards/general.md`
-- `docs/standards/backend.md`
 - `docs/standards/testing.md`
 - `docs/standards/git.md`
-- `apps/api/package.json`
-- `apps/api/.env.example`
-- current API TypeScript/build configuration and root database scripts
+- root `package.json`, `yarn.lock`, `turbo.json`, and `.gitignore`
+- all Workspace manifests and current root/Workspace quality scripts
+- current repository-hosting/remotes and existing CI configuration
 
 ## Scope
 
-- Review current stable Prisma CLI/client compatibility with the repository Node, TypeScript, NestJS, Yarn Classic, and PostgreSQL 18 constraints before installation.
-- Add the minimal exact-version Prisma toolchain to the API Workspace using the approved dependency policy.
-- Configure the PostgreSQL provider, generated-client boundary, and the existing `DATABASE_URL` contract without adding a business model.
-- Add narrow API Workspace commands for generation, schema validation, formatting, development migration creation, and deployment-safe migration application where justified.
-- Define human review requirements for generated SQL, data loss, locks, indexes, backfills, compatibility, and recovery before migration application.
-- Keep development and test database use explicit and prevent accidental production-like destructive commands.
-- Document generated artifacts, ignore behavior, and the workflow future schema tasks must follow.
+- Inspect the repository host and choose the minimal supported CI workflow location without reopening deployment/provider architecture.
+- Pin an approved current action/runtime foundation compatible with Yarn Classic, Node, Next.js, NestJS, and Prisma requirements.
+- Install dependencies from `yarn.lock` without mutation and without package-manager migration.
+- Run check-only formatting, repository typecheck/lint/build, the real existing API test suite, and model-free Prisma validation/generation with a safe non-secret configuration value.
+- Keep Turborepo remote caching disabled and avoid requiring Docker/PostgreSQL where no current CI check needs connectivity.
+- Add only narrowly useful cache or concurrency settings if justified and safe.
+- Document CI reality and failure ownership; update Sprint 0 execution records after validation.
 
 ## Out of Scope
 
-- Product, catalog, inventory, authentication, authorization, customer, order, payment, or any other domain model/table.
-- Applying a speculative initial migration solely to create an empty database history.
-- API repository/service integration, health endpoint changes, seed data, fixtures, or database-backed tests.
-- Production database hosting, deployment pipeline implementation, backups, secret management, or zero-downtime migration automation.
+- Deployment, release publishing, environments, production migrations, container/service startup, secret-provider selection, or infrastructure provisioning.
+- Remote Turborepo caching, coverage thresholds, browser e2e infrastructure, matrix testing, preview deployments, or broad security scanning.
+- New application behavior, tests invented solely for CI, dependency upgrades unrelated to the workflow, or package-manager changes.
 - Staging, committing, pushing, branching, or other Git writes.
 
 ## Expected Changes
 
-- Exact reviewed Prisma CLI/client dependencies in the API Workspace and the scoped `yarn.lock` update.
-- Minimal Prisma schema/configuration and generation/validation/migration scripts.
-- Generated-client and migration artifact ignore/source-control decisions.
-- Canonical Prisma and migration-review documentation plus Sprint 0 execution records.
+- One minimal CI workflow for the verified repository host.
+- Narrow root/Workspace command adjustments only if the workflow exposes a real orchestration gap.
+- Canonical CI/onboarding reality and Sprint 0 execution records.
+- Any external action version must be stable, current, official, and reviewed under the dependency-version policy.
 
 ## Testing Impact
 
 No new automated test required — validation only
 
-No application persistence behavior or model is introduced. Validate the Prisma configuration/schema, client generation, command routing, environment boundary, migration workflow safeguards, API typecheck/build compatibility, dependency integrity, and generated/source-controlled artifact scope.
+The workflow must execute the existing real API test suite and applicable repository checks. Validate workflow syntax/configuration and locally exercise the same commands where possible; do not add placeholder tests.
 
 ## Swagger / OpenAPI Impact
 
-No documentation impact. This task does not create or change a Backend HTTP contract.
+No documentation impact. This task does not create or change a Backend HTTP contract; existing API tests continue to verify Swagger exposure behavior.
 
 ## Constraints
 
-- Use current official Prisma documentation and verify the selected exact version is stable and compatible before installation.
-- Do not invent any model, table, field, relation, index, enum, seed record, or migration merely to demonstrate Prisma.
-- Never commit a real database URL or expose it to a browser bundle.
-- Migration creation is a deliberate reviewed development action; production-like application uses the non-interactive deployment-safe command only in a separately approved deployment context.
-- Do not weaken TypeScript, lint, formatting, validation, or migration safety to accommodate tooling.
+- Use current official documentation for the selected CI provider/actions and pin stable compatible major or immutable references according to the repository's approved policy.
+- CI must use Yarn Classic and `yarn install --frozen-lockfile`; it must not rewrite `yarn.lock`.
+- Use only safe non-production environment values. Do not add repository secrets for checks that do not need them or print credential-bearing values.
+- Check-only commands must not mutate source-controlled files.
+- Keep remote caching and deployment disabled.
+- Apply the risk-based validation policy while satisfying the Sprint/CI repository-wide gate.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- Exact stable Prisma CLI/client versions are documented as compatible with the current runtime/toolchain and PostgreSQL 18.
-- The API owns a minimal valid PostgreSQL Prisma configuration with no business model or speculative migration.
-- Prisma validation, formatting, and client generation commands are explicit and succeed with safe configuration.
-- Development migration creation and deployment application commands have distinct documented purposes and review gates.
-- Generated/source-controlled artifact behavior is intentional, documented, and ignored or tracked appropriately.
-- `DATABASE_URL` remains server-only and real environment files remain ignored.
-- Relevant API typecheck/build, Prisma configuration/generation, formatting, Workspace, dependency, lockfile, and scope checks pass.
+- The workflow runs on the verified repository host for pull requests and relevant branch pushes with intentional permissions.
+- A clean CI job uses a supported Node version, Yarn Classic, and the frozen lockfile.
+- Formatting, repository typecheck, lint, build, all real existing tests, Prisma validation, and Prisma generation run and fail the job when unsuccessful.
+- Prisma checks use a safe process-only URL and require no live PostgreSQL service or committed secret.
+- No deployment, production migration, remote cache, Docker service, placeholder test, or unrelated dependency behavior is introduced.
+- Workflow/action versions, permissions, caching, and environment exposure are reviewed and documented.
+- Local equivalents, workflow syntax, Workspace/integrity, dependency/lockfile scope, and final diff checks pass.
 
 ## Validation
 
-- Verify registry stability, engines, peers, framework/toolchain support, and the exact dependency/lockfile delta.
-- Run Prisma format, validate, and generate using safe configuration; inspect the generated location and ensure no unapproved model or migration exists.
-- Exercise script routing without applying a speculative migration or touching a production-like database.
-- Run affected API typecheck/build and repository formatting checks, plus Workspace/integrity and diff-scope validation.
-- If Prisma validation or generation requires PostgreSQL connectivity in the selected version, use only the approved local development database and report unavailable Docker-dependent checks accurately.
+- Validate workflow syntax and inspect the expanded command/action configuration.
+- Run every local command represented by CI from the existing installation, then verify frozen offline installation/integrity where appropriate.
+- Confirm Prisma validation/generation succeeds with a safe process-only URL and no database connection.
+- Confirm the workflow contains no write token permission, secret echo, deployment, migration application, Docker service, or remote-cache configuration.
+- Verify Workspace graph, lockfile scope, check-only formatting behavior, and read-only Git index state.
+- If the provider workflow cannot be executed remotely without a commit/push, report that external run as unexecuted rather than claiming it passed.
 
 ## Documentation Impact
 
-Document the canonical Prisma configuration, generation, migration creation/review/application workflow, environment handling, and generated artifacts; update database reality and Sprint 0 execution records after validation.
+Document the CI provider, triggers, runtime, commands, permissions, safe Prisma value, caching decision, and local equivalents; update project/Sprint execution records after validation.
 
 ## Approval State
 

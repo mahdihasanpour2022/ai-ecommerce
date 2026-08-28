@@ -4,7 +4,7 @@
 
 The planned system uses PostgreSQL with Prisma ORM. Relational constraints, joins, mature transactional semantics, and consistency across catalog, inventory, identity, and orders motivate PostgreSQL. Prisma provides typed data access and reviewed migrations while preserving the need to understand generated SQL and query behavior.
 
-No Prisma schema or migration exists yet. A feature-specific ERD and schema review must precede the relevant implementation sprint.
+The API now owns a minimal model-free Prisma 7.10.0 configuration and generated-client boundary. No application model or migration exists; a feature-specific ERD and schema review must precede the relevant implementation sprint. The canonical generation and migration-review process is defined in [Prisma Development and Migration Workflow](../development/prisma.md).
 
 Local development uses the exact official `postgres:18.6-alpine3.24` image through the root Docker Compose configuration. Development and test databases are isolated as `automotive_dev` and `automotive_test`; their lifecycle and guarded reset contract are defined in [Local PostgreSQL Development](../development/local-postgresql.md). This local configuration does not decide production hosting, credentials, backup, or recovery.
 
