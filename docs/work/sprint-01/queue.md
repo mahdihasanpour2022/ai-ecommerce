@@ -14,17 +14,17 @@ Sprint 0 complete and explicit owner approval to start Sprint 1.
 
 ## S1-T02 — Design Admin Identity and Session Schema
 
-Status: Queued
+Status: Done
 
 Objective:
 Translate the accepted AdminUser, Role, Permission, AuthSession, and RefreshToken concepts into a reviewed schema and migration proposal.
 
 Dependency:
-S1-T01; final Prisma details remain Open until this task is approved.
+S1-T01 and explicit owner approval of the S1-T02 schema/migration proposal.
 
 ## S1-T03 — Implement Admin Identity and Session Persistence
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the separately approved schema and migration for Admin identity, authorization, sessions, and rotating refresh history.

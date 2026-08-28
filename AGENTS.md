@@ -35,28 +35,25 @@ Architecture and security documents own **how** the system is intended to work. 
 
 ## Task execution and transitions
 
-- Sprint execution state lives under `docs/work/<sprint>/`. Only the Active Sprint may have one Current task; implement it only after explicit owner approval. Normal context is this file, that task's `current.md`, and its Minimum Sufficient **Required Context**.
+- Sprint execution state lives under `docs/work/<sprint>/`. Only the Active Sprint may have one Current task. Preparing a task is automatic within an Active Sprint; implementing it requires explicit owner approval. An unambiguous `Yes` to the implementation-approval question is equivalent to `Approve and implement the current task.` Normal context is this file, that task's `current.md`, and its Minimum Sufficient **Required Context**.
 - Every implementation task declares **Testing Impact**. A Backend HTTP-contract task also declares **Swagger / OpenAPI Impact** with matching acceptance and validation criteria. Detailed completion rules live in [testing standards](docs/standards/testing.md).
+- Once implementation is approved, continue until the Current task succeeds, reaches an explicit Open Decision, or is genuinely Blocked. Ask only the minimum necessary owner question for an explicit Open Decision; after the answer, persist it and resume the same already-approved task without another general approval. Ordinary implementation choices add no approval checkpoint.
 
 ### Successful task completion
 
-- Verify the task's Acceptance Criteria and applicable Definition of Done, then run only validation required by the risk-based policy. Mark it `Done` in `queue.md`, clear it from `current.md`, and append a concise durable `done.md` record containing only: task ID/title, result, important decisions, affected areas/files at summary level, validation actually executed/result, documentation impact, and relevant follow-ups. Never copy full `current.md` content into `done.md`.
-- Keep the chat response minimal: `Sx-Tyy completed successfully. Required validation passed.` Do not repeat persisted file lists, command output/logs, walkthroughs, documentation changes, or passing criteria. Repository documentation owns durable detail; conversation owns approvals, blockers, decisions, and concise status.
-
-### Next task in the same Sprint
-
-- If another task is `Queued`, do not make it Current or implement it. Ask exactly one question: `Sx-Tyy is complete. Prepare Sx-Tzz as the next Current task?`
-- After owner approval, mark that task `Current` and populate `current.md` with Minimum Sufficient **Required Context**, Scope, Out of Scope, Acceptance Criteria, Testing Impact, Validation, Documentation Impact, applicable constraints, and `Approval State: Awaiting Implementation Approval`; then **stop**. Implement it only after the separate command `Approve and implement the current task.`
+- Verify Acceptance Criteria and applicable Definition of Done, run only validation required by the risk-based policy, mark the task `Done` in `queue.md`, and append a concise durable `done.md` record containing only: task ID/title, result, important decisions, affected areas/files at summary level, validation actually executed/result, documentation impact, and relevant follow-ups. Never copy full `current.md` content into `done.md`.
+- If another task is `Queued` in the same Active Sprint, immediately select the next queue entry, mark it `Current`, and replace `current.md` with its Goal, Why, Minimum Sufficient **Required Context**, Scope, Out of Scope, Expected Changes, Constraints, Acceptance Criteria, Testing Impact, Validation, Documentation Impact, and `Approval State: Awaiting Implementation Approval`; then **stop before implementation**. This preparation needs no owner approval.
+- After that transition, keep chat minimal: `Sx-Tyy completed. Sx-Tzz is now Current and awaiting implementation approval. Approve and implement Sx-Tzz?` At that point the previous task is already archived and the next task is already prepared; the question authorizes implementation only. Repository documentation owns durable detail; conversation owns approvals, Open Decisions, blockers, and concise status.
 
 ### End of Sprint
 
-- If the completed task was final, verify the Sprint Definition of Done and exit criteria, mark the Sprint `Completed` if they pass, and identify—but do not activate—the next Planned Sprint.
-- Ask exactly one question: `Sprint <n> is complete. Activate Sprint <n+1> and prepare its first Current task?` If no Planned Sprint exists, report that roadmap planning is required; never invent one.
-- After owner approval, mark the next Sprint `Active`, select and mark its first `Queued` task `Current`, prepare its `current.md` with the same minimum task sections and `Approval State: Awaiting Implementation Approval`, then **stop**. Do not implement it without separate approval.
+- If the completed task was final, clear `current.md` and verify the Sprint exit criteria. Mark the Sprint `Completed` and identify the next intended Sprint from the roadmap without activating it only when those criteria pass.
+- If that Sprint lacks an approved detailed plan/queue, ask `Sprint <n> is complete. Plan Sprint <n+1> from the roadmap?`; on approval, plan only that Sprint, surface required Open Decisions, and obtain plan approval. If an approved detailed plan already exists, ask `Sprint <n> is complete. Activate Sprint <n+1> and prepare its first Current task?`
+- Only after the required plan/activation approval, mark the Sprint `Active`, automatically prepare its first `Current` task with `Approval State: Awaiting Implementation Approval`, and stop before implementation. If no next roadmap Sprint exists, report that roadmap planning is required. Detailed Just-In-Time policy is canonical in [the roadmap](docs/roadmap.md#just-in-time-sprint-planning).
 
 ### Failure, blockers, and context efficiency
 
-- The compact success report never hides failure. If implementation or required validation fails, do not mark Done; record the relevant execution state, explain the exact failure/blocker concisely but sufficiently, and request owner input only when a decision is required.
+- Fix in-scope implementation or validation failures and continue. If genuinely Blocked, keep the task Current/Blocked, do not prepare another task, record the relevant execution state, and report only the exact blocker and required owner input. The compact success rule never hides failure.
 - Minimize routine conversational output, but never reduce correctness, validation, traceability, or important owner decisions to save context.
 
 ## Required workflow

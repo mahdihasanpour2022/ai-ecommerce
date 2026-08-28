@@ -4,7 +4,7 @@
 
 Use backend-enforced role-based access control (RBAC) for the independent Admin identity model. `AdminUser` has a conceptual many-to-many relationship with `Role`; `Role` has a conceptual many-to-many relationship with `Permission`. `SUPER_ADMIN` is a special Role, not an `isSuperAdmin` boolean. Protected endpoints evaluate the required action and, when necessary, resource context. Default-deny is required: no protected operation is allowed merely because a route or button exists.
 
-Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission. An active Admin must hold effective `admin.access` to establish or continue Admin application access. `SUPER_ADMIN` receives every registered effective permission but never bypasses Admin/session-status, authentication, CSRF, input-validation, or audit enforcement. `/auth/me` returns safe Admin identity plus sorted, deduplicated `roles` and effective `permissions` string arrays; it never returns a wildcard or treats frontend state as authority.
+Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission. An active Admin must hold effective `admin.access` to establish or continue Admin application access. `SUPER_ADMIN` receives every registered effective permission but never bypasses Admin/session-status, authentication, CSRF, input-validation, or audit enforcement. `/auth/me` returns `id`, `email`, and `displayName` as safe Admin identity plus sorted, deduplicated `roles` and effective `permissions` string arrays; it never returns a wildcard or treats frontend state as authority.
 
 Future conceptual roles, subject to their feature approval, include `ADMIN`, `PRODUCT_MANAGER`, and `ORDER_MANAGER`. Example future permissions include:
 
@@ -30,6 +30,6 @@ These examples are not the final permission matrix. Avoid relying only on role n
 - Privilege assignment, account changes, destructive catalog operations, inventory changes, and other sensitive actions should be auditable when audit scope is approved.
 - Never trust client-supplied role, permission, ownership, price, or inventory claims.
 
-## Remaining open decisions
+## Accepted persistence boundary and deferred decisions
 
-Final Prisma representation is S1-T02 scope. Broader role-permission matrices, resource scopes, role assignment UI/workflow, separation of duties, additional Super Admin safeguards, audit retention, and emergency access remain Deferred until the relevant functionality. Customer identity/authentication remains separate and Deferred.
+The owner-approved explicit join-model, constraint, reference-data, and bootstrap-lock design is canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and remains unimplemented until S1-T03/S1-T04. Broader role-permission matrices, resource scopes, role assignment UI/workflow, separation of duties, additional Super Admin safeguards, audit retention, and emergency access remain Deferred until the relevant functionality. Customer identity/authentication remains separate and Deferred.

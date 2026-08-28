@@ -59,6 +59,7 @@ These API-owned values are approved inputs for later Sprint 1 implementation but
 | `AUTH_LOGIN_INITIAL_DELAY_SECONDS` | Integer; default `30` | Server-only, non-secret initial account backoff |
 | `AUTH_LOGIN_MAX_DELAY_SECONDS` | Integer; default `900` | Server-only, non-secret maximum account backoff |
 | `AUTH_LOGIN_IP_LIMIT` | Integer; default `20` | Server-only, non-secret requests per IP/login window |
+| `AUTH_LOGIN_THROTTLE_HMAC_KEY` | 256-bit or stronger HMAC key; required | Secret server-only key for enumeration-safe account/identifier throttle buckets; independent from JWT, recovery, password, and database material |
 | `AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE` | Integer; default `10` | Server-only, non-secret refresh requests per active session |
 | `AUTH_REFRESH_IP_LIMIT_PER_MINUTE` | Integer; default `30` | Server-only, non-secret refresh requests per IP |
 

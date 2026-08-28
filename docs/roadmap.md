@@ -4,6 +4,8 @@
 
 - This roadmap is intentionally high-level. Sprint specifications and ordered task queues are refined only as a Sprint approaches implementation.
 - Feature and task context is created incrementally under `docs/work/sprint-XX/` after the required scope and decisions are ready.
+- Future work exists at two levels: the roadmap carries long-term objectives, milestones, major dependencies/sequencing, and useful known Open Decisions; only the Active or next planning-horizon Sprint receives a detailed plan, exit criteria, ordered queue, and task execution metadata.
+- Do not create detailed task queues, `current.md` files, task Required Context lists, or implementation plans for distant future Sprints merely for completeness.
 - Roadmap planning does not reopen Accepted architecture. Changes require an explicit owner decision and the appropriate architecture record.
 - Future scope may move as product requirements are clarified, but the MVP boundary must not expand or contract silently.
 - A planned or future Sprint is not authorization to implement it. Only the active approved task may be implemented.
@@ -371,15 +373,42 @@ The following remain Deferred or Future considerations unless separately approve
 - Event-driven integrations, Kafka, microservices, Kubernetes, advanced tracing/telemetry, WAF/bot services, and other specialized infrastructure without evidence from requirements or scale.
 - Nonessential design-system or shared-package abstraction.
 
-## Roadmap Update Rule
+## Just-In-Time Sprint Planning
 
-Before a future Sprint becomes Active:
+Use these context levels:
 
-1. Review its roadmap scope against current product requirements.
-2. Resolve only the decisions required for that Sprint.
-3. Create or refine the Sprint and feature specification.
-4. Define its ordered feature/task queue under `docs/work/sprint-XX/`.
-5. Define Minimum Sufficient **Required Context** for each task.
-6. Activate only the first owner-approved task.
+```text
+Roadmap = long-term direction
+Next Sprint Plan = near-term detailed planning
+current.md = immediate execution context
+```
 
-Do not fully specify distant Sprints prematurely.
+When the final task of the Active Sprint is Done, verify the Sprint exit criteria and mark it `Completed` only when they pass. If they do not pass, keep the Sprint `Active`, record and report the unmet criteria, and do not begin a Sprint transition. After successful completion, read this roadmap to identify the next intended Sprint; never invent a Sprint that has no roadmap direction.
+
+### Next Sprint is not yet detailed
+
+Do not activate it. Ask exactly:
+
+`Sprint N is complete. Plan Sprint N+1 from the roadmap?`
+
+After owner approval, plan only that next Sprint using its roadmap objective, outcomes/decisions from completed Sprints, actual repository state, accepted architecture/ADRs, relevant feature specifications, dependencies, and unresolved Open Decisions. Produce or update:
+
+- Sprint Goal;
+- Scope and Out of Scope;
+- dependencies and relevant Open Decisions;
+- exit criteria; and
+- an appropriately scoped ordered task queue.
+
+Do not prepare task-level Required Context/current files during Sprint-plan drafting, prematurely design distant implementation details, or implement anything. Do not silently resolve an explicitly documented Open Decision. Ask the owner to approve the completed Sprint plan.
+
+After plan approval, mark that Sprint `Active`, automatically select its first `Queued` task, mark it `Current`, and populate its `current.md` with Minimum Sufficient **Required Context** and every required task section. Set `Approval State: Awaiting Implementation Approval`, stop before implementation, and ask only for implementation approval of that prepared task.
+
+### Next Sprint already has an approved detailed plan
+
+Ask exactly:
+
+`Sprint N is complete. Activate Sprint N+1 and prepare its first Current task?`
+
+After approval, activate it and perform the same automatic first-task preparation/stop boundary above.
+
+Detailed planning normally exists only for the Active Sprint and the single next Sprint being planned. Future roadmap entries remain high-level so newly completed work and owner decisions can shape the next plan without maintaining speculative queues.

@@ -63,7 +63,7 @@ Under `/api/v1`:
 - `GET /auth/csrf`: validate the Refresh cookie and active session without rotation; return the existing session-bound CSRF token in a no-store JSON response for frontend-memory bootstrap.
 - `POST /auth/refresh`: validate the refresh cookie/session/CSRF as approved, rotate atomically, and issue replacement credentials.
 - `POST /auth/logout`: revoke the current session refresh capability and expire its authentication cookies; repeated logout behavior must be safely defined.
-- `GET /auth/me`: return a safe, explicit `admin` identity object plus `{ authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret. S1-T02 fixes the non-sensitive identity fields with the schema contract. Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission.
+- `GET /auth/me`: return `{ admin: { id, email, displayName }, authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret. Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission.
 
 Errors follow [API conventions](../../api/conventions.md): stable English `code`, Persian `message` when user-display text is appropriate, and no sensitive internals.
 
@@ -130,6 +130,6 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 - Relevant contract, security, concurrency, integration, and critical-flow tests pass.
 - Swagger/OpenAPI accurately documents all implemented authentication endpoints and their API-visible contracts, and no stale authentication contract remains.
 
-## Remaining Open Question
+## Accepted Persistence Contract
 
-Final Prisma columns, constraints, indexes, relations, deletion/cleanup policies, retention, and migration design for the accepted AdminUser/Role/Permission/AuthSession/RefreshToken, CSRF-hash, recovery-envelope, and shared throttle concepts remain S1-T02 scope.
+The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). They remain design-only until S1-T03 implements the reviewed Prisma schema/migration.
