@@ -1,6 +1,6 @@
 # Automotive Parts Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. Sprint 0's engineering foundation is complete; product features, authentication, catalog schema, purchasing, deployment, and production infrastructure are still planned work rather than implemented behavior.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation and initial Admin identity persistence/provisioning boundary are implemented; login, browser authentication, catalog, purchasing, deployment, and production infrastructure remain planned work.
 
 ## Repository applications
 
@@ -8,7 +8,7 @@ Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce p
 | --- | --- | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | `http://localhost:3000` | Preserved Next.js starter and future customer experience |
 | Admin | `@automotive-commerce/admin` | `http://localhost:3001` | Minimal Persian RTL Next.js foundation; no authentication or business UI |
-| API | `@automotive-commerce/api` | `http://localhost:3002` | Empty NestJS Modular Monolith/OpenAPI foundation; no business endpoints or runtime database integration |
+| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS foundation plus Admin identity schema/migration and trusted first-Admin command; no business/login endpoint or long-running runtime database integration |
 
 `packages/` is intentionally empty until a demonstrated cross-application need justifies a shared package.
 
@@ -56,7 +56,7 @@ yarn build
 yarn test
 ```
 
-These root commands orchestrate every applicable Workspace. The current real test graph contains the API environment and Swagger integration suite; no placeholder frontend tests exist. `yarn format` writes only the repository's configured source/configuration scope, so keep write-mode formatting limited to task-relevant files.
+These root commands orchestrate every applicable Workspace. The current real test graph contains API environment, Swagger, Prisma schema, and first-Admin provisioning coverage; database-backed provisioning tests run when the isolated `TEST_DATABASE_URL` contract is supplied. No placeholder frontend tests exist. `yarn format` writes only the repository's configured source/configuration scope, so keep write-mode formatting limited to task-relevant files.
 
 GitHub Actions runs the same quality foundation for pull requests and pushes to `main`, including frozen installation and Prisma validation/generation. See [continuous integration](docs/development/ci.md) for the exact gates and security boundary.
 
@@ -74,14 +74,14 @@ yarn db:stop
 
 Read [Local PostgreSQL Development](docs/development/local-postgresql.md) before using the intentionally destructive, allowlisted reset commands.
 
-Prisma is currently model-free and is not used by the API runtime. Prisma CLI commands require `DATABASE_URL` in the invoking process; validation and generation do not require a live database:
+Prisma owns the implemented Admin identity/session persistence schema and reviewed migration. Prisma CLI commands require `DATABASE_URL` in the invoking process; validation and generation do not require a live database:
 
 ```bash
 yarn workspace @automotive-commerce/api prisma:validate
 yarn workspace @automotive-commerce/api prisma:generate
 ```
 
-Schema changes and migrations require separately approved work and the SQL review process in the [Prisma workflow](docs/development/prisma.md).
+Schema changes and migrations require separately approved work and the SQL review process in the [Prisma workflow](docs/development/prisma.md). The one-shot trusted first-Super-Admin command is documented separately in [First Super Admin Provisioning](docs/development/admin-provisioning.md); it is not a login flow or public API.
 
 ## Project context
 

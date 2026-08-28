@@ -54,4 +54,22 @@ Prisma ORM 7 migration behavior was reviewed through Context7. The pinned Postgr
 
 **Follow-ups:** S1-T04 is Current and awaiting implementation approval. It owns the trusted-environment first-Super-Admin provisioning workflow; selecting and installing an Argon2 implementation remains an explicit owner-approved dependency decision.
 
+## S1-T04 — Implement First Super Admin Provisioning
+
+**Completed:** 2026-08-28
+
+**Result:** Implemented a trusted one-shot API Workspace command that provisions exactly the first eligible `SUPER_ADMIN` without an HTTP endpoint, default credential, session, token, seed framework, schema change, or bootstrap flag.
+
+### Validation
+
+Current node-argon2 and Prisma 7 adapter documentation was reviewed through Context7, and current OWASP password guidance was reviewed. The owner-approved `argon2@0.45.1` and `@prisma/adapter-pg@7.10.0` direct versions, transitive lockfile scope, native hash/verify behavior, and adapter import were verified. Frozen offline installation, final Yarn integrity, Prisma validate/generate, API typecheck, lint, build, repository formatting, all 35 API tests against isolated PostgreSQL 18.6, and the compiled CLI smoke path passed. Database tests proved exact Role/Permission assignment, Argon2id v19 parameters/verification, safe repeat behavior, exactly one concurrent winner, missing-reference failure, assignment-failure rollback, and absence of sessions/tokens. Final catalog inspection proved no test Admin/assignment/trigger/function remained and the system reference grant remained intact. Local Markdown links, secret-pattern/argv/output inspection, dependency scope, generated-output ignore behavior, `git diff --check`, and the read-only Git index passed.
+
+**Important Decisions:** The command accepts no arguments and consumes one-shot process configuration; password variables are removed from the child environment immediately after capture. Passwords allow Unicode/whitespace, require 15–128 characters and exact confirmation, and use Argon2id v19 with `m=65536`, `t=3`, `p=1`, 32-byte output, and a library-generated salt. Hashing occurs before the transaction; a fixed parameterized transaction-scoped PostgreSQL advisory lock then serializes the zero-Admin check, exact `SUPER_ADMIN` → `admin.access` verification, and atomic Admin/assignment insertion.
+
+**Files / Areas Changed:** Added the API administration/provisioning boundary, compiled Workspace command, focused unit/database integration tests, the two explicitly approved direct dependencies and lockfile resolution, trusted provisioning guide, one-shot environment contract, and narrow repository/security reality updates.
+
+**Documentation Impact:** The trusted invocation, prerequisites, one-shot variables, safe output/failure behavior, password policy, transaction boundary, and explicit no-HTTP/no-login scope are documented without a usable credential.
+
+**Follow-ups:** S1-T05 is Current and awaiting implementation approval. It owns backend credential validation, enumeration-safe throttling, session/initial-token creation, cookie issuance, login security boundary, and matching Swagger/OpenAPI documentation. Selecting/installing an exact JOSE implementation remains a separate explicit dependency decision.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

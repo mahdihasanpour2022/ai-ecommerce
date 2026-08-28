@@ -34,7 +34,7 @@ S1-T02 and explicit schema/migration approval.
 
 ## S1-T04 — Implement First Super Admin Provisioning
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the secure trusted-environment administrative CLI/script with safe repeat-bootstrap prevention and auditable behavior.
@@ -44,7 +44,7 @@ S1-T03 and approved hashing/provisioning details.
 
 ## S1-T05 — Implement Backend Authentication and Login
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement credential validation, Admin/session creation, accepted authentication cookies, stable errors, and the login contract with matching Swagger/OpenAPI documentation.

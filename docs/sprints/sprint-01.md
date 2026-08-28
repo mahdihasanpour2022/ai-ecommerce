@@ -59,4 +59,4 @@ The approved specification and security decisions are met; schema/migrations and
 
 ## Risks / Open Questions
 
-S1-T01 resolved the blocking authentication security/contract decisions, S1-T02 produced the owner-approved Prisma schema/migration design, and S1-T03 implemented and database-verified that persistence boundary. S1-T04 now owns secure first-Super-Admin provisioning; deployment secret providers, distributed throttling, and broader authorization/operational policy remain downstream or Deferred as documented canonically.
+S1-T01 resolved the blocking authentication security/contract decisions, S1-T02 produced the owner-approved Prisma schema/migration design, S1-T03 implemented and database-verified that persistence boundary, and S1-T04 implemented trusted first-Super-Admin provisioning. S1-T05 now owns backend login/session establishment; deployment secret providers, distributed throttling, and broader authorization/operational policy remain downstream or Deferred as documented canonically.

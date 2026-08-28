@@ -10,7 +10,7 @@ The API Workspace owns Prisma ORM. Prisma `7.10.0` is pinned exactly for both th
 - Generated client files are reproducible and ignored. Run generation after schema or generator changes; do not edit generated files.
 - The reviewed additive initial migration lives under `apps/api/prisma/migrations/` and adds PostgreSQL-only CHECK constraints, a partial current-token index, and the approved `SUPER_ADMIN`/`admin.access` reference grant that Prisma schema syntax does not fully represent.
 - The rollback-only invariant suite at `apps/api/prisma/tests/admin-identity-constraints.sql` verifies the applied database structures and critical constraints when run against an approved disposable test database.
-- No repository, service, runtime client instance, or general seed mechanism exists yet.
+- The trusted [first-Super-Admin provisioner](admin-provisioning.md) creates a short-lived adapter-backed Prisma Client for its one transaction and disconnects afterward. No general runtime repository/service/client singleton or seed mechanism exists yet.
 
 Prisma 7 does not load `.env` implicitly. The repository intentionally adds no dotenv dependency: provide `DATABASE_URL` through the invoking shell or process manager. The tracked `.env.example` documents safe local values but is not loaded automatically. `TEST_DATABASE_URL` remains reserved for future test tooling and must never be substituted silently for development migrations.
 

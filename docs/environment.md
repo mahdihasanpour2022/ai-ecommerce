@@ -28,10 +28,16 @@ The Storefront and Admin scripts pin their development and production-server por
 | --- | --- | --- | --- | --- |
 | `NODE_ENV` | API | `development`, `test`, or `production` | Optional; defaults to `development` | Server-only, non-secret |
 | `PORT` | API | Base-10 integer from 1 through 65535 | Optional; defaults to `3002` | Server-only, non-secret |
-| `DATABASE_URL` | API Prisma CLI / future runtime | PostgreSQL connection URL for `automotive_dev` | Required for Prisma configuration; not consumed by API runtime yet | Server-only; credential-bearing |
-| `TEST_DATABASE_URL` | Future API test tooling | PostgreSQL connection URL for `automotive_test` | Reserved; not consumed yet | Server-only; credential-bearing |
+| `DATABASE_URL` | API Prisma CLI / trusted Admin provisioner | PostgreSQL connection URL for the explicitly selected target | Required for Prisma configuration and provisioning; no implicit file loading | Server-only; credential-bearing |
+| `TEST_DATABASE_URL` | API persistence integration tests | PostgreSQL connection URL for `automotive_test` | Optional outside database integration validation | Server-only; credential-bearing |
+| `ADMIN_BOOTSTRAP_EMAIL` | Trusted Admin provisioner | Email, trimmed/lowercased; maximum 254 characters | Required only for the one-shot provisioning process | Server-only, identity data |
+| `ADMIN_BOOTSTRAP_DISPLAY_NAME` | Trusted Admin provisioner | Trimmed non-control string; maximum 120 characters | Required only for the one-shot provisioning process | Server-only, identity data |
+| `ADMIN_BOOTSTRAP_PASSWORD` | Trusted Admin provisioner | 15–128 characters; no silent normalization/truncation | Required only for the one-shot provisioning process | Secret; never tracked, logged, or passed in argv |
+| `ADMIN_BOOTSTRAP_PASSWORD_CONFIRM` | Trusted Admin provisioner | Exact confirmation | Required only for the one-shot provisioning process | Secret; never tracked, logged, or passed in argv |
 
 The API parses configuration before creating the NestJS application. Invalid values stop startup with an actionable error that describes the accepted shape without echoing the supplied value.
+
+The `ADMIN_BOOTSTRAP_*` variables are intentionally absent from `.env.example` values and are not runtime application configuration. Supply them only to the trusted one-shot command through the process contract in [First Super Admin Provisioning](development/admin-provisioning.md); compile before secret injection.
 
 Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather than an application setting and must not be overridden with a nonstandard value. Neither frontend currently consumes an application environment variable.
 
