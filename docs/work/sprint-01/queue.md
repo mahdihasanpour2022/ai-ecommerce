@@ -44,7 +44,7 @@ S1-T03 and approved hashing/provisioning details.
 
 ## S1-T05 — Implement Backend Authentication and Login
 
-Status: Current
+Status: Done
 
 Objective:
 Implement credential validation, Admin/session creation, accepted authentication cookies, stable errors, and the login contract with matching Swagger/OpenAPI documentation.
@@ -54,7 +54,7 @@ S1-T01 and S1-T03.
 
 ## S1-T06 — Implement CSRF, Minimum RBAC, and Protected Admin Access
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the approved CSRF contract, minimum Role/Permission enforcement, current Admin/session checks, and `/auth/me` with matching Swagger/OpenAPI documentation.

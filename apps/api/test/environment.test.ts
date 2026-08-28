@@ -2,28 +2,29 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import { DEFAULT_API_PORT, parseEnvironment } from '../src/config/environment';
+import { validEnvironmentSource } from './test-environment';
 
 void describe('API environment parsing', () => {
   void test('uses safe local defaults when optional values are absent', () => {
-    assert.deepEqual(parseEnvironment({}), {
-      nodeEnv: 'development',
-      port: DEFAULT_API_PORT,
-    });
+    const environment = parseEnvironment(validEnvironmentSource({ NODE_ENV: undefined }));
+    assert.equal(environment.nodeEnv, 'development');
+    assert.equal(environment.port, DEFAULT_API_PORT);
   });
 
   void test('parses every supported runtime environment and an explicit port', () => {
     for (const nodeEnv of ['development', 'test', 'production']) {
-      assert.deepEqual(parseEnvironment({ NODE_ENV: nodeEnv, PORT: '4100' }), {
-        nodeEnv,
-        port: 4100,
-      });
+      const environment = parseEnvironment(
+        validEnvironmentSource({ NODE_ENV: nodeEnv, PORT: '4100' }),
+      );
+      assert.equal(environment.nodeEnv, nodeEnv);
+      assert.equal(environment.port, 4100);
     }
   });
 
   for (const nodeEnv of ['', 'staging', 'PRODUCTION']) {
     void test(`rejects unsupported NODE_ENV input: ${nodeEnv || '<empty>'}`, () => {
       assert.throws(
-        () => parseEnvironment({ NODE_ENV: nodeEnv }),
+        () => parseEnvironment(validEnvironmentSource({ NODE_ENV: nodeEnv })),
         /Invalid NODE_ENV: expected development, test, or production\./,
       );
     });
@@ -32,9 +33,28 @@ void describe('API environment parsing', () => {
   for (const port of ['', '0', '-1', '3000.5', ' 3000', '65536', 'not-a-port']) {
     void test(`rejects malformed or out-of-range PORT input: ${port || '<empty>'}`, () => {
       assert.throws(
-        () => parseEnvironment({ PORT: port }),
-        /Invalid PORT: expected a base-10 integer from 1 through 65535\./,
+        () => parseEnvironment(validEnvironmentSource({ PORT: port })),
+        /Invalid PORT:/,
       );
     });
   }
+
+  void test('rejects missing and mismatched authentication secrets without echoing values', () => {
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_JWT_PRIVATE_KEY: undefined })),
+      /^Error: Invalid AUTH_JWT_PRIVATE_KEY:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ CORS_ALLOWED_ORIGINS: '*' })),
+      /^Error: Invalid CORS_ALLOWED_ORIGINS:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_LOGIN_THROTTLE_HMAC_KEY: 'short' })),
+      /^Error: Invalid AUTH_LOGIN_THROTTLE_HMAC_KEY:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_JWT_ACTIVE_KID: 'untrusted-key-id' })),
+      /^Error: Invalid AUTH_JWT_ACTIVE_KID:/,
+    );
+  });
 });

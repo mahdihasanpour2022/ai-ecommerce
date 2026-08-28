@@ -8,8 +8,8 @@ import { parseEnvironment } from './config/environment';
 
 async function bootstrap(): Promise<void> {
   const environment = parseEnvironment();
-  const app = await NestFactory.create(AppModule);
-  configureApplication(app, environment.nodeEnv);
+  const app = await NestFactory.create(AppModule.forRoot(environment));
+  configureApplication(app, environment);
   await app.listen(environment.port);
 }
 

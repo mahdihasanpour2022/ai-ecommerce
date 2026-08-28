@@ -8,9 +8,9 @@ Environment configuration is application-owned, validated at its consumption bou
 | --- | --- | ---: | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | 3000 | `http://localhost:3000` | None currently |
 | Admin | `@automotive-commerce/admin` | 3001 | `http://localhost:3001` | None currently |
-| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | `NODE_ENV`, `PORT` |
+| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database and S1-T05 login values below |
 
-The future REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. The two browser origins above are the development-origin contract for the future credentialed CORS task; S0-T09 does not enable CORS.
+The REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. S1-T05 enables credentialed CORS for exact configured origins; the accepted Admin development origin is `http://localhost:3001`.
 
 Run an application with its Workspace command:
 
@@ -43,7 +43,7 @@ Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather t
 
 ## Accepted Sprint 1 configuration contract
 
-These API-owned values are approved inputs for later Sprint 1 implementation but are not consumed yet. Implementation must validate them before application creation and add only safe placeholders—not usable keys—to `.env.example`.
+S1-T05 consumes the access/refresh lifetimes, JWT, CORS, Argon2, and login-throttle values below and validates them before application creation. Refresh recovery and refresh-throttle values remain approved but unconsumed until their owning task. `.env.example` contains only non-secret defaults and intentionally unusable secret placeholders.
 
 | Name | Type/default | Exposure and purpose |
 | --- | --- | --- |

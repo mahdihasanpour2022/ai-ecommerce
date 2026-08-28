@@ -9,7 +9,7 @@
     "admin:create-super-admin": "node dist/administration/create-super-admin.cli.js",
     "lint": "eslint .",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "test": "tsc --project tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\"",
+    "test": "tsc --project tsconfig.test.json && node --test --test-concurrency=1 \"dist-test/test/**/*.test.js\"",
     "prisma:format": "prisma format",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
@@ -24,6 +24,7 @@
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "argon2": "0.45.1",
+    "jose": "6.2.10",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },

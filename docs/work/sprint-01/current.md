@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S1-T05
+S1-T06
 
 ## Title
 
-Implement Backend Authentication and Login
+Implement CSRF, Minimum RBAC, and Protected Admin Access
 
 ## Status
 
@@ -14,11 +14,11 @@ Current
 
 ## Goal
 
-Implement the backend Admin login contract: enumeration-safe credential/status/eligibility validation, accepted throttling, atomic session and initial credential creation, secure cookie issuance, CSRF bootstrap response, and matching Swagger/OpenAPI documentation.
+Implement the backend current-session boundary needed after login: Access-cookie validation, authoritative Admin/session and minimum RBAC enforcement, session-bound CSRF validation infrastructure, `GET /api/v1/auth/csrf`, and `GET /api/v1/auth/me`, with exact safe errors and matching Swagger/OpenAPI contracts.
 
 ## Why
 
-The persisted Admin identity and trusted bootstrap command do not yet provide a browser authentication path. The Admin application needs one security-reviewed login endpoint that establishes the accepted server-authoritative session boundary without exposing identity state, credentials, or authorization claims.
+S1-T05 establishes a browser session but no endpoint can yet validate that session, reload the in-memory CSRF credential, or return current server-authoritative identity/authorization. The Admin frontend and later refresh/logout tasks require these boundaries before protected application access is safe.
 
 ## Required Context
 
@@ -29,116 +29,111 @@ The following is the Minimum Sufficient **Required Context** for this task:
 - `docs/security/authentication.md`
 - `docs/security/authorization.md`
 - `docs/security/baseline.md`
-- `docs/work/sprint-01/s1-t02-schema-proposal.md`
 - `docs/api/conventions.md`
 - `docs/architecture/backend-architecture.md`
-- `docs/development/prisma.md`
+- `docs/work/sprint-01/s1-t02-schema-proposal.md`
+- `docs/development/admin-login.md`
 - `docs/environment.md`
 - `docs/standards/backend.md`
 - `docs/standards/testing.md`
 - `docs/standards/execution.md`
+- `apps/api/src/authentication/`
+- `apps/api/prisma/schema.prisma`
 
-This set owns the observable login/error contract, credential/cookie/JWT/session/throttle rules, authoritative RBAC lookup, persistence transactions, backend/OpenAPI conventions, environment inputs, and security-focused validation. Refresh rotation, general CSRF middleware, protected access, frontend behavior, and later endpoint implementation details are excluded except where the login response must establish their accepted initial credentials.
+This set owns the observable CSRF/current-Admin behavior, Access JWT trust boundary, backend-authoritative status/RBAC rules, implemented login credentials, available persistence fields, error/OpenAPI conventions, and security-focused validation. Refresh rotation, logout, frontend behavior, role administration, and later hardening remain outside this task except where reusable guards must provide their accepted boundary.
 
 ## Scope
 
-- Add the Admin authentication module/controller/service/repository boundary required for `POST /api/v1/auth/login` only.
-- Accept and validate the explicit JSON request `{ email, password }`; normalize email consistently without logging submitted identifiers or credentials.
-- Enforce the accepted unauthenticated login Origin/Referer and Fetch Metadata boundary plus exact credentialed CORS behavior needed for the implemented route.
-- Apply the accepted durable HMAC-keyed account/identifier throttle and single-instance process-local IP throttle, including configurable windows/delays, generic `429 AUTH_RATE_LIMITED`, `Retry-After`, safe concurrency, and reset after success.
-- Perform materially equivalent Argon2id verification work for unknown identity, wrong password, disabled identity, and missing `admin.access`; return the same `401 INVALID_CREDENTIALS` contract and create no credential state for every failure.
-- Rehash a successful password when approved Argon2 parameters have changed.
-- On success, atomically create one `AuthSession`, its refresh-throttle row, one initial hashed opaque `RefreshToken`, and the 32-byte hash of a random session-bound CSRF token with the accepted fixed absolute expiry.
-- Sign the Access JWT with the configured active Ed25519 key and exact approved header/claims; include identity/session claims only, never Roles/Permissions.
-- Issue host-only HttpOnly Access and Refresh cookies with the accepted environment-aware `Secure`, `SameSite=Lax`, `/` path, expiry, and no `Domain`; return only `{ csrfToken }` with `Cache-Control: no-store`.
-- Add stable safe error handling, focused unit/integration/API/e2e coverage, and generated Swagger/OpenAPI documentation for the exact implemented contract.
-- Reconcile only configuration and documentation made stale by the login implementation.
+- Validate the Access cookie with the configured trusted Ed25519 public-key ring, hard-allowed `EdDSA`, exact `typ`, issuer, audience, `kid`, signature, expiry, and required `sub`/`sid`/`jti`/`iat`/`exp` claims; reject token-supplied trust material and malformed/unknown keys.
+- Resolve the referenced `AuthSession` and `AdminUser` on every protected operation; enforce active/non-revoked/non-expired session and non-disabled Admin state before authorization.
+- Resolve current effective Roles and Permissions from `AdminUserRole -> Role -> RolePermission -> Permission`; require `admin.access` for Admin application access and never treat JWT/frontend claims as authority.
+- Implement reusable exact-Origin plus session-bound CSRF validation for unsafe cookie-authenticated requests, with timing-safe hash comparison, safe `403 CSRF_VALIDATION_FAILED`, and no credential logging.
+- Implement `GET /api/v1/auth/csrf` using the separately resolved raw-token recovery decision, validating the Refresh cookie/current token and active session without refresh rotation and returning only `{ csrfToken }` with `Cache-Control: no-store`.
+- Implement `GET /api/v1/auth/me` returning only `{ admin: { id, email, displayName }, authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret.
+- Add stable safe error mapping for missing/expired/invalid Access credentials, disabled Admin, invalid session, CSRF failure, insufficient permission, and unexpected failure without exposing existence or internals.
+- Add focused unit, PostgreSQL integration, HTTP/API, JWT/CSRF/RBAC, concurrency/status-change, and OpenAPI contract-drift coverage.
+- Reconcile only configuration and documentation made stale by this implementation.
 
 ## Out of Scope
 
-- Refresh rotation/recovery/reuse handling, logout, `/auth/csrf`, `/auth/me`, protected-route guards, general unsafe-method CSRF middleware, disabled-session enforcement, or frontend behavior.
-- Role/Permission administration, additional permissions, Customer authentication, password reset/change, MFA, SSO, social login, or security-event persistence.
-- Distributed IP throttling, Redis, production secret-provider integration, public JWKS, Bearer authentication, authorization claims in JWTs, or a BFF.
-- Schema/migration changes, cleanup scheduling, deployment operations, or S1-T06 and later implementation.
+- Refresh rotation/recovery/reuse classification, logout, cookie expiry operations, disabled-session cleanup/revocation writes, or S1-T07/S1-T08 behavior.
+- Frontend login/bootstrap/protected shell, Axios interceptors, frontend authorization UX, or later Sprint tasks.
+- Role/Permission administration, new permissions, authorization caching, Customer authentication, password flows, MFA, SSO, or social login.
+- Schema/migration changes until the CSRF raw-token recovery Open Decision is explicitly resolved and any resulting persistence impact separately approved.
+- Distributed caches/throttles, Redis, production secret-provider integration, public JWKS, Bearer headers, or authorization claims in JWTs.
 
-## Proposed HTTP Contract
+## Proposed HTTP Contracts
 
-- `POST /api/v1/auth/login`
-- Request JSON: `{ email: string, password: string }`
-- Success: `200`, response `{ csrfToken: string }`, Access and Refresh `Set-Cookie` headers, and `Cache-Control: no-store`
-- Invalid DTO/origin/metadata: safe `400`/`403` contracts as applicable without credential processing or identity disclosure
-- Authentication failure: `401 INVALID_CREDENTIALS` with the accepted generic Persian message and consistent envelope
-- Throttled: `429 AUTH_RATE_LIMITED` with the accepted generic Persian message and `Retry-After`
-- Unexpected failure: safe `5xx` envelope with no credential, key, SQL, stack, or internal detail
+- `GET /api/v1/auth/csrf`: validate the Refresh cookie/current token and active session without rotation; success `200 { csrfToken }` plus `Cache-Control: no-store`; stable authentication/session failures otherwise.
+- `GET /api/v1/auth/me`: validate the Access cookie and current backend state; success `200 { admin, authorization }` with sorted effective Role/Permission strings; stable `401`/`403` failures otherwise.
+- Unsafe cookie-authenticated endpoints use exact Origin plus `X-CSRF-Token`; this task establishes the reusable enforcement boundary even though refresh/logout remain later tasks.
 
 ## Expected Changes
 
-- Focused API authentication module/controller/service/persistence/security utilities and DTOs
-- API environment validation and safe `.env.example` placeholders for implemented non-secret/key-shape contracts only
-- Focused unit, PostgreSQL integration, and HTTP/API tests plus OpenAPI contract-drift assertions
-- `apps/api/package.json` and `yarn.lock` only after separate approval of an exact JOSE dependency/version
-- Narrow API/authentication/environment/onboarding documentation and Sprint execution records
+- Extend the API authentication module with Access-cookie parsing/verification, current-session resolution, authoritative RBAC lookup, CSRF validation, focused Nest guards, `/auth/csrf`, and `/auth/me`.
+- Focused DTOs, stable error mapping, cookie/CSRF utilities, and generated OpenAPI documentation.
+- Focused unit, PostgreSQL integration, HTTP/API, and contract-drift tests.
+- Configuration/schema changes only if explicitly approved after the Open Decision; no dependency change is currently expected.
+- Narrow authentication/environment/onboarding and Sprint execution documentation.
 
 ## Architecture Impact
 
-Adds the first runtime business module inside the existing NestJS Modular Monolith. Prisma remains adapter-backed and API-owned; login orchestration is separated from HTTP DTO/cookie handling, cryptographic utilities, and persistence transactions so later refresh/protected-access tasks can reuse accepted boundaries without premature generalization.
+Extends the existing NestJS authentication module into the first protected-request boundary. HTTP extraction/error serialization remains separate from JWT/CSRF cryptography and Prisma-backed current-state/RBAC resolution. Backend database state remains authoritative, while reusable guards support later refresh/logout endpoints without premature generalization.
 
 ## Swagger / OpenAPI Impact
 
-Creates documentation for `POST /api/v1/auth/login`, including request/response DTOs, cookie effects, no-store handling, `200`, validation/security failures, `401 INVALID_CREDENTIALS`, `429 AUTH_RATE_LIMITED` plus `Retry-After`, safe `5xx`, and secret-free examples. Swagger must match tested behavior before Done.
+Creates exact generated documentation for `GET /api/v1/auth/csrf` and `GET /api/v1/auth/me`, including cookie requirements, no-store behavior, response DTOs, stable error/status codes, and secret-free examples. Documents the reusable CSRF header requirement only where an implemented unsafe endpoint consumes it.
 
 ## Database / Prisma Impact
 
-No schema or migration change. Login reads Admin/RBAC/throttle state and atomically inserts an `AuthSession`, `AuthSessionRefreshThrottle`, and initial `RefreshToken`; successful account-throttle reset participates in the accepted transaction boundary where required. Failed/throttled attempts must not create partial session/token rows.
+Reads existing Admin, Role, Permission, AuthSession, and RefreshToken state. No schema/migration change is currently approved. The Open Decision may require a separately reviewed persistence/configuration change because a one-way CSRF hash cannot reproduce the existing raw token promised by the accepted reload-bootstrap contract.
 
 ## Security Impact
 
-Security-critical. The implementation handles plaintext passwords, signing/recovery-independent key material, random browser credentials, credentialed cookies, submitted identifiers, enumeration resistance, brute-force throttling, login CSRF/origin defense, and transactional session creation. Secrets and identifiers must not reach logs, errors, OpenAPI examples, source defaults, snapshots, URLs, or frontend-readable token fields.
+Security-critical. This task verifies signed browser credentials, prevents token-header trust injection, rechecks disabled/session/RBAC state before JWT expiry, validates synchronizer CSRF credentials and exact origins, and returns safe identity/authorization data. Raw cookies/tokens, submitted CSRF material, key material, database internals, and sensitive headers must never reach logs, errors, OpenAPI examples, snapshots, or frontend-readable fields beyond the explicitly approved CSRF response.
 
 ## Constraints
 
-- Preserve the accepted S1-T01/S1-T02 contracts exactly; surface a required security/API design change as an Open Decision.
-- Use installed Prisma/adapter-pg and Argon2 boundaries; do not change schema/migration or add a general repository abstraction without concrete reuse.
-- Do not add a JOSE package until its exact package/version and lockfile impact receive explicit owner approval.
-- Access JWTs hard-allow EdDSA and configured keys/issuer/audience; headers cannot supply trust material; Roles/Permissions never enter the token.
-- Raw refresh/CSRF credentials are random 256-bit values, persisted only as SHA-256 hashes, never logged, and never returned except the CSRF token in the accepted success body.
-- Backend eligibility is authoritative; UI state is irrelevant. No default credentials, plaintext fixtures, wildcard origins, arbitrary origin reflection, or permanent account lockout.
+- Preserve S1-T01 through S1-T05 contracts unless the CSRF Open Decision explicitly changes one; persist that decision before implementation.
+- Backend authorization is authoritative. Access JWTs contain no Roles/Permissions, `SUPER_ADMIN` has no bypass, and UI visibility is not enforcement.
+- Trust only configured public keys selected by a validated `kid`; hard-allow `EdDSA` and reject token-supplied key URLs/material.
+- Cookie authentication remains direct browser-to-API; do not add Bearer handling or a BFF.
+- Do not add dependencies, change Prisma schema/migrations, or introduce new secrets without explicit owner approval.
 - Do not stage, commit, push, migrate, or change unrelated/later-task files.
 
 ## Acceptance Criteria
 
-- The tested/generated OpenAPI contract exactly matches `POST /api/v1/auth/login`, its DTO, `200` body/cookies/no-store headers, stable errors/statuses, and `Retry-After` behavior without exposing secrets.
-- A valid active Admin with effective `admin.access` receives one absolute-lifetime session, one initial refresh credential, one session throttle row, a valid approved Access JWT cookie, an opaque Refresh cookie, and a memory-bootstrap CSRF token; database rows contain only hashes and no Role/Permission JWT claims.
-- Unknown identity, wrong password, disabled Admin, and missing eligibility are materially equivalent `401 INVALID_CREDENTIALS` outcomes with dummy/real Argon2 work, no identity disclosure, and no session/token creation.
-- Durable account and process-local IP throttles enforce accepted limits/delays generically and concurrency-safely, return `429 AUTH_RATE_LIMITED` with `Retry-After`, and never permanently lock an account; successful login resets the account bucket.
-- Invalid request/origin/fetch-metadata, malformed/untrusted key configuration, signing failure, and transaction failure fail closed without credentials or partial persistence.
-- Cookies are host-only HttpOnly, `SameSite=Lax`, path `/`, environment-aware `Secure`, correctly expired, and inaccessible to response JSON; credential-bearing responses are `no-store`.
-- Password rehash-on-success, exact JWT header/claims/TTL, random credential length/uniqueness, hash persistence, transaction rollback, concurrency, error redaction, and absence of plaintext material have focused automated coverage.
-- API tests, PostgreSQL integration tests, typecheck, lint, build, formatting, Prisma checks, and Swagger/OpenAPI contract-drift validation pass with no unrelated schema/dependency/later-task changes.
+- Generated OpenAPI exactly matches both implemented GET endpoints, their safe DTOs, cookie/no-store behavior, relevant statuses/stable codes, and secret-free examples.
+- A valid Access cookie plus active session/Admin and effective `admin.access` returns only the accepted safe Admin identity and sorted/deduplicated current Roles/Permissions; changing backend status or authorization takes effect before JWT expiry.
+- Missing, expired, malformed, wrongly signed, wrong-algorithm/type/issuer/audience, unknown-`kid`, incomplete-claim, and token-supplied-trust Access JWTs fail closed with stable safe errors and no state disclosure.
+- Disabled Admin, expired/revoked/mismatched session, and missing `admin.access` are enforced from current database state with the accepted `401`/`403` distinctions.
+- The resolved `/auth/csrf` design validates the opaque Refresh cookie/current token and active session without rotating it, returns the correct session-bound token only in a no-store body, and stores/logs/exposes no unauthorized raw credential.
+- Unsafe cookie-authenticated CSRF validation requires both an allowed exact Origin and matching session credential, rejects missing/malformed/mismatched values safely and timing-safely, and never treats CORS or Fetch Metadata alone as CSRF authorization.
+- Configuration/key failures, database failures, concurrent status/RBAC changes, and unexpected exceptions fail closed without credentials, stale authorization acceptance, partial writes, or internal detail.
+- Focused API/unit/PostgreSQL tests, typecheck, lint, build, formatting, Prisma checks, OpenAPI drift validation, security scans, and scope inspection pass without unrelated dependency/schema/later-task changes.
 
 ## Testing Impact
 
-Automated tests required
+Automated tests required.
 
-Focused unit, database integration, and HTTP/API coverage must exercise success, every enumeration-equivalent failure, validation/origin/metadata rejection, account/IP throttling and `Retry-After`, password rehash, JWT/cookie/CSRF/refresh properties, transaction rollback, concurrent attempts, redacted errors/output, no partial state, and generated OpenAPI parity.
+Focused unit, database integration, and HTTP/API coverage must exercise valid and adversarial JWT headers/claims/signatures, cookie parsing, current session/Admin/RBAC changes, sorted/deduplicated authorization output, Refresh-cookie CSRF bootstrap, exact Origin and CSRF matching, stable errors, no-store/redaction, concurrency, and generated OpenAPI parity.
 
 ## Validation
 
-- Preflight isolated PostgreSQL test identity/state plus required process-only signing, throttle-HMAC, origin, TTL, and cookie configuration without printing secrets.
-- Use Context7/current primary documentation for NestJS, the selected JOSE implementation, Prisma transactions, Argon2 rehash behavior, and Swagger decorators before code changes.
-- Validate any proposed dependency/version and lockfile impact, then obtain separate owner approval before installation.
-- Run focused unit and disposable-database integration tests plus HTTP/API and OpenAPI contract assertions.
-- Inspect stored session/token/CSRF hashes, JWT protected header/claims/signature verification, cookie attributes/expiry, throttle state/reset, no-store responses, and failed-transaction cleanup without emitting usable credentials.
-- Run affected API test, typecheck, lint, build, Prisma validate/generate, and repository formatting gates.
-- Run local Markdown-link checks, `git diff --check`, secret/log/OpenAPI/fixture scan, dependency/lockfile and schema/migration scope inspection, generated-output-ignore checks, and read-only Git-index inspection.
+- Preflight the isolated PostgreSQL test database and process-only Ed25519/origin/CSRF configuration without printing secrets.
+- Resolve the CSRF raw-token recovery Open Decision and obtain any required schema/configuration approval before code changes in that area.
+- Use Context7/current primary documentation for NestJS guards/decorators, JOSE verification, Prisma transactional/current-state queries, and Swagger decorators before implementation.
+- Run focused unit, disposable-database integration, HTTP/API, JWT/CSRF/RBAC, and OpenAPI contract tests.
+- Inspect current-state enforcement, timing-safe CSRF comparison, response redaction/no-store behavior, and absence of raw token/key persistence or output beyond the approved CSRF body.
+- Run affected API tests, typecheck, lint, build, Prisma validate/generate, repository formatting, Markdown links, `git diff --check`, secret scans, dependency/schema/migration scope, generated-output-ignore checks, and read-only Git-index inspection.
 
 ## Documentation Impact
 
-Document the implemented login contract, cookie names/attributes, required validated configuration, development `Secure` behavior, stable errors, throttle behavior, and remaining unimplemented refresh/CSRF/protected-access boundaries. Do not claim a complete authentication slice before later tasks.
+Document implemented protected-cookie validation, `/auth/csrf`, `/auth/me`, stable errors, current RBAC/status authority, CSRF usage, and any explicitly approved raw-token recovery/configuration choice. Continue to state that refresh, logout, frontend authentication, and later hardening are unimplemented.
 
 ## Open Decision
 
-Select the exact maintained JOSE implementation/version compatible with the repository's Node matrix and Ed25519/EdDSA contract, then obtain explicit owner approval for its API manifest/lockfile change before installation.
+The accepted schema stores only `AuthSession.csrfTokenHash`, while the accepted `GET /auth/csrf` reload contract says to return the existing raw session-bound CSRF token. SHA-256 is intentionally one-way, so the Backend cannot reproduce that token after login. Before implementation, choose and separately approve one coherent design: persist a narrowly encrypted recoverable CSRF value with reviewed schema/key lifecycle impact, rotate the CSRF token/hash during bootstrap with explicitly revised multi-tab/session semantics, or revise token derivation/configuration while preserving required entropy and separation. No option is silently assumed.
 
 ## Approval State
 

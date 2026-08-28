@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import type { RuntimeEnvironment } from './config/environment';
+import type { ApiEnvironment, RuntimeEnvironment } from './config/environment';
 
 export const API_PREFIX = 'api/v1';
 export const SWAGGER_PATH = 'api/docs';
@@ -11,13 +11,22 @@ export function isSwaggerEnabled(environment: RuntimeEnvironment): boolean {
   return environment === 'development' || environment === 'test';
 }
 
-export function configureApplication(
-  app: INestApplication,
-  environment: RuntimeEnvironment = 'development',
-): void {
+export function configureApplication(app: INestApplication, environment: ApiEnvironment): void {
   app.setGlobalPrefix(API_PREFIX);
 
-  if (!isSwaggerEnabled(environment)) {
+  app.enableCors({
+    credentials: true,
+    origin(origin: string | undefined, callback: (error: Error | null, allow?: boolean) => void) {
+      callback(
+        null,
+        origin === undefined || environment.authentication.corsAllowedOrigins.has(origin),
+      );
+    },
+    methods: ['POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
+  });
+
+  if (!isSwaggerEnabled(environment.nodeEnv)) {
     return;
   }
 

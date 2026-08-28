@@ -1,6 +1,6 @@
 # Automotive Parts Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation and initial Admin identity persistence/provisioning boundary are implemented; login, browser authentication, catalog, purchasing, deployment, and production infrastructure remain planned work.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation, initial Admin identity persistence/provisioning boundary, and backend Admin login endpoint are implemented; refresh/protected access, frontend login, catalog, purchasing, deployment, and production infrastructure remain planned work.
 
 ## Repository applications
 
@@ -8,7 +8,7 @@ Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce p
 | --- | --- | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | `http://localhost:3000` | Preserved Next.js starter and future customer experience |
 | Admin | `@automotive-commerce/admin` | `http://localhost:3001` | Minimal Persian RTL Next.js foundation; no authentication or business UI |
-| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS foundation plus Admin identity schema/migration and trusted first-Admin command; no business/login endpoint or long-running runtime database integration |
+| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS API with Admin identity persistence, trusted first-Admin provisioning, and `POST /api/v1/auth/login` |
 
 `packages/` is intentionally empty until a demonstrated cross-application need justifies a shared package.
 
@@ -81,7 +81,7 @@ yarn workspace @automotive-commerce/api prisma:validate
 yarn workspace @automotive-commerce/api prisma:generate
 ```
 
-Schema changes and migrations require separately approved work and the SQL review process in the [Prisma workflow](docs/development/prisma.md). The one-shot trusted first-Super-Admin command is documented separately in [First Super Admin Provisioning](docs/development/admin-provisioning.md); it is not a login flow or public API.
+Schema changes and migrations require separately approved work and the SQL review process in the [Prisma workflow](docs/development/prisma.md). The one-shot trusted first-Super-Admin command is documented separately in [First Super Admin Provisioning](docs/development/admin-provisioning.md); the backend browser contract is documented in [Admin Login](docs/development/admin-login.md).
 
 ## Project context
 

@@ -72,4 +72,22 @@ Current node-argon2 and Prisma 7 adapter documentation was reviewed through Cont
 
 **Follow-ups:** S1-T05 is Current and awaiting implementation approval. It owns backend credential validation, enumeration-safe throttling, session/initial-token creation, cookie issuance, login security boundary, and matching Swagger/OpenAPI documentation. Selecting/installing an exact JOSE implementation remains a separate explicit dependency decision.
 
+## S1-T05 — Implement Backend Authentication and Login
+
+**Completed:** 2026-08-28
+
+**Result:** Implemented `POST /api/v1/auth/login` with exact-origin/Referer and Fetch Metadata defenses, credentialed CORS, enumeration-safe Argon2id verification, concurrent durable account and process-local IP throttling, atomic session/initial-token persistence, Ed25519 Access JWTs, host-only HttpOnly cookies, CSRF bootstrap response, safe errors, and matching OpenAPI.
+
+### Validation
+
+Context7 documentation for NestJS 12, Prisma 7, node-argon2, JOSE, and Nest Swagger was reviewed. PostgreSQL health/isolation passed. Exact `jose@6.2.10`, `argon2@0.45.1`, and `@prisma/adapter-pg@7.10.0` versions were verified. All 45 API tests passed against PostgreSQL 18.6, covering success, equivalent credential/status/eligibility failures, Origin/Referer/Fetch Metadata, exact JWT/cookies/hashes/expiry, rehash, signing and transaction failure, concurrency, throttles, randomness, redaction, production `Secure`, and OpenAPI drift. Prisma format/validate/generate, API typecheck/lint/build, repository formatting, frozen offline install, Markdown links, secret-pattern scan, dependency/schema scope, `git diff --check`, and disposable-data cleanup passed.
+
+**Important Decisions:** `jose@6.2.10` is the approved JOSE implementation. Login pre-signs against an application-generated session UUID before persistence; one transaction creates the session, refresh-throttle row, initial hashed Refresh token, optional password rehash, and account-throttle reset. The durable account limiter reserves attempts under a PostgreSQL row lock so concurrent requests cannot bypass limits. Access JWTs contain identity/session claims only.
+
+**Files / Areas Changed:** API authentication/configuration/database runtime modules, login DTO/controller/service/repository/security/crypto boundaries, API and PostgreSQL tests, exact JOSE dependency/lockfile entry, safe environment examples, Admin login documentation, and narrow repository/security reality updates. No Prisma schema or migration changed.
+
+**Documentation Impact:** Documented the implemented endpoint, cookie names/attributes, key and throttle configuration, stable failures, development/production behavior, and explicit remaining refresh/CSRF/protected-access boundaries.
+
+**Follow-ups:** S1-T06 is Current and awaiting implementation approval. It must resolve how `GET /auth/csrf` can return a session-stable raw token when persistence intentionally stores only its one-way hash.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

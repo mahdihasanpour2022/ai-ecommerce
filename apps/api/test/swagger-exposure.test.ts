@@ -14,11 +14,15 @@ import {
   SWAGGER_PATH,
 } from '../src/application';
 import type { RuntimeEnvironment } from '../src/config/environment';
+import { createTestEnvironment } from './test-environment';
 
 async function createTestApplication(environment: RuntimeEnvironment): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const apiEnvironment = createTestEnvironment(environment);
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule.forRoot(apiEnvironment)],
+  }).compile();
   const app = moduleRef.createNestApplication({ logger: false });
-  configureApplication(app, environment);
+  configureApplication(app, apiEnvironment);
   await app.init();
   return app;
 }
@@ -58,7 +62,7 @@ void describe('Swagger exposure', () => {
 
       const body = response.body as OpenApiDocumentBody;
       assert.equal(body.info.title, 'Automotive Commerce API');
-      assert.deepEqual(body.paths, {});
+      assert.ok('/api/v1/auth/login' in body.paths);
       await request(getHttpServer(app)).get(`/${API_PREFIX}`).expect(404);
     });
   }
