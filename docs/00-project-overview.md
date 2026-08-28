@@ -24,7 +24,7 @@ Persian (`fa-IR`) and right-to-left layout are the accepted frontend language an
 
 No Admin authentication or business UI, API business module or endpoint, PostgreSQL/Prisma model, authentication flow, or product behavior described in these documents currently exists. The API reserves `/api/v1` for future REST contracts and exposes generated Swagger/OpenAPI at `/api/docs` only in development and test; production documentation remains disabled.
 
-Local development uses non-conflicting ports: Storefront `3000`, Admin `3001`, and API `3002`. Application-owned environment values, safe examples, validation behavior, and browser-exposure rules are defined in the [environment strategy](environment.md).
+Local development uses non-conflicting ports: Storefront `3000`, Admin `3001`, and API `3002`. Application-owned environment values, safe examples, validation behavior, and browser-exposure rules are defined in the [environment strategy](environment.md). The accepted local database contract uses pinned PostgreSQL 18.6 through Docker Compose with isolated development and test databases; Prisma and application schema remain unimplemented.
 
 ## Out of scope now
 

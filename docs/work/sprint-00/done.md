@@ -144,4 +144,22 @@ Current Next.js and Turborepo environment guidance was reviewed through Context7
 
 **Follow-ups:** S0-T10 is prepared for separate implementation approval to establish the lightweight local PostgreSQL lifecycle, health, test-database, and reset strategy. Production domains, deployment secrets, and final CORS implementation remain deferred to their approved workstreams.
 
+## S0-T10 — Establish Local PostgreSQL Development
+
+**Completed:** 2026-08-28
+
+**Result:** Selected Docker Compose as the reproducible local PostgreSQL boundary and added an exact `postgres:18.6-alpine3.24` service bound only to `127.0.0.1:5432`. The configuration persists PostgreSQL 18 data in a named volume, creates isolated `automotive_dev` and `automotive_test` databases, exposes lifecycle/health/isolation commands, and provides guarded resets that accept only those two exact targets. Safe local connection references reserve the future Prisma contract without making the API consume them or creating application schema.
+
+### Validation
+
+Current PostgreSQL 18, Docker Compose, official Postgres image, and Prisma supported-database documentation were reviewed; Prisma confirms support for PostgreSQL through version 18, and official release/image records confirm stable PostgreSQL `18.6` and the selected image tag. Prettier parsed and formatted `compose.yaml`, and `node --check scripts/local-postgres.mjs` passed. `yarn format:check` passed for the expanded configured scope. Executable safety checks passed for missing, arbitrary, production-like, extra-argument, and both allowlisted reset routes: rejected targets stopped before Docker, while allowlisted targets reached the Docker prerequisite. Manifest/configuration assertions, environment ignore checks, destructive-command inspection, Workspace discovery, frozen offline installation, Yarn integrity, dependency/lockfile scope, and `git diff --check` passed.
+
+Docker-dependent validation was unavailable on this host: neither Docker/Desktop, native PostgreSQL tooling/service, nor usable WSL was installed. Therefore `yarn db:config`, image pull, container start/readiness, health, development/test connection isolation, live reset, persistence across stop/restart, and stop were not executed and are not claimed as passing. `yarn db:config` was executed only far enough to verify its actionable missing-Docker failure.
+
+**Important Decisions:** Docker Compose is the repository contract because native PostgreSQL lifecycle and authentication vary by host. The current stable PostgreSQL `18.6` official Alpine 3.24 image is pinned exactly; PostgreSQL 19 beta is a prohibited prerelease. PostgreSQL 18 data mounts at `/var/lib/postgresql` per the official image contract. Local credentials are fixed, loopback-only, public non-production values that must never be reused in deployment. Normal stop preserves data, no broad volume-deletion helper exists, and reset commands can drop only `automotive_dev` or `automotive_test` through the named Compose service.
+
+**Files / Areas Changed:** Added root `compose.yaml`, PostgreSQL test-database initialization SQL, the guarded local lifecycle wrapper, root database/formatting scripts, safe API connection references, canonical local PostgreSQL documentation, and project/database/environment/Sprint execution records. No dependency, `yarn.lock`, Prisma, application schema, API database integration, HTTP contract, production infrastructure, or business behavior was added.
+
+**Follow-ups:** Install/start Docker Compose before relying on local database commands and execute the unrun live validation sequence on a Docker-capable host. S0-T11 is prepared for separate implementation approval to bootstrap Prisma against this connection contract without inventing product schema.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

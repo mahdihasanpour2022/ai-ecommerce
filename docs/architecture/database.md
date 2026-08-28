@@ -6,6 +6,8 @@ The planned system uses PostgreSQL with Prisma ORM. Relational constraints, join
 
 No Prisma schema or migration exists yet. A feature-specific ERD and schema review must precede the relevant implementation sprint.
 
+Local development uses the exact official `postgres:18.6-alpine3.24` image through the root Docker Compose configuration. Development and test databases are isolated as `automotive_dev` and `automotive_test`; their lifecycle and guarded reset contract are defined in [Local PostgreSQL Development](../development/local-postgresql.md). This local configuration does not decide production hosting, credentials, backup, or recovery.
+
 ## Initial conceptual entities
 
 - Admin identity/access: `AdminUser`, `Role`, `Permission`, plus explicit many-to-many assignments. `SUPER_ADMIN` is a Role, not a boolean shortcut.

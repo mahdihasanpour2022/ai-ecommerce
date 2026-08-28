@@ -76,14 +76,14 @@ Define validated environment configuration, safe examples, local ports, and deve
 
 ## S0-T10 — Establish Local PostgreSQL Development
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the approved lightweight local PostgreSQL lifecycle, health, test-database, and reset approach.
 
 ## S0-T11 — Bootstrap Prisma
 
-Status: Queued
+Status: Current
 
 Objective:
 Initialize Prisma tooling and migration-review workflow without creating product, authentication, or other business schemas.

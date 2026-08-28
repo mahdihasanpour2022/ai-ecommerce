@@ -14,8 +14,16 @@
     "lint": "turbo run lint",
     "lint:all": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "format": "prettier --write \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts}\" --no-error-on-unmatched-pattern",
-    "format:check": "prettier --check \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts}\" --no-error-on-unmatched-pattern"
+    "format": "prettier --write \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"scripts/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts,yaml,yml}\" --no-error-on-unmatched-pattern",
+    "format:check": "prettier --check \"apps/**/*.{css,json,js,mjs,ts,tsx}\" \"packages/**/*.{css,json,js,mjs,ts,tsx}\" \"scripts/**/*.{css,json,js,mjs,ts,tsx}\" \"*.{json,js,mjs,ts,yaml,yml}\" --no-error-on-unmatched-pattern",
+    "db:config": "node scripts/local-postgres.mjs config",
+    "db:start": "node scripts/local-postgres.mjs start",
+    "db:status": "node scripts/local-postgres.mjs status",
+    "db:health": "node scripts/local-postgres.mjs health",
+    "db:verify": "node scripts/local-postgres.mjs verify",
+    "db:stop": "node scripts/local-postgres.mjs stop",
+    "db:reset:dev": "node scripts/local-postgres.mjs reset automotive_dev",
+    "db:reset:test": "node scripts/local-postgres.mjs reset automotive_test"
   },
   "devDependencies": {
     "prettier": "3.9.6",
