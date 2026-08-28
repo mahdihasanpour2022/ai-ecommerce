@@ -25,6 +25,14 @@ Use focused context rather than loading all documentation:
 
 Architecture and security documents own **how** the system is intended to work. Feature specifications own **what** observable behavior is required. Sprint documents own **when** work occurs and its scope. ADRs own **why** significant decisions were made. Prefer references to the canonical owner over duplicating detailed rules.
 
+## Model and reasoning routing
+
+- Use **GPT-5.6 Terra** for routine, well-scoped, low-risk work with clear requirements and architecture. Use **GPT-5.6 Sol** for complex, high-risk, security-sensitive, architectural, ambiguous, or cross-Workspace work, including authentication/authorization, security, Prisma schemas/migrations, data integrity, cart, checkout, payments, orders, complex debugging, architecture decisions, and significant refactors. When uncertain, use Sol.
+- Use **Light** for simple deterministic work such as documentation, formatting, straightforward configuration/cleanup, and isolated changes. Use **Medium** for meaningful analysis, calculations, debugging, trade-offs, multi-file reasoning, planning, or security/domain reasoning. When uncertain, use Medium.
+- Medium is the maximum for normal project execution; do not use High, Extra High, or Ultra. For difficult or high-risk work, use Sol + Medium instead of increasing reasoning beyond Medium.
+- If Terra + Light becomes unexpectedly complex, escalate first to Terra + Medium, then to Sol + Medium when complexity, ambiguity, risk, or repeated failures justify it.
+- Model/reasoning choices optimize execution only. They never weaken Acceptance Criteria, Definition of Done, required tests, typecheck, lint, formatting, build validation, Swagger/OpenAPI, security validation, regression coverage, or correctness to save tokens.
+
 ## Task execution state
 
 - Sprint execution state lives under `docs/work/<sprint>/`. Only the active sprint may have one task marked `Current`; implement it only after explicit owner approval for that task.
