@@ -64,7 +64,7 @@ S1-T01, S1-T03, and S1-T05; cross-origin CSRF and minimum permission decisions m
 
 ## S1-T07 — Implement Refresh Rotation and Reuse Handling
 
-Status: Current
+Status: Done
 
 Objective:
 Implement refresh, rotation history, grace recovery, replay classification, affected-session revocation, definitive failure behavior, and the matching Swagger/OpenAPI contract.
@@ -74,7 +74,7 @@ S1-T01, S1-T03, and S1-T05; in-grace lost-response recovery must be resolved.
 
 ## S1-T08 — Implement Logout and Disabled Admin Enforcement
 
-Status: Queued
+Status: Done
 
 Objective:
 Implement current-session logout and ensure disabling an Admin makes all of that Admin's sessions unusable, with matching Swagger/OpenAPI documentation for affected contracts.
@@ -84,7 +84,7 @@ S1-T05 through S1-T07.
 
 ## S1-T09 — Implement Admin Login and Protected Frontend Shell
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the accessible Persian RTL login, authenticated bootstrap, protected entry, and required user-visible states.

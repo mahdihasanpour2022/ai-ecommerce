@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S1-T08
+S1-T09
 
 ## Title
 
-Implement Logout and Disabled Admin Enforcement
+Implement Admin Login and Protected Frontend Shell
 
 ## Status
 
@@ -14,11 +14,11 @@ Current
 
 ## Goal
 
-Implement secure current-session logout with exact Origin/CSRF validation, atomic affected-session revocation, recovery-material erasure, deterministic cookie expiry, safe idempotent behavior for the same known session, and matching Swagger/OpenAPI; complete backend verification that disabling an Admin immediately makes every independent session unusable.
+Implement an accessible Persian RTL Admin login experience, memory-only authenticated bootstrap, safe protected entry shell, allowlisted return routing, and explicit loading/error/unauthenticated states against the stable backend authentication contracts.
 
 ## Why
 
-S1-T05 through S1-T07 now establish, protect, and rotate independent browser sessions, but users cannot deliberately end the current session or clear its authentication cookies. Current-state checks already reject disabled Admins; this task closes the logout contract and proves that disabled status applies consistently across every implemented session endpoint without widening logout to other devices.
+The backend now provides login, CSRF bootstrap, current-Admin identity, refresh, and current-session logout, but the Admin application remains a static foundation. This task establishes the first user-facing authentication boundary and protected shell without prematurely implementing the centralized Axios interceptor or single-flight refresh orchestration owned by S1-T10 and S1-T11.
 
 ## Required Context
 
@@ -26,103 +26,109 @@ The following is the Minimum Sufficient **Required Context** for this task:
 
 - `docs/sprints/sprint-01.md`
 - `docs/features/admin-auth/specification.md`
+- `docs/architecture/frontend-architecture.md`
 - `docs/security/authentication.md`
 - `docs/security/authorization.md`
 - `docs/security/baseline.md`
 - `docs/api/conventions.md`
-- `docs/architecture/backend-architecture.md`
-- `docs/work/sprint-01/s1-t02-schema-proposal.md`
-- `docs/development/admin-login.md`
-- `docs/standards/backend.md`
+- `docs/environment.md`
+- `docs/standards/frontend.md`
 - `docs/standards/testing.md`
 - `docs/standards/execution.md`
-- `apps/api/src/authentication/`
-- `apps/api/prisma/schema.prisma`
+- `docs/development/admin-login.md`
+- `apps/admin/`
+- Relevant installed Next.js 16.3.2 App Router guides under `node_modules/next/dist/docs/`, especially layouts/pages, Server and Client Components, authentication, redirecting, environment variables, CSS, and selected testing guidance.
 
-This set owns current-session versus Admin-wide semantics, existing Access/Refresh/CSRF/current-state behavior, session/token persistence, cookie/error/OpenAPI conventions, and required security validation. Admin management APIs, `logout-all`, frontend logout UX, and later hardening remain outside this task.
+This set owns the observable login/protected-entry behavior, cookie and memory-only CSRF model, safe redirects, current endpoint contracts, Persian RTL/accessibility expectations, and the installed framework's current conventions. Backend implementation internals, refresh concurrency, and unrelated product UI are outside this task.
 
 ## Scope
 
-- Implement `POST /api/v1/auth/logout` with no request body, exact Origin/Referer plus `X-CSRF-Token`, the Refresh cookie, `Cache-Control: no-store`, and exact host-only cookie expiry.
-- Resolve a known Refresh-family credential to its owning session, validate the session-bound CSRF hash timing-safely, and revoke only that `AuthSession` plus its Refresh family atomically; erase every recovery-envelope field while preserving prior security timestamps.
-- Return idempotent `204` and the same cookie-clearing headers when the same known session credential is repeated with a valid CSRF credential, including already-revoked/expired/disabled state; malformed/unknown credentials cannot establish a CSRF-bound session and fail safely.
-- Expire both Access and Refresh cookies with the exact original name/path/host-only/SameSite/HttpOnly/production-Secure attributes, `Max-Age=0`, and a past `Expires`; never expose token values in a response body.
-- Ensure disabled Admins can still perform this cleanup when a known session and valid CSRF credential are presented, without allowing disabled state to mint or refresh credentials.
-- Verify every independent session for a disabled Admin is rejected immediately by protected access, CSRF bootstrap, and refresh, while normal logout and suspicious-reuse revocation remain current-session-only.
-- Record only a safe structured logout/session-revocation event without credential material.
-- Add focused unit, PostgreSQL integration, HTTP/API, concurrency/idempotency, cookie, disabled-session isolation, failure-path, and OpenAPI contract-drift coverage.
+- Replace the static Admin foundation entry with a distinct login route and a minimal protected Admin home/shell in Persian (`fa-IR`) and RTL.
+- Add a client-side authentication boundary/state model with explicit bootstrapping, authenticated, unauthenticated, and recoverable/error states; never render protected content before bootstrap resolves.
+- On reload, use the backend CSRF bootstrap and current-Admin endpoints to recover the session-bound CSRF value into memory and load safe Admin identity/authorization data without reading authentication cookies in JavaScript.
+- Submit email/password to the backend login endpoint, prevent duplicate submission, keep the password transient, retain the returned CSRF value only in memory, load `/auth/me`, and enter the protected shell only after successful identity bootstrap.
+- Map the endpoint-local stable outcomes needed by this screen to accessible Persian feedback, including invalid credentials, throttling, disabled/session-invalid state, forbidden state, generic safe server failure, and connectivity/retry behavior.
+- Accept only explicitly allowlisted application-relative return destinations; reject absolute/protocol-relative URLs, backslashes, control characters, and unknown routes, falling back to the protected Admin home.
+- Provide semantic labels, descriptions, focus/error behavior, keyboard operation, sufficient visible state, logical RTL layout, responsive presentation, and no protected-content flash.
+- Add focused tests for authentication state transitions, login interaction, bootstrap routing, safe return destinations, Persian RTL/accessibility semantics, duplicate-submit prevention, and representative backend/network failures.
 - Reconcile only documentation made stale by the implementation.
 
 ## Out of Scope
 
-- An Admin disable/enable management endpoint, Role/User administration, or bulk-revocation command; disabled status is manipulated only by trusted test/setup paths until its owning feature exists.
-- `logout-all`, other-device logout, session listing/device management, Customer authentication, password flows, MFA, or authorization administration.
-- Frontend logout control/state/routing, Axios behavior, single-flight coordination, or UI messages; those belong to later frontend tasks.
-- Schema/migration/dependency/configuration changes; existing session/token fields and cookie configuration are sufficient.
-- Hard deletion, retention cleanup scheduling, distributed logging/throttling, Redis, or production secret-provider work.
-
-## Proposed HTTP Contract
-
-- `POST /api/v1/auth/logout`: no request body; requires a known Refresh-family cookie, exact trusted Origin/Referer, and matching `X-CSRF-Token`; success returns `204`, `Cache-Control: no-store`, and expired Access/Refresh `Set-Cookie` headers.
-- A repeated request for the same known session with valid CSRF remains `204` and reissues the same clearing headers. Unknown/malformed/missing authentication returns a stable `401`; invalid Origin/CSRF returns `403 CSRF_VALIDATION_FAILED`; unexpected failures return safe `500` without clearing or claiming revocation.
+- The centralized credentialed Axios client, general request interceptors, cross-feature error routing, and default-timeout infrastructure owned by S1-T10.
+- Single-flight refresh, replaying failed protected requests, refresh transport retry, tab coordination, or refresh-loop prevention owned by S1-T11.
+- Final authentication hardening/end-to-end matrix owned by S1-T12.
+- Backend endpoint, OpenAPI, cookie, CORS, CSRF derivation, authorization, Prisma schema/migration, or database changes.
+- Frontend `logout-all`, other-device/session management, password reset, MFA, staff/Role management, catalog/business UI, or Storefront work.
+- Persisting authentication or CSRF data in Web Storage, IndexedDB, URLs, non-HttpOnly cookies, or server-rendered markup.
 
 ## Expected Changes
 
-- Extend the existing authentication repository/service/controller boundaries for known-family session resolution, atomic idempotent revocation, envelope erasure, safe logout events, and cookie expiry serialization.
-- Reuse S1-T06 Origin/CSRF/current-state primitives and S1-T05/S1-T07 cookie names/attributes without adding abstractions beyond the logout boundary.
-- Add exact Swagger/OpenAPI metadata and focused unit/PostgreSQL/HTTP/contract tests.
-- Update narrow authentication/development/repository/Sprint documentation.
+- Introduce Admin login and protected route segments/components, an authentication provider/boundary, a narrow typed endpoint adapter for login/bootstrap/current identity, safe return-destination validation, and reusable accessible status/error presentation.
+- Extend Admin styles and metadata only as required for the Persian RTL authentication experience and protected shell.
+- Add a safe public API-origin environment value/example if the existing Admin configuration has no suitable backend base URL; it must contain no credential or secret.
+- Add focused Admin tests and only the minimum test/tooling configuration justified by the approved validation contract. Any new runtime or test dependency requires separate explicit owner approval before installation.
+- Update narrow Admin-authentication/repository documentation and Sprint execution records.
 
 ## Architecture Impact
 
-Completes the backend current-session lifecycle within the existing NestJS authentication module. Logout authorization is based on the known opaque credential plus session-bound CSRF rather than an Access JWT, allowing safe cleanup after Access expiry or Admin disable while preserving backend authority and device isolation.
+Adds the first client-owned Admin authentication state boundary inside the existing Next.js App Router application. Backend session and authorization state remain authoritative; the browser owns only safe Admin display data and an in-memory CSRF credential. The narrow endpoint adapter must remain replaceable by S1-T10's centralized Axios layer without page-level request duplication.
 
-## Swagger / OpenAPI Impact
+## API Impact
 
-Adds exact generated documentation for `POST /api/v1/auth/logout`, including Refresh-cookie and CSRF-header requirements, no request/response body, no-store `204`, both clearing cookies, stable `401`/`403`/`500` failures, and secret-free examples.
+Consumes the existing `POST /api/v1/auth/login`, `GET /api/v1/auth/csrf`, and `GET /api/v1/auth/me` contracts with credentialed requests. No backend route or OpenAPI change is planned. Refresh and logout may be represented as later-capability boundaries but are not orchestrated in this task.
 
-## Database / Prisma Impact
+## Database Impact
 
-Updates only existing `AuthSession.revokedAt` and its RefreshToken family fields transactionally. Logout preserves history and prior revocation timestamps, clears recovery-envelope fields, and requires no Prisma schema or migration change.
+None. The Admin frontend does not access Prisma or PostgreSQL and introduces no schema, migration, seed, or persistence behavior.
 
-## Security Impact
+## Security Implications
 
-Security-critical. Logout must resist cross-site logout, revoke only the intended browser session, remain safe after disable/expiry, prevent recovery after revocation, and never log or echo credentials. Unknown credentials cannot receive idempotent success based on an unverified session; database failure must not produce a false successful logout response.
+Security-sensitive. Authentication cookies remain HttpOnly and unreadable to JavaScript; no Bearer header is constructed. The CSRF token and password remain memory-only/transient and must never enter storage, URLs, logs, server markup, or error telemetry. Bootstrap must avoid protected-content disclosure, return routing must reject open redirects, backend authorization remains authoritative, and network uncertainty must not be misreported as definitive logout.
+
+## Edge Cases
+
+- Reload with valid Refresh and Access cookies, valid Refresh with unusable Access, no cookies, disabled/revoked/expired state, or backend/network failure.
+- Login double-click/Enter submission, invalid fields, generic invalid credentials, rate limiting with `Retry-After`, delayed/stale completion, and component unmount.
+- Direct navigation to login while authenticated and to a protected route while unauthenticated.
+- Malicious or malformed return destinations, including encoded absolute/protocol-relative values, backslashes, control characters, and unknown routes.
+- Narrow/mobile layouts, long Persian messages, mixed-direction email text, keyboard-only use, focus placement, and assistive-technology announcements.
 
 ## Constraints
 
-- Preserve S1-T01 through S1-T07 contracts, fixed session lifetime, current-state enforcement, and affected-session-only semantics.
-- Backend status remains authoritative. Disabled Admins receive no new credentials but may revoke and clear a known current session with valid CSRF.
-- Cookie deletion must match the original host-only name/path/SameSite/HttpOnly/production-Secure attributes.
-- Do not add dependencies, change environment configuration or Prisma schema/migrations, stage/commit/push, or modify unrelated/later-task behavior.
+- Read the relevant installed Next.js 16.3.2 guides before writing frontend code and use Context7 for current React/Next.js API details.
+- Preserve the direct browser-to-API, credentialed-cookie, session-bound memory-only CSRF architecture and stable backend contracts.
+- Keep transport logic narrow and replaceable; do not pull S1-T10 centralized Axios or S1-T11 refresh coordination into this task.
+- Do not add/remove/upgrade dependencies without separate explicit approval, and do not change backend code, Prisma schema/migrations, stage/commit/push, or modify unrelated application behavior.
 
 ## Acceptance Criteria
 
-- Generated OpenAPI exactly matches the implemented logout endpoint, cookie/CSRF requirements, no-body/no-store `204`, clearing-cookie headers, stable failures, and secret-free examples.
-- A valid known session logout atomically revokes only that session/family, erases recovery material, clears both cookies, returns no body, and leaves other sessions for the same Admin usable.
-- Repeating logout for the same known session with valid CSRF is idempotent and returns the same safe `204`/clearing-cookie contract without altering prior revocation timestamps or other sessions.
-- Missing/malformed/unknown credentials fail safely; invalid/missing Origin or CSRF returns `CSRF_VALIDATION_FAILED`; database/concurrency failures do not claim success, issue live credentials, or partially revoke state.
-- Disabled, expired, or already-revoked known sessions can be safely logged out/cleared with matching CSRF, but cannot access protected/CSRF-bootstrap/refresh endpoints or obtain new credentials.
-- Disabling one Admin makes all of that Admin's independent sessions unusable before Access expiry, while normal logout affects only its selected current session and another active session remains usable.
-- Focused unit/PostgreSQL/HTTP/concurrency/cookie/OpenAPI tests, typecheck, lint, build, formatting, Prisma checks, security scans, and dependency/schema scope inspection pass.
+- The Admin application provides an accessible Persian RTL login and protected home shell with correct language/direction metadata and responsive logical layout.
+- A successful login prevents duplicate submission, retains no password, keeps CSRF only in memory, loads `/auth/me`, and reveals the protected shell only after authenticated bootstrap succeeds.
+- Reload bootstrap recovers the CSRF credential and safe Admin identity through the existing endpoints without reading authentication cookies or flashing protected content.
+- Unauthenticated/definitive invalid states reach login with a safe allowlisted return destination; malicious/unknown destinations fall back to the protected Admin home.
+- Invalid credentials, throttling, disabled/invalid session, forbidden, safe server, connectivity, loading, and retry states have deterministic accessible Persian presentation without sensitive details.
+- No token is stored in browser persistence, exposed in markup/logs, or placed in a Bearer header; frontend visibility never substitutes for backend authorization.
+- Focused frontend state, component/integration, routing/redirect, RTL/accessibility, and failure-path tests pass with relevant Admin typecheck, lint, build, formatting, dependency/config scope, and security inspections.
 
 ## Testing Impact
 
 Automated tests required.
 
-Focused unit, database integration, and HTTP/API coverage must exercise successful and repeated logout, stale rotated-family credentials, disabled/expired/revoked known sessions, unknown/malformed credentials, missing/mismatched CSRF/Origin, exact cookie deletion in development/production, affected-session isolation, all-session disabled enforcement across implemented endpoints, concurrency, transaction rollback, response redaction/no-store, safe events, and generated OpenAPI parity.
+Focused tests must cover login success/failure, duplicate submission, memory-only CSRF handling, reload bootstrap, protected-content gating, safe return-destination parsing, authenticated/unauthenticated direct navigation, disabled/forbidden/throttled/network states, retry behavior, Persian labels/messages, document direction/language, keyboard/focus behavior, and no credential persistence or logging. Browser-level coverage may be proportionate here, with the complete critical-flow/accessibility matrix remaining in S1-T12.
 
 ## Validation
 
-- Preflight the isolated PostgreSQL test database and required authentication configuration without printing secrets.
-- Use Context7/current primary documentation for NestJS response/cookie/OpenAPI behavior and Prisma transactional row locking before implementation.
-- Run focused unit, disposable-database integration, HTTP/API, concurrency/idempotency, cookie, disabled-state, failure-path, and OpenAPI contract tests.
-- Inspect exact Origin/CSRF enforcement, atomic affected-session revocation, recovery erasure, timestamp preservation, clearing-cookie attribute matching, status authority, response/event redaction, and absence of cross-session effects.
-- Run affected API tests, typecheck, lint, build, Prisma format/validate/generate, repository formatting, Markdown links, `git diff --check`, secret scans, dependency/schema/migration scope, generated-output-ignore checks, disposable-data cleanup, and read-only Git-index inspection.
+- Preflight the Admin Workspace, installed Next.js guide set, required safe API-origin configuration, backend/test availability needed by the chosen integration boundary, and whether task-required test/UI dependencies are already installed.
+- Use Context7 and the installed Next.js 16.3.2 App Router documentation for relevant React/Next APIs before implementation.
+- Run focused pure-state, component/integration, route/redirect, RTL/accessibility, and representative network/backend failure tests.
+- Inspect the rendered flow for no protected-content flash, responsive RTL layout, keyboard/focus behavior, safe Persian errors, duplicate-submit prevention, and mixed-direction email handling.
+- Inspect for Web Storage/IndexedDB/non-HttpOnly cookie/Bearer use, unsafe return redirects, credential logging/markup, accidental server serialization of CSRF/passwords, and task-boundary leakage into refresh orchestration.
+- Run Admin typecheck, lint, build, repository formatting, relevant root regression checks, local Markdown links, `git diff --check`, added-line secret scan, dependency/config scope, generated-output-ignore behavior, and read-only Git-index inspection.
 
 ## Documentation Impact
 
-Document the implemented logout endpoint, idempotent known-session behavior, cookie expiry, current-session scope, disabled-session cleanup/enforcement, safe failures, and explicit remaining frontend/Admin-management work.
+Document the implemented Admin login/bootstrap/protected-shell behavior, safe API-origin setup, memory-only state, Persian user-visible outcomes, and explicit remaining Axios/refresh/hardening work.
 
 ## Approval State
 

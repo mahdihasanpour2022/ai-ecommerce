@@ -1,6 +1,6 @@
 # Backend Admin Login
 
-The Backend implements `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `GET /api/v1/auth/csrf`, `GET /api/v1/auth/me`, strict Access-cookie/current-state enforcement, and reusable unsafe-request CSRF validation. Logout, the Admin frontend, and frontend single-flight/transport orchestration remain later work.
+The Backend implements `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/csrf`, `GET /api/v1/auth/me`, strict Access-cookie/current-state enforcement, and reusable unsafe-request CSRF validation. The Admin frontend and frontend single-flight/transport orchestration remain later work.
 
 ## Contract
 
@@ -23,7 +23,9 @@ Unknown identity, wrong password, disabled identity, and missing effective `admi
 
 `POST /api/v1/auth/refresh` has no request body and requires the Refresh cookie, exact trusted Origin/Referer, and `X-CSRF-Token`. A current credential rotates atomically and returns `204` with replacement host-only HttpOnly cookies and `Cache-Control: no-store`; the fixed session expiry never slides. A directly superseded credential inside the configured grace window may reissue the exact latest credential from its session/token-bound AES-256-GCM envelope without another rotation. Missing/tampered/expired recovery state or a family that advanced again returns `REFRESH_TOKEN_REUSED`, erases recovery material, and revokes only that browser session. Durable per-session and process-local per-IP limits return generic `429 AUTH_RATE_LIMITED` plus `Retry-After`.
 
-Unsafe cookie-authenticated endpoints use exact Origin/Referer validation plus the session token in `X-CSRF-Token`; Fetch Metadata remains defense in depth. Missing or mismatched tokens return `403 CSRF_VALIDATION_FAILED`. Refresh consumes this reusable boundary now; logout will consume it in its owning task.
+`POST /api/v1/auth/logout` also has no request body and requires a known Refresh-family credential, exact trusted Origin/Referer, and `X-CSRF-Token`. It accepts stale, expired, or already-revoked credentials from the known family so the owning browser can clean up idempotently, including after the Admin is disabled. Success atomically revokes only that session, erases its recovery material, preserves prior revocation timestamps, returns `204` with `Cache-Control: no-store`, and expires both host-only authentication cookies. Other sessions remain unchanged. Unknown or malformed credentials return `401`; invalid origin or CSRF evidence returns `403` and does not clear cookies.
+
+Unsafe cookie-authenticated endpoints use exact Origin/Referer validation plus the session token in `X-CSRF-Token`; Fetch Metadata remains defense in depth. Missing or mismatched tokens return `403 CSRF_VALIDATION_FAILED`. Refresh and logout both consume this reusable boundary.
 
 ## Required runtime configuration
 

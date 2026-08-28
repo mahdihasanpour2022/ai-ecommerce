@@ -433,6 +433,56 @@ export class AuthenticationRepository {
     });
   }
 
+  async logoutKnownSession(
+    tokenHash: Uint8Array<ArrayBuffer>,
+    expectedSessionId: string,
+    now = new Date(),
+  ): Promise<boolean> {
+    return this.prisma.$transaction(async (transaction) => {
+      const sessions = await transaction.$queryRaw<{ id: string }[]>`
+        SELECT id
+        FROM auth_sessions
+        WHERE id = CAST(${expectedSessionId} AS uuid)
+        FOR UPDATE
+      `;
+      if (sessions[0] === undefined) return false;
+      const tokens = await transaction.$queryRaw<{ id: string }[]>`
+        SELECT id
+        FROM refresh_tokens
+        WHERE token_hash = ${tokenHash}
+          AND session_id = CAST(${expectedSessionId} AS uuid)
+        FOR UPDATE
+      `;
+      if (tokens[0] === undefined) return false;
+      await transaction.authSession.updateMany({
+        where: { id: expectedSessionId, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      await transaction.refreshToken.updateMany({
+        where: { sessionId: expectedSessionId, revokedAt: null },
+        data: {
+          revokedAt: now,
+          recoveryCiphertext: null,
+          recoveryNonce: null,
+          recoveryAuthTag: null,
+          recoveryKeyId: null,
+          recoveryExpiresAt: null,
+        },
+      });
+      await transaction.refreshToken.updateMany({
+        where: { sessionId: expectedSessionId },
+        data: {
+          recoveryCiphertext: null,
+          recoveryNonce: null,
+          recoveryAuthTag: null,
+          recoveryKeyId: null,
+          recoveryExpiresAt: null,
+        },
+      });
+      return true;
+    });
+  }
+
   async commitSuccessfulLogin(
     adminUserId: string,
     identifierKey: Uint8Array<ArrayBuffer>,

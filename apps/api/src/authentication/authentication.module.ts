@@ -8,6 +8,7 @@ import { AuthenticationRepository } from './authentication.repository.js';
 import { AuthenticationService } from './authentication.service.js';
 import { CsrfService } from './csrf.service.js';
 import { LoginSecurity } from './login-security.js';
+import { LogoutAuthenticationService } from './logout-authentication.service.js';
 import { ProtectedAuthenticationService } from './protected-authentication.service.js';
 import { RefreshAuthenticationService } from './refresh-authentication.service.js';
 
@@ -21,6 +22,7 @@ import { RefreshAuthenticationService } from './refresh-authentication.service.j
     AuthenticationService,
     CsrfService,
     LoginSecurity,
+    LogoutAuthenticationService,
     ProtectedAuthenticationService,
     RefreshAuthenticationService,
   ],

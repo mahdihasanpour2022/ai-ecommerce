@@ -32,6 +32,7 @@ import { AuthenticationError } from './authentication.errors.js';
 import { safeInternalHttpException, toAuthenticationHttpException } from './authentication-http.js';
 import { AuthenticationService } from './authentication.service.js';
 import { LoginSecurity } from './login-security.js';
+import { LogoutAuthenticationService } from './logout-authentication.service.js';
 import { ApiErrorDto, LoginRequestDto, LoginResponseDto, parseLoginRequest } from './login.dto.js';
 import {
   CsrfResponseDto,
@@ -54,9 +55,54 @@ export class AuthenticationController {
     private readonly authentication: AuthenticationService,
     private readonly protectedAuthentication: ProtectedAuthenticationService,
     private readonly refreshAuthentication: RefreshAuthenticationService,
+    private readonly logoutAuthentication: LogoutAuthenticationService,
     private readonly security: LoginSecurity,
     @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment,
   ) {}
+
+  @Post('logout')
+  @HttpCode(204)
+  @ApiCookieAuth('adminRefresh')
+  @ApiHeader({
+    name: 'X-CSRF-Token',
+    required: true,
+    description: 'Current session-bound CSRF credential held only in browser memory.',
+    schema: { type: 'string' },
+  })
+  @ApiOperation({ summary: 'Revoke and clear the current browser session' })
+  @ApiResponse({
+    status: 204,
+    description: 'Current known session revoked idempotently and both cookies cleared; no body.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Expired host-only Access and Refresh HttpOnly cookies.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Unknown authentication session.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'CSRF validation failure.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async logout(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      await this.logoutAuthentication.logout(request);
+      response.setHeader('Set-Cookie', [
+        this.serializeExpiredCookie(ACCESS_COOKIE_NAME),
+        this.serializeExpiredCookie(REFRESH_COOKIE_NAME),
+      ]);
+    } catch (error) {
+      if (error instanceof AuthenticationError) throw toAuthenticationHttpException(error);
+      throw safeInternalHttpException();
+    }
+  }
 
   @Post('refresh')
   @HttpCode(204)
@@ -290,6 +336,19 @@ export class AuthenticationController {
       'Path=/',
       `Max-Age=${maxAge}`,
       `Expires=${expiresAt.toUTCString()}`,
+      'HttpOnly',
+      'SameSite=Lax',
+      ...(secure ? ['Secure'] : []),
+    ].join('; ');
+  }
+
+  private serializeExpiredCookie(name: string): string {
+    const secure = this.environment.nodeEnv === 'production';
+    return [
+      `${name}=`,
+      'Path=/',
+      'Max-Age=0',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
       'HttpOnly',
       'SameSite=Lax',
       ...(secure ? ['Secure'] : []),

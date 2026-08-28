@@ -108,4 +108,40 @@ Current Context7 documentation for NestJS guards, JOSE verification, Prisma curr
 
 **Follow-ups:** S1-T07 is Current and awaiting implementation approval. It owns atomic refresh rotation, bounded AES-256-GCM lost-response recovery, reuse classification/revocation, refresh throttling, cookies, and matching OpenAPI.
 
+## S1-T07 — Implement Refresh Rotation and Reuse Handling
+
+**Completed:** 2026-08-28
+
+**Result:** Implemented no-body `POST /api/v1/auth/refresh` with exact Origin/CSRF enforcement, atomic opaque-token rotation, fixed session expiry, bounded AES-256-GCM lost-response recovery, suspicious-reuse classification and affected-session-only revocation, durable session/process-local IP throttles, replacement HttpOnly cookies, safe errors/events, and exact OpenAPI. No dependency, Prisma schema, or migration changed.
+
+### Validation
+
+Current Context7 documentation for Prisma 7 transactions/row locking, NestJS 12 controllers, and Node.js authenticated encryption was reviewed. PostgreSQL health/isolation preflight passed. All 60 API tests passed against PostgreSQL 18.6, including GCM round-trip/tamper/key rotation, exact hash/envelope persistence, current rotation, same-token concurrency, lost-response recovery, advanced-family/tampered-envelope reuse, session isolation, fixed expiry, current Admin/RBAC/revocation, CSRF/Origin, session/IP throttles, transaction rollback, no-store/cookies/redaction, and OpenAPI drift. API typecheck/lint/build, Prisma format/validate/generate, repository formatting, frozen offline installation, Markdown local links, added-line secret scan, generated-output ignore behavior, dependency/schema/migration scope, read-only Git-index inspection, `git diff --check`, and disposable-data cleanup passed.
+
+**Important Decisions:** The exact recovery configuration is one JSON value with `activeKid` plus active/retiring exact 32-byte base64 keys, independently validated from CSRF/throttle material. Envelopes bind version, session, replacement token ID, and expiry through AAD, use a unique 12-byte nonce/16-byte tag, and are accepted only when recovered plaintext hashes to the exact current row. Admin, session, token, effective permission, and throttle rows are locked/rechecked before issuance. Reuse preserves prior revocation timestamps, erases family recovery material, and revokes only the affected session.
+
+**Files / Areas Changed:** API authentication environment/crypto/security/repository/service/controller/module/error boundaries, recovery/throttle examples, focused unit/PostgreSQL/HTTP/OpenAPI tests, and narrow authentication/environment/security documentation.
+
+**Documentation Impact:** Documented the implemented refresh contract, fixed-lifetime atomic rotation, authenticated recovery keyring/envelopes, grace/reuse behavior, session/IP throttles, safe failures, and remaining logout/frontend orchestration.
+
+**Follow-ups:** S1-T08 is Current and awaiting implementation approval. It owns current-session logout, cookie expiry, idempotent same-session cleanup, and final disabled-Admin enforcement coverage.
+
+## S1-T08 — Implement Logout and Disabled Admin Enforcement
+
+**Completed:** 2026-08-29
+
+**Result:** Implemented no-body `POST /api/v1/auth/logout` with exact Origin/session-CSRF enforcement, known-family credential resolution, atomic current-session revocation and recovery erasure, deterministic Access/Refresh cookie expiry, safe idempotence, disabled-Admin cleanup, structured redacted events, stable failures, and exact OpenAPI. Other Admin sessions remain unaffected; no dependency, configuration, Prisma schema, or migration changed.
+
+### Validation
+
+Current Context7 documentation for Prisma transactions/row locking and NestJS controller/OpenAPI behavior was reviewed. PostgreSQL health/isolation preflight passed. All 66 API tests passed against PostgreSQL 18.6, including stale-family, expired/revoked/disabled-state cleanup, repeated/concurrent idempotence, revocation-timestamp preservation, affected-session isolation, all-session disabled enforcement, exact development/production clearing cookies, CSRF/unknown-credential rejection, persistence failure, response/event redaction, and OpenAPI drift. API typecheck/lint/build, Prisma format/validate/generate, repository formatting, frozen offline installation, local Markdown links, security-pattern scan, generated-output ignore behavior, dependency/schema/migration scope, `git diff --check`, read-only Git-index inspection, and disposable-data cleanup passed.
+
+**Important Decisions:** Logout authenticates cleanup with any known Refresh-family credential plus its session-bound CSRF value, without requiring current Access, Admin, permission, expiry, or revocation state. The transaction locks the owning session then token, preserves existing revocation timestamps, clears every family recovery field, and never treats an unknown credential as idempotent success. Clearing cookies are emitted only after persistence succeeds.
+
+**Files / Areas Changed:** API authentication repository/service/controller/module boundaries, focused PostgreSQL/HTTP/concurrency/OpenAPI tests, and narrow repository, development, and authentication-security documentation.
+
+**Documentation Impact:** Documented the implemented logout endpoint, known-session idempotence, disabled-state cleanup, exact cookie expiry, affected-session-only behavior, and safe failure boundary.
+
+**Follow-ups:** S1-T09 is Current and awaiting implementation approval. It owns the accessible Persian RTL login, authenticated bootstrap, protected entry shell, and required user-visible states; centralized Axios and refresh coordination remain S1-T10/S1-T11.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

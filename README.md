@@ -1,6 +1,6 @@
 # Automotive Parts Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation, initial Admin identity persistence/provisioning boundary, backend Admin login, CSRF bootstrap, current Admin/RBAC access, and refresh rotation/reuse endpoints are implemented; logout, frontend login, catalog, purchasing, deployment, and production infrastructure remain planned work.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation, initial Admin identity persistence/provisioning boundary, backend Admin login, CSRF bootstrap, current Admin/RBAC access, refresh rotation/reuse, and current-session logout endpoints are implemented; frontend login, catalog, purchasing, deployment, and production infrastructure remain planned work.
 
 ## Repository applications
 
@@ -8,7 +8,7 @@ Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce p
 | --- | --- | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | `http://localhost:3000` | Preserved Next.js starter and future customer experience |
 | Admin | `@automotive-commerce/admin` | `http://localhost:3001` | Minimal Persian RTL Next.js foundation; no authentication or business UI |
-| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS API with Admin persistence/provisioning plus `/auth/login`, `/auth/csrf`, and `/auth/me` |
+| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS API with Admin persistence/provisioning plus login, refresh, CSRF, current-Admin, and logout endpoints |
 
 `packages/` is intentionally empty until a demonstrated cross-application need justifies a shared package.
 
