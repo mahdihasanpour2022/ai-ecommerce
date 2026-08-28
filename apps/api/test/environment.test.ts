@@ -56,5 +56,24 @@ void describe('API environment parsing', () => {
       () => parseEnvironment(validEnvironmentSource({ AUTH_JWT_ACTIVE_KID: 'untrusted-key-id' })),
       /^Error: Invalid AUTH_JWT_ACTIVE_KID:/,
     );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_CSRF_HMAC_KEYS: undefined })),
+      /^Error: Invalid AUTH_CSRF_HMAC_KEYS:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_CSRF_ACTIVE_KID: 'retired' })),
+      /^Error: Invalid AUTH_CSRF_ACTIVE_KID:/,
+    );
+    const sharedKey = Buffer.alloc(32, 7).toString('base64');
+    assert.throws(
+      () =>
+        parseEnvironment(
+          validEnvironmentSource({
+            AUTH_CSRF_HMAC_KEYS: JSON.stringify({ shared: sharedKey }),
+            AUTH_CSRF_ACTIVE_KID: 'shared',
+          }),
+        ),
+      /^Error: Invalid AUTH_CSRF_HMAC_KEYS:/,
+    );
   });
 });

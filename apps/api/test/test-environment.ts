@@ -23,6 +23,10 @@ export function validEnvironmentSource(
     AUTH_JWT_ACTIVE_KID: 'test-key',
     CORS_ALLOWED_ORIGINS: 'http://localhost:3001',
     AUTH_LOGIN_THROTTLE_HMAC_KEY: Buffer.alloc(32, 7).toString('base64'),
+    AUTH_CSRF_ACTIVE_KID: 'test-csrf-key',
+    AUTH_CSRF_HMAC_KEYS: JSON.stringify({
+      'test-csrf-key': Buffer.alloc(32, 11).toString('base64'),
+    }),
     ...overrides,
   };
 }

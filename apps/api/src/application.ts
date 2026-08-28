@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import type { ApiEnvironment, RuntimeEnvironment } from './config/environment';
+import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './authentication/authentication.constants';
 
 export const API_PREFIX = 'api/v1';
 export const SWAGGER_PATH = 'api/docs';
@@ -22,7 +23,7 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
         origin === undefined || environment.authentication.corsAllowedOrigins.has(origin),
       );
     },
-    methods: ['POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
   });
 
@@ -34,6 +35,8 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
     .setTitle('Automotive Commerce API')
     .setDescription('HTTP API contracts implemented by the Automotive Commerce backend.')
     .setVersion('1.0')
+    .addCookieAuth(ACCESS_COOKIE_NAME, { type: 'apiKey' }, 'adminAccess')
+    .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'adminRefresh')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, openApiConfig);
 

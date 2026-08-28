@@ -90,4 +90,22 @@ Context7 documentation for NestJS 12, Prisma 7, node-argon2, JOSE, and Nest Swag
 
 **Follow-ups:** S1-T06 is Current and awaiting implementation approval. It must resolve how `GET /auth/csrf` can return a session-stable raw token when persistence intentionally stores only its one-way hash.
 
+## S1-T06 — Implement CSRF, Minimum RBAC, and Protected Admin Access
+
+**Completed:** 2026-08-28
+
+**Result:** Implemented strict Access-cookie verification, current database-backed Admin/session/RBAC enforcement, reusable unsafe-request CSRF validation, stable no-store `GET /api/v1/auth/csrf` bootstrap, safe `GET /api/v1/auth/me`, stable error envelopes, and matching generated OpenAPI contracts. No dependency, Prisma schema, or migration changed.
+
+### Validation
+
+Current Context7 documentation for NestJS guards, JOSE verification, Prisma current-state queries, and Nest Swagger was reviewed. PostgreSQL health/isolation preflight passed. All 52 API tests passed against PostgreSQL 18.6, including adversarial JWT headers/claims/signatures, duplicate cookies, current status/RBAC/session changes, CSRF Origin/token enforcement, key rotation recovery, failure boundaries, no-store/redaction, and OpenAPI drift. Prisma format/validate/generate, API typecheck/lint/build, repository formatting, frozen offline installation, Markdown local links, secret-pattern scan, generated-output ignore behavior, dependency/schema/migration scope, `git diff --check`, and disposable-data cleanup passed.
+
+**Important Decisions:** The owner-approved stable CSRF credential is base64url HMAC-SHA-256 of the session UUID under an independent active/retiring keyring; persistence retains only its SHA-256 hash. Bootstrap tests all configured keys timing-safely and fails closed if the required retiring key is unavailable. Access JWT verification hard-allows exact EdDSA/header/claim/issuer/audience structure, while current database state remains authoritative.
+
+**Files / Areas Changed:** API authentication guards/services/repository/controller/DTO/error boundaries, CORS and Swagger cookie schemes, authentication environment parsing/examples, focused unit/PostgreSQL/HTTP/OpenAPI tests, and narrow authentication/onboarding/security documentation.
+
+**Documentation Impact:** Documented implemented CSRF bootstrap, protected Admin identity/RBAC behavior, HMAC keyring lifecycle, configuration, stable failures, and explicit remaining refresh/logout/frontend work.
+
+**Follow-ups:** S1-T07 is Current and awaiting implementation approval. It owns atomic refresh rotation, bounded AES-256-GCM lost-response recovery, reuse classification/revocation, refresh throttling, cookies, and matching OpenAPI.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

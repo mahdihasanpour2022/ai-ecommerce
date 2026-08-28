@@ -66,10 +66,12 @@ S1-T05 consumes the access/refresh lifetimes, JWT, CORS, Argon2, and login-throt
 | `AUTH_LOGIN_MAX_DELAY_SECONDS` | Integer; default `900` | Server-only, non-secret maximum account backoff |
 | `AUTH_LOGIN_IP_LIMIT` | Integer; default `20` | Server-only, non-secret requests per IP/login window |
 | `AUTH_LOGIN_THROTTLE_HMAC_KEY` | 256-bit or stronger HMAC key; required | Secret server-only key for enumeration-safe account/identifier throttle buckets; independent from JWT, recovery, password, and database material |
+| `AUTH_CSRF_HMAC_KEYS` | JSON object mapping safe key IDs to base64 256-bit-or-stronger HMAC keys; required | Independent secret active/retiring keyring that reproduces stable session-bound CSRF credentials without raw persistence |
+| `AUTH_CSRF_ACTIVE_KID` | Non-empty key ID; required | Server-only selector that must exist in `AUTH_CSRF_HMAC_KEYS`; retiring keys remain through the maximum absolute session lifetime |
 | `AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE` | Integer; default `10` | Server-only, non-secret refresh requests per active session |
 | `AUTH_REFRESH_IP_LIMIT_PER_MINUTE` | Integer; default `30` | Server-only, non-secret refresh requests per IP |
 
-JWT verification accepts only configured keys and exact issuer/audience values; a token header cannot introduce trust material. Recovery keys decrypt only the at-most-ten-second refresh recovery envelope. Key-ring serialization, deployment secret injection, and rotation runbooks remain implementation/release concerns, but source-controlled/private-key defaults are prohibited.
+JWT verification accepts only configured keys and exact issuer/audience values; a token header cannot introduce trust material. The independent CSRF HMAC keyring derives the same 256-bit session credential at login/bootstrap while persistence retains only SHA-256; losing a still-required retiring key makes bootstrap fail closed. Recovery keys decrypt only the at-most-ten-second refresh recovery envelope. Key-ring serialization, deployment secret injection, and rotation runbooks remain implementation/release concerns, but source-controlled secret defaults are prohibited.
 
 ## Adding configuration later
 

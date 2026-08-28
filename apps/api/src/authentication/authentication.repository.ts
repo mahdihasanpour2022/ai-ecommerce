@@ -18,6 +18,35 @@ export interface LoginAdminRecord {
   readonly eligible: boolean;
 }
 
+export interface CurrentSessionRecord {
+  readonly id: string;
+  readonly adminUserId: string;
+  readonly csrfTokenHash: Uint8Array<ArrayBuffer>;
+  readonly expiresAt: Date;
+  readonly revokedAt: Date | null;
+  readonly adminUser: {
+    readonly id: string;
+    readonly email: string;
+    readonly displayName: string;
+    readonly disabledAt: Date | null;
+    readonly roles: readonly {
+      readonly role: {
+        readonly code: string;
+        readonly permissions: readonly {
+          readonly permission: { readonly code: string };
+        }[];
+      };
+    }[];
+  };
+}
+
+export interface CurrentRefreshRecord {
+  readonly expiresAt: Date;
+  readonly rotatedAt: Date | null;
+  readonly revokedAt: Date | null;
+  readonly session: CurrentSessionRecord;
+}
+
 @Injectable()
 export class AuthenticationRepository {
   constructor(
@@ -102,6 +131,27 @@ export class AuthenticationRepository {
     };
   }
 
+  async findCurrentSession(sessionId: string): Promise<CurrentSessionRecord | null> {
+    return this.prisma.authSession.findUnique({
+      where: { id: sessionId },
+      select: this.currentSessionSelection(),
+    });
+  }
+
+  async findRefreshCredential(
+    tokenHash: Uint8Array<ArrayBuffer>,
+  ): Promise<CurrentRefreshRecord | null> {
+    return this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: {
+        expiresAt: true,
+        rotatedAt: true,
+        revokedAt: true,
+        session: { select: this.currentSessionSelection() },
+      },
+    });
+  }
+
   async commitSuccessfulLogin(
     adminUserId: string,
     identifierKey: Uint8Array<ArrayBuffer>,
@@ -139,5 +189,35 @@ export class AuthenticationRepository {
       });
       await transaction.adminLoginThrottle.deleteMany({ where: { identifierKey } });
     });
+  }
+
+  private currentSessionSelection() {
+    return {
+      id: true,
+      adminUserId: true,
+      csrfTokenHash: true,
+      expiresAt: true,
+      revokedAt: true,
+      adminUser: {
+        select: {
+          id: true,
+          email: true,
+          displayName: true,
+          disabledAt: true,
+          roles: {
+            select: {
+              role: {
+                select: {
+                  code: true,
+                  permissions: {
+                    select: { permission: { select: { code: true } } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    } as const;
   }
 }

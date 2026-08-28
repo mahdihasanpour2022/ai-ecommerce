@@ -1,14 +1,36 @@
-import { Body, Controller, HttpCode, HttpException, Post, Req, Res, Inject } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  Inject,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import type { ApiEnvironment } from '../config/environment.js';
 import { API_ENVIRONMENT } from '../config/tokens.js';
+import { AccessAuthenticationGuard } from './access-authentication.guard.js';
 import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './authentication.constants.js';
+import {
+  CurrentAuthenticationContext,
+  type CurrentAuthentication,
+} from './authentication-context.js';
 import { AuthenticationError } from './authentication.errors.js';
+import { safeInternalHttpException, toAuthenticationHttpException } from './authentication-http.js';
 import { AuthenticationService } from './authentication.service.js';
 import { LoginSecurity } from './login-security.js';
 import { ApiErrorDto, LoginRequestDto, LoginResponseDto, parseLoginRequest } from './login.dto.js';
+import {
+  CsrfResponseDto,
+  CurrentAuthenticationResponseDto,
+} from './protected-authentication.dto.js';
+import { ProtectedAuthenticationService } from './protected-authentication.service.js';
 
 interface ErrorEnvelope {
   statusCode: number;
@@ -22,9 +44,72 @@ interface ErrorEnvelope {
 export class AuthenticationController {
   constructor(
     private readonly authentication: AuthenticationService,
+    private readonly protectedAuthentication: ProtectedAuthenticationService,
     private readonly security: LoginSecurity,
     @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment,
   ) {}
+
+  @Get('csrf')
+  @ApiCookieAuth('adminRefresh')
+  @ApiOperation({ summary: 'Bootstrap the current session CSRF token without rotation' })
+  @ApiResponse({
+    status: 200,
+    type: CsrfResponseDto,
+    description: 'Returns the existing session-bound token after Refresh/session validation.',
+    headers: {
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Authentication/session failure.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Current Admin lacks access.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async csrf(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<CsrfResponseDto> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      return { csrfToken: await this.protectedAuthentication.bootstrapCsrf(request) };
+    } catch (error) {
+      if (error instanceof AuthenticationError) throw toAuthenticationHttpException(error);
+      throw safeInternalHttpException();
+    }
+  }
+
+  @Get('me')
+  @UseGuards(AccessAuthenticationGuard)
+  @ApiCookieAuth('adminAccess')
+  @ApiOperation({ summary: 'Return current Admin identity and effective authorization' })
+  @ApiResponse({
+    status: 200,
+    type: CurrentAuthenticationResponseDto,
+    description: 'Current server-authoritative Admin identity, Roles, and Permissions.',
+    headers: {
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Access/session/Admin failure.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Insufficient current permission.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  me(
+    @CurrentAuthenticationContext() authentication: CurrentAuthentication,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): CurrentAuthenticationResponseDto {
+    response.setHeader('Cache-Control', 'no-store');
+    return {
+      admin: { ...authentication.admin },
+      authorization: {
+        roles: [...authentication.roles],
+        permissions: [...authentication.permissions],
+      },
+    };
+  }
 
   @Post('login')
   @HttpCode(200)

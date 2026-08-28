@@ -54,7 +54,7 @@ S1-T01 and S1-T03.
 
 ## S1-T06 — Implement CSRF, Minimum RBAC, and Protected Admin Access
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the approved CSRF contract, minimum Role/Permission enforcement, current Admin/session checks, and `/auth/me` with matching Swagger/OpenAPI documentation.
@@ -64,7 +64,7 @@ S1-T01, S1-T03, and S1-T05; cross-origin CSRF and minimum permission decisions m
 
 ## S1-T07 — Implement Refresh Rotation and Reuse Handling
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement refresh, rotation history, grace recovery, replay classification, affected-session revocation, definitive failure behavior, and the matching Swagger/OpenAPI contract.

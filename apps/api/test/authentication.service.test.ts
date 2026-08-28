@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
+import type { IncomingMessage } from 'node:http';
 import { describe, test } from 'node:test';
 
 import type { AuthenticationCrypto } from '../src/authentication/authentication.crypto';
 import { AuthenticationCrypto as AuthenticationCryptoImplementation } from '../src/authentication/authentication.crypto';
 import type { AuthenticationRepository } from '../src/authentication/authentication.repository';
 import { AuthenticationService } from '../src/authentication/authentication.service';
+import { ProtectedAuthenticationService } from '../src/authentication/protected-authentication.service';
+import { ACCESS_COOKIE_NAME } from '../src/authentication/authentication.constants';
 import { createTestEnvironment } from './test-environment';
 
 void describe('authentication orchestration failure boundaries', () => {
@@ -85,5 +88,21 @@ void describe('authentication orchestration failure boundaries', () => {
     assert.notEqual(first.refreshToken, second.refreshToken);
     assert.notDeepEqual(first.csrfTokenHash, second.csrfTokenHash);
     assert.notDeepEqual(first.refreshTokenHash, second.refreshTokenHash);
+  });
+
+  void test('does not misclassify a protected-session database failure as an invalid token', async () => {
+    const environment = createTestEnvironment();
+    const crypto = new AuthenticationCryptoImplementation(environment);
+    const credentials = await crypto.issueLoginCredentials(randomUUID());
+    const databaseFailure = new Error('database unavailable');
+    const repository = {
+      findCurrentSession: () => Promise.reject(databaseFailure),
+    } as unknown as AuthenticationRepository;
+    const service = new ProtectedAuthenticationService(repository, crypto, environment);
+    const request = {
+      headers: { cookie: `${ACCESS_COOKIE_NAME}=${credentials.accessToken}` },
+    } as IncomingMessage;
+
+    await assert.rejects(service.authenticateAccess(request), databaseFailure);
   });
 });

@@ -26,6 +26,8 @@ export interface AuthenticationEnvironment {
   readonly loginMaxDelaySeconds: number;
   readonly loginIpLimit: number;
   readonly loginThrottleHmacKey: Buffer;
+  readonly csrfHmacKeys: ReadonlyMap<string, Buffer>;
+  readonly csrfActiveKid: string;
 }
 
 export interface ApiEnvironment {
@@ -200,6 +202,54 @@ function parseHmacKey(value: string | undefined): Buffer {
   return key;
 }
 
+function decodeBase64Key(value: unknown, name: string): Buffer {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/u.test(value)) {
+    invalid(name, 'expected base64 encoding of at least 32 random bytes');
+  }
+  const key = Buffer.from(value, 'base64');
+  if (key.length < 32 || key.toString('base64').replace(/=+$/u, '') !== value.replace(/=+$/u, '')) {
+    invalid(name, 'expected base64 encoding of at least 32 random bytes');
+  }
+  return key;
+}
+
+function parseCsrfKeyConfiguration(
+  source: EnvironmentSource,
+  loginThrottleHmacKey: Buffer,
+): { keys: ReadonlyMap<string, Buffer>; activeKid: string } {
+  const activeKid = required(source, 'AUTH_CSRF_ACTIVE_KID');
+  if (!KID_PATTERN.test(activeKid)) {
+    invalid('AUTH_CSRF_ACTIVE_KID', 'expected 1-128 safe key-id characters');
+  }
+  let parsedRing: unknown;
+  try {
+    parsedRing = JSON.parse(required(source, 'AUTH_CSRF_HMAC_KEYS')) as unknown;
+  } catch {
+    invalid('AUTH_CSRF_HMAC_KEYS', 'expected a JSON object of base64 HMAC keys');
+  }
+  if (parsedRing === null || Array.isArray(parsedRing) || typeof parsedRing !== 'object') {
+    invalid('AUTH_CSRF_HMAC_KEYS', 'expected a JSON object of base64 HMAC keys');
+  }
+  const keys = new Map<string, Buffer>();
+  const fingerprints = new Set<string>();
+  for (const [kid, encodedKey] of Object.entries(parsedRing as Record<string, unknown>)) {
+    if (!KID_PATTERN.test(kid)) {
+      invalid('AUTH_CSRF_HMAC_KEYS', 'expected safe key IDs mapped to base64 HMAC keys');
+    }
+    const key = decodeBase64Key(encodedKey, 'AUTH_CSRF_HMAC_KEYS');
+    const fingerprint = key.toString('base64');
+    if (fingerprints.has(fingerprint) || key.equals(loginThrottleHmacKey)) {
+      invalid('AUTH_CSRF_HMAC_KEYS', 'keys must be unique and independent');
+    }
+    fingerprints.add(fingerprint);
+    keys.set(kid, key);
+  }
+  if (!keys.has(activeKid)) {
+    invalid('AUTH_CSRF_ACTIVE_KID', 'must exist in AUTH_CSRF_HMAC_KEYS');
+  }
+  return { keys, activeKid };
+}
+
 function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironment {
   const keys = parseKeyConfiguration(source);
   const accessTokenTtlSeconds = parseDuration(source.ACCESS_TOKEN_TTL, 'ACCESS_TOKEN_TTL', '15m');
@@ -236,6 +286,8 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
   const jwtAudience = source.AUTH_JWT_AUDIENCE ?? 'automotive-commerce-admin';
   if (jwtIssuer.length === 0) invalid('AUTH_JWT_ISSUER', 'expected a non-empty exact issuer');
   if (jwtAudience.length === 0) invalid('AUTH_JWT_AUDIENCE', 'expected a non-empty exact audience');
+  const loginThrottleHmacKey = parseHmacKey(source.AUTH_LOGIN_THROTTLE_HMAC_KEY);
+  const csrfKeys = parseCsrfKeyConfiguration(source, loginThrottleHmacKey);
   return Object.freeze({
     accessTokenTtlSeconds,
     refreshTokenTtlSeconds,
@@ -265,7 +317,9 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
     loginInitialDelaySeconds,
     loginMaxDelaySeconds,
     loginIpLimit: parsePositiveInteger(source.AUTH_LOGIN_IP_LIMIT, 'AUTH_LOGIN_IP_LIMIT', 20),
-    loginThrottleHmacKey: parseHmacKey(source.AUTH_LOGIN_THROTTLE_HMAC_KEY),
+    loginThrottleHmacKey,
+    csrfHmacKeys: csrfKeys.keys,
+    csrfActiveKid: csrfKeys.activeKid,
   });
 }
 

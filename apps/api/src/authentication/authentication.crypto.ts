@@ -1,4 +1,4 @@
-import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { SignJWT } from 'jose';
@@ -56,7 +56,10 @@ export class AuthenticationCrypto {
     now = new Date(),
   ): Promise<IssuedLoginCredentials> {
     const sessionId = randomUUID();
-    const csrfToken = randomBytes(32).toString('base64url');
+    const csrfToken = this.deriveCsrfToken(
+      sessionId,
+      this.environment.authentication.csrfActiveKid,
+    );
     const refreshToken = randomBytes(32).toString('base64url');
     const jti = randomUUID();
     const issuedAt = Math.floor(now.getTime() / 1000);
@@ -90,6 +93,33 @@ export class AuthenticationCrypto {
       accessExpiresAt,
       sessionExpiresAt,
     };
+  }
+
+  recoverCsrfToken(sessionId: string, storedHash: Uint8Array<ArrayBufferLike>): string | null {
+    if (storedHash.byteLength !== 32) return null;
+    let match: string | null = null;
+    const expected = Buffer.from(storedHash);
+    for (const kid of this.environment.authentication.csrfHmacKeys.keys()) {
+      const candidate = this.deriveCsrfToken(sessionId, kid);
+      const candidateHash = Buffer.from(this.sha256(candidate));
+      if (timingSafeEqual(candidateHash, expected)) match = candidate;
+    }
+    return match;
+  }
+
+  verifyCsrfToken(token: string, storedHash: Uint8Array<ArrayBufferLike>): boolean {
+    if (!/^[A-Za-z0-9_-]{43}$/u.test(token) || storedHash.byteLength !== 32) return false;
+    return timingSafeEqual(Buffer.from(this.sha256(token)), Buffer.from(storedHash));
+  }
+
+  hashOpaqueCredential(value: string): Uint8Array<ArrayBuffer> {
+    return this.sha256(value);
+  }
+
+  private deriveCsrfToken(sessionId: string, kid: string): string {
+    const key = this.environment.authentication.csrfHmacKeys.get(kid);
+    if (key === undefined) throw new Error('Configured CSRF key is unavailable.');
+    return createHmac('sha256', key).update(sessionId, 'utf8').digest('base64url');
   }
 
   private sha256(value: string): Uint8Array<ArrayBuffer> {
