@@ -137,6 +137,10 @@ export class ProtectedAuthenticationService {
     return csrfToken;
   }
 
+  validateCurrentSession(session: CurrentSessionRecord, now = new Date()): CurrentAuthentication {
+    return this.toCurrentAuthentication(session, now);
+  }
+
   private toCurrentAuthentication(session: CurrentSessionRecord, now: Date): CurrentAuthentication {
     if (session.revokedAt !== null || session.expiresAt <= now) {
       throw new AuthenticationError(

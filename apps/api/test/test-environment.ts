@@ -27,6 +27,10 @@ export function validEnvironmentSource(
     AUTH_CSRF_HMAC_KEYS: JSON.stringify({
       'test-csrf-key': Buffer.alloc(32, 11).toString('base64'),
     }),
+    AUTH_REFRESH_RECOVERY_KEYRING: JSON.stringify({
+      activeKid: 'test-recovery-key',
+      keys: { 'test-recovery-key': Buffer.alloc(32, 13).toString('base64') },
+    }),
     ...overrides,
   };
 }

@@ -90,6 +90,53 @@ void describe('authentication orchestration failure boundaries', () => {
     assert.notDeepEqual(first.refreshTokenHash, second.refreshTokenHash);
   });
 
+  void test('authenticates session-bound AES-256-GCM refresh recovery envelopes', async () => {
+    const crypto = new AuthenticationCryptoImplementation(createTestEnvironment());
+    const sessionId = randomUUID();
+    const issued = await crypto.issueRefreshCredentials(
+      randomUUID(),
+      sessionId,
+      new Date(Date.now() + 60_000),
+    );
+
+    assert.equal(issued.recovery.nonce.byteLength, 12);
+    assert.equal(issued.recovery.authTag.byteLength, 16);
+    assert.equal(
+      crypto.decryptRefreshToken(sessionId, issued.tokenId, issued.recovery),
+      issued.refreshToken,
+    );
+    const tamperedTag = Uint8Array.from(issued.recovery.authTag);
+    tamperedTag[0] = (tamperedTag[0] ?? 0) ^ 1;
+    assert.throws(
+      () =>
+        crypto.decryptRefreshToken(sessionId, issued.tokenId, {
+          ...issued.recovery,
+          authTag: tamperedTag,
+        }),
+      /authentication failed/u,
+    );
+    assert.throws(
+      () => crypto.decryptRefreshToken(randomUUID(), issued.tokenId, issued.recovery),
+      /authentication failed/u,
+    );
+
+    const rotatedCrypto = new AuthenticationCryptoImplementation(
+      createTestEnvironment('test', {
+        AUTH_REFRESH_RECOVERY_KEYRING: JSON.stringify({
+          activeKid: 'new-recovery-key',
+          keys: {
+            'new-recovery-key': Buffer.alloc(32, 17).toString('base64'),
+            'test-recovery-key': Buffer.alloc(32, 13).toString('base64'),
+          },
+        }),
+      }),
+    );
+    assert.equal(
+      rotatedCrypto.decryptRefreshToken(sessionId, issued.tokenId, issued.recovery),
+      issued.refreshToken,
+    );
+  });
+
   void test('does not misclassify a protected-session database failure as an invalid token', async () => {
     const environment = createTestEnvironment();
     const crypto = new AuthenticationCryptoImplementation(environment);

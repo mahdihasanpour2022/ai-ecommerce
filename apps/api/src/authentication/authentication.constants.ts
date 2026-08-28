@@ -12,3 +12,5 @@ export const CSRF_VALIDATION_FAILED_MESSAGE =
   'درخواست معتبر نیست. لطفاً صفحه را تازه‌سازی و دوباره تلاش کنید.';
 export const REFRESH_TOKEN_INVALID_MESSAGE = 'نشست معتبر نیست. لطفاً دوباره وارد شوید.';
 export const REFRESH_TOKEN_EXPIRED_MESSAGE = 'نشست منقضی شده است. لطفاً دوباره وارد شوید.';
+export const REFRESH_TOKEN_REUSED_MESSAGE =
+  'نشست به دلایل امنیتی پایان یافت. لطفاً دوباره وارد شوید.';

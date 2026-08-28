@@ -14,6 +14,7 @@ interface IpBucket {
 @Injectable()
 export class LoginSecurity {
   private readonly ipBuckets = new Map<string, IpBucket>();
+  private readonly refreshIpBuckets = new Map<string, IpBucket>();
 
   constructor(@Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment) {}
 
@@ -42,14 +43,40 @@ export class LoginSecurity {
   }
 
   consumeIpAttempt(request: IncomingMessage, now = Date.now()): void {
+    this.consumeIpBucket(
+      this.ipBuckets,
+      request,
+      this.environment.authentication.loginWindowSeconds,
+      this.environment.authentication.loginIpLimit,
+      now,
+    );
+  }
+
+  consumeRefreshIpAttempt(request: IncomingMessage, now = Date.now()): void {
+    this.consumeIpBucket(
+      this.refreshIpBuckets,
+      request,
+      60,
+      this.environment.authentication.refreshIpLimitPerMinute,
+      now,
+    );
+  }
+
+  private consumeIpBucket(
+    buckets: Map<string, IpBucket>,
+    request: IncomingMessage,
+    windowSeconds: number,
+    limit: number,
+    now: number,
+  ): void {
     const key = request.socket.remoteAddress ?? 'unknown';
-    const windowMilliseconds = this.environment.authentication.loginWindowSeconds * 1000;
-    const existing = this.ipBuckets.get(key);
+    const windowMilliseconds = windowSeconds * 1000;
+    const existing = buckets.get(key);
     const bucket =
       existing === undefined || now - existing.windowStartedAt >= windowMilliseconds
         ? { count: 0, windowStartedAt: now }
         : existing;
-    if (bucket.count >= this.environment.authentication.loginIpLimit) {
+    if (bucket.count >= limit) {
       const retryAfter = Math.max(
         1,
         Math.ceil((bucket.windowStartedAt + windowMilliseconds - now) / 1000),
@@ -57,11 +84,12 @@ export class LoginSecurity {
       throw new AuthenticationError(429, 'AUTH_RATE_LIMITED', RATE_LIMITED_MESSAGE, retryAfter);
     }
     bucket.count += 1;
-    this.ipBuckets.set(key, bucket);
+    buckets.set(key, bucket);
   }
 
   resetForTests(): void {
     this.ipBuckets.clear();
+    this.refreshIpBuckets.clear();
   }
 
   private singleHeader(value: string | string[] | undefined): string | undefined {

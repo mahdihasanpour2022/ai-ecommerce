@@ -11,6 +11,7 @@ export type RuntimeEnvironment = (typeof RUNTIME_ENVIRONMENTS)[number];
 export interface AuthenticationEnvironment {
   readonly accessTokenTtlSeconds: number;
   readonly refreshTokenTtlSeconds: number;
+  readonly refreshReuseGraceSeconds: number;
   readonly jwtPrivateKey: KeyObject;
   readonly jwtPublicKeys: ReadonlyMap<string, KeyObject>;
   readonly jwtActiveKid: string;
@@ -28,6 +29,10 @@ export interface AuthenticationEnvironment {
   readonly loginThrottleHmacKey: Buffer;
   readonly csrfHmacKeys: ReadonlyMap<string, Buffer>;
   readonly csrfActiveKid: string;
+  readonly refreshRecoveryKeys: ReadonlyMap<string, Buffer>;
+  readonly refreshRecoveryActiveKid: string;
+  readonly refreshSessionLimitPerMinute: number;
+  readonly refreshIpLimitPerMinute: number;
 }
 
 export interface ApiEnvironment {
@@ -250,6 +255,65 @@ function parseCsrfKeyConfiguration(
   return { keys, activeKid };
 }
 
+function parseRecoveryKeyConfiguration(
+  source: EnvironmentSource,
+  independentKeys: readonly Buffer[],
+): { keys: ReadonlyMap<string, Buffer>; activeKid: string } {
+  let parsedRing: unknown;
+  try {
+    parsedRing = JSON.parse(required(source, 'AUTH_REFRESH_RECOVERY_KEYRING')) as unknown;
+  } catch {
+    invalid(
+      'AUTH_REFRESH_RECOVERY_KEYRING',
+      'expected JSON with activeKid and base64 AES-256-GCM keys',
+    );
+  }
+  if (parsedRing === null || Array.isArray(parsedRing) || typeof parsedRing !== 'object') {
+    invalid(
+      'AUTH_REFRESH_RECOVERY_KEYRING',
+      'expected JSON with activeKid and base64 AES-256-GCM keys',
+    );
+  }
+  const record = parsedRing as Record<string, unknown>;
+  if (
+    Object.keys(record).sort().join(',') !== 'activeKid,keys' ||
+    typeof record.activeKid !== 'string' ||
+    !KID_PATTERN.test(record.activeKid) ||
+    record.keys === null ||
+    Array.isArray(record.keys) ||
+    typeof record.keys !== 'object'
+  ) {
+    invalid(
+      'AUTH_REFRESH_RECOVERY_KEYRING',
+      'expected JSON with activeKid and base64 AES-256-GCM keys',
+    );
+  }
+  const keys = new Map<string, Buffer>();
+  const fingerprints = new Set<string>();
+  for (const [kid, encodedKey] of Object.entries(record.keys as Record<string, unknown>)) {
+    if (!KID_PATTERN.test(kid)) {
+      invalid('AUTH_REFRESH_RECOVERY_KEYRING', 'expected safe key IDs mapped to 32-byte keys');
+    }
+    const key = decodeBase64Key(encodedKey, 'AUTH_REFRESH_RECOVERY_KEYRING');
+    if (key.length !== 32) {
+      invalid('AUTH_REFRESH_RECOVERY_KEYRING', 'expected exact 32-byte AES-256-GCM keys');
+    }
+    const fingerprint = key.toString('base64');
+    if (
+      fingerprints.has(fingerprint) ||
+      independentKeys.some((candidate) => candidate.equals(key))
+    ) {
+      invalid('AUTH_REFRESH_RECOVERY_KEYRING', 'keys must be unique and independent');
+    }
+    fingerprints.add(fingerprint);
+    keys.set(kid, key);
+  }
+  if (!keys.has(record.activeKid)) {
+    invalid('AUTH_REFRESH_RECOVERY_KEYRING', 'activeKid must exist in keys');
+  }
+  return { keys, activeKid: record.activeKid };
+}
+
 function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironment {
   const keys = parseKeyConfiguration(source);
   const accessTokenTtlSeconds = parseDuration(source.ACCESS_TOKEN_TTL, 'ACCESS_TOKEN_TTL', '15m');
@@ -288,9 +352,18 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
   if (jwtAudience.length === 0) invalid('AUTH_JWT_AUDIENCE', 'expected a non-empty exact audience');
   const loginThrottleHmacKey = parseHmacKey(source.AUTH_LOGIN_THROTTLE_HMAC_KEY);
   const csrfKeys = parseCsrfKeyConfiguration(source, loginThrottleHmacKey);
+  const recoveryKeys = parseRecoveryKeyConfiguration(source, [
+    loginThrottleHmacKey,
+    ...csrfKeys.keys.values(),
+  ]);
   return Object.freeze({
     accessTokenTtlSeconds,
     refreshTokenTtlSeconds,
+    refreshReuseGraceSeconds: parsePositiveInteger(
+      source.REFRESH_REUSE_GRACE_SECONDS,
+      'REFRESH_REUSE_GRACE_SECONDS',
+      10,
+    ),
     jwtPrivateKey: keys.privateKey,
     jwtPublicKeys: keys.publicKeys,
     jwtActiveKid: keys.activeKid,
@@ -320,6 +393,18 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
     loginThrottleHmacKey,
     csrfHmacKeys: csrfKeys.keys,
     csrfActiveKid: csrfKeys.activeKid,
+    refreshRecoveryKeys: recoveryKeys.keys,
+    refreshRecoveryActiveKid: recoveryKeys.activeKid,
+    refreshSessionLimitPerMinute: parsePositiveInteger(
+      source.AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE,
+      'AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE',
+      10,
+    ),
+    refreshIpLimitPerMinute: parsePositiveInteger(
+      source.AUTH_REFRESH_IP_LIMIT_PER_MINUTE,
+      'AUTH_REFRESH_IP_LIMIT_PER_MINUTE',
+      30,
+    ),
   });
 }
 

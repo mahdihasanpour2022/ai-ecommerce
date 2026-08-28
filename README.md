@@ -1,6 +1,6 @@
 # Automotive Parts Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation, initial Admin identity persistence/provisioning boundary, backend Admin login, CSRF bootstrap, and current Admin/RBAC access endpoints are implemented; refresh/logout, frontend login, catalog, purchasing, deployment, and production infrastructure remain planned work.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation, initial Admin identity persistence/provisioning boundary, backend Admin login, CSRF bootstrap, current Admin/RBAC access, and refresh rotation/reuse endpoints are implemented; logout, frontend login, catalog, purchasing, deployment, and production infrastructure remain planned work.
 
 ## Repository applications
 

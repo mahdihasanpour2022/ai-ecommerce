@@ -10,7 +10,8 @@ export type AuthenticationErrorCode =
   | 'INVALID_REQUEST'
   | 'ORIGIN_NOT_ALLOWED'
   | 'REFRESH_TOKEN_EXPIRED'
-  | 'REFRESH_TOKEN_INVALID';
+  | 'REFRESH_TOKEN_INVALID'
+  | 'REFRESH_TOKEN_REUSED';
 
 export class AuthenticationError extends Error {
   constructor(

@@ -8,9 +8,9 @@ Environment configuration is application-owned, validated at its consumption bou
 | --- | --- | ---: | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | 3000 | `http://localhost:3000` | None currently |
 | Admin | `@automotive-commerce/admin` | 3001 | `http://localhost:3001` | None currently |
-| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database and S1-T05 login values below |
+| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database and implemented authentication values below |
 
-The REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. S1-T05 enables credentialed CORS for exact configured origins; the accepted Admin development origin is `http://localhost:3001`.
+The REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. The authentication backend enables credentialed CORS for exact configured origins; the accepted Admin development origin is `http://localhost:3001`.
 
 Run an application with its Workspace command:
 
@@ -43,7 +43,7 @@ Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather t
 
 ## Accepted Sprint 1 configuration contract
 
-S1-T05 consumes the access/refresh lifetimes, JWT, CORS, Argon2, and login-throttle values below and validates them before application creation. Refresh recovery and refresh-throttle values remain approved but unconsumed until their owning task. `.env.example` contains only non-secret defaults and intentionally unusable secret placeholders.
+The implemented authentication backend consumes and validates the access/refresh lifetimes, JWT, CORS, Argon2, login/refresh throttles, CSRF keyring, and refresh-recovery values below before application creation. `.env.example` contains only non-secret defaults and intentionally unusable secret placeholders.
 
 | Name | Type/default | Exposure and purpose |
 | --- | --- | --- |
@@ -55,7 +55,7 @@ S1-T05 consumes the access/refresh lifetimes, JWT, CORS, Argon2, and login-throt
 | `AUTH_JWT_ACTIVE_KID` | Non-empty key ID; required | Server-only, non-secret selector that must exist in the trusted key ring |
 | `AUTH_JWT_ISSUER` | Exact string; default `automotive-commerce-api` | Server-only, non-secret required `iss` value |
 | `AUTH_JWT_AUDIENCE` | Exact string; default `automotive-commerce-admin` | Server-only, non-secret required `aud` value |
-| `AUTH_REFRESH_RECOVERY_KEYRING` | Versioned AES-256-GCM keys; required | Secret active/retiring recovery keys; separate from JWT and database material |
+| `AUTH_REFRESH_RECOVERY_KEYRING` | Exact JSON `{ "activeKid": "kid", "keys": { "kid": "base64" } }`; required | Secret active/retiring exact 32-byte AES-256-GCM keys; separate from JWT, CSRF, throttle, password, and database material |
 | `CORS_ALLOWED_ORIGINS` | Exact origin list; environment-specific | Server-only, non-secret; no wildcard, broad regex, or arbitrary reflection |
 | `AUTH_ARGON2_MEMORY_KIB` | Integer; default `65536` | Server-only, non-secret password-hash memory cost |
 | `AUTH_ARGON2_TIME_COST` | Integer; default `3` | Server-only, non-secret password-hash iteration cost |
@@ -71,7 +71,7 @@ S1-T05 consumes the access/refresh lifetimes, JWT, CORS, Argon2, and login-throt
 | `AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE` | Integer; default `10` | Server-only, non-secret refresh requests per active session |
 | `AUTH_REFRESH_IP_LIMIT_PER_MINUTE` | Integer; default `30` | Server-only, non-secret refresh requests per IP |
 
-JWT verification accepts only configured keys and exact issuer/audience values; a token header cannot introduce trust material. The independent CSRF HMAC keyring derives the same 256-bit session credential at login/bootstrap while persistence retains only SHA-256; losing a still-required retiring key makes bootstrap fail closed. Recovery keys decrypt only the at-most-ten-second refresh recovery envelope. Key-ring serialization, deployment secret injection, and rotation runbooks remain implementation/release concerns, but source-controlled secret defaults are prohibited.
+JWT verification accepts only configured keys and exact issuer/audience values; a token header cannot introduce trust material. The independent CSRF HMAC keyring derives the same 256-bit session credential at login/bootstrap while persistence retains only SHA-256; losing a still-required retiring key makes bootstrap fail closed. The refresh recovery JSON names exactly one active encryption key and may retain older keys needed to decrypt unexpired envelopes; keys must be exact 32-byte base64 values and unique/independent. Recovery keys decrypt only the at-most-ten-second authenticated envelope. Deployment secret injection and operational rotation runbooks remain release concerns, but source-controlled secret defaults are prohibited.
 
 ## Adding configuration later
 

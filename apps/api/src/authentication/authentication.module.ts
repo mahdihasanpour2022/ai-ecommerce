@@ -9,6 +9,7 @@ import { AuthenticationService } from './authentication.service.js';
 import { CsrfService } from './csrf.service.js';
 import { LoginSecurity } from './login-security.js';
 import { ProtectedAuthenticationService } from './protected-authentication.service.js';
+import { RefreshAuthenticationService } from './refresh-authentication.service.js';
 
 @Module({
   imports: [DatabaseModule],
@@ -21,6 +22,7 @@ import { ProtectedAuthenticationService } from './protected-authentication.servi
     CsrfService,
     LoginSecurity,
     ProtectedAuthenticationService,
+    RefreshAuthenticationService,
   ],
   exports: [AuthenticationCrypto, CsrfService, LoginSecurity, ProtectedAuthenticationService],
 })

@@ -317,6 +317,12 @@ void describe(
         .setIssuedAt(issuedAt)
         .setExpirationTime(issuedAt + context.environment.authentication.accessTokenTtlSeconds)
         .sign(randomBytes(32));
+      const rawAccess = access.slice(access.indexOf('=') + 1);
+      const accessParts = rawAccess.split('.');
+      const signature = accessParts[2];
+      assert.ok(signature);
+      accessParts[2] = `${signature.startsWith('A') ? 'B' : 'A'}${signature.slice(1)}`;
+      const corruptedAccess = accessParts.join('.');
       const adversarial = [
         incomplete,
         wrongAlgorithm,
@@ -342,7 +348,7 @@ void describe(
         }),
         await signAccess(context.environment, randomUUID(), session.id),
         await signAccess(context.environment, admin.id, randomUUID()),
-        `${access.slice(access.indexOf('=') + 1, -1)}x`,
+        corruptedAccess,
       ];
       for (const token of adversarial) {
         const response: Response = await request(server(context.app))

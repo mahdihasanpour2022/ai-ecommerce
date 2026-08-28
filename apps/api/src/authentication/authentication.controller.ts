@@ -10,7 +10,14 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCookieAuth,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import type { ApiEnvironment } from '../config/environment.js';
@@ -31,6 +38,7 @@ import {
   CurrentAuthenticationResponseDto,
 } from './protected-authentication.dto.js';
 import { ProtectedAuthenticationService } from './protected-authentication.service.js';
+import { RefreshAuthenticationService } from './refresh-authentication.service.js';
 
 interface ErrorEnvelope {
   statusCode: number;
@@ -45,9 +53,78 @@ export class AuthenticationController {
   constructor(
     private readonly authentication: AuthenticationService,
     private readonly protectedAuthentication: ProtectedAuthenticationService,
+    private readonly refreshAuthentication: RefreshAuthenticationService,
     private readonly security: LoginSecurity,
     @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment,
   ) {}
+
+  @Post('refresh')
+  @HttpCode(204)
+  @ApiCookieAuth('adminRefresh')
+  @ApiHeader({
+    name: 'X-CSRF-Token',
+    required: true,
+    description: 'Current session-bound CSRF credential held only in browser memory.',
+    schema: { type: 'string' },
+  })
+  @ApiOperation({ summary: 'Rotate or narrowly recover the current Refresh credential' })
+  @ApiResponse({
+    status: 204,
+    description: 'Credentials rotated or latest in-grace credential safely reissued; no body.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Replacement host-only Access and Refresh HttpOnly cookies.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Refresh/session failure or reuse.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'CSRF or permission failure.' })
+  @ApiResponse({
+    status: 429,
+    type: ApiErrorDto,
+    description: 'Generic refresh throttle response.',
+    headers: {
+      'Retry-After': {
+        description: 'Seconds until another attempt is allowed.',
+        schema: { type: 'integer', minimum: 1 },
+      },
+    },
+  })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async refresh(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const credentials = await this.refreshAuthentication.refresh(request);
+      response.setHeader('Set-Cookie', [
+        this.serializeCookie(
+          ACCESS_COOKIE_NAME,
+          credentials.accessToken,
+          credentials.accessExpiresAt,
+        ),
+        this.serializeCookie(
+          REFRESH_COOKIE_NAME,
+          credentials.refreshToken,
+          credentials.sessionExpiresAt,
+        ),
+      ]);
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        if (error.retryAfterSeconds !== undefined) {
+          response.setHeader('Retry-After', String(error.retryAfterSeconds));
+        }
+        throw toAuthenticationHttpException(error);
+      }
+      throw safeInternalHttpException();
+    }
+  }
 
   @Get('csrf')
   @ApiCookieAuth('adminRefresh')

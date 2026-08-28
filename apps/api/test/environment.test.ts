@@ -9,6 +9,9 @@ void describe('API environment parsing', () => {
     const environment = parseEnvironment(validEnvironmentSource({ NODE_ENV: undefined }));
     assert.equal(environment.nodeEnv, 'development');
     assert.equal(environment.port, DEFAULT_API_PORT);
+    assert.equal(environment.authentication.refreshReuseGraceSeconds, 10);
+    assert.equal(environment.authentication.refreshSessionLimitPerMinute, 10);
+    assert.equal(environment.authentication.refreshIpLimitPerMinute, 30);
   });
 
   void test('parses every supported runtime environment and an explicit port', () => {
@@ -64,6 +67,22 @@ void describe('API environment parsing', () => {
       () => parseEnvironment(validEnvironmentSource({ AUTH_CSRF_ACTIVE_KID: 'retired' })),
       /^Error: Invalid AUTH_CSRF_ACTIVE_KID:/,
     );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ AUTH_REFRESH_RECOVERY_KEYRING: undefined })),
+      /^Error: Invalid AUTH_REFRESH_RECOVERY_KEYRING:/,
+    );
+    assert.throws(
+      () =>
+        parseEnvironment(
+          validEnvironmentSource({
+            AUTH_REFRESH_RECOVERY_KEYRING: JSON.stringify({
+              activeKid: 'missing',
+              keys: { available: Buffer.alloc(32, 19).toString('base64') },
+            }),
+          }),
+        ),
+      /^Error: Invalid AUTH_REFRESH_RECOVERY_KEYRING:/,
+    );
     const sharedKey = Buffer.alloc(32, 7).toString('base64');
     assert.throws(
       () =>
@@ -74,6 +93,18 @@ void describe('API environment parsing', () => {
           }),
         ),
       /^Error: Invalid AUTH_CSRF_HMAC_KEYS:/,
+    );
+    assert.throws(
+      () =>
+        parseEnvironment(
+          validEnvironmentSource({
+            AUTH_REFRESH_RECOVERY_KEYRING: JSON.stringify({
+              activeKid: 'shared',
+              keys: { shared: sharedKey },
+            }),
+          }),
+        ),
+      /^Error: Invalid AUTH_REFRESH_RECOVERY_KEYRING:/,
     );
   });
 });

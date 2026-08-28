@@ -31,7 +31,7 @@ Exactly one configured private key signs new tokens. Verification accepts its pu
 
 Frontend JavaScript reads neither authentication cookie. Axios does not construct `Authorization: Bearer ...` in the accepted architecture. With credentialed CORS and browser cookie rules satisfied, the browser attaches eligible cookies automatically. `withCredentials: true` enables eligible cookie transmission; it does not create an Authorization header.
 
-The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. Login now creates the initial token and hash; rotation and its approved short-lived encrypted recovery envelope remain unimplemented. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and are represented by the S1-T03 Prisma schema and reviewed migration. Plaintext is never persisted.
+The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. Login creates the initial token and hash; the implemented refresh boundary rotates that history and stores replacement plaintext only inside the approved short-lived authenticated recovery envelope. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and are represented by the S1-T03 Prisma schema and reviewed migration. Plaintext is never persisted outside that bounded envelope.
 
 ## CSRF and CORS
 
@@ -64,9 +64,13 @@ Admin authentication has three separate accepted concepts: `AdminUser`, `AuthSes
 
 Refresh rotation is required: using `R1` produces `R2`, and `R1` becomes superseded. Legitimate races can arise from tabs, retries, or a lost response. A configuration-driven `REFRESH_REUSE_GRACE_SECONDS=10` is the accepted default. Within the approved grace logic, a recently rotated credential associated with the same legitimate session may be handled narrowly as concurrency/recovery rather than immediate theft. This does not make the old token normally valid for ten seconds.
 
+The implemented `POST /auth/refresh` enforces the Refresh cookie, exact Origin/Referer, session CSRF token, current session/Admin/`admin.access`, fixed expiry, and session/IP throttles. PostgreSQL locks the session, presented token, and durable throttle row; marking the old token, inserting/linking the replacement, persisting its envelope, and updating session/throttle state commit atomically. Signing/encryption or persistence failure issues no cookie and leaves no partial rotation.
+
 The initial session lifetime is absolute: the accepted seven-day refresh/session expiry is set at login, and rotation never slides or extends it. Every replacement RefreshToken is capped at its owning session's `expiresAt`.
 
 Each newly current refresh token has an AES-256-GCM recovery envelope containing its raw value for at most that ten-second grace period. Ciphertext, unique nonce, authentication tag, key ID, and expiry are stored; the versioned encryption key ring is injected separately from the database. The envelope is deleted or made unusable after expiry. Rotation and current-token selection are atomic.
+
+The recovery implementation uses an exact 32-byte active/retiring keyring, a unique 12-byte nonce, 16-byte authentication tag, and additional authenticated data binding the envelope version, session ID, replacement token ID, and envelope expiry. Decryption also timing-safely verifies that recovered plaintext hashes to the exact current token row. Rotating a current token erases that token's obsolete envelope; suspicious reuse erases all envelope material in the affected family while preserving prior revocation timestamps.
 
 If a superseded family token is presented within grace with the same active session and valid CSRF token, the Backend returns the exact latest current credential from its authenticated recovery envelope without creating another rotation. This makes concurrent/lost-response handling idempotent even when multiple tabs raced. IP address or user-agent similarity is not proof of legitimacy and is not required. A missing/invalid/expired envelope, revoked session, invalid CSRF credential, token outside grace, or reuse after the family advanced beyond recoverable state is suspicious reuse, not recovery.
 
