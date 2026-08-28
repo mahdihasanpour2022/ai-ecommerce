@@ -36,6 +36,25 @@ Acceptance Criteria tie tests to observable outcomes and failure paths, not vagu
 
 Use the smallest level and focused command that prove behavior without excessive mocking or brittle internal assertions. During iteration, do not run the whole monorepo when a focused suite is sufficient. Before Done, run the broader tests and validation required by the task and Sprint context.
 
+## Risk-based validation scope
+
+Use the smallest sufficient validation scope that provides confidence in the affected behavior and Acceptance Criteria. During normal task execution, prefer the affected Workspace, files, tests, configuration, and runtime behavior instead of repeatedly running full-repository checks.
+
+Run repository-wide validation only when at least one of these conditions applies:
+
+- the task changes shared configuration, shared packages, contracts, orchestration, or other cross-Workspace behavior;
+- the task or owner explicitly requires repository-wide validation;
+- the change may reasonably affect multiple applications or packages; or
+- an applicable Sprint, CI, release, or other quality gate requires it.
+
+Select tests, typecheck, lint, formatting, build, Swagger/OpenAPI, Prisma, database, configuration, and smoke checks according to the task's actual changes and risk. A gate is not required merely because the repository exposes a command, but it remains mandatory whenever the affected scope, Acceptance Criteria, task Validation section, or governing Sprint/CI/release gate requires it.
+
+Validation breadth must increase with risk. Security-critical, authentication, authorization, payment, persistence, destructive-operation, concurrency, and other high-impact changes require sufficient positive, negative, failure-path, integration, and regression validation even when that extends beyond the directly edited files. Never weaken correctness, regression coverage, security verification, or an Acceptance Criterion to reduce execution time, tokens, or cost.
+
+Reuse a still-relevant successful result when no source, configuration, dependency, generated artifact, environment input, or other condition affecting that check has changed. Do not repeatedly rerun an expensive check without a concrete invalidating change or an explicit final-gate requirement. If a later change can affect a prior result, rerun the smallest invalidated scope and any broader gate that remains required.
+
+Validation reports and completion records list only commands and checks actually executed, their real scope, and their result. Do not imply that an unexecuted Workspace, suite, or repository-wide gate passed.
+
 ## TypeScript type-checking
 
 Every workspace that owns a `tsconfig.json` and can be type-checked independently must expose `typecheck` as `tsc --project tsconfig.json --noEmit`. Do not add this script to non-TypeScript workspaces or packages without an independent TypeScript configuration. The repository root exposes `typecheck` through Turborepo so cross-workspace changes can run the relevant task graph.
