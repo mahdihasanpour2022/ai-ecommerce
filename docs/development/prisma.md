@@ -5,10 +5,12 @@ The API Workspace owns Prisma ORM. Prisma `7.10.0` is pinned exactly for both th
 ## Foundation boundary
 
 - `apps/api/prisma.config.ts` owns the schema path, migration path, and server-only `DATABASE_URL` lookup.
-- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator.
+- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator and declares the nine approved Admin identity, RBAC, session, refresh-history, and shared-throttle models.
 - Generated TypeScript is written to `apps/api/src/generated/prisma` in CommonJS form to match the API's NodeNext/CommonJS package boundary.
 - Generated client files are reproducible and ignored. Run generation after schema or generator changes; do not edit generated files.
-- No model, enum, migration, seed, repository, service, or runtime client instance exists yet.
+- The reviewed additive initial migration lives under `apps/api/prisma/migrations/` and adds PostgreSQL-only CHECK constraints, a partial current-token index, and the approved `SUPER_ADMIN`/`admin.access` reference grant that Prisma schema syntax does not fully represent.
+- The rollback-only invariant suite at `apps/api/prisma/tests/admin-identity-constraints.sql` verifies the applied database structures and critical constraints when run against an approved disposable test database.
+- No repository, service, runtime client instance, or general seed mechanism exists yet.
 
 Prisma 7 does not load `.env` implicitly. The repository intentionally adds no dotenv dependency: provide `DATABASE_URL` through the invoking shell or process manager. The tracked `.env.example` documents safe local values but is not loaded automatically. `TEST_DATABASE_URL` remains reserved for future test tooling and must never be substituted silently for development migrations.
 

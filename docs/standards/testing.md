@@ -38,6 +38,8 @@ Use the smallest level and focused command that prove behavior without excessive
 
 ## Risk-based validation scope
 
+Before implementation, apply the external-dependency and database preflight rules in [Task Execution and Context Efficiency](execution.md#cheap-environment-preflight). A task must discover an unavailable environment required for validation before substantial work rather than at the end of implementation.
+
 Use the smallest sufficient validation scope that provides confidence in the affected behavior and Acceptance Criteria. During normal task execution, prefer the affected Workspace, files, tests, configuration, and runtime behavior instead of repeatedly running full-repository checks.
 
 Run repository-wide validation only when at least one of these conditions applies:

@@ -24,7 +24,7 @@ S1-T01 and explicit owner approval of the S1-T02 schema/migration proposal.
 
 ## S1-T03 — Implement Admin Identity and Session Persistence
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the separately approved schema and migration for Admin identity, authorization, sessions, and rotating refresh history.
@@ -34,7 +34,7 @@ S1-T02 and explicit schema/migration approval.
 
 ## S1-T04 — Implement First Super Admin Provisioning
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the secure trusted-environment administrative CLI/script with safe repeat-bootstrap prevention and auditable behavior.

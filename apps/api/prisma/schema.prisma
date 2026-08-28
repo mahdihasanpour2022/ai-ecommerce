@@ -7,3 +7,127 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model AdminUser {
+  id           String          @id(map: "admin_users_pkey") @default(uuid()) @db.Uuid
+  email        String          @unique(map: "admin_users_email_key") @db.VarChar(254)
+  displayName  String          @map("display_name") @db.VarChar(120)
+  passwordHash String          @map("password_hash") @db.VarChar(255)
+  disabledAt   DateTime?       @map("disabled_at") @db.Timestamptz(3)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  roles        AdminUserRole[]
+  sessions     AuthSession[]
+
+  @@map("admin_users")
+}
+
+model Role {
+  id          String           @id(map: "roles_pkey") @default(uuid()) @db.Uuid
+  code        String           @unique(map: "roles_code_key") @db.VarChar(64)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  adminUsers  AdminUserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id        String           @id(map: "permissions_pkey") @default(uuid()) @db.Uuid
+  code      String           @unique(map: "permissions_code_key") @db.VarChar(128)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  roles     RolePermission[]
+
+  @@map("permissions")
+}
+
+model AdminUserRole {
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  roleId      String    @map("role_id") @db.Uuid
+  assignedAt  DateTime  @default(now()) @map("assigned_at") @db.Timestamptz(3)
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "admin_user_roles_admin_user_id_fkey")
+  role        Role      @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "admin_user_roles_role_id_fkey")
+
+  @@id([adminUserId, roleId], map: "admin_user_roles_pkey")
+  @@index([roleId], map: "admin_user_roles_role_id_idx")
+  @@map("admin_user_roles")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  grantedAt    DateTime   @default(now()) @map("granted_at") @db.Timestamptz(3)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "role_permissions_role_id_fkey")
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "role_permissions_permission_id_fkey")
+
+  @@id([roleId, permissionId], map: "role_permissions_pkey")
+  @@index([permissionId], map: "role_permissions_permission_id_idx")
+  @@map("role_permissions")
+}
+
+model AuthSession {
+  id              String                      @id(map: "auth_sessions_pkey") @default(uuid()) @db.Uuid
+  adminUserId     String                      @map("admin_user_id") @db.Uuid
+  csrfTokenHash   Bytes                       @map("csrf_token_hash") @db.ByteA
+  expiresAt       DateTime                    @map("expires_at") @db.Timestamptz(3)
+  revokedAt       DateTime?                   @map("revoked_at") @db.Timestamptz(3)
+  lastUsedAt      DateTime                    @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  createdAt       DateTime                    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  adminUser       AdminUser                   @relation(fields: [adminUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "auth_sessions_admin_user_id_fkey")
+  refreshTokens   RefreshToken[]
+  refreshThrottle AuthSessionRefreshThrottle?
+
+  @@index([adminUserId, revokedAt, expiresAt], map: "auth_sessions_admin_user_revoked_expires_idx")
+  @@index([expiresAt], map: "auth_sessions_expires_at_idx")
+  @@map("auth_sessions")
+}
+
+model RefreshToken {
+  id                 String         @id(map: "refresh_tokens_pkey") @default(uuid()) @db.Uuid
+  sessionId          String         @map("session_id") @db.Uuid
+  tokenHash          Bytes          @unique(map: "refresh_tokens_token_hash_key") @map("token_hash") @db.ByteA
+  expiresAt          DateTime       @map("expires_at") @db.Timestamptz(3)
+  rotatedAt          DateTime?      @map("rotated_at") @db.Timestamptz(3)
+  revokedAt          DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  replacedByTokenId  String?        @map("replaced_by_token_id") @db.Uuid
+  recoveryCiphertext Bytes?         @map("recovery_ciphertext") @db.ByteA
+  recoveryNonce      Bytes?         @map("recovery_nonce") @db.ByteA
+  recoveryAuthTag    Bytes?         @map("recovery_auth_tag") @db.ByteA
+  recoveryKeyId      String?        @map("recovery_key_id") @db.VarChar(128)
+  recoveryExpiresAt  DateTime?      @map("recovery_expires_at") @db.Timestamptz(3)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  session            AuthSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "refresh_tokens_session_id_fkey")
+  replacement        RefreshToken?  @relation("RefreshReplacement", fields: [replacedByTokenId, sessionId], references: [id, sessionId], onDelete: NoAction, onUpdate: NoAction, map: "refresh_tokens_replacement_fkey")
+  replacedTokens     RefreshToken[] @relation("RefreshReplacement")
+
+  @@unique([id, sessionId], map: "refresh_tokens_id_session_id_key")
+  @@unique([replacedByTokenId, sessionId], map: "refresh_tokens_replacement_session_key")
+  @@index([sessionId, createdAt], map: "refresh_tokens_session_created_at_idx")
+  @@index([expiresAt], map: "refresh_tokens_expires_at_idx")
+  @@index([recoveryExpiresAt], map: "refresh_tokens_recovery_expires_at_idx")
+  @@map("refresh_tokens")
+}
+
+model AdminLoginThrottle {
+  identifierKey   Bytes     @id(map: "admin_login_throttles_pkey") @map("identifier_key") @db.ByteA
+  windowStartedAt DateTime? @map("window_started_at") @db.Timestamptz(3)
+  failureCount    Int       @default(0) @map("failure_count")
+  delayUntil      DateTime? @map("delay_until") @db.Timestamptz(3)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([updatedAt], map: "admin_login_throttles_updated_at_idx")
+  @@map("admin_login_throttles")
+}
+
+model AuthSessionRefreshThrottle {
+  sessionId       String      @id(map: "auth_session_refresh_throttles_pkey") @map("session_id") @db.Uuid
+  windowStartedAt DateTime?   @map("window_started_at") @db.Timestamptz(3)
+  attemptCount    Int         @default(0) @map("attempt_count")
+  updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  session         AuthSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "auth_session_refresh_throttles_session_id_fkey")
+
+  @@map("auth_session_refresh_throttles")
+}

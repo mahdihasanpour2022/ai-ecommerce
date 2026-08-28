@@ -19,9 +19,11 @@ Start with [the project overview](docs/00-project-overview.md). Detailed archite
 Use focused context rather than loading all documentation:
 
 1. Always read this file.
-2. For a feature or task, read the documents explicitly listed in its **Required Context** section. That feature-local list is the source of truth for task-specific context routing.
+2. For a feature or task, use its **Required Context** as the routing source, but first assess whether that list is materially broader than execution requires. Narrow over-broad context before substantial work while retaining every authoritative source needed for correctness.
 3. Read the applicable sprint document for timing and approved scope.
 4. Load other documents only when inspection reveals a genuine dependency; do not read the entire `docs/` tree by default.
+
+Required Context is task-specific and Minimum Sufficient: prefer exact authoritative sections/topics and narrow canonical sources over whole documents included only for general relevance. Do not load unrelated completed-Sprint history or reread broad sources when a narrower canonical source already owns the applicable decision.
 
 Architecture and security documents own **how** the system is intended to work. Feature specifications own **what** observable behavior is required. Sprint documents own **when** work occurs and its scope. ADRs own **why** significant decisions were made. Prefer references to the canonical owner over duplicating detailed rules.
 
@@ -31,6 +33,7 @@ Architecture and security documents own **how** the system is intended to work. 
 - Use **Light** for simple deterministic work such as documentation, formatting, straightforward configuration/cleanup, and isolated changes. Use **Medium** for meaningful analysis, calculations, debugging, trade-offs, multi-file reasoning, planning, or security/domain reasoning. When uncertain, use Medium.
 - Medium is the maximum for normal project execution; do not use High, Extra High, or Ultra. For difficult or high-risk work, use Sol + Medium instead of increasing reasoning beyond Medium.
 - If Terra + Light becomes unexpectedly complex, escalate first to Terra + Medium, then to Sol + Medium when complexity, ambiguity, risk, or repeated failures justify it.
+- Improve workflow, preflight, context selection, and validation scope before lowering model/reasoning below the level required by task risk. Do not globally replace Sol with Terra or Medium with Light to save quota.
 - Model/reasoning choices optimize execution only. They never weaken Acceptance Criteria, Definition of Done, required tests, typecheck, lint, formatting, build validation, Swagger/OpenAPI, security validation, regression coverage, or correctness to save tokens.
 
 ## Task execution and transitions
@@ -54,23 +57,26 @@ Architecture and security documents own **how** the system is intended to work. 
 ### Failure, blockers, and context efficiency
 
 - Fix in-scope implementation or validation failures and continue. If genuinely Blocked, keep the task Current/Blocked, do not prepare another task, record the relevant execution state, and report only the exact blocker and required owner input. The compact success rule never hides failure.
+- Before substantial implementation, cheaply preflight external local infrastructure, required CLIs, environment values, and credentials that are necessary to implement or validate the task. For Prisma/schema/migration/persistence/data-integrity work, confirm the approved disposable PostgreSQL/Docker environment can run before expensive exploration or migration work. If a required dependency is unavailable, stop early and apply the existing Blocked workflow; do not install system software or perform heavyweight setup without owner approval.
 - Minimize routine conversational output, but never reduce correctness, validation, traceability, or important owner decisions to save context.
+- Detailed preflight, context-budget, and execution-efficiency policy is canonical in [Task Execution and Context Efficiency](docs/standards/execution.md); validation breadth/reuse is canonical in [testing standards](docs/standards/testing.md).
 
 ## Required workflow
 
 Before any non-trivial implementation:
 
-1. Inspect relevant existing code.
-2. Read the feature/task Required Context and, for Next.js work, the relevant installed guide under `node_modules/next/dist/docs/`.
-3. Identify reusable existing patterns.
-4. Determine affected applications and packages.
-5. Describe architecture impact.
-6. Describe API impact.
-7. Describe database impact.
-8. Describe security implications and edge cases.
-9. Describe required tests and documentation impact.
-10. Present a plan headed: Goal, Relevant existing architecture, Affected files/modules, Proposed implementation, API changes, Database changes, Security implications, Edge cases, Tests, Documentation impact.
-11. If the request did not already explicitly authorize implementation, wait for explicit approval before changing code.
+1. Review the task, Acceptance Criteria, and Required Context for scope and context-budget fit.
+2. Preflight any required external infrastructure, CLI, environment, or credential dependency before expensive exploration or implementation.
+3. If preflight passes, inspect relevant existing code and read only the Minimum Sufficient authoritative context; for Next.js work, read the relevant installed guide under `node_modules/next/dist/docs/`.
+4. Identify reusable existing patterns.
+5. Determine affected applications and packages.
+6. Describe architecture impact.
+7. Describe API impact.
+8. Describe database impact.
+9. Describe security implications and edge cases.
+10. Describe required tests and documentation impact.
+11. Present a plan headed: Goal, Relevant existing architecture, Affected files/modules, Proposed implementation, API changes, Database changes, Security implications, Edge cases, Tests, Documentation impact.
+12. If the request did not already explicitly authorize implementation, wait for explicit approval before changing code.
 
 When authorized, make the smallest coherent change, follow established architecture, avoid scope expansion, run relevant checks, and report changes, checks, and unresolved concerns. Explain non-trivial architecture and security patterns, alternatives, trade-offs, failure modes, and security implications so the user retains ownership.
 

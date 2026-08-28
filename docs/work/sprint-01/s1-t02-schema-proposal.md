@@ -4,7 +4,7 @@
 
 **Owner approval:** 2026-08-28
 
-This is an approved design artifact, not an implemented Prisma schema or migration. It translates the accepted Sprint 1 authentication contract into the concrete persistence design that S1-T03 may implement after its separate task approval.
+This is the approved design artifact that S1-T03 implements in the live Prisma schema and reviewed migration source. It does not by itself prove that a database was migrated or that runtime authentication persistence exists.
 
 ## Design summary
 
@@ -183,7 +183,7 @@ Cleanup must be bounded, batched, ordered child-before-parent, safe to retry, an
 
 ## Initial migration proposal
 
-The current Prisma schema has no model and the development database is expected to contain no application tables. S1-T03 should:
+The pre-S1-T03 Prisma schema had no model, and the development database was expected to contain no application tables. S1-T03's implementation follows this approved sequence:
 
 1. Add the nine approved Prisma models with explicit mapped names, foreign keys, unique constraints, and ordinary indexes.
 2. Run the existing `prisma:migrate:create -- --name add_admin_identity_and_sessions` command against disposable `automotive_dev` only.
@@ -230,4 +230,4 @@ The owner approved this proposal as one package:
 - [PostgreSQL 18 constraints](https://www.postgresql.org/docs/18/ddl-constraints.html)
 - [PostgreSQL 18 locking and consistency](https://www.postgresql.org/docs/18/applevel-consistency.html)
 
-A disposable candidate containing all nine mapped models, relations, composite keys, native types, indexes representable without Preview features, and explicit referential actions passed `prisma validate` with the repository's installed Prisma CLI `7.10.0`. The probe was removed; the live `schema.prisma` and generated client were not changed.
+A disposable design candidate containing all nine mapped models, relations, composite keys, native types, indexes representable without Preview features, and explicit referential actions passed `prisma validate` with the repository's installed Prisma CLI `7.10.0`. S1-T03 now carries those models in the live `schema.prisma`; generated client output remains reproducible and ignored.

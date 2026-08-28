@@ -32,4 +32,4 @@ GitHub Actions provides the minimal repository quality gate for pull requests an
 
 Schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and unapproved dependency changes require their separately approved tasks. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.
 
-See [product requirements](product/requirements.md), [MVP](product/mvp.md), and [system architecture](architecture/system-architecture.md).
+See [product requirements](product/requirements.md), [MVP](product/mvp.md), [system architecture](architecture/system-architecture.md), and [task execution/context-efficiency standards](standards/execution.md).

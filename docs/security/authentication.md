@@ -31,7 +31,7 @@ Exactly one configured private key signs new tokens. Verification accepts its pu
 
 Frontend JavaScript reads neither authentication cookie. Axios does not construct `Authorization: Bearer ...` in the accepted architecture. With credentialed CORS and browser cookie rules satisfied, the browser attaches eligible cookies automatically. `withCredentials: true` enables eligible cookie transmission; it does not create an Authorization header.
 
-The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. The only exception is the approved short-lived encrypted recovery envelope described under rotation; plaintext is never persisted. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and remain unimplemented until S1-T03.
+The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. The only exception is the approved short-lived encrypted recovery envelope described under rotation; plaintext is never persisted. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and are represented by the S1-T03 Prisma schema and reviewed migration. Runtime token behavior remains unimplemented.
 
 ## CSRF and CORS
 
@@ -98,7 +98,7 @@ Safe post-login return destinations are application-relative allowlisted paths. 
 
 ## Accepted persistence boundary and deferred decisions
 
-- The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md). They remain unimplemented until S1-T03.
+- The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified that persistence boundary; later tasks own runtime authentication behavior.
 - Production secret-provider integration, long-term security-event retention, distributed throttling, and operational key-rotation runbooks remain release/deployment work; their absence does not permit source-controlled secrets or horizontal deployment with per-process-only limiting.
 - BFF adoption remains Deferred until a concrete security, aggregation, deployment, or multi-client requirement justifies revisiting ADR 0010.
 

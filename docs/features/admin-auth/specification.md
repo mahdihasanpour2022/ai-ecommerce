@@ -132,4 +132,4 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 
 ## Accepted Persistence Contract
 
-The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). They remain design-only until S1-T03 implements the reviewed Prisma schema/migration.
+The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified them; runtime authentication behavior remains later-task work.

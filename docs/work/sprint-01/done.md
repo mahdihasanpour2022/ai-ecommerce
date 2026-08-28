@@ -36,4 +36,22 @@ Current Prisma ORM 7 and PostgreSQL 18 documentation was reviewed through Contex
 
 **Follow-ups:** S1-T03 is Current and awaiting implementation approval. It owns the reviewed Prisma schema, additive migration SQL, reference data, database-constraint verification, and generated-client validation.
 
+## S1-T03 — Implement Admin Identity and Session Persistence
+
+**Completed:** 2026-08-28
+
+**Result:** Implemented and database-verified the approved nine-model Admin identity, minimum RBAC, session, rotating-refresh history, recovery-envelope metadata, and shared-throttle persistence boundary as one additive PostgreSQL migration with the approved system reference grant.
+
+### Validation
+
+Prisma ORM 7 migration behavior was reviewed through Context7. The pinned PostgreSQL 18.6 Compose environment passed health and exact development/test database identity checks; both databases initially contained zero public tables. Prisma 7.10.0 format, validate, generate, create-only review, deploy, and migration-status checks passed. A fresh test-database apply and repeated deploy proved a clean idempotent migration path. Catalog inspection found the expected nine tables, 23 CHECK constraints, eight foreign keys with intended actions, 15 named indexes including the partial current-token invariant, and exactly one `SUPER_ADMIN`/`admin.access` grant with no Admin row. The rollback-only database invariant suite passed after correcting its PostgreSQL `RESTRICT` exception handling. All 19 API tests, API typecheck, lint, build, and repository formatting checks passed. Repository-wide local Markdown targets, stale blocker wording, secret-material patterns, generated-client ignore behavior, dependency/lockfile scope, `git diff --check`, and the read-only Git index also passed.
+
+**Important Decisions:** The reviewed migration remains one transaction-safe additive baseline for an empty application schema; it performs no drop, backfill, rewrite, or concurrent index operation. Prisma's create-only gate produced one empty follow-up artifact because the reviewed migration already matched the schema; that unneeded empty artifact was removed before the clean test apply. Migration failures roll back atomically, and any future correction uses a new forward-repair migration rather than editing the applied baseline.
+
+**Files / Areas Changed:** API Prisma schema, reviewed migration and migration lock, focused schema/source tests, rollback-only PostgreSQL invariant suite, and narrow database/authentication/Sprint documentation.
+
+**Documentation Impact:** Canonical persistence documents now distinguish the implemented and database-verified S1-T03 boundary from unimplemented provisioning and runtime authentication behavior.
+
+**Follow-ups:** S1-T04 is Current and awaiting implementation approval. It owns the trusted-environment first-Super-Admin provisioning workflow; selecting and installing an Argon2 implementation remains an explicit owner-approved dependency decision.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->
