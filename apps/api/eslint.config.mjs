@@ -1,14 +1,14 @@
-import eslint from "@eslint/js";
-import tseslint from "typescript-eslint";
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "dist-test/**", "eslint.config.mjs"],
+    ignores: ['dist/**', 'dist-test/**', 'eslint.config.mjs'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
-    files: ["**/*.ts"],
+    files: ['**/*.ts'],
     languageOptions: {
       parserOptions: {
         projectService: true,

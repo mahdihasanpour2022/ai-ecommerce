@@ -62,14 +62,14 @@ The foundation generates an OpenAPI document and provides Swagger UI in developm
 
 ## S0-T08 — Align TypeScript, Lint, and Formatting
 
-Status: Current
+Status: Done
 
 Objective:
 Establish consistent TypeScript and ESLint quality configuration plus a root-owned Prettier formatting/check workflow, sharing or duplicating configuration only where actual reuse or a concrete Workspace need justifies it.
 
 ## S0-T09 — Define Environment Strategy
 
-Status: Queued
+Status: Current
 
 Objective:
 Define validated environment configuration, safe examples, local ports, and development origin conventions without secrets.

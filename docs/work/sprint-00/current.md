@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T08
+S0-T09
 
 ## Title
 
-Align TypeScript, Lint, and Formatting
+Define Environment Strategy
 
 ## Status
 
@@ -14,111 +14,93 @@ Current
 
 ## Goal
 
-Establish consistent, explicit TypeScript, ESLint, and Prettier conventions across the implemented Storefront, Admin, and API Workspaces without premature shared-package abstraction or unrelated formatting churn.
-
-## Owner Decision
-
-- Prettier is the repository's official code-formatting tool.
-- S0-T08 establishes an appropriate Prettier configuration, ignore rules, and standard monorepo format/check commands.
-- Prefer one root formatting configuration; duplicate configuration inside a Workspace only when a concrete application-specific need requires it.
-- Formatting is part of the Definition of Done for tasks that modify files within the configured source/configuration scope.
-- Before such a task moves to Done, its relevant changed files conform to Prettier and the applicable formatting check passes.
-- Formatting writes remain scoped to the approved task. Do not blindly rewrite unrelated repository files; a repository-wide check-only command may still be used for validation.
-- CI must be able to run formatting in check-only mode without modifying files.
-- If installation is required, select the latest stable compatible Prettier release under the canonical dependency-version policy. Prerelease versions require separate explicit owner approval.
-
-## Reconciliation Note
-
-This context update does not authorize implementation or dependency changes. An earlier approved run already left uncommitted S0-T08 implementation changes in the shared working tree, including Prettier manifest/lockfile changes and formatting configuration. Those existing changes are preserved and must be reconciled against this owner decision before S0-T08 can be reviewed and marked Done; this documentation-only update neither installs dependencies nor adds to those implementation changes.
+Define and implement validated, secret-safe environment configuration for Storefront, Admin, and API, including predictable local ports and development-origin conventions.
 
 ## Why This Task Exists
 
-All three application boundaries compile independently, but their configuration was created task by task. The repository needs a reviewed quality baseline that preserves framework-specific needs while making typecheck, lint, and formatting validation predictable for local development and future CI.
+The three application foundations now exist, but environment values are not yet owned or validated consistently. Reproducible local development and future security-sensitive configuration require explicit application boundaries, safe examples, and fail-fast validation without committing secrets.
 
 ## Required Context
 
 - `docs/sprints/sprint-00.md`
+- `docs/00-project-overview.md`
+- `docs/architecture/system-architecture.md`
+- `docs/architecture/frontend-architecture.md`
+- `docs/architecture/backend-architecture.md`
+- `docs/api/conventions.md`
+- `docs/security/baseline.md`
 - `docs/standards/general.md`
 - `docs/standards/frontend.md`
 - `docs/standards/backend.md`
 - `docs/standards/testing.md`
 - `docs/standards/git.md`
+- `.gitignore`
 - `package.json`
 - `turbo.json`
-- each Workspace manifest, `tsconfig.json`, and ESLint configuration
-- existing Prettier declarations/configuration and ignore files, if any
+- all three Workspace manifests and current environment reads
 
 ## Scope
 
-- Inventory established TypeScript and ESLint differences and distinguish intentional framework requirements from accidental drift.
-- Align strict compiler expectations and explicit quality scripts where applications can share a convention safely.
-- Establish Prettier as the official formatter with one appropriate root configuration and root ignore rules unless a concrete Workspace-specific exception is required.
-- Provide standard write and check-only commands that cover the intended monorepo source/configuration scope; the check-only command must be suitable for later CI use.
-- Define task-scoped formatting practice and make applicable formatting validation an explicit Definition of Done gate.
-- Keep Turborepo orchestration and canonical quality standards aligned with the implemented commands.
+- Inventory current runtime/build-time environment reads and assign each value to its owning application.
+- Define environment naming, required/optional/default behavior, parsing, validation, and failure behavior without exposing secrets.
+- Establish predictable non-conflicting local ports and development browser/API origin conventions for all three applications.
+- Add safe tracked example files and concise setup documentation; keep real environment files ignored.
+- Add focused automated coverage for validation behavior where runtime logic is introduced.
+- Keep Turborepo environment inputs explicit enough to avoid incorrect cache reuse without introducing remote caching.
 
 ## Out of Scope
 
-- Application features, UI behavior changes, API contracts, business modules, database work, authentication, CI implementation, or broad onboarding work.
-- Blind repository-wide formatting writes or cleanup of unrelated pre-existing style.
-- Formatting generated artifacts, dependency trees, lockfiles, or other files intentionally excluded by the approved ignore/scope policy.
-- Framework or dependency upgrades unrelated to the approved quality baseline.
-- Creating a shared configuration package solely for future possibility.
+- Production domains, deployment-provider configuration, DNS/TLS, secret-manager selection, or committing real credentials.
+- Authentication implementation, cookie issuance, CORS middleware implementation beyond documenting/validating the required origin contract, database setup, Prisma, or business features.
+- Broad onboarding/README cleanup reserved for S0-T13.
 - Staging, committing, pushing, branching, or other Git writes.
 
-## Expected Changes After Implementation Approval
+## Expected Changes
 
-- Focused TypeScript and ESLint configuration/script alignment where justified.
-- A single root Prettier configuration, ignore rules, and standard root format/check-only commands unless inspection proves a narrower exception is necessary.
-- Only task-scoped formatting changes required to make affected source/configuration files conform.
-- Canonical standards and Sprint 0 execution-documentation updates.
-- Prettier dependency/lockfile changes only after stable-version and compatibility review and explicit implementation approval.
+- Application-local environment schemas/loaders and focused tests where justified.
+- Safe example environment files, local port/origin scripts or configuration, and narrowly required Turborepo inputs.
+- Canonical environment/onboarding reality and Sprint 0 execution records.
+- Any validation dependency requires exact stable-version compatibility review and explicit inclusion in the approved implementation scope.
 
 ## Testing Impact
 
-No new automated test required — validation only
+Automated tests required
 
-Run applicable typecheck, lint, Prettier check-only, build, Workspace integrity, and repository-wide regression commands. Do not create placeholder runtime tests for configuration-only behavior.
+Cover valid parsing/defaults and representative missing, malformed, unsafe, or cross-application values for any introduced validation logic. Also run typecheck, lint, formatting, build, tests, Workspace integrity, and configuration smoke checks.
 
 ## Swagger / OpenAPI Impact
 
-No documentation impact. This task does not change Backend HTTP behavior or contracts.
+No documentation impact. This task does not create or change a Backend HTTP contract; it only defines configuration that future API behavior may consume.
 
 ## Constraints
 
-- Preserve framework-required Next.js and NestJS compiler/lint behavior.
-- Do not weaken strictness, disable meaningful rules, or suppress real diagnostics merely to obtain a pass.
-- Prefer the smallest coherent configuration and dependency surface.
-- Use the latest stable compatible Prettier version if installation is approved and required; do not select a prerelease without explicit owner approval.
-- Keep write-mode formatting scoped to files affected by the task; use check-only validation for broader confidence.
-- Do not install or modify dependencies during this context-only decision update.
+- Never place secrets, credentials, tokens, or production-sensitive values in source, examples, logs, tests, or generated documentation.
+- Browser-exposed variables must be explicitly public and contain no secrets.
+- Validation fails early with actionable messages that do not echo sensitive values.
+- Preserve the accepted direct-browser-to-API architecture and deferred production-domain decisions.
+- Use Context7/current official documentation before changing framework-, library-, or Turborepo-specific environment behavior.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- Each TypeScript Workspace retains an appropriate strict configuration and an independently passing `typecheck` command.
-- ESLint commands/configurations are explicit, framework-compatible, and pass without hiding errors.
-- Prettier is documented and configured as the official formatter through an appropriate single root configuration and ignore policy, unless a justified exception is recorded.
-- Standard write and check-only commands exist; check-only mode makes no file modifications and is suitable for future CI.
-- Relevant task-changed source/configuration files conform to Prettier, and the applicable formatting check passes before Done.
-- Formatting writes do not create unrelated repository churn.
-- Root/Turbo quality commands cover all applicable Workspaces predictably.
-- Relevant typecheck, lint, formatting, build, integrity, and regression gates pass.
-- No unrelated runtime behavior, speculative shared package, prerelease dependency, or unapproved dependency/version change is introduced.
+- Each current environment value has one documented owner, type, requirement/default, and exposure classification.
+- Storefront, Admin, and API have non-conflicting documented local ports and consistent development-origin conventions.
+- Introduced environment parsing is typed, validated, fail-fast, and covered by focused automated tests.
+- Safe tracked examples contain placeholders/defaults only; real environment files remain ignored.
+- Browser bundles receive no server-only or secret value.
+- Relevant typecheck, lint, formatting, build, test, Workspace, integrity, and configuration checks pass.
+- No deployment, authentication, database, business, or unrelated dependency behavior is introduced.
 
 ## Validation
 
-- Compare effective TypeScript and ESLint behavior across all three Workspaces.
-- Verify the Prettier version is stable and compatible before any approved installation or manifest change.
-- Inspect root Prettier configuration, ignores, file scope, and write/check-only command behavior.
-- Prove check-only mode returns success for conforming files, failure for nonconforming files when safely testable, and does not modify files.
-- Run focused and root typecheck, lint, formatting, and build commands after implementation.
-- Verify Workspace discovery, Yarn integrity, generated-output handling, and exact dependency/lockfile scope.
-- Review the read-only Git diff/index state and confirm documentation matches implementation.
+- Inspect source and build configuration for every environment read and public/server-only boundary.
+- Run focused valid/invalid environment tests and application startup/build smoke checks with safe values.
+- Run repository-wide typecheck, lint, formatting, build, and applicable test gates.
+- Verify example tracking, real environment ignores, Turbo inputs, Workspace integrity, dependency/lockfile scope, and read-only Git index state.
 
 ## Documentation Impact
 
-Update canonical general/testing standards so applicable Prettier conformance and a passing formatting check are permanent Definition of Done requirements. Keep detailed policy in canonical standards rather than duplicating it in `AGENTS.md`.
+Document the canonical environment contract, safe local defaults, application ownership, and setup commands; update Sprint 0 execution records when validated.
 
 ## Approval State
 

@@ -112,4 +112,20 @@ Current official NestJS guidance was reviewed through Context7 before implementa
 
 **Follow-ups:** S0-T08 is prepared for separate implementation approval to align TypeScript, lint, and formatting conventions across the established Workspaces.
 
+## S0-T08 — Align TypeScript, Lint, and Formatting
+
+**Completed:** 2026-08-28
+
+**Result:** Reconciled and completed the repository quality baseline under the owner's explicit Prettier decision. Prettier is the official formatter through one root configuration, one root ignore policy, and standard `yarn format`/`yarn format:check` commands. TypeScript strictness and explicit ESLint behavior remain aligned across Storefront, Admin, and API while preserving Next.js Bundler and NestJS NodeNext requirements. The 14 existing files reported by the configured formatting gate were baselined through an explicit file list rather than a blind repository-wide write.
+
+### Validation
+
+Current Prettier guidance was reviewed through Context7. Registry metadata confirmed root-pinned Prettier `3.9.6` is the latest stable release, supports Node `>=14`, and the newer `4.0.0-alpha.13` is a prohibited prerelease. `yarn format:check` passed across 28 configured files and SHA-256 comparison proved check-only mode modified zero files. A temporary unformatted root JavaScript probe proved the same command returns exit code `1` without modifying the file; the probe was then removed. Uncached repository-wide typecheck, lint, build, and test graphs passed; all three API Swagger exposure tests remained green. Yarn discovered all three Workspaces without mismatches, integrity passed, frozen offline installation was already up to date, `git diff --check` passed, and no manifest or lockfile delta was introduced during this approved reconciliation.
+
+**Important Decisions:** Prettier owns formatting and ESLint owns correctness diagnostics. One root configuration is sufficient; no Workspace-specific Prettier configuration or shared configuration package is justified. Write-mode formatting stays scoped to task-relevant files, while repository-wide check-only validation is permitted and suitable for future CI. Applicable source/configuration changes cannot move to Done until changed files conform and `yarn format:check` passes. Documentation, lockfiles, dependencies, and generated output remain outside automated formatting scope.
+
+**Files / Areas Changed:** Applied the approved root Prettier style to the 14 explicitly reported application/configuration files and updated Sprint 0 execution records. The already-present root Prettier configuration, ignore rules, scripts, strict TypeScript/ESLint alignment, and canonical Definition of Done standards were verified rather than duplicated. No dependency, lockfile, runtime behavior, API contract, database, authentication, or infrastructure change was made in this reconciliation pass.
+
+**Follow-ups:** S0-T09 is prepared for separate implementation approval to define validated environment configuration, safe examples, local ports, and development-origin conventions.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->
