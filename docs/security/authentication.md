@@ -25,27 +25,23 @@ The API issues two separate host-only cookies. The `Domain` attribute is not set
 
 Runtime lifetimes come from validated environment configuration; 15 minutes and 7 days are the accepted defaults, not values to hard-code throughout the application. Local development configuration may differ where HTTPS is unavailable, but production protections must not be weakened silently. Cookie names and exact development behavior belong to environment-aware implementation planning.
 
+Access JWTs use asymmetric `EdDSA` with Ed25519 keys. The protected header contains only the fixed `alg=EdDSA`, `typ=at+jwt`, and a validated `kid` that selects from the API's configured trusted key ring; token-supplied `jwk`, `jku`, `x5u`, or other key material is never trusted. Verification hard-allows only EdDSA and requires the configured issuer/audience plus `sub` (AdminUser ID), `sid` (AuthSession ID), `jti`, `iat`, and `exp`. Roles and permissions are deliberately absent because current Backend state remains authoritative.
+
+Exactly one configured private key signs new tokens. Verification accepts its public key and explicitly configured retiring public keys until every token they signed has exceeded its short lifetime; unknown/invalid `kid`, algorithm, issuer, audience, type, signature, or required claim fails closed. Private and recovery keys are server secrets supplied by an approved secret mechanism, never source-controlled or exposed through public JWKS/headers in this single-issuer boundary.
+
 Frontend JavaScript reads neither authentication cookie. Axios does not construct `Authorization: Bearer ...` in the accepted architecture. With credentialed CORS and browser cookie rules satisfied, the browser attaches eligible cookies automatically. `withCredentials: true` enables eligible cookie transmission; it does not create an Authorization header.
 
-The raw cryptographically secure opaque refresh token exists only in its HttpOnly cookie. Backend persistence stores a secure representation such as a hash, never the raw credential. Exact persistence schema is Open.
+The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. The only exception is the approved short-lived encrypted recovery envelope described under rotation; plaintext is never persisted. Exact columns and constraints remain S1-T02 scope.
 
 ## CSRF and CORS
 
-Cookie authentication requires CSRF protection for state-changing browser requests. The Backend issues a CSRF credential bound to the authenticated session. A frontend-readable host-only `csrf-token` cookie is conceptually:
+Cookie authentication requires a synchronizer CSRF token bound to each `AuthSession`. The Backend generates a random 256-bit base64url token at session creation, stores only its SHA-256 hash on the session, and compares the submitted value safely. The token remains stable only for that session and is neither an authentication token nor a parent-domain/double-submit cookie.
 
-```text
-HttpOnly = false
-Secure = true in production
-SameSite = Lax
-Path = /
-Domain = not set
-```
+Successful login returns the CSRF token in a JSON response. On reload, the Admin obtains the same token from a no-store `GET /auth/csrf` bootstrap endpoint after the Backend validates the Refresh cookie and active session without rotating it. The frontend holds the token in memory only—never local/session storage, a URL, or a cookie—and sends it in `X-CSRF-Token` on `POST`, `PUT`, `PATCH`, and `DELETE`, including refresh and logout. Missing/mismatched credentials fail with `403 CSRF_VALIDATION_FAILED` and are security-event candidates. `GET`, `HEAD`, and `OPTIONS` never change application state.
 
-The frontend sends `X-CSRF-Token` on `POST`, `PUT`, `PATCH`, and `DELETE`. `GET`, `HEAD`, and `OPTIONS` must not change state. Validation must be bound to the current authenticated session and must not be a naive unsigned double-submit design.
+Login has no authenticated session token yet, so it is protected by exact configured Origin validation, JSON/custom-header preflight behavior, and Fetch Metadata as defense in depth. Every other unsafe browser request requires both an allowed exact Origin and the session-bound token. If `Origin` is absent, a validated Referer fallback may be used; if neither is trustworthy, reject. Fetch Metadata does not replace Origin/token checks.
 
-With direct cross-origin API communication, a host-only cookie created by `api.example.com` cannot be read by JavaScript executing on `admin.example.com`. Therefore the accepted host-only attributes do not authorize a parent-domain cookie: the exact safe delivery/storage mechanism for the frontend-readable CSRF value, including login/bootstrap and refresh coverage, remains **Open** and must preserve session binding.
-
-CORS uses an environment-configured explicit origin allowlist, conceptually including `https://admin.example.com` and `https://example.com` plus explicit development origins. Credentialed CORS is required. Never combine credentials with `Access-Control-Allow-Origin: *`.
+CORS uses an environment-configured exact origin allowlist, conceptually including `https://admin.example.com` and explicit development origins. Credentialed CORS is required; wildcard origins, broad subdomain regexes, reflected arbitrary origins, and `Access-Control-Allow-Origin: *` are forbidden. Responses carrying credentials or CSRF material use `Cache-Control: no-store` and never log that material.
 
 ## Refresh trigger and single flight
 
@@ -66,6 +62,10 @@ Admin authentication has three separate accepted concepts: `AdminUser`, `AuthSes
 
 Refresh rotation is required: using `R1` produces `R2`, and `R1` becomes superseded. Legitimate races can arise from tabs, retries, or a lost response. A configuration-driven `REFRESH_REUSE_GRACE_SECONDS=10` is the accepted default. Within the approved grace logic, a recently rotated credential associated with the same legitimate session may be handled narrowly as concurrency/recovery rather than immediate theft. This does not make the old token normally valid for ten seconds.
 
+Each newly current refresh token has an AES-256-GCM recovery envelope containing its raw value for at most that ten-second grace period. Ciphertext, unique nonce, authentication tag, key ID, and expiry are stored; the versioned encryption key ring is injected separately from the database. The envelope is deleted or made unusable after expiry. Rotation and current-token selection are atomic.
+
+If a superseded family token is presented within grace with the same active session and valid CSRF token, the Backend returns the exact latest current credential from its authenticated recovery envelope without creating another rotation. This makes concurrent/lost-response handling idempotent even when multiple tabs raced. IP address or user-agent similarity is not proof of legitimacy and is not required. A missing/invalid/expired envelope, revoked session, invalid CSRF credential, token outside grace, or reuse after the family advanced beyond recoverable state is suspicious reuse, not recovery.
+
 Reuse outside valid grace/recovery behavior returns the English machine code `REFRESH_TOKEN_REUSED`, issues no normal replacement credentials, records a security event, and revokes only the affected current `AuthSession`/token family. Other sessions belonging to the Admin remain valid. The affected frontend session stops refreshing, clears its authentication state/cookies as appropriate, requires login, and may show a safe Persian message without technical security details.
 
 Normal logout revokes only the current `AuthSession` and its refresh capability, clears Access and Refresh cookies and related frontend state, and requires login again in that browser. Other browser/device sessions remain active. `logout-all` is Deferred unless separately approved.
@@ -85,17 +85,21 @@ Definitive Backend responses such as `REFRESH_TOKEN_INVALID`, `REFRESH_TOKEN_EXP
 - Access JWT validation includes the approved signature algorithm, key, issuer, audience, expiry, and required identity/session claims.
 - Refresh validation covers secure comparison, expiry, session status, rotation state, revocation, and grace behavior; rotation is atomic.
 - Access and Refresh lifetimes are configuration-driven with accepted defaults of `ACCESS_TOKEN_TTL=15m` and `REFRESH_TOKEN_TTL=7d`.
-- Passwords use an approved adaptive hash; parameters remain Open. Tokens, cookies, passwords, CSRF credentials, and credential-bearing headers are never logged.
-- Authentication endpoints require approved brute-force/abuse controls without assuming Redis.
+- Passwords use Argon2id with 64 MiB memory (`m=65536 KiB`), three iterations, parallelism one, 32-byte output, library-generated unique salts, and Argon2 version 19. Successful verification rehashes when accepted parameters change. Deployment benchmarking may increase cost; reducing below OWASP's Argon2id minimum requires explicit security approval. No pepper is used initially because its independent secret lifecycle/recovery cost is not currently justified.
+- Login uses equivalent password-verification work, including a maintained dummy Argon2id hash for nonexistent identities. Unknown identity, wrong password, disabled/inactive identity, and missing `admin.access` eligibility all return the same `401 INVALID_CREDENTIALS`, generic Persian message, response shape, and materially equivalent path. `ACCOUNT_DISABLED` is reserved for a previously authenticated session whose Admin becomes disabled.
+- Configurable login protection allows five failed attempts per account in 15 minutes, then applies an escalating delay from 30 seconds up to 15 minutes; successful authentication resets that account counter. A coarse per-IP limit allows 20 login attempts per 15 minutes. Refresh allows 10 attempts per active session and 30 per IP per minute. Exceeding a limit returns generic `429 AUTH_RATE_LIMITED` with `Retry-After`, creates no session/credential, and never permanently locks the account.
+- Account/session throttling state must be shared through PostgreSQL where S1-T02 determines its final representation. IP throttling may be per-process only for the current single-instance foundation; an approved shared/edge limiter is required before horizontal deployment. Proxy-derived client addresses are trusted only from explicitly configured proxies. CAPTCHA and Redis remain Deferred.
+- Tokens, cookies, passwords, CSRF credentials, submitted login identifiers, credential-bearing headers, and recovery plaintext are never logged. Structured events use correlation IDs and minimum safe identifiers for login success/failure/throttle, session creation/revocation, CSRF rejection, grace recovery, suspicious reuse, and disabled-session rejection; retention remains an operational decision.
 - The first Super Admin is provisioned through a secure administrative CLI/script workflow from a trusted environment, conceptually `yarn admin:create-super-admin` subject to final repository naming. It accepts credentials through a secure interactive prompt or protected environment configuration, hashes the password, is explicit/auditable, exposes no public bootstrap endpoint or default/committed credentials, stores no plaintext password, and fails safely if an initial Super Admin already exists.
 
-## Open Decisions
+Safe post-login return destinations are application-relative allowlisted paths. Reject absolute URLs, protocol-relative values, backslashes, control characters, and unrecognized routes; fall back to the protected Admin home. Client input never selects an external redirect.
 
-- Access-JWT signing algorithm, key ownership, rotation, issuer, audience, and final claims.
-- Final Prisma schema, constraints, indexes, relations, deletion policies, and retention for `AuthSession` and `RefreshToken`.
-- Exact safe credential-recovery mechanics for legitimate reuse within the grace window, including how a lost rotated response is recovered without treating the superseded token as normally valid.
-- Exact cross-origin delivery/storage, login/bootstrap coverage, and cryptographic/session-binding implementation for the frontend-readable CSRF credential.
-- Password hash algorithm/parameters and authentication throttling thresholds.
-- Future criteria for reconsidering BFF.
+## Remaining Open / Deferred Decisions
+
+- S1-T02 owns final Prisma columns, constraints, indexes, relations, deletion policies, cleanup, and retention while preserving the accepted session, CSRF, recovery-envelope, and shared throttle invariants above.
+- Production secret-provider integration, long-term security-event retention, distributed throttling, and operational key-rotation runbooks remain release/deployment work; their absence does not permit source-controlled secrets or horizontal deployment with per-process-only limiting.
+- BFF adoption remains Deferred until a concrete security, aggregation, deployment, or multi-client requirement justifies revisiting ADR 0010.
+
+These decisions follow [JWT Best Current Practices (RFC 8725)](https://www.rfc-editor.org/rfc/rfc8725), [EdDSA for JOSE (RFC 8037)](https://www.rfc-editor.org/rfc/rfc8037), and OWASP guidance for [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html), and [password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
 
 See [authorization](authorization.md), [security baseline](baseline.md), [API conventions](../api/conventions.md), and [ADR 0010](../architecture/adr/0010-authentication-strategy.md).

@@ -1,6 +1,6 @@
 # Sprint 1: Admin Authentication
 
-**Status:** Proposed
+**Status:** Active
 
 ## Required Context
 
@@ -59,4 +59,4 @@ The approved specification and security decisions are met; schema/migrations and
 
 ## Risks / Open Questions
 
-Sprint 1 cannot begin implementation until the remaining items in [Authentication Open Decisions](../security/authentication.md#open-decisions) and [feature Open Questions](../features/admin-auth/specification.md#open-questions) that affect the slice are approved.
+S1-T01 resolves the blocking authentication security and contract decisions. S1-T02 must still produce and receive explicit approval for final Prisma schema/migration details before persistence implementation; deployment secret providers, distributed throttling, and broader authorization/operational policy remain downstream or Deferred as documented canonically.

@@ -1,6 +1,9 @@
 # Current Task
 
-No active task — Sprint 1 is Planned and has not started.
+No task is Current. Sprint 1 remains Active.
 
-Activation requires Sprint 0 completion and explicit owner approval. When activated, the selected task must be copied from the queue into this file with `Approval State: Awaiting Implementation Approval`; implementation must not begin automatically.
+S1-T01 is Done. S1-T02 remains Queued until the owner approves preparing it as the next Current task.
 
+## Approval State
+
+No Implementation Authorized

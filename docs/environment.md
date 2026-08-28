@@ -35,6 +35,35 @@ The API parses configuration before creating the NestJS application. Invalid val
 
 Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather than an application setting and must not be overridden with a nonstandard value. Neither frontend currently consumes an application environment variable.
 
+## Accepted Sprint 1 configuration contract
+
+These API-owned values are approved inputs for later Sprint 1 implementation but are not consumed yet. Implementation must validate them before application creation and add only safe placeholders—not usable keys—to `.env.example`.
+
+| Name | Type/default | Exposure and purpose |
+| --- | --- | --- |
+| `ACCESS_TOKEN_TTL` | Duration; default `15m` | Server-only, non-secret access lifetime |
+| `REFRESH_TOKEN_TTL` | Duration; default `7d` | Server-only, non-secret refresh/session lifetime |
+| `REFRESH_REUSE_GRACE_SECONDS` | Integer; default `10` | Server-only, non-secret bounded recovery window |
+| `AUTH_JWT_PRIVATE_KEY` | Ed25519 private key; required | Secret active signing key; never tracked or logged |
+| `AUTH_JWT_PUBLIC_KEYS` | Trusted Ed25519 verification key ring; required | Server-only integrity-sensitive configuration containing active/retiring public keys keyed by `kid` |
+| `AUTH_JWT_ACTIVE_KID` | Non-empty key ID; required | Server-only, non-secret selector that must exist in the trusted key ring |
+| `AUTH_JWT_ISSUER` | Exact string; default `automotive-commerce-api` | Server-only, non-secret required `iss` value |
+| `AUTH_JWT_AUDIENCE` | Exact string; default `automotive-commerce-admin` | Server-only, non-secret required `aud` value |
+| `AUTH_REFRESH_RECOVERY_KEYRING` | Versioned AES-256-GCM keys; required | Secret active/retiring recovery keys; separate from JWT and database material |
+| `CORS_ALLOWED_ORIGINS` | Exact origin list; environment-specific | Server-only, non-secret; no wildcard, broad regex, or arbitrary reflection |
+| `AUTH_ARGON2_MEMORY_KIB` | Integer; default `65536` | Server-only, non-secret password-hash memory cost |
+| `AUTH_ARGON2_TIME_COST` | Integer; default `3` | Server-only, non-secret password-hash iteration cost |
+| `AUTH_ARGON2_PARALLELISM` | Integer; default `1` | Server-only, non-secret password-hash parallelism |
+| `AUTH_LOGIN_ACCOUNT_FAILURE_LIMIT` | Integer; default `5` | Server-only, non-secret failures per account/window |
+| `AUTH_LOGIN_WINDOW_SECONDS` | Integer; default `900` | Server-only, non-secret account/IP login window |
+| `AUTH_LOGIN_INITIAL_DELAY_SECONDS` | Integer; default `30` | Server-only, non-secret initial account backoff |
+| `AUTH_LOGIN_MAX_DELAY_SECONDS` | Integer; default `900` | Server-only, non-secret maximum account backoff |
+| `AUTH_LOGIN_IP_LIMIT` | Integer; default `20` | Server-only, non-secret requests per IP/login window |
+| `AUTH_REFRESH_SESSION_LIMIT_PER_MINUTE` | Integer; default `10` | Server-only, non-secret refresh requests per active session |
+| `AUTH_REFRESH_IP_LIMIT_PER_MINUTE` | Integer; default `30` | Server-only, non-secret refresh requests per IP |
+
+JWT verification accepts only configured keys and exact issuer/audience values; a token header cannot introduce trust material. Recovery keys decrypt only the at-most-ten-second refresh recovery envelope. Key-ring serialization, deployment secret injection, and rotation runbooks remain implementation/release concerns, but source-controlled/private-key defaults are prohibited.
+
 ## Adding configuration later
 
 - Assign every new value to one application and document its name, type, requirement/default, and exposure.

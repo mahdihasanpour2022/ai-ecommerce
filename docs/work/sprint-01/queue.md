@@ -1,10 +1,10 @@
 # Sprint 1 Queue
 
-Sprint 1 is Planned and inactive. Its goal, scope, and Definition of Done remain canonical in [Sprint 1](../../sprints/sprint-01.md). Starting it requires Sprint 0 completion and explicit owner approval.
+Sprint 1 is Active. Its goal, scope, and Definition of Done remain canonical in [Sprint 1](../../sprints/sprint-01.md).
 
 ## S1-T01 — Resolve Blocking Authentication Decisions
 
-Status: Queued
+Status: Done
 
 Objective:
 Resolve only the Open security, CSRF, signing, authorization-contract, recovery, hashing, and throttling decisions that block the approved feature.

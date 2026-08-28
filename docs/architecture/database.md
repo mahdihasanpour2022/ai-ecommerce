@@ -12,14 +12,14 @@ Local development uses the exact official `postgres:18.6-alpine3.24` image throu
 
 - Admin identity/access: `AdminUser`, `Role`, `Permission`, plus explicit many-to-many assignments. `SUPER_ADMIN` is a Role, not a boolean shortcut.
 - Admin authentication uses separate accepted concepts:
-  - `AuthSession` represents one browser/device login and conceptually contains `id`, `adminUserId`, `createdAt`, `expiresAt`, `revokedAt`, and `lastUsedAt`.
-  - `RefreshToken` belongs to an `AuthSession` and represents one credential in its rotating history/family. It conceptually contains `id`, `sessionId`, `tokenHash`, `createdAt`, `expiresAt`, `rotatedAt`, `revokedAt`, and `replacedByTokenId`.
+  - `AuthSession` represents one browser/device login and conceptually contains `id`, `adminUserId`, a hash of its random session-bound CSRF token, `createdAt`, `expiresAt`, `revokedAt`, and `lastUsedAt`.
+  - `RefreshToken` belongs to an `AuthSession` and represents one credential in its rotating history/family. It conceptually contains `id`, `sessionId`, the SHA-256 token hash, `createdAt`, `expiresAt`, `rotatedAt`, `revokedAt`, and `replacedByTokenId`. The current token also needs bounded AES-256-GCM recovery-envelope metadata (ciphertext, unique nonce, authentication tag, key ID, and expiry) that becomes unusable after the accepted ten-second grace window.
 - Catalog: `Product`, `ProductImage`, `Category`, `Brand`.
 - Fitment: `VehicleBrand`, `VehicleModel`, `VehicleTrim`, `ProductVehicleCompatibility`.
 - Stock: `Inventory`.
 - Commerce: `Customer`, `Address`, `Order`, `OrderItem`.
 
-`AdminUser`, `AuthSession`, and `RefreshToken` separation and the fields above are accepted conceptual architecture: refresh credentials rotate while a logical session continues, enabling history, concurrency grace, replay detection, logout, session revocation, and auditing. They are not a final Prisma model. Constraints, indexes, relations, nullability, deletion policies, retention, and migrations remain Open until an explicitly approved schema task.
+`AdminUser`, `AuthSession`, and `RefreshToken` separation and the fields above are accepted conceptual architecture: refresh credentials rotate while a logical session continues, enabling history, idempotent encrypted grace recovery, replay detection, logout, session revocation, and auditing. S1-T02 must also propose shared account/session throttling state and bounded cleanup/retention; per-IP state may remain process-local only while deployment is single-instance. These are not final Prisma models. Constraints, indexes, relations, nullability, deletion policies, cleanup, retention, and migrations remain Open until S1-T02 approval.
 
 `AdminUser` and `Customer` are independent business identity models unless a future decision changes that boundary. Other entities are discovery inputs, not approved tables. Product variants, SKU ownership, category hierarchy/cardinality, exact vehicle compatibility, inventory location/reservation, pricing history, order snapshots, names, identifiers, deletion behavior, timestamps, and audit fields remain Open or Deferred until their feature/schema planning stage.
 

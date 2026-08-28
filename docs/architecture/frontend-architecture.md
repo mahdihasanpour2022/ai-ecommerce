@@ -10,7 +10,7 @@ Per the installed Next.js 16 guide, layouts and pages are Server Components by d
 
 - Route/layout composition owns page structure and rendering strategy.
 - Feature-level UI separates presentation from validation, orchestration, and business rules.
-- A reusable HTTP/auth layer centralizes base URL, credentialed cookies, CSRF headers, timeout, error-code handling, refresh coordination, and observability hooks. In the accepted cookie architecture, JavaScript does not read the access token or construct a Bearer header.
+- A reusable HTTP/auth layer centralizes base URL, credentialed cookies, CSRF headers, timeout, error-code handling, refresh coordination, and observability hooks. In the accepted cookie architecture, JavaScript does not read either authentication token or construct a Bearer header. The session-bound CSRF token is the only frontend-readable credential; it is delivered by login/`GET /auth/csrf`, held only in memory, and never persisted in Web Storage or a cookie.
 - Components must not scatter arbitrary API calls or duplicate server business rules.
 - Introduce global state only for genuinely cross-route client state. Prefer server data, URL state, local state, and focused context first.
 - Do not use `useMemo` or `useCallback` without a measured or behaviorally necessary reason. Avoid `any` unless documented and strongly justified.
@@ -29,6 +29,8 @@ Target WCAG 2.2 AA. Use semantic HTML and keyboard-operable native controls firs
 Storefront routes need intentional Persian metadata, crawlability, canonical strategy, semantic content, structured data where validated, optimized images, and performance budgets aligned with Core Web Vitals. Keep client JavaScript narrow, avoid layout shifts, and select caching/revalidation per data freshness requirements.
 
 Admin prioritizes accessible dense data, forms, permissions-aware actions, and resilient CRUD states. Hiding an action is usability only; the API must authorize every operation.
+
+Authentication return destinations are allowlisted application-relative paths. Reject external/protocol-relative URLs, backslashes, control characters, and unknown routes rather than forwarding attacker-controlled navigation.
 
 Trusted source-controlled SVG assets such as logos, icons, and illustrations are allowed and may use an approved build-time component import approach. Never inject arbitrary untrusted SVG markup. Uploaded product/media SVG is forbidden; upload rules live in the [security baseline](../security/baseline.md).
 
