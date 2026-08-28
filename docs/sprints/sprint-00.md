@@ -40,6 +40,7 @@ Read only the context for the active workstream in addition to `AGENTS.md` and t
 
 ### CI and environment baseline
 
+- [Environment strategy](../environment.md)
 - [General standards](../standards/general.md)
 - [Testing standards](../standards/testing.md)
 - [Security baseline](../security/baseline.md)

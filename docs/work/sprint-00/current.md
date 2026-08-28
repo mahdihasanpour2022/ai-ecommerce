@@ -2,11 +2,11 @@
 
 ## Task ID
 
-S0-T09
+S0-T10
 
 ## Title
 
-Define Environment Strategy
+Establish Local PostgreSQL Development
 
 ## Status
 
@@ -14,93 +14,92 @@ Current
 
 ## Goal
 
-Define and implement validated, secret-safe environment configuration for Storefront, Admin, and API, including predictable local ports and development-origin conventions.
+Select and implement the lightest reproducible local PostgreSQL approach that provides predictable lifecycle, health, isolated test-database, and reset behavior without introducing production infrastructure or product schema.
 
 ## Why This Task Exists
 
-The three application foundations now exist, but environment values are not yet owned or validated consistently. Reproducible local development and future security-sensitive configuration require explicit application boundaries, safe examples, and fail-fast validation without committing secrets.
+PostgreSQL is the accepted primary database, but the repository does not yet define how developers start, stop, verify, isolate, or reset it locally. Prisma work must build on an explicit, safe local database contract rather than machine-specific assumptions.
 
 ## Required Context
 
 - `docs/sprints/sprint-00.md`
 - `docs/00-project-overview.md`
+- `docs/environment.md`
 - `docs/architecture/system-architecture.md`
-- `docs/architecture/frontend-architecture.md`
 - `docs/architecture/backend-architecture.md`
-- `docs/api/conventions.md`
+- `docs/architecture/database.md`
+- `docs/architecture/adr/0006-use-postgresql.md`
+- `docs/architecture/adr/0007-use-prisma.md`
 - `docs/security/baseline.md`
 - `docs/standards/general.md`
-- `docs/standards/frontend.md`
 - `docs/standards/backend.md`
 - `docs/standards/testing.md`
 - `docs/standards/git.md`
-- `.gitignore`
-- `package.json`
-- `turbo.json`
-- all three Workspace manifests and current environment reads
+- current root scripts, ignore rules, and local-infrastructure files
 
 ## Scope
 
-- Inventory current runtime/build-time environment reads and assign each value to its owning application.
-- Define environment naming, required/optional/default behavior, parsing, validation, and failure behavior without exposing secrets.
-- Establish predictable non-conflicting local ports and development browser/API origin conventions for all three applications.
-- Add safe tracked example files and concise setup documentation; keep real environment files ignored.
-- Add focused automated coverage for validation behavior where runtime logic is introduced.
-- Keep Turborepo environment inputs explicit enough to avoid incorrect cache reuse without introducing remote caching.
+- Inspect repository and host constraints relevant to native versus containerized PostgreSQL development.
+- Select and document the minimal reproducible local approach, including its supported version and ownership boundary.
+- Define safe development and isolated test database names, ports, credentials/placeholders, and connection-string handling without committing secrets.
+- Provide narrow lifecycle, health/readiness, test-database provisioning, and destructive reset commands with explicit targets and safeguards.
+- Add only the scripts/configuration and validation documentation needed for the selected approach.
+- Keep the environment contract and future Prisma bootstrap boundary consistent.
 
 ## Out of Scope
 
-- Production domains, deployment-provider configuration, DNS/TLS, secret-manager selection, or committing real credentials.
-- Authentication implementation, cookie issuance, CORS middleware implementation beyond documenting/validating the required origin contract, database setup, Prisma, or business features.
-- Broad onboarding/README cleanup reserved for S0-T13.
+- Prisma installation/schema/migrations, product or authentication tables, seed business data, or API database integration.
+- Production/staging database hosting, backups, high availability, TLS, secret managers, deployment providers, or cloud infrastructure.
+- Redis, queues, search, observability stacks, or other local services.
 - Staging, committing, pushing, branching, or other Git writes.
 
 ## Expected Changes
 
-- Application-local environment schemas/loaders and focused tests where justified.
-- Safe example environment files, local port/origin scripts or configuration, and narrowly required Turborepo inputs.
-- Canonical environment/onboarding reality and Sprint 0 execution records.
-- Any validation dependency requires exact stable-version compatibility review and explicit inclusion in the approved implementation scope.
+- A reviewed local PostgreSQL lifecycle configuration or narrowly scoped scripts for the selected approach.
+- Safe development/test configuration examples and ignore behavior where needed.
+- Canonical local database setup, health, reset, and troubleshooting documentation.
+- Sprint 0 execution records after validation.
 
 ## Testing Impact
 
-Automated tests required
+No new automated test required — validation only
 
-Cover valid parsing/defaults and representative missing, malformed, unsafe, or cross-application values for any introduced validation logic. Also run typecheck, lint, formatting, build, tests, Workspace integrity, and configuration smoke checks.
+Validate configuration syntax, lifecycle commands, health/readiness, database isolation, an explicitly targeted reset, safe ignore/credential behavior, and relevant repository quality gates. Do not invent application tests before database integration exists.
 
 ## Swagger / OpenAPI Impact
 
-No documentation impact. This task does not create or change a Backend HTTP contract; it only defines configuration that future API behavior may consume.
+No documentation impact. This task does not create or change a Backend HTTP contract.
 
 ## Constraints
 
-- Never place secrets, credentials, tokens, or production-sensitive values in source, examples, logs, tests, or generated documentation.
-- Browser-exposed variables must be explicitly public and contain no secrets.
-- Validation fails early with actionable messages that do not echo sensitive values.
-- Preserve the accepted direct-browser-to-API architecture and deferred production-domain decisions.
-- Use Context7/current official documentation before changing framework-, library-, or Turborepo-specific environment behavior.
+- Do not commit real credentials or make a shared/default command capable of deleting an unspecified database or broad data directory.
+- Destructive reset behavior must name and validate the exact local development or test target and must not apply to production-like targets.
+- Use current official documentation before introducing version-specific PostgreSQL, Docker, or orchestration behavior.
+- Any new dependency or tool installation requires stable-version compatibility review and must follow the dependency-version policy.
+- Preserve the accepted PostgreSQL/Prisma architecture while leaving Prisma implementation to S0-T11.
 - Never stage or commit without separate approval.
 
 ## Acceptance Criteria
 
-- Each current environment value has one documented owner, type, requirement/default, and exposure classification.
-- Storefront, Admin, and API have non-conflicting documented local ports and consistent development-origin conventions.
-- Introduced environment parsing is typed, validated, fail-fast, and covered by focused automated tests.
-- Safe tracked examples contain placeholders/defaults only; real environment files remain ignored.
-- Browser bundles receive no server-only or secret value.
-- Relevant typecheck, lint, formatting, build, test, Workspace, integrity, and configuration checks pass.
-- No deployment, authentication, database, business, or unrelated dependency behavior is introduced.
+- The selected native or containerized approach and supported PostgreSQL version are explicit and justified against repository/host constraints.
+- A developer can start, stop, and verify local PostgreSQL using documented commands with predictable configuration.
+- Development and test databases are isolated by explicit names and safe non-production credentials/placeholders.
+- Reset behavior is reproducible, narrowly targeted, guarded against production-like targets, and validated.
+- Real secrets remain ignored; tracked examples/documentation contain safe local values only.
+- The approach exposes the connection contract S0-T11 needs without installing Prisma or creating schema.
+- Relevant configuration, lifecycle, health, Workspace, integrity, formatting, and scope checks pass.
 
 ## Validation
 
-- Inspect source and build configuration for every environment read and public/server-only boundary.
-- Run focused valid/invalid environment tests and application startup/build smoke checks with safe values.
-- Run repository-wide typecheck, lint, formatting, build, and applicable test gates.
-- Verify example tracking, real environment ignores, Turbo inputs, Workspace integrity, dependency/lockfile scope, and read-only Git index state.
+- Validate every introduced configuration file with the owning tool.
+- Exercise start, readiness/health, isolated development/test database access, stop, restart, and targeted reset behavior where the selected approach and host permit it.
+- Inspect commands for destructive target safety and examples/logs for secrets.
+- Run relevant repository formatting and quality gates, Workspace integrity, dependency/lockfile scope, and read-only Git index checks.
+- If a required host capability is unavailable, record the exact unexecuted integration check and do not claim it passed.
 
 ## Documentation Impact
 
-Document the canonical environment contract, safe local defaults, application ownership, and setup commands; update Sprint 0 execution records when validated.
+Document the selected local PostgreSQL contract and exact lifecycle/health/reset commands; update the environment strategy and Sprint 0 execution records when validated.
 
 ## Approval State
 

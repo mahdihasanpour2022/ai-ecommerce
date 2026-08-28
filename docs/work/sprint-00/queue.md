@@ -69,14 +69,14 @@ Establish consistent TypeScript and ESLint quality configuration plus a root-own
 
 ## S0-T09 — Define Environment Strategy
 
-Status: Current
+Status: Done
 
 Objective:
 Define validated environment configuration, safe examples, local ports, and development origin conventions without secrets.
 
 ## S0-T10 — Establish Local PostgreSQL Development
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the approved lightweight local PostgreSQL lifecycle, health, test-database, and reset approach.

@@ -4,11 +4,13 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { configureApplication } from './application';
+import { parseEnvironment } from './config/environment';
 
 async function bootstrap(): Promise<void> {
+  const environment = parseEnvironment();
   const app = await NestFactory.create(AppModule);
-  configureApplication(app);
-  await app.listen(process.env.PORT ?? 3000);
+  configureApplication(app, environment.nodeEnv);
+  await app.listen(environment.port);
 }
 
 void bootstrap();

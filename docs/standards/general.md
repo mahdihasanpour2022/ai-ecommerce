@@ -13,6 +13,8 @@
 - If architecture or requirements are ambiguous, document the assumption instead of silently making a major architectural decision.
 - Make the smallest coherent change, avoid unrelated cleanup, and update source-of-truth documentation with contract or architecture changes.
 
+Application environment values follow the canonical [environment strategy](../environment.md): assign one owner, validate before use, keep secrets server-only and untracked, and declare build-affecting values as cache inputs.
+
 ## Dependency version policy
 
 When an approved task adds or installs a new dependency, select the latest stable release that is compatible with the repository's existing runtime, framework, package-manager, peer-dependency, and related dependency constraints. Before installation, verify both that the selected release is stable and that its documented engines, peer ranges, and relevant framework/runtime support are compatible with the project.

@@ -13,8 +13,9 @@ import {
   OPENAPI_JSON_PATH,
   SWAGGER_PATH,
 } from '../src/application';
+import type { RuntimeEnvironment } from '../src/config/environment';
 
-async function createTestApplication(environment: string): Promise<INestApplication> {
+async function createTestApplication(environment: RuntimeEnvironment): Promise<INestApplication> {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = moduleRef.createNestApplication({ logger: false });
   configureApplication(app, environment);
@@ -41,7 +42,7 @@ void describe('Swagger exposure', () => {
     app = undefined;
   });
 
-  for (const environment of ['development', 'test']) {
+  for (const environment of ['development', 'test'] as const) {
     void test(`serves Swagger UI and an empty generated document in ${environment}`, async () => {
       app = await createTestApplication(environment);
 

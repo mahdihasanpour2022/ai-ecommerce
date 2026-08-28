@@ -1,17 +1,19 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+import type { RuntimeEnvironment } from './config/environment';
+
 export const API_PREFIX = 'api/v1';
 export const SWAGGER_PATH = 'api/docs';
 export const OPENAPI_JSON_PATH = 'api/docs-json';
 
-export function isSwaggerEnabled(environment: string | undefined): boolean {
+export function isSwaggerEnabled(environment: RuntimeEnvironment): boolean {
   return environment === 'development' || environment === 'test';
 }
 
 export function configureApplication(
   app: INestApplication,
-  environment: string = process.env.NODE_ENV ?? 'development',
+  environment: RuntimeEnvironment = 'development',
 ): void {
   app.setGlobalPrefix(API_PREFIX);
 

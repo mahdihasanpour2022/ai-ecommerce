@@ -128,4 +128,20 @@ Current Prettier guidance was reviewed through Context7. Registry metadata confi
 
 **Follow-ups:** S0-T09 is prepared for separate implementation approval to define validated environment configuration, safe examples, local ports, and development-origin conventions.
 
+## S0-T09 — Define Environment Strategy
+
+**Completed:** 2026-08-28
+
+**Result:** Established one secret-safe environment contract for all three applications. Storefront, Admin, and API now use non-conflicting local ports `3000`, `3001`, and `3002`; the API owns a typed fail-fast parser for `NODE_ENV` and `PORT`; and each Workspace has a trackable safe `.env.example` while real environment files remain ignored. The canonical strategy documents ownership, defaults, local origins, browser-exposure rules, error redaction, and future Turborepo cache-input requirements.
+
+### Validation
+
+Current Next.js and Turborepo environment guidance was reviewed through Context7 and the installed Next.js 16.3.2 guide. Focused API typecheck, lint, build, and test commands passed; all 15 tests passed, covering defaults, every supported runtime environment, explicit ports, representative invalid values, and existing development/test/production Swagger exposure. Runtime smoke checks proved default startup on port `3002`, Swagger HTTP `200`, the empty reserved API prefix HTTP `404`, and nonzero fail-fast startup with an actionable invalid-port message that did not echo the supplied value. Uncached repository-wide typecheck, lint, build, and test graphs passed with zero cached tasks, and `yarn format:check` passed. Workspace discovery, Yarn integrity, frozen offline installation, script/example assertions, ignore-rule checks, centralized environment-read inspection, and `git diff --check` passed. No dependency declaration or `yarn.lock` change was introduced.
+
+**Important Decisions:** The frontends currently require no application environment variable and expose no `NEXT_PUBLIC_` value. The API reads its process environment directly; its example file is a safe contract reference, not an implicit dotenv loader. `NODE_ENV` defaults to `development`, `PORT` defaults to `3002`, and invalid values are rejected before Nest application creation. Current values are runtime-only and do not affect compiled output, so no speculative `turbo.json` environment hash input was added; the first real build-affecting value must add its owning task's `env` entry. The documented browser origins define a future credentialed-CORS contract but do not enable CORS.
+
+**Files / Areas Changed:** Added three application-local `.env.example` files, the API environment parser and focused tests, explicit frontend dev/start ports, safe ignore exceptions, and the canonical environment strategy; updated API bootstrap/Swagger typing, project/system/standards/Sprint context, and Sprint 0 execution records. No dependency, lockfile, HTTP contract, CORS, authentication, database, deployment, or business behavior was added.
+
+**Follow-ups:** S0-T10 is prepared for separate implementation approval to establish the lightweight local PostgreSQL lifecycle, health, test-database, and reset strategy. Production domains, deployment secrets, and final CORS implementation remain deferred to their approved workstreams.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->
