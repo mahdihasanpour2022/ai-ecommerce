@@ -1,6 +1,6 @@
 # Sprint 0 Queue
 
-Sprint 0 is Active. Its goal, scope, and Definition of Done remain canonical in [Sprint 0](../../sprints/sprint-00.md).
+Sprint 0 is Complete. Its goal, scope, and Definition of Done remain canonical in [Sprint 0](../../sprints/sprint-00.md).
 
 ## S0-T01 — Inventory Existing Starter and Propose Placement
 
@@ -97,7 +97,7 @@ Run approved install-integrity, typecheck, lint, and build checks in CI without 
 
 ## S0-T13 — Align Onboarding and Foundation Documentation
 
-Status: Current
+Status: Done
 
 Objective:
 Update README, onboarding, and architecture records to match the repository that Sprint 0 actually produced.

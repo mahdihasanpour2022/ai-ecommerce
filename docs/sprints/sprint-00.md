@@ -1,6 +1,8 @@
 # Sprint 0: Engineering Foundation
 
-**Plan only. Do not execute without explicit approval.**
+**Status:** Complete
+
+This document is the canonical historical scope and exit gate for Sprint 0. Further product or foundation changes require a separately approved task or Sprint.
 
 ## Goal
 
@@ -91,12 +93,9 @@ Authentication, RBAC implementation, catalog/inventory/orders, product schemas/m
 
 All approved tasks and acceptance criteria are met; required automated tests and task-appropriate validation pass; dependency/lockfile and generated changes were explicitly reviewed; relevant checks pass from a clean install; docs match reality; no unrelated changes exist; and Git staging/commit/push has not occurred without separate approval.
 
-## Risks / Open Questions
+## Remaining Open / Deferred Decisions
 
-- Does the current root app become Storefront, and how are its dependencies handled?
-- Exact Node/Turborepo/framework versions and the approved workspace execution/validation sequence. Changing the established Yarn major is a separate decision.
-- Bootstrap tools/options and whether HeroUI/Ant Design are installed now or in feature work.
-- Docker Compose is the accepted local PostgreSQL boundary and GitHub Actions is the selected CI provider. Remote Turborepo caching remains deferred.
-- Test runner timing, formatter policy, deployment environments, ports, and final domains. Shared-contract generation is Deferred until a real contract-sharing need exists.
-- Final Swagger documentation route and exact production protection mechanism; the latter remains Open until deployment/security planning and does not permit public production access meanwhile.
-- Remote Turborepo caching, Redis, Kafka, microservices, a full observability stack, complex deployment infrastructure, and premature design-system/shared-package work are not Sprint 0 blockers.
+- Final domains, deployment environments/providers, production secrets, and the exact protected-production Swagger mechanism remain Open for release planning. Production Swagger stays unavailable until an approved control exists.
+- Remote Turborepo caching is Deferred until measured CI needs justify its credentials and cache-trust boundary.
+- HeroUI, Ant Design, shared-contract generation, and shared packages are not foundation defaults; introduce them only for a concrete separately approved feature need.
+- Redis, Kafka, microservices, advanced observability, and complex deployment infrastructure remain Deferred until requirements or measured scale justify them.

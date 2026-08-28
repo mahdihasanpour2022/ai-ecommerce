@@ -196,4 +196,22 @@ With the documented safe process-only URL and no database service, Prisma valida
 
 **Follow-ups:** S0-T13 is prepared for separate implementation approval to align README/onboarding and perform the final Sprint 0 documentation-reality pass. The first remote CI result remains pending a separately authorized commit/push or pull request.
 
+## S0-T13 — Align Onboarding and Foundation Documentation
+
+**Completed:** 2026-08-28
+
+**Result:** Replaced the standalone Next.js starter README with repository-specific onboarding for the completed Sprint 0 foundation. A new contributor can now identify prerequisites, install with the frozen Yarn lockfile, run each application on its configured port, find environment/Swagger/PostgreSQL/Prisma guidance, execute the real quality commands, and distinguish implemented foundations from planned product behavior. Narrow project, Sprint, roadmap, and agent-workflow statements were reconciled with repository reality.
+
+### Validation
+
+Manifest/source/configuration assertions passed for the documented Yarn version, root commands, Workspace development commands, ports, API defaults, `/api/v1`, Swagger UI/JSON routes and environment exposure, PostgreSQL image/databases/binding, model-free Prisma schema, absence of API controllers, GitHub Actions gates, and absence of shared child packages. All 48 local Markdown targets in the changed onboarding/context files resolved. Local Node `v24.19.0` and Yarn `1.22.22` matched onboarding; frozen offline installation, `yarn check --integrity`, and Workspace discovery passed for Admin, API, and Storefront with no mismatches. The `yarn.lock` SHA-256 remained `CD374739A33616141C51E6C7B2FA3BF109ABBD0309A2DF58933F9496DE974FB0`. A Turbo dry run resolved the documented build, lint, typecheck, and real API test graph with remote caching disabled. Final documentation/status assertions, `git diff --check`, dependency/lockfile scope, and read-only Git index inspection passed.
+
+No automated test, typecheck, lint, build, live application, Docker, database, Prisma, or remote CI command was executed for this documentation-only task: no source, executable configuration, dependency, generated artifact, or prior successful quality-gate input changed, so the still-relevant S0-T12 repository-wide results were not repeated.
+
+**Important Decisions:** Sprint 0 is Complete. Sprint 1 remains Planned and is not activated or authorized by this documentation pass. Root onboarding links to canonical detail instead of duplicating operational/security standards, and `AGENTS.md` remains concise while now handling the final-task/no-current-task transition explicitly.
+
+**Files / Areas Changed:** Replaced `README.md`; narrowly updated `AGENTS.md`, project overview, roadmap, Sprint 0 scope/status, and Sprint 0 execution records. No application, package manifest, dependency, lockfile, environment example, database/Prisma configuration, CI workflow, generated file, or Git history change was made.
+
+**Follow-ups:** Explicit owner approval is required before activating Sprint 1 and preparing its first implementation task. There is no current task after Sprint 0 completion.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

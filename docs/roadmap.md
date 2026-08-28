@@ -11,7 +11,7 @@
 
 ## Sprint 0 — Engineering Foundation
 
-**Status:** Active
+**Status:** Complete
 
 ### Goal
 

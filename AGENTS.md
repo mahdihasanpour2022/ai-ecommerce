@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Automotive Parts Commerce: Agent Guide
 
-This repository is becoming a production automotive-parts commerce monorepo with three independent applications: a public Storefront, an Admin Panel, and a shared Backend API. The current repository is an existing Next.js starter; preserve it until an approved Sprint 0 migration plan says how it fits the target layout.
+This repository is a production-oriented automotive-parts commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; product behavior remains planned work.
 
 Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, feature specifications, and sprint plans live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
 
@@ -27,9 +27,9 @@ Architecture and security documents own **how** the system is intended to work. 
 
 ## Task execution state
 
-- Sprint execution state lives under `docs/work/<sprint>/`. Only the active sprint may have one task marked `Current`; implement it only when `current.md` says `Approved for Implementation`.
+- Sprint execution state lives under `docs/work/<sprint>/`. Only the active sprint may have one task marked `Current`; implement it only after explicit owner approval for that task.
 - Normal working context is this file, the active `current.md`, and only its **Required Context**. Do not load the full documentation tree.
-- After an approved task meets every Acceptance Criterion and required Validation check, including required automated tests, mark it `Done` in `queue.md`, append a concise result to `done.md`, promote the next `Queued` task to `Current`, replace `current.md`, set its Approval State to `Awaiting Implementation Approval`, and **stop**. Preparing the next task is automatic; implementing it is not.
+- After an approved task meets every Acceptance Criterion and required Validation check, including required automated tests, mark it `Done` in `queue.md` and append a concise result to `done.md`. If another task is `Queued`, promote it to `Current`, replace `current.md`, set its Approval State to `Awaiting Implementation Approval`, and **stop**. If none remains, mark the Sprint complete, replace `current.md` with a no-current-task marker, and **stop**; starting the next planned Sprint still requires explicit owner approval.
 - If a required test or validation fails, do not mark the task Done or select the next task. Keep working within approved scope when the implementation caused the failure; if an external or unresolved issue blocks progress, mark the task `Blocked`, record and report the exact blocker, and do not archive, skip, reorder, or start another task without owner direction.
 - Starting a planned sprint requires explicit owner approval after the active sprint is complete.
 - For a backend task that creates, removes, or modifies an HTTP API contract, `current.md` must declare **Swagger / OpenAPI Impact** with matching acceptance and validation criteria; Swagger/OpenAPI is part of that task's Definition of Done. Do not load API documentation context for tasks with no Backend HTTP API impact.
