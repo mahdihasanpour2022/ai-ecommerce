@@ -96,7 +96,7 @@ All approved tasks and acceptance criteria are met; required automated tests and
 - Does the current root app become Storefront, and how are its dependencies handled?
 - Exact Node/Turborepo/framework versions and the approved workspace execution/validation sequence. Changing the established Yarn major is a separate decision.
 - Bootstrap tools/options and whether HeroUI/Ant Design are installed now or in feature work.
-- Native versus Docker PostgreSQL; CI provider and remote-cache policy.
+- Docker Compose is the accepted local PostgreSQL boundary and GitHub Actions is the selected CI provider. Remote Turborepo caching remains deferred.
 - Test runner timing, formatter policy, deployment environments, ports, and final domains. Shared-contract generation is Deferred until a real contract-sharing need exists.
 - Final Swagger documentation route and exact production protection mechanism; the latter remains Open until deployment/security planning and does not permit public production access meanwhile.
 - Remote Turborepo caching, Redis, Kafka, microservices, a full observability stack, complex deployment infrastructure, and premature design-system/shared-package work are not Sprint 0 blockers.

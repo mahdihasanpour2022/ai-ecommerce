@@ -26,6 +26,8 @@ No Admin authentication or business UI, API business module or endpoint, Postgre
 
 Local development uses non-conflicting ports: Storefront `3000`, Admin `3001`, and API `3002`. Application-owned environment values, safe examples, validation behavior, and browser-exposure rules are defined in the [environment strategy](environment.md). The accepted local database contract uses pinned PostgreSQL 18.6 through Docker Compose with isolated development and test databases. The API owns model-free Prisma tooling; application schema, migrations, and runtime database integration remain unimplemented.
 
+GitHub Actions provides the minimal repository quality gate for pull requests and pushes to `main`. It reproduces the frozen Yarn installation and runs Prisma validation/generation, formatting, typecheck, lint, build, and all real tests without deployment or database infrastructure. See [continuous integration](development/ci.md).
+
 ## Out of scope now
 
 Schemas and migrations, authentication, catalog behavior, infrastructure, deployment, and unapproved dependency changes require their separately approved tasks. Microservices, event-driven architecture, Kafka, Kubernetes, Elasticsearch, Redis, recommendation engines, advanced analytics, and speculative shared packages are not initial requirements.

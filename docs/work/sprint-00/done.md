@@ -178,4 +178,22 @@ Current Prisma v7 documentation was reviewed through Context7 and official Prism
 
 **Follow-ups:** S0-T12 is prepared for separate implementation approval to add minimal CI quality checks, including real existing tests and Prisma validation/generation where applicable. The first approved domain schema task must follow the documented create-only SQL review gate and add the runtime driver adapter only when actual API persistence integration requires it.
 
+## S0-T12 — Add Minimal CI Quality Checks
+
+**Completed:** 2026-08-28
+
+**Result:** Added one read-only GitHub Actions quality workflow for pull requests and pushes to `main`. A clean Ubuntu/Node 24 job installs exact Yarn Classic `1.22.22`, enforces the frozen lockfile, validates and generates the model-free Prisma client with a safe process-only URL, and runs repository formatting, typecheck, lint, build, and all real tests. The root now exposes the real Turbo test graph, and its test task accurately declares no generated coverage output.
+
+### Validation
+
+Current official action releases were reviewed and their immutable tags were verified with `git ls-remote`: `actions/checkout@v7.0.1` resolved to `3d3c42e5aac5ba805825da76410c181273ba90b1`, and `actions/setup-node@v7.0.0` resolved to `820762786026740c76f36085b0efc47a31fe5020`. Scoped Prettier write and repository `yarn format:check` passed, including workflow YAML parsing. Frozen offline installation and `yarn check --integrity` passed; the `yarn.lock` SHA-256 remained `CD374739A33616141C51E6C7B2FA3BF109ABBD0309A2DF58933F9496DE974FB0`.
+
+With the documented safe process-only URL and no database service, Prisma validate and generate passed. Root `yarn typecheck`, `yarn lint`, and `yarn build` passed across all three Workspaces; unchanged Admin/Storefront results were replayed from local Turbo cache while the API checks executed. Root `yarn test` executed the API suite uncached and all 15 tests passed. Workflow policy assertions confirmed the expected triggers, read-only permission, non-persisted checkout credentials, full-SHA action pins, runtime, frozen install, and gates, and rejected secrets, write permissions, deployment, migration application, Docker/services, and remote-cache credentials. JSON parsing, Workspace discovery with no mismatches, `git diff --check`, lockfile-scope inspection, and read-only Git index inspection passed. The remote GitHub Actions run was not executed because this task did not commit or push the workflow.
+
+**Important Decisions:** The first CI workflow uses one fail-fast quality job, Node 24, exact Yarn Classic, immutable official action SHAs, `contents: read`, and per-ref concurrency cancellation. Dependency caching and remote Turborepo caching remain disabled until measured CI duration justifies their added trust and invalidation surface. The safe Prisma URL is visibly non-production and never connects because only validation/generation run; CI has no database, secret, deployment, or migration-application behavior.
+
+**Files / Areas Changed:** Added `.github/workflows/ci.yml` and canonical CI documentation; added root test orchestration and workflow formatting coverage; corrected Turbo's test output declaration and excluded ignored Prisma generation from formatting; updated project/Sprint reality and Sprint 0 execution records. No dependency declaration or `yarn.lock` change was made.
+
+**Follow-ups:** S0-T13 is prepared for separate implementation approval to align README/onboarding and perform the final Sprint 0 documentation-reality pass. The first remote CI result remains pending a separately authorized commit/push or pull request.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, and Follow-ups. Add Completed only when the date is reliable. -->

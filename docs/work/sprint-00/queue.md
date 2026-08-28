@@ -90,14 +90,14 @@ Initialize Prisma tooling and migration-review workflow without creating product
 
 ## S0-T12 — Add Minimal CI Quality Checks
 
-Status: Current
+Status: Done
 
 Objective:
 Run approved install-integrity, typecheck, lint, and build checks in CI without fake tests or advanced infrastructure.
 
 ## S0-T13 — Align Onboarding and Foundation Documentation
 
-Status: Queued
+Status: Current
 
 Objective:
 Update README, onboarding, and architecture records to match the repository that Sprint 0 actually produced.

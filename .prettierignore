@@ -4,5 +4,6 @@ dist/
 dist-test/
 .turbo/
 coverage/
+apps/api/src/generated/prisma/
 next-env.d.ts
 yarn.lock
