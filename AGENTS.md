@@ -33,15 +33,31 @@ Architecture and security documents own **how** the system is intended to work. 
 - If Terra + Light becomes unexpectedly complex, escalate first to Terra + Medium, then to Sol + Medium when complexity, ambiguity, risk, or repeated failures justify it.
 - Model/reasoning choices optimize execution only. They never weaken Acceptance Criteria, Definition of Done, required tests, typecheck, lint, formatting, build validation, Swagger/OpenAPI, security validation, regression coverage, or correctness to save tokens.
 
-## Task execution state
+## Task execution and transitions
 
-- Sprint execution state lives under `docs/work/<sprint>/`. Only the active sprint may have one task marked `Current`; implement it only after explicit owner approval for that task.
-- Normal working context is this file, the active `current.md`, and only its **Required Context**. Do not load the full documentation tree.
-- After an approved task meets every Acceptance Criterion and required Validation check, including required automated tests, mark it `Done` in `queue.md` and append a concise result to `done.md`. If another task is `Queued`, promote it to `Current`, replace `current.md`, set its Approval State to `Awaiting Implementation Approval`, and **stop**. If none remains, mark the Sprint complete, replace `current.md` with a no-current-task marker, and **stop**; starting the next planned Sprint still requires explicit owner approval.
-- If a required test or validation fails, do not mark the task Done or select the next task. Keep working within approved scope when the implementation caused the failure; if an external or unresolved issue blocks progress, mark the task `Blocked`, record and report the exact blocker, and do not archive, skip, reorder, or start another task without owner direction.
-- Starting a planned sprint requires explicit owner approval after the active sprint is complete.
-- For a backend task that creates, removes, or modifies an HTTP API contract, `current.md` must declare **Swagger / OpenAPI Impact** with matching acceptance and validation criteria; Swagger/OpenAPI is part of that task's Definition of Done. Do not load API documentation context for tasks with no Backend HTTP API impact.
-- Every implementation `current.md` must declare **Testing Impact** as `Automated tests required`, `Existing tests must be updated`, or `No new automated test required — validation only`. Meaningful runtime behavior is not Done until relevant automated tests and validation pass; do not create placeholder tests for documentation or configuration-only work. Detailed rules live in [testing standards](docs/standards/testing.md).
+- Sprint execution state lives under `docs/work/<sprint>/`. Only the Active Sprint may have one Current task; implement it only after explicit owner approval. Normal context is this file, that task's `current.md`, and its Minimum Sufficient **Required Context**.
+- Every implementation task declares **Testing Impact**. A Backend HTTP-contract task also declares **Swagger / OpenAPI Impact** with matching acceptance and validation criteria. Detailed completion rules live in [testing standards](docs/standards/testing.md).
+
+### Successful task completion
+
+- Verify the task's Acceptance Criteria and applicable Definition of Done, then run only validation required by the risk-based policy. Mark it `Done` in `queue.md`, clear it from `current.md`, and append a concise durable `done.md` record containing only: task ID/title, result, important decisions, affected areas/files at summary level, validation actually executed/result, documentation impact, and relevant follow-ups. Never copy full `current.md` content into `done.md`.
+- Keep the chat response minimal: `Sx-Tyy completed successfully. Required validation passed.` Do not repeat persisted file lists, command output/logs, walkthroughs, documentation changes, or passing criteria. Repository documentation owns durable detail; conversation owns approvals, blockers, decisions, and concise status.
+
+### Next task in the same Sprint
+
+- If another task is `Queued`, do not make it Current or implement it. Ask exactly one question: `Sx-Tyy is complete. Prepare Sx-Tzz as the next Current task?`
+- After owner approval, mark that task `Current` and populate `current.md` with Minimum Sufficient **Required Context**, Scope, Out of Scope, Acceptance Criteria, Testing Impact, Validation, Documentation Impact, applicable constraints, and `Approval State: Awaiting Implementation Approval`; then **stop**. Implement it only after the separate command `Approve and implement the current task.`
+
+### End of Sprint
+
+- If the completed task was final, verify the Sprint Definition of Done and exit criteria, mark the Sprint `Completed` if they pass, and identify—but do not activate—the next Planned Sprint.
+- Ask exactly one question: `Sprint <n> is complete. Activate Sprint <n+1> and prepare its first Current task?` If no Planned Sprint exists, report that roadmap planning is required; never invent one.
+- After owner approval, mark the next Sprint `Active`, select and mark its first `Queued` task `Current`, prepare its `current.md` with the same minimum task sections and `Approval State: Awaiting Implementation Approval`, then **stop**. Do not implement it without separate approval.
+
+### Failure, blockers, and context efficiency
+
+- The compact success report never hides failure. If implementation or required validation fails, do not mark Done; record the relevant execution state, explain the exact failure/blocker concisely but sufficiently, and request owner input only when a decision is required.
+- Minimize routine conversational output, but never reduce correctness, validation, traceability, or important owner decisions to save context.
 
 ## Required workflow
 
