@@ -104,7 +104,7 @@ S1-T06 through S1-T09.
 
 ## S1-T11 — Implement Single-Flight Refresh Recovery
 
-Status: Current
+Status: Done
 
 Objective:
 Implement eligible-expiry coordination, one shared refresh operation, waiting-request settlement, bounded retry, and loop prevention.
@@ -114,7 +114,7 @@ S1-T07 and S1-T10.
 
 ## S1-T12 — Complete Authentication Verification and Hardening
 
-Status: Queued
+Status: Current
 
 Objective:
 Complete meaningful backend, frontend, concurrency, security, accessibility, critical-flow, and Swagger/OpenAPI contract-drift validation for the full authentication slice.

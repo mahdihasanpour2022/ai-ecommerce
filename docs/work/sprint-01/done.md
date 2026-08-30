@@ -180,4 +180,22 @@ Current Axios instance/interceptor/header/cancellation/timeout/error guidance wa
 
 **Follow-ups:** S1-T11 is Current and awaiting implementation approval. It owns eligible access-expiry interception, one shared refresh operation, bounded refresh transport retry, waiter settlement, one-time replay, and recursion/loop prevention.
 
+## S1-T11 — Implement Single-Flight Refresh Recovery
+
+**Completed:** 2026-08-30
+
+**Result:** Implemented tab-local single-flight recovery for explicitly eligible `401 ACCESS_TOKEN_EXPIRED` responses. One shared no-body, credentialed, CSRF-protected refresh operation releases concurrent waiters after success; each original request preserves cancellation and replays at most once. Refresh transport ambiguity receives one bounded retry, while definitive responses receive none and shared failures settle consistently without loops or false logout.
+
+### Validation
+
+Current Axios interceptor/replay/cancellation guidance was reviewed through Context7 and the installed Next.js 16.3.2 testing guide was reviewed. All 25 Admin tests passed, including deterministic concurrency, exact eligibility exclusions, one-time replay, bounded refresh retry, definitive failure, consistent waiter rejection, retained CSRF on transport ambiguity, recursion prevention, and cancellation. Admin and repository-wide typecheck, lint, and build passed; frozen offline install and repository formatting passed. Local Markdown links, `git diff --check`, timer/storage/cookie/Bearer/logging inspection, added-line credential scan, dependency/configuration scope, generated-output ignore behavior, and read-only Git-index inspection passed. An optional Docker health probe could not connect because Docker Desktop was not running; the selected deterministic frontend interceptor boundary required no live Backend or database.
+
+**Important Decisions:** Single-flight ownership lives per Axios client/JavaScript context. Only the exact eligible status/code pair can join it; refresh and completed replays carry a recursion marker. Shared failure publication is deduplicated, cancellation remains waiter-local, and only network/timeout refresh failures qualify for one controlled retry. A second transport failure retains memory credentials and maps to recoverable connectivity behavior; stable Backend failures continue through the existing definitive auth-state policy.
+
+**Files / Areas Changed:** Admin centralized HTTP client, refresh coordinator/endpoint adapter, focused transport/concurrency regression tests, and narrow project/Admin authentication documentation. No backend contract, dependency, configuration, schema, migration, or database changed.
+
+**Documentation Impact:** Documented implemented single-flight ownership, exact exclusions, one-time replay, bounded transport retry, definitive-versus-ambiguous failure behavior, independent tab boundary, and remaining S1-T12 verification/hardening work.
+
+**Follow-ups:** S1-T12 is Current and awaiting implementation approval. It owns final authentication-slice gap closure plus cross-layer security, accessibility, critical-flow, and Swagger/OpenAPI drift verification.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->
