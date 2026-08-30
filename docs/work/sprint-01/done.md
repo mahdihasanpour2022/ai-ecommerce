@@ -144,4 +144,22 @@ Current Context7 documentation for Prisma transactions/row locking and NestJS co
 
 **Follow-ups:** S1-T09 is Current and awaiting implementation approval. It owns the accessible Persian RTL login, authenticated bootstrap, protected entry shell, and required user-visible states; centralized Axios and refresh coordination remain S1-T10/S1-T11.
 
+## S1-T09 — Implement Admin Login and Protected Frontend Shell
+
+**Completed:** 2026-08-30
+
+**Result:** Implemented an accessible Persian RTL Admin login, credentialed reload bootstrap, strict protected-content gate, allowlisted return routing, safe localized failure/retry states, and a minimal authenticated shell. Authentication cookies remain HttpOnly, CSRF remains provider-memory-only, and no refresh orchestration, backend contract, dependency, schema, or migration changed.
+
+### Validation
+
+Current Next.js 16.3 App Router and React 19 guidance was reviewed through Context7 and the installed Next.js guides. All 13 focused Admin tests passed for state/error transitions, credentialed endpoint contracts, duplicate submission, safe redirects, Persian form/document semantics, and accessible busy/error markup. Admin typecheck, lint, and production build passed. Repository-wide build, typecheck, lint, and formatting passed; the root build succeeded after permitting the unchanged Storefront Google Font fetch that the restricted first attempt could not reach. Local Markdown links, `git diff --check`, credential-persistence/logging/timer patterns, dependency/backend/schema scope, generated-output ignore behavior, and the read-only Git index passed.
+
+**Important Decisions:** The root client provider bootstraps CSRF then `/auth/me`, never reveals protected content while unresolved, coalesces duplicate login submissions, clears the controlled password immediately after submit, and treats transport uncertainty as recoverable. The narrow Fetch adapter is intentionally replaceable by S1-T10, includes cookies without a Bearer header, validates response shapes, and reads a safe public build-time API base with the accepted local default. Only `/` is currently a valid protected return destination.
+
+**Files / Areas Changed:** Admin authentication state/API/redirect helpers, `/login`, protected home/shell, accessible status/form components, responsive RTL styles and metadata, focused built-in-toolchain tests, public Admin API-origin configuration, Turborepo build hashing, and narrow environment/authentication/repository documentation.
+
+**Documentation Impact:** Documented the implemented Admin login/bootstrap/protected-entry boundary, memory-only credential handling, public API base configuration, safe return routing, failure behavior, and explicit Axios/refresh deferrals.
+
+**Follow-ups:** S1-T10 is Current and awaiting implementation approval. It owns the centralized Axios client, 20-second default timeout, credential/CSRF request behavior, stable error routing, and transport classification; single-flight refresh remains S1-T11.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

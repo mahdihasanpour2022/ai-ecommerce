@@ -1,6 +1,14 @@
 # Backend Admin Login
 
-The Backend implements `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/csrf`, `GET /api/v1/auth/me`, strict Access-cookie/current-state enforcement, and reusable unsafe-request CSRF validation. The Admin frontend and frontend single-flight/transport orchestration remain later work.
+The Backend implements `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/csrf`, `GET /api/v1/auth/me`, strict Access-cookie/current-state enforcement, and reusable unsafe-request CSRF validation. The Admin frontend now implements login, reload bootstrap, protected-entry gating, and a minimal protected shell. The centralized Axios transport and single-flight refresh orchestration remain S1-T10 and S1-T11 work.
+
+## Admin frontend
+
+The Admin serves an accessible Persian RTL login at `/login` and protects `/`. Its client authentication boundary begins in an unresolved bootstrap state, requests `/auth/csrf` and then `/auth/me` with `credentials: include`, and reveals the protected shell only after both succeed. Authentication cookies remain HttpOnly and unreadable to JavaScript; the returned CSRF token exists only in the provider's in-memory state. The frontend creates no Bearer header and writes no credential to Web Storage, IndexedDB, URLs, logs, or server-rendered markup.
+
+Login prevents duplicate submissions, clears the controlled password value immediately after submission, loads `/auth/me` before entering the protected shell, and exposes stable Persian invalid-credential, throttle, disabled/session-invalid, forbidden, server, and connectivity outcomes. Transport uncertainty is a recoverable state and is not reported as a definitive logout. The current task deliberately does not refresh an expired Access cookie; centralized eligible refresh/replay remains S1-T11.
+
+Return navigation currently allowlists only the protected home `/`. Absolute and protocol-relative URLs, backslashes, control characters, and unknown paths fall back to `/`. The Admin API base is the public, non-secret build value `NEXT_PUBLIC_API_BASE_URL`, defaulting locally to `http://localhost:3002/api/v1`.
 
 ## Contract
 

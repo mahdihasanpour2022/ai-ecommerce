@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-test",
+    "noEmit": false,
+    "incremental": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "app/auth/auth-api.ts",
+    "app/auth/auth-errors.ts",
+    "app/auth/auth-types.ts",
+    "app/auth/return-destination.ts",
+    "app/auth/submission-gate.ts",
+    "app/components/login-form.tsx",
+    "app/document-shell.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx"
+  ],
+  "exclude": ["node_modules", ".next", "dist-test"]
+}

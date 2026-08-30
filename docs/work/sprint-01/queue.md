@@ -84,7 +84,7 @@ S1-T05 through S1-T07.
 
 ## S1-T09 — Implement Admin Login and Protected Frontend Shell
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the accessible Persian RTL login, authenticated bootstrap, protected entry, and required user-visible states.
@@ -94,7 +94,7 @@ Stable backend login, `/auth/me`, and error contracts from S1-T05 and S1-T06.
 
 ## S1-T10 — Implement Axios Cookie, CSRF, and Error Behavior
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement the centralized credentialed Axios client, timeout, CSRF header, stable error routing, and network-failure behavior.

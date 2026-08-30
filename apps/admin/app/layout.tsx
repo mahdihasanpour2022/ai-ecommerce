@@ -1,16 +1,18 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { AuthProvider } from './auth/auth-provider';
+import { DocumentShell } from './document-shell';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'پنل مدیریت',
-  description: 'زیرساخت اولیه پنل مدیریت فروشگاه قطعات خودرو',
+  title: 'پنل مدیریت فروشگاه قطعات خودرو',
+  description: 'ورود امن و مدیریت فروشگاه قطعات خودرو',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="fa-IR" dir="rtl">
-      <body>{children}</body>
-    </html>
+    <DocumentShell>
+      <AuthProvider>{children}</AuthProvider>
+    </DocumentShell>
   );
 }

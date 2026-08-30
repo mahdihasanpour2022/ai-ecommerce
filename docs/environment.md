@@ -7,7 +7,7 @@ Environment configuration is application-owned, validated at its consumption bou
 | Application | Workspace | Local port | Development origin | Environment values |
 | --- | --- | ---: | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | 3000 | `http://localhost:3000` | None currently |
-| Admin | `@automotive-commerce/admin` | 3001 | `http://localhost:3001` | None currently |
+| Admin | `@automotive-commerce/admin` | 3001 | `http://localhost:3001` | Public API base URL below |
 | API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database and implemented authentication values below |
 
 The REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. The authentication backend enables credentialed CORS for exact configured origins; the accepted Admin development origin is `http://localhost:3001`.
@@ -39,7 +39,13 @@ The API parses configuration before creating the NestJS application. Invalid val
 
 The `ADMIN_BOOTSTRAP_*` variables are intentionally absent from `.env.example` values and are not runtime application configuration. Supply them only to the trusted one-shot command through the process contract in [First Super Admin Provisioning](development/admin-provisioning.md); compile before secret injection.
 
-Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather than an application setting and must not be overridden with a nonstandard value. Neither frontend currently consumes an application environment variable.
+Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather than an application setting and must not be overridden with a nonstandard value. The Storefront currently consumes no application environment variable. The Admin consumes the public, non-secret value below.
+
+| Name | Owner | Type and allowed values | Requirement/default | Exposure |
+| --- | --- | --- | --- | --- |
+| `NEXT_PUBLIC_API_BASE_URL` | Admin | Absolute HTTP(S) REST base URL without credentials, query, or fragment | Optional; defaults to `http://localhost:3002/api/v1` | Public and build-time inlined; never contains credentials or secrets |
+
+Set `NEXT_PUBLIC_API_BASE_URL` in the Admin build environment when the API is not at the accepted local default. Because Next.js inlines this value into browser JavaScript, changing it requires a new Admin build; Turborepo includes it in the Admin build cache inputs.
 
 ## Accepted Sprint 1 configuration contract
 
@@ -81,7 +87,7 @@ JWT verification accepts only configured keys and exact issuer/audience values; 
 - Keep real credentials in ignored local files or an approved deployment secret mechanism. Examples contain safe placeholders only.
 - If an environment value changes the output of a cacheable Turborepo task, add it to that task's `env` list (or `globalEnv` only when it truly affects every task). Do not use pass-through configuration for build-affecting values because it does not invalidate cached output.
 
-No current environment value changes compiled output, so `turbo.json` intentionally has no environment hash inputs. Add them alongside the first real build-affecting value rather than speculating now.
+`NEXT_PUBLIC_API_BASE_URL` changes compiled Admin output and is therefore included in the root build task's environment hash inputs. Server-only API values remain runtime-owned and do not enter frontend bundles.
 
 The safe local PostgreSQL values, lifecycle commands, isolation, and guarded reset behavior are canonical in [Local PostgreSQL Development](development/local-postgresql.md). The tracked API example contains fixed loopback-only development credentials; they are public non-production values and must never be reused for a deployed environment.
 
