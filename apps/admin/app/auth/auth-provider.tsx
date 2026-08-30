@@ -3,10 +3,12 @@
 import { createContext, useContext, useEffect, useReducer, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createAuthApi } from './auth-api';
-import { mapBootstrapFailure, mapLoginFailure } from './auth-errors';
+import { applyCredentialPolicy, mapBootstrapFailure, mapLoginFailure } from './auth-errors';
 import { createSubmissionGate } from './submission-gate';
 import { authReducer } from './auth-types';
 import type { AuthState } from './auth-types';
+import { csrfCredentialStore } from '../http/csrf-credential';
+import { httpFailureChannel } from '../http/http-failure-channel';
 
 interface AuthContextValue {
   readonly state: AuthState;
@@ -17,10 +19,27 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 const api = createAuthApi();
 
+function dispatchBootstrapFailure(
+  error: unknown,
+  dispatch: React.Dispatch<Parameters<typeof authReducer>[1]>,
+) {
+  const action = mapBootstrapFailure(error);
+  applyCredentialPolicy(action, csrfCredentialStore);
+  dispatch(action);
+}
+
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [state, dispatch] = useReducer(authReducer, { phase: 'bootstrapping' });
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
   const loginGate = useRef(createSubmissionGate<readonly [string, string], void>());
+
+  useEffect(
+    () =>
+      httpFailureChannel.subscribe((error) => {
+        dispatchBootstrapFailure(error, dispatch);
+      }),
+    [],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -29,10 +48,11 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     async function bootstrap() {
       try {
         const csrfToken = await api.bootstrapCsrf(controller.signal);
+        csrfCredentialStore.set(csrfToken);
         const current = await api.current(controller.signal);
-        dispatch({ type: 'authenticated', current, csrfToken });
+        dispatch({ type: 'authenticated', current });
       } catch (error) {
-        if (!controller.signal.aborted) dispatch(mapBootstrapFailure(error));
+        if (!controller.signal.aborted) dispatchBootstrapFailure(error, dispatch);
       }
     }
 
@@ -42,19 +62,22 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   async function performLogin(email: string, password: string): Promise<void> {
     dispatch({ type: 'login-started' });
+    csrfCredentialStore.clear();
     let csrfToken: string;
     try {
       csrfToken = await api.login(email, password);
+      csrfCredentialStore.set(csrfToken);
     } catch (error) {
+      csrfCredentialStore.clear();
       dispatch({ type: 'login-failed', message: mapLoginFailure(error) });
       throw error;
     }
 
     try {
       const current = await api.current();
-      dispatch({ type: 'authenticated', current, csrfToken });
+      dispatch({ type: 'authenticated', current });
     } catch (error) {
-      dispatch(mapBootstrapFailure(error));
+      dispatchBootstrapFailure(error, dispatch);
       throw error;
     }
   }

@@ -94,7 +94,7 @@ Stable backend login, `/auth/me`, and error contracts from S1-T05 and S1-T06.
 
 ## S1-T10 — Implement Axios Cookie, CSRF, and Error Behavior
 
-Status: Current
+Status: Done
 
 Objective:
 Implement the centralized credentialed Axios client, timeout, CSRF header, stable error routing, and network-failure behavior.
@@ -104,7 +104,7 @@ S1-T06 through S1-T09.
 
 ## S1-T11 — Implement Single-Flight Refresh Recovery
 
-Status: Queued
+Status: Current
 
 Objective:
 Implement eligible-expiry coordination, one shared refresh operation, waiting-request settlement, bounded retry, and loop prevention.

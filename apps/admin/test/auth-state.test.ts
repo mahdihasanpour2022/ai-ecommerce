@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { AuthApiError } from '../app/auth/auth-api';
+import { AdminHttpError } from '../app/http/http-client';
 import {
   ACCOUNT_DISABLED_MESSAGE,
   CONNECTIVITY_MESSAGE,
+  CSRF_MESSAGE,
   FORBIDDEN_MESSAGE,
   INVALID_CREDENTIALS_MESSAGE,
   RATE_LIMIT_MESSAGE,
+  applyCredentialPolicy,
   mapBootstrapFailure,
   mapLoginFailure,
 } from '../app/auth/auth-errors';
+import { createCsrfCredentialStore } from '../app/http/csrf-credential';
 import { authReducer } from '../app/auth/auth-types';
 import type { AuthState, CurrentAuthentication } from '../app/auth/auth-types';
 
@@ -33,33 +36,34 @@ void test('moves through login pending, failure, and authenticated states withou
     submitting: false,
   });
 
-  const authenticated = authReducer(failed, {
-    type: 'authenticated',
-    current,
-    csrfToken: 'memory-only',
-  });
+  const authenticated = authReducer(failed, { type: 'authenticated', current });
   assert.equal(authenticated.phase, 'authenticated');
   if (authenticated.phase === 'authenticated') {
     assert.equal(authenticated.current.admin.email, 'admin@example.com');
-    assert.equal(authenticated.csrfToken, 'memory-only');
   }
 });
 
 void test('maps definitive bootstrap and recoverable connectivity outcomes distinctly', () => {
-  assert.deepEqual(mapBootstrapFailure(new AuthApiError(401, 'AUTHENTICATION_REQUIRED', null)), {
-    type: 'unauthenticated',
-  });
-  assert.deepEqual(mapBootstrapFailure(new AuthApiError(401, 'ACCOUNT_DISABLED', null)), {
+  assert.deepEqual(
+    mapBootstrapFailure(new AdminHttpError('http', 401, 'AUTHENTICATION_REQUIRED')),
+    {
+      type: 'unauthenticated',
+    },
+  );
+  assert.deepEqual(mapBootstrapFailure(new AdminHttpError('http', 401, 'ACCOUNT_DISABLED')), {
     type: 'unauthenticated',
     message: ACCOUNT_DISABLED_MESSAGE,
   });
-  assert.deepEqual(mapBootstrapFailure(new AuthApiError(403, 'INSUFFICIENT_PERMISSION', null)), {
-    type: 'failed',
-    kind: 'forbidden',
-    message: FORBIDDEN_MESSAGE,
-    recoverable: false,
-  });
-  assert.deepEqual(mapBootstrapFailure(new TypeError('network unavailable')), {
+  assert.deepEqual(
+    mapBootstrapFailure(new AdminHttpError('http', 403, 'INSUFFICIENT_PERMISSION')),
+    {
+      type: 'failed',
+      kind: 'forbidden',
+      message: FORBIDDEN_MESSAGE,
+      recoverable: false,
+    },
+  );
+  assert.deepEqual(mapBootstrapFailure(new AdminHttpError('network', null, 'NETWORK_ERROR')), {
     type: 'failed',
     kind: 'connectivity',
     message: CONNECTIVITY_MESSAGE,
@@ -69,12 +73,44 @@ void test('maps definitive bootstrap and recoverable connectivity outcomes disti
 
 void test('maps stable login codes to deterministic Persian feedback', () => {
   assert.equal(
-    mapLoginFailure(new AuthApiError(401, 'INVALID_CREDENTIALS', null)),
+    mapLoginFailure(new AdminHttpError('http', 401, 'INVALID_CREDENTIALS')),
     INVALID_CREDENTIALS_MESSAGE,
   );
   assert.equal(
-    mapLoginFailure(new AuthApiError(429, 'AUTH_RATE_LIMITED', '30')),
+    mapLoginFailure(new AdminHttpError('http', 429, 'AUTH_RATE_LIMITED', '30')),
     RATE_LIMIT_MESSAGE,
   );
-  assert.equal(mapLoginFailure(new TypeError('offline')), CONNECTIVITY_MESSAGE);
+  assert.equal(
+    mapLoginFailure(new AdminHttpError('timeout', null, 'REQUEST_TIMEOUT')),
+    CONNECTIVITY_MESSAGE,
+  );
+});
+
+void test('keeps credentials for recoverable uncertainty and clears definitive auth outcomes', () => {
+  const credentials = createCsrfCredentialStore();
+  credentials.set('session-csrf');
+  applyCredentialPolicy(
+    { type: 'failed', kind: 'connectivity', message: CONNECTIVITY_MESSAGE, recoverable: true },
+    credentials,
+  );
+  assert.equal(credentials.get(), 'session-csrf');
+
+  applyCredentialPolicy({ type: 'unauthenticated' }, credentials);
+  assert.equal(credentials.get(), null);
+
+  credentials.set('new-session-csrf');
+  applyCredentialPolicy(
+    { type: 'failed', kind: 'forbidden', message: FORBIDDEN_MESSAGE, recoverable: false },
+    credentials,
+  );
+  assert.equal(credentials.get(), null);
+});
+
+void test('maps CSRF rejection to the stable recoverable Persian request message', () => {
+  assert.deepEqual(mapBootstrapFailure(new AdminHttpError('http', 403, 'CSRF_VALIDATION_FAILED')), {
+    type: 'failed',
+    kind: 'server',
+    message: CSRF_MESSAGE,
+    recoverable: true,
+  });
 });

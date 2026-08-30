@@ -16,11 +16,7 @@ export type AuthErrorKind = 'connectivity' | 'forbidden' | 'server';
 
 export type AuthState =
   | { readonly phase: 'bootstrapping' }
-  | {
-      readonly phase: 'authenticated';
-      readonly current: CurrentAuthentication;
-      readonly csrfToken: string;
-    }
+  | { readonly phase: 'authenticated'; readonly current: CurrentAuthentication }
   | {
       readonly phase: 'unauthenticated';
       readonly message: string | null;
@@ -38,7 +34,6 @@ export type AuthAction =
   | {
       readonly type: 'authenticated';
       readonly current: CurrentAuthentication;
-      readonly csrfToken: string;
     }
   | { readonly type: 'unauthenticated'; readonly message?: string }
   | {
@@ -55,7 +50,7 @@ export function authReducer(_state: AuthState, action: AuthAction): AuthState {
     case 'bootstrap-started':
       return { phase: 'bootstrapping' };
     case 'authenticated':
-      return { phase: 'authenticated', current: action.current, csrfToken: action.csrfToken };
+      return { phase: 'authenticated', current: action.current };
     case 'unauthenticated':
       return { phase: 'unauthenticated', message: action.message ?? null, submitting: false };
     case 'failed':

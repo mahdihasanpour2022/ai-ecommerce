@@ -17,6 +17,7 @@
     "app/auth/submission-gate.ts",
     "app/components/login-form.tsx",
     "app/document-shell.tsx",
+    "app/http/**/*.ts",
     "test/**/*.ts",
     "test/**/*.tsx"
   ],

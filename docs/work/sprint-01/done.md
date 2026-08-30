@@ -162,4 +162,22 @@ Current Next.js 16.3 App Router and React 19 guidance was reviewed through Conte
 
 **Follow-ups:** S1-T10 is Current and awaiting implementation approval. It owns the centralized Axios client, 20-second default timeout, credential/CSRF request behavior, stable error routing, and transport classification; single-flight refresh remains S1-T11.
 
+## S1-T10 — Implement Axios Cookie, CSRF, and Error Behavior
+
+**Completed:** 2026-08-30
+
+**Result:** Replaced the temporary Fetch adapter with one typed centralized Axios boundary that owns the validated public base URL, credentialed cookies, 20-second timeout, memory-only CSRF injection, stable HTTP/transport normalization, and caller-versus-global auth failure routing. No backend contract, refresh/replay behavior, schema, migration, or database changed.
+
+### Validation
+
+Current Axios instance/interceptor/header/cancellation/timeout/error guidance was reviewed through Context7, and the installed Next.js 16.3.2 environment guide was reviewed. Exact owner-approved `axios@1.19.0` direct dependency and minimal lockfile coalescing were verified; frozen offline installation passed. All 20 focused Admin tests passed for Axios defaults, cookie and CSRF rules, caller/global routing, credential lifecycle, stable HTTP/timeout/cancellation/network classification, no implicit retry/Bearer behavior, auth adapter regression, login/state behavior, RTL semantics, and safe redirects. Admin and repository-wide typecheck, lint, build, and formatting passed. Local Markdown links, `git diff --check`, persistence/logging/timer/retry and header inspection, backend scope, generated-output ignore behavior, dependency/lockfile scope, and the read-only Git index passed.
+
+**Important Decisions:** Every request carries typed CSRF, failure-routing, and future refresh-eligibility policy. Safe methods and explicit omit requests cannot carry CSRF; unsafe required requests fail closed without the current in-memory credential; any Authorization header is rejected. Axios timeout clarification distinguishes timeout from cancellation/network failure, preserves stable HTTP code/status/`Retry-After`, performs no retry, and publishes only global failures to the existing provider boundary. Definitive auth/forbidden outcomes clear CSRF while recoverable transport uncertainty retains it.
+
+**Files / Areas Changed:** Added the centralized Admin Axios client, memory-only CSRF store, HTTP failure channel, normalized error/request-policy types, migrated auth adapter/provider boundaries, focused transport/state regression tests, exact Admin Axios dependency and lockfile entry, and narrow authentication/repository documentation.
+
+**Documentation Impact:** Documented Axios configuration, credentials/CSRF rules, typed request policies, failure classification/routing, credential lifecycle, and the explicit remaining S1-T11 refresh boundary.
+
+**Follow-ups:** S1-T11 is Current and awaiting implementation approval. It owns eligible access-expiry interception, one shared refresh operation, bounded refresh transport retry, waiter settlement, one-time replay, and recursion/loop prevention.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

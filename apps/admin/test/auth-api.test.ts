@@ -1,72 +1,66 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { AuthApiError, createAuthApi, getApiBaseUrl } from '../app/auth/auth-api';
+import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
+import { createAuthApi } from '../app/auth/auth-api';
+import { createCsrfCredentialStore } from '../app/http/csrf-credential';
+import { createHttpClient } from '../app/http/http-client';
 
-void test('uses the safe local default and validates public API origins', () => {
-  assert.equal(getApiBaseUrl(undefined), 'http://localhost:3002/api/v1');
-  assert.equal(getApiBaseUrl('https://api.example.com/api/v1/'), 'https://api.example.com/api/v1');
-  assert.throws(() => getApiBaseUrl('https://user:pass@example.com/api/v1'));
-  assert.throws(() => getApiBaseUrl('javascript:alert(1)'));
-});
-
-void test('bootstraps CSRF and identity with credentialed requests and no Bearer header', async () => {
-  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = [];
-  const responses = [
-    Response.json({ csrfToken: 'csrf-value' }),
-    Response.json({
-      admin: { id: 'admin-1', email: 'admin@example.com', displayName: 'مدیر آزمون' },
-      authorization: { roles: ['SUPER_ADMIN'], permissions: ['admin.access'] },
-    }),
-  ];
-  const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ input, ...(init ? { init } : {}) });
-    const response = responses.shift();
-    if (!response) throw new Error('Unexpected request.');
-    return response;
-  }) as typeof fetch;
-  const api = createAuthApi(fetcher, 'https://api.example.com/api/v1');
+void test('uses the centralized client for login, CSRF bootstrap, and current identity', async () => {
+  const calls: InternalAxiosRequestConfig[] = [];
+  const adapter: AxiosAdapter = async (config) => {
+    calls.push(config);
+    const data =
+      config.url === '/auth/me'
+        ? {
+            admin: { id: 'admin-1', email: 'admin@example.com', displayName: 'مدیر آزمون' },
+            authorization: { roles: ['SUPER_ADMIN'], permissions: ['admin.access'] },
+          }
+        : { csrfToken: 'csrf-value' };
+    return { data, status: 200, statusText: 'OK', headers: {}, config };
+  };
+  const client = createHttpClient({
+    adapter,
+    baseURL: 'https://api.example.com/api/v1',
+    credentials: createCsrfCredentialStore(),
+  });
+  const api = createAuthApi(client);
 
   assert.equal(await api.bootstrapCsrf(), 'csrf-value');
+  assert.equal(await api.login('admin@example.com', 'transient-password'), 'csrf-value');
   assert.equal((await api.current()).admin.email, 'admin@example.com');
-  assert.equal(calls.length, 2);
-  for (const call of calls) {
-    assert.equal(call.init?.credentials, 'include');
-    const headers = new Headers(call.init?.headers);
-    assert.equal(headers.has('authorization'), false);
-    assert.equal(headers.has('x-csrf-token'), false);
-  }
-});
 
-void test('submits login JSON once without retaining it in the adapter', async () => {
-  let captured: RequestInit | undefined;
-  const fetcher = (async (_input: RequestInfo | URL, init?: RequestInit) => {
-    captured = init;
-    return Response.json({ csrfToken: 'new-csrf' });
-  }) as typeof fetch;
-  const api = createAuthApi(fetcher, 'https://api.example.com/api/v1');
-
-  assert.equal(await api.login('admin@example.com', 'transient-password'), 'new-csrf');
-  assert.equal(captured?.method, 'POST');
-  assert.equal(captured?.credentials, 'include');
-  assert.deepEqual(JSON.parse(String(captured?.body)) as unknown, {
+  assert.equal(calls.length, 3);
+  assert.deepEqual(
+    calls.map((call) => call.authPolicy),
+    [
+      { csrf: 'omit', failure: 'caller', refresh: 'never' },
+      { csrf: 'omit', failure: 'caller', refresh: 'never' },
+      { csrf: 'omit', failure: 'caller', refresh: 'eligible' },
+    ],
+  );
+  assert.deepEqual(JSON.parse(String(calls[1]?.data)) as unknown, {
     email: 'admin@example.com',
     password: 'transient-password',
   });
+  for (const call of calls) {
+    assert.equal(call.withCredentials, true);
+    assert.equal(call.headers.has('Authorization'), false);
+    assert.equal(call.headers.has('X-CSRF-Token'), false);
+  }
 });
 
-void test('preserves stable error code, status, and Retry-After without exposing backend details', async () => {
-  const fetcher = (async () =>
-    Response.json(
-      { statusCode: 429, code: 'AUTH_RATE_LIMITED', message: 'safe' },
-      { status: 429, headers: { 'Retry-After': '30' } },
-    )) as typeof fetch;
-  const api = createAuthApi(fetcher, 'https://api.example.com/api/v1');
-
-  await assert.rejects(api.login('admin@example.com', 'password'), (error: unknown) => {
-    assert.ok(error instanceof AuthApiError);
-    assert.equal(error.status, 429);
-    assert.equal(error.code, 'AUTH_RATE_LIMITED');
-    assert.equal(error.retryAfter, '30');
-    return true;
+void test('rejects malformed success responses without exposing response data', async () => {
+  const adapter: AxiosAdapter = async (config) => ({
+    data: { unexpected: 'value' },
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    config,
   });
+  const api = createAuthApi(
+    createHttpClient({ adapter, baseURL: 'https://api.example.com/api/v1' }),
+  );
+
+  await assert.rejects(api.bootstrapCsrf(), { code: 'INVALID_RESPONSE', status: 502 });
+  await assert.rejects(api.current(), { code: 'INVALID_RESPONSE', status: 502 });
 });
