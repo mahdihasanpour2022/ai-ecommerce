@@ -385,13 +385,44 @@ current.md = immediate execution context
 
 When the final task of the Active Sprint is Done, verify the Sprint exit criteria and mark it `Completed` only when they pass. If they do not pass, keep the Sprint `Active`, record and report the unmet criteria, and do not begin a Sprint transition. After successful completion, read this roadmap to identify the next intended Sprint; never invent a Sprint that has no roadmap direction.
 
+### Minimum Sufficient Sprint Scope
+
+Every future Sprint plan or plan refinement must use **Minimum Sufficient Sprint Scope**. A Sprint plan must be complete enough to achieve its roadmap Goal, Exit Outcome and exit criteria at the required quality level, remain architecturally correct, secure, maintainable, and ready for its immediately dependent next Sprint, while excluding speculative work, premature abstraction, unnecessary infrastructure, excessive hardening, and nice-to-have engineering that is not required yet.
+
+Start planning from the Sprint's roadmap Goal and Exit Outcome, its dependencies, accepted architecture and ADRs, relevant specifications, approved owner decisions, outcomes of completed Sprints, and actual repository state.
+
+Include a task only when at least one of these is true:
+
+- it is directly required to satisfy the Sprint Goal or exit criteria;
+- another required task cannot be implemented correctly without it;
+- it prevents a realistic correctness, security, data-integrity, accessibility, or operational problem within the Sprint's actual scope;
+- it establishes a foundation genuinely required by the immediately dependent next Sprint; or
+- an accepted specification, ADR, architecture rule, or previously approved owner decision requires it.
+
+Do not add work merely because it is a general industry best practice, may become useful in a distant future Sprint, makes the architecture more generic, extensible, enterprise-ready, or reusable, anticipates hypothetical scale or requirements, creates an abstraction before the current scope needs it, or would be nice to have. Security, performance, observability, abstraction, infrastructure, testing, and other engineering concerns must not be copied mechanically into every Sprint; include each only to the depth justified by that Sprint's actual requirements, risks, dependencies, and exit criteria.
+
+Lean scope must not become incomplete scope. Do not postpone work genuinely required for the current Sprint merely to keep the Sprint smaller. If omission would leave the Sprint incomplete, unsafe, internally inconsistent, below its required quality level, or would force the immediately dependent next Sprint to rely on an unfinished foundation, that work belongs in the current Sprint. Prefer the simplest implementation and architecture that fully satisfy currently approved requirements while preserving accepted architecture.
+
+Respect existing **Future** and **Deferred** decisions. Do not pull them into a Sprint without concrete evidence that the Sprint cannot meet its approved outcome without them. Do not silently resolve an **Open Decision**; expose it explicitly and ask the owner when it becomes a planning blocker.
+
+Before finalizing an ordered task queue, perform all four checks:
+
+- **Missing check:** Is any task absent that is required for the Sprint Goal, exit criteria, correctness, security, required quality, or the immediately dependent next Sprint?
+- **Over-planning check:** Is any task present whose justification is only hypothetical future value, premature abstraction, generalized best practice, speculative scalability, or nice-to-have value?
+- **Placement check:** Does each task belong in this Sprint rather than an earlier or later Sprint?
+- **Dependency check:** Are tasks ordered only as deeply as their actual dependencies require?
+
+When task placement is uncertain, classify it as **Required Now**, **Required Dependency**, **Optional / Nice-to-Have**, or **Future / Deferred**. Only **Required Now** and **Required Dependency** work should normally enter the Sprint queue. The resulting Sprint plan must be complete but lean: no missing required engineering and no speculative engineering.
+
+This principle applies automatically whenever a Sprint plan is created or refined, including after the transition prompt `Sprint N is complete. Plan Sprint N+1 from the roadmap?`, and it is part of—not a parallel alternative to—the Just-In-Time Sprint Planning process below.
+
 ### Next Sprint is not yet detailed
 
 Do not activate it. Ask exactly:
 
 `Sprint N is complete. Plan Sprint N+1 from the roadmap?`
 
-After owner approval, plan only that next Sprint using its roadmap objective, outcomes/decisions from completed Sprints, actual repository state, accepted architecture/ADRs, relevant feature specifications, dependencies, and unresolved Open Decisions. Produce or update:
+After owner approval, plan only that next Sprint using the canonical **Minimum Sufficient Sprint Scope** rule above. Produce or update:
 
 - Sprint Goal;
 - Scope and Out of Scope;

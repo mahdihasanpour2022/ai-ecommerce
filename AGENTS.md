@@ -52,6 +52,7 @@ Architecture and security documents own **how** the system is intended to work. 
 
 - If the completed task was final, clear `current.md` and verify the Sprint exit criteria. Mark the Sprint `Completed` and identify the next intended Sprint from the roadmap without activating it only when those criteria pass.
 - If that Sprint lacks an approved detailed plan/queue, ask `Sprint <n> is complete. Plan Sprint <n+1> from the roadmap?`; on approval, plan only that Sprint, surface required Open Decisions, and obtain plan approval. If an approved detailed plan already exists, ask `Sprint <n> is complete. Activate Sprint <n+1> and prepare its first Current task?`
+- Every new or refined Sprint plan must apply the canonical [Minimum Sufficient Sprint Scope](docs/roadmap.md#minimum-sufficient-sprint-scope): include Required Now and Required Dependency work, exclude Optional / Nice-to-Have and Future / Deferred work from normal queues, run the missing/over-planning/placement/dependency review, and surface rather than silently resolve required Open Decisions.
 - Only after the required plan/activation approval, mark the Sprint `Active`, automatically prepare its first `Current` task with `Approval State: Awaiting Implementation Approval`, and stop before implementation. If no next roadmap Sprint exists, report that roadmap planning is required. Detailed Just-In-Time policy is canonical in [the roadmap](docs/roadmap.md#just-in-time-sprint-planning).
 
 ### Failure, blockers, and context efficiency
