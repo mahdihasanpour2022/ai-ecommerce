@@ -198,4 +198,22 @@ Current Axios interceptor/replay/cancellation guidance was reviewed through Cont
 
 **Follow-ups:** S1-T12 is Current and awaiting implementation approval. It owns final authentication-slice gap closure plus cross-layer security, accessibility, critical-flow, and Swagger/OpenAPI drift verification.
 
+## S1-T12 — Complete Authentication Verification and Hardening
+
+**Completed:** 2026-08-30
+
+**Result:** Completed and verified the Sprint 1 Admin authentication vertical slice. Added accessible Persian current-session logout to the protected Admin shell with CSRF-required, refresh-ineligible transport; duplicate-submit coalescing; explicit pending and retryable failure states; memory-credential cleanup; and definitive auth-loss handling. The cross-layer audit found no Backend, OpenAPI, schema, migration, or dependency correction necessary.
+
+### Validation
+
+Current React 19 async interaction guidance was reviewed through Context7 and the installed Next.js 16.3.2 testing guide was reviewed. PostgreSQL 18.6 health and isolated development/test identities passed. All 31 Admin tests passed for login/bootstrap, protected state, refresh concurrency/retry/cancellation, logout API/policy/orchestration/semantics, credential lifecycle, Persian RTL accessibility, duplicate submission, and safe routing. All 66 API tests passed against `automotive_test` with zero skips, covering provisioning, login equivalence/throttling, CSRF/origin, JWT/current RBAC, refresh rotation/grace/reuse/concurrency, disabled Admins, logout isolation/idempotence, redaction, and exact OpenAPI. The test database ended with zero Admin/session/token/throttle rows. Prisma validate/generate, frozen offline install, Yarn integrity, repository formatting, repository-wide typecheck/lint/build, and Admin production build passed. Local Markdown links, `git diff --check`, dependency/Prisma/Backend scope, credential/timer/storage/cookie/Bearer/log inspection, added-line secret scan, generated-output ignores, and read-only Git-index inspection passed.
+
+**Important Decisions:** Logout reuses the centralized Axios/auth provider boundary and never reads cookies. Success clears memory CSRF and protected state before redirect; definitive authentication loss follows the same clearing policy. Transport, server, or CSRF ambiguity retains the authenticated shell and credential for an explicit user retry rather than claiming Backend revocation. Native button semantics, disabled/busy state, accessible Persian errors, and the existing submission gate provide keyboard behavior and duplicate-activation protection without a new dependency.
+
+**Files / Areas Changed:** Admin logout adapter, orchestration/reducer/provider, protected-shell control and responsive styling, focused frontend tests, final authentication verification trace, and narrow repository/authentication/Sprint reality documentation. Backend source/tests, API contracts, dependencies, lockfile, Prisma schema/migrations, database schema, and Storefront were unchanged.
+
+**Documentation Impact:** Marked the Admin Authentication specification implemented, documented frontend logout and final verification evidence, reconciled repository reality, and marked Sprint 1 Completed.
+
+**Follow-ups:** Sprint 2 — Catalog Domain & Persistence Foundation is the next roadmap Sprint. It remains Future and requires an owner-approved detailed Sprint plan before activation or task preparation.
+
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. Add Completed only when the date is reliable. -->

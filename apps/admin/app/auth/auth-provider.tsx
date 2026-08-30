@@ -7,12 +7,14 @@ import { applyCredentialPolicy, mapBootstrapFailure, mapLoginFailure } from './a
 import { createSubmissionGate } from './submission-gate';
 import { authReducer } from './auth-types';
 import type { AuthState } from './auth-types';
+import { performLogout } from './logout-flow';
 import { csrfCredentialStore } from '../http/csrf-credential';
 import { httpFailureChannel } from '../http/http-failure-channel';
 
 interface AuthContextValue {
   readonly state: AuthState;
   login(email: string, password: string): Promise<void>;
+  logout(): Promise<void>;
   retryBootstrap(): void;
 }
 
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [state, dispatch] = useReducer(authReducer, { phase: 'bootstrapping' });
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
   const loginGate = useRef(createSubmissionGate<readonly [string, string], void>());
+  const logoutGate = useRef(createSubmissionGate<readonly [], void>());
 
   useEffect(
     () =>
@@ -85,6 +88,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const value: AuthContextValue = {
     state,
     login: (email, password) => loginGate.current.run(performLogin, email, password),
+    logout: () => logoutGate.current.run(() => performLogout(api, csrfCredentialStore, dispatch)),
     retryBootstrap: () => setBootstrapAttempt((attempt) => attempt + 1),
   };
 

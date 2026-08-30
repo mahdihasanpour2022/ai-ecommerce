@@ -1,6 +1,6 @@
 # Admin Authentication Specification
 
-**Status:** Proposed
+**Status:** Implemented
 
 This document owns observable Admin Authentication behavior. Architectural mechanisms are canonical in the security and ADR documents below.
 
@@ -132,4 +132,4 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 
 ## Accepted Persistence Contract
 
-The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified them; runtime authentication behavior remains later-task work.
+The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified them; S1-T04 through S1-T12 implemented and verified the trusted provisioning, Backend authentication, frontend session, refresh-recovery, logout, security, accessibility, and contract behavior defined here.

@@ -34,7 +34,7 @@ See [Sprint 0](sprints/sprint-00.md) for canonical scope and `docs/work/sprint-0
 
 ## Sprint 1 — Admin Authentication & Authorization
 
-**Status:** Active
+**Status:** Completed
 
 ### Goal
 

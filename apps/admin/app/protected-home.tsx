@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from './auth/auth-provider';
 import { loginDestination } from './auth/return-destination';
 import { StatusPanel } from './components/status-panel';
+import { LogoutButton } from './components/logout-button';
 
 export function ProtectedHome() {
   const router = useRouter();
-  const { state, retryBootstrap } = useAuth();
+  const { state, logout, retryBootstrap } = useAuth();
 
   useEffect(() => {
     if (state.phase === 'unauthenticated') router.replace(loginDestination('/'));
@@ -39,9 +40,16 @@ export function ProtectedHome() {
     <div className="admin-shell">
       <header className="shell-header">
         <p className="shell-brand">پنل مدیریت فروشگاه</p>
-        <p className="shell-user">
-          {admin.displayName} — <bdi className="ltr-value">{admin.email}</bdi>
-        </p>
+        <div className="shell-session">
+          <p className="shell-user">
+            {admin.displayName} — <bdi className="ltr-value">{admin.email}</bdi>
+          </p>
+          <LogoutButton
+            submitting={state.logout.submitting}
+            message={state.logout.message}
+            onLogout={() => void logout().catch(() => undefined)}
+          />
+        </div>
       </header>
       <main className="shell-main">
         <section className="shell-card" aria-labelledby="welcome-title">

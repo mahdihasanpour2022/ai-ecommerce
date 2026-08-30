@@ -1,6 +1,6 @@
 # Sprint 1: Admin Authentication
 
-**Status:** Active
+**Status:** Completed
 
 ## Required Context
 
@@ -59,4 +59,4 @@ The approved specification and security decisions are met; schema/migrations and
 
 ## Risks / Open Questions
 
-S1-T01 resolved the blocking authentication security/contract decisions, S1-T02 produced the owner-approved Prisma schema/migration design, S1-T03 implemented and database-verified that persistence boundary, and S1-T04 implemented trusted first-Super-Admin provisioning. S1-T05 now owns backend login/session establishment; deployment secret providers, distributed throttling, and broader authorization/operational policy remain downstream or Deferred as documented canonically.
+S1-T01 through S1-T12 resolved, implemented, and verified the complete accepted Admin authentication/authorization slice. Deployment secret providers, distributed throttling, broader authorization administration, and operational policy remain downstream or Deferred as documented canonically.

@@ -40,7 +40,30 @@ void test('moves through login pending, failure, and authenticated states withou
   assert.equal(authenticated.phase, 'authenticated');
   if (authenticated.phase === 'authenticated') {
     assert.equal(authenticated.current.admin.email, 'admin@example.com');
+    assert.deepEqual(authenticated.logout, { submitting: false, message: null });
   }
+});
+
+void test('keeps retryable logout failure in the authenticated state and clears on success', () => {
+  const authenticated = authReducer(initial, { type: 'authenticated', current });
+  const pending = authReducer(authenticated, { type: 'logout-started' });
+  assert.equal(pending.phase, 'authenticated');
+  if (pending.phase !== 'authenticated') return;
+  assert.deepEqual(pending.logout, { submitting: true, message: null });
+
+  const failed = authReducer(pending, {
+    type: 'logout-failed',
+    message: CONNECTIVITY_MESSAGE,
+  });
+  assert.equal(failed.phase, 'authenticated');
+  if (failed.phase !== 'authenticated') return;
+  assert.deepEqual(failed.logout, { submitting: false, message: CONNECTIVITY_MESSAGE });
+
+  assert.deepEqual(authReducer(failed, { type: 'unauthenticated' }), {
+    phase: 'unauthenticated',
+    message: null,
+    submitting: false,
+  });
 });
 
 void test('maps definitive bootstrap and recoverable connectivity outcomes distinctly', () => {

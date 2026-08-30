@@ -16,7 +16,11 @@ export type AuthErrorKind = 'connectivity' | 'forbidden' | 'server';
 
 export type AuthState =
   | { readonly phase: 'bootstrapping' }
-  | { readonly phase: 'authenticated'; readonly current: CurrentAuthentication }
+  | {
+      readonly phase: 'authenticated';
+      readonly current: CurrentAuthentication;
+      readonly logout: { readonly submitting: boolean; readonly message: string | null };
+    }
   | {
       readonly phase: 'unauthenticated';
       readonly message: string | null;
@@ -43,14 +47,20 @@ export type AuthAction =
       readonly recoverable: boolean;
     }
   | { readonly type: 'login-started' }
-  | { readonly type: 'login-failed'; readonly message: string };
+  | { readonly type: 'login-failed'; readonly message: string }
+  | { readonly type: 'logout-started' }
+  | { readonly type: 'logout-failed'; readonly message: string };
 
-export function authReducer(_state: AuthState, action: AuthAction): AuthState {
+export function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case 'bootstrap-started':
       return { phase: 'bootstrapping' };
     case 'authenticated':
-      return { phase: 'authenticated', current: action.current };
+      return {
+        phase: 'authenticated',
+        current: action.current,
+        logout: { submitting: false, message: null },
+      };
     case 'unauthenticated':
       return { phase: 'unauthenticated', message: action.message ?? null, submitting: false };
     case 'failed':
@@ -64,5 +74,13 @@ export function authReducer(_state: AuthState, action: AuthAction): AuthState {
       return { phase: 'unauthenticated', message: null, submitting: true };
     case 'login-failed':
       return { phase: 'unauthenticated', message: action.message, submitting: false };
+    case 'logout-started':
+      return state.phase === 'authenticated'
+        ? { ...state, logout: { submitting: true, message: null } }
+        : state;
+    case 'logout-failed':
+      return state.phase === 'authenticated'
+        ? { ...state, logout: { submitting: false, message: action.message } }
+        : state;
   }
 }

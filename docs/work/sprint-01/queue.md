@@ -1,6 +1,6 @@
 # Sprint 1 Queue
 
-Sprint 1 is Active. Its goal, scope, and Definition of Done remain canonical in [Sprint 1](../../sprints/sprint-01.md).
+Sprint 1 is Completed. Its goal, scope, and Definition of Done remain canonical in [Sprint 1](../../sprints/sprint-01.md).
 
 ## S1-T01 — Resolve Blocking Authentication Decisions
 
@@ -114,7 +114,7 @@ S1-T07 and S1-T10.
 
 ## S1-T12 — Complete Authentication Verification and Hardening
 
-Status: Current
+Status: Done
 
 Objective:
 Complete meaningful backend, frontend, concurrency, security, accessibility, critical-flow, and Swagger/OpenAPI contract-drift validation for the full authentication slice.

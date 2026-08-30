@@ -6,6 +6,7 @@ export interface AuthApi {
   bootstrapCsrf(signal?: AbortSignal): Promise<string>;
   current(signal?: AbortSignal): Promise<CurrentAuthentication>;
   login(email: string, password: string, signal?: AbortSignal): Promise<string>;
+  logout(signal?: AbortSignal): Promise<void>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -67,6 +68,12 @@ export function createAuthApi(client: AxiosInstance = httpClient): AuthApi {
         },
       );
       return requireCsrf(response.data);
+    },
+    async logout(signal) {
+      await client.post('/auth/logout', undefined, {
+        ...(signal ? { signal } : {}),
+        authPolicy: { csrf: 'required', failure: 'caller', refresh: 'never' },
+      });
     },
   };
 }

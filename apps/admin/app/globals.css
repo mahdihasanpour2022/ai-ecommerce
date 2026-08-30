@@ -179,6 +179,12 @@ h2 {
 .shell-user {
   margin: 0;
 }
+.shell-session {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
 .shell-brand {
   font-weight: 800;
 }
@@ -207,6 +213,18 @@ h2 {
   direction: ltr;
   unicode-bidi: isolate;
 }
+.logout-control {
+  position: relative;
+}
+.logout-error {
+  position: absolute;
+  z-index: 1;
+  inset-inline-end: 0;
+  width: min(24rem, calc(100vw - 2rem));
+  margin-top: 0.5rem;
+  background: var(--surface);
+  box-shadow: 0 0.5rem 1.5rem rgb(21 32 56 / 12%);
+}
 
 @keyframes spin {
   to {
@@ -217,6 +235,19 @@ h2 {
   .shell-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .shell-session {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .logout-control,
+  .logout-control .secondary-button {
+    width: 100%;
+  }
+  .logout-error {
+    position: static;
+    width: 100%;
   }
 }
 @media (prefers-reduced-motion: reduce) {
