@@ -2,7 +2,7 @@
 
 Sprint 2 is Active. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
 
-S2-T03 is the sole Current task and is awaiting implementation approval. Task preparation does not authorize Prisma, migration, database, runtime, or dependency changes.
+S2-T04 is the sole Current task and is awaiting implementation approval. S2-T03 is Done; its implemented catalog persistence and convention-compatible permission reference data are prerequisites for Category contracts.
 
 ## S2-T01 — Specify Clothing Catalog Behavior and Contracts
 
@@ -30,7 +30,7 @@ S2-T01 Done. The resulting schema/migration proposal requires separate explicit 
 
 ## S2-T03 — Implement Approved Catalog Persistence
 
-Status: Current
+Status: Done
 
 Classification: Required Now
 
@@ -42,7 +42,7 @@ S2-T02 Done, explicit owner approval of its schema/migration proposal, and succe
 
 ## S2-T04 — Implement Protected Nested-Category Contracts
 
-Status: Queued
+Status: Current
 
 Classification: Required Now
 

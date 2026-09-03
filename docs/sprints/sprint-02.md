@@ -144,7 +144,7 @@ Deliver a reviewed, secure, and tested Backend foundation for a minimum clothing
 
 ### Authorization
 
-- Sprint 2 registers `catalog.read`, `catalog.manage`, `inventory.update`, `product-media.manage`, and `settings.price-display-unit.update`.
+- Sprint 2 registers `catalog.read`, `catalog.manage`, `inventory.update`, `product.media.manage`, and `settings.price.display.unit.update`.
 - Protected operations remain Backend-enforced and default-deny. Public Active-catalog and display-setting reads use explicit safe DTOs and require no Admin permission.
 - Existing `SUPER_ADMIN` receives explicit persisted grants for all five permissions; there is no wildcard or hard-coded authorization bypass.
 - Sprint 2 adds no other Role or role-management workflow. Future staff Role composition is deferred to Sprint 3.

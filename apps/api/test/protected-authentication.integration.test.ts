@@ -197,7 +197,14 @@ void describe(
         },
         authorization: {
           roles: ['SUPER_ADMIN', 'TEST_AUDITOR'],
-          permissions: ['admin.access'],
+          permissions: [
+            'admin.access',
+            'catalog.manage',
+            'catalog.read',
+            'inventory.update',
+            'product.media.manage',
+            'settings.price.display.unit.update',
+          ],
         },
       });
       assert.doesNotMatch(JSON.stringify(me.body), /token|session|password/iu);

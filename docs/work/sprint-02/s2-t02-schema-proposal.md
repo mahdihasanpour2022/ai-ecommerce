@@ -1,10 +1,10 @@
 # S2-T02 Clothing Catalog Schema and Migration Proposal
 
-**Status:** Accepted
+**Status:** Implemented and PostgreSQL-verified by S2-T03
 
 **Owner approval:** 2026-09-03
 
-**Implementation boundary:** This document proposes the Sprint 2 persistence design. It does not modify the Prisma schema, create or apply a migration, mutate a database, or authorize S2-T03 implementation.
+**Implementation boundary:** This document remains the canonical approved design implemented by S2-T03. The live Prisma schema, reviewed catalog migration, and executable persistence tests are the implementation evidence; later runtime catalog contracts remain separately scoped.
 
 ## Design summary
 
@@ -347,8 +347,8 @@ Reserve stable UUIDs following the Sprint 1 reference range:
 | `00000000-0000-4000-8000-000000000003` | `catalog.read` |
 | `00000000-0000-4000-8000-000000000004` | `catalog.manage` |
 | `00000000-0000-4000-8000-000000000005` | `inventory.update` |
-| `00000000-0000-4000-8000-000000000006` | `product-media.manage` |
-| `00000000-0000-4000-8000-000000000007` | `settings.price-display-unit.update` |
+| `00000000-0000-4000-8000-000000000006` | `product.media.manage` |
+| `00000000-0000-4000-8000-000000000007` | `settings.price.display.unit.update` |
 
 The migration inserts Permission rows by fixed UUID/code with `ON CONFLICT (code) DO NOTHING`. A conflicting fixed UUID assigned to another code is an intentional migration failure, not silently overwritten. It then asserts the existing unique `SUPER_ADMIN` Role and all five Permission codes exist, and inserts grants through `INSERT ... SELECT ... ON CONFLICT (role_id, permission_id) DO NOTHING`. No Role, wildcard, boolean bypass, token claim, or non-Super-Admin grant is added.
 

@@ -31,7 +31,7 @@ The Storefront prioritizes Persian RTL product discovery and purchase, SEO, acce
 
 ## Open decisions
 
-Future non-Super-Admin catalog Role composition, cart persistence, guest/account checkout, checkout/address/shipping details, order snapshots/statuses, payment provider/verification/retry behavior, localization, search, audit retention, production operations, and legal/compliance requirements need feature-level decisions. Sprint 2's accepted permissions are `catalog.read`, `catalog.manage`, `inventory.update`, `product-media.manage`, and `settings.price-display-unit.update`, with explicit `SUPER_ADMIN` grants and no wildcard bypass.
+Future non-Super-Admin catalog Role composition, cart persistence, guest/account checkout, checkout/address/shipping details, order snapshots/statuses, payment provider/verification/retry behavior, localization, search, audit retention, production operations, and legal/compliance requirements need feature-level decisions. Sprint 2's accepted permissions are `catalog.read`, `catalog.manage`, `inventory.update`, `product.media.manage`, and `settings.price.display.unit.update`, with explicit `SUPER_ADMIN` grants and no wildcard bypass.
 
 ## Future considerations
 

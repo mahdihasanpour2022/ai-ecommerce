@@ -5,11 +5,11 @@ The API Workspace owns Prisma ORM. Prisma `7.10.0` is pinned exactly for both th
 ## Foundation boundary
 
 - `apps/api/prisma.config.ts` owns the schema path, migration path, and server-only `DATABASE_URL` lookup.
-- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator and declares the nine approved Admin identity, RBAC, session, refresh-history, and shared-throttle models.
+- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator and declares sixteen implemented models: nine Admin identity/RBAC/session/throttle models and seven Clothing Catalog persistence models, plus the three catalog enums.
 - Generated TypeScript is written to `apps/api/src/generated/prisma` in CommonJS form to match the API's NodeNext/CommonJS package boundary.
 - Generated client files are reproducible and ignored. Run generation after schema or generator changes; do not edit generated files.
-- The reviewed additive initial migration lives under `apps/api/prisma/migrations/` and adds PostgreSQL-only CHECK constraints, a partial current-token index, and the approved `SUPER_ADMIN`/`admin.access` reference grant that Prisma schema syntax does not fully represent.
-- The rollback-only invariant suite at `apps/api/prisma/tests/admin-identity-constraints.sql` verifies the applied database structures and critical constraints when run against an approved disposable test database.
+- Two reviewed additive migrations live under `apps/api/prisma/migrations/`: the Sprint 1 Admin foundation and the Sprint 2 catalog foundation. Their PostgreSQL-only CHECKs, specialized unique indexes, deferred constraints, narrow triggers, singleton state, and explicit `SUPER_ADMIN` grants remain migration-managed where Prisma schema syntax cannot fully represent them.
+- The rollback-only suites at `apps/api/prisma/tests/admin-identity-constraints.sql` and `apps/api/prisma/tests/catalog-constraints.sql` verify applied structures, reference state, and critical invariants against an approved disposable database. Focused API integration tests use independent connections for catalog race behavior.
 - The trusted [first-Super-Admin provisioner](admin-provisioning.md) creates a short-lived adapter-backed Prisma Client for its one transaction and disconnects afterward. No general runtime repository/service/client singleton or seed mechanism exists yet.
 
 Prisma 7 does not load `.env` implicitly. The repository intentionally adds no dotenv dependency: provide `DATABASE_URL` through the invoking shell or process manager. The tracked `.env.example` documents safe local values but is not loaded automatically. `TEST_DATABASE_URL` remains reserved for future test tooling and must never be substituted silently for development migrations.

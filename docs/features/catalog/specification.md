@@ -147,7 +147,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 - Exactly one global setting has value `RIAL` or `TOMAN`; initial value is `TOMAN`.
 - Public and protected reads return `{ "unit": "RIAL" | "TOMAN" }`.
-- Only a caller with `settings.price-display-unit.update` may update it, and the state-changing request requires valid session CSRF.
+- Only a caller with `settings.price.display.unit.update` may update it, and the state-changing request requires valid session CSRF.
 - The Admin frontend later interprets Toman input as a positive integer and multiplies by 10 before submitting canonical `priceRial`. Toman display divides `priceRial` by 10 exactly.
 - Setting changes affect display/input only. They do not update Product Variant rows, change public price values, or affect Backend/payment calculations.
 - A later payment provider begins with canonical rial values and may convert only at its approved provider boundary.
@@ -204,7 +204,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 - Upload appends at the next position; the first upload becomes position 0.
 - Reorder submits every current ready image UUID exactly once in desired order with the last-read `imageVersion`. Missing, duplicate, foreign-Product, stale, or extra IDs reject the whole operation.
 - Every Image mutation supplies the last-read `imageVersion`. Reorder and replacement preserve contiguous positions in one transaction; a stale version conflicts rather than partially applying or silently overwriting another Image mutation.
-- Protected Product/Image reads require `catalog.read`; image mutations require `product-media.manage` and session CSRF.
+- Protected Product/Image reads require `catalog.read`; image mutations require `product.media.manage` and session CSRF.
 - Public metadata/content retrieval succeeds only for ready images whose Product is Active. Protected retrieval may access ready Draft/Archived Product images.
 - Public/protected content responses use detected allowlisted `Content-Type`, `X-Content-Type-Options: nosniff`, safe inline disposition without the original filename, and cache behavior appropriate to immutable image UUIDs. Missing, pending-cleanup, unsafe, or ineligible content returns a safe not-found/error without leaking keys or paths.
 
@@ -215,8 +215,8 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 | `catalog.read` | Read Categories, Products, Variants, exact Inventory, Image metadata/content, and the setting through Admin contracts. |
 | `catalog.manage` | Create/rename/move/delete eligible Categories and create/update/transition Products and Variants. |
 | `inventory.update` | Set absolute Variant on-hand quantity using optimistic version. |
-| `product-media.manage` | Upload, reorder, replace, and remove Product Images. |
-| `settings.price-display-unit.update` | Change the global rial/toman display/input unit. |
+| `product.media.manage` | Upload, reorder, replace, and remove Product Images. |
+| `settings.price.display.unit.update` | Change the global rial/toman display/input unit. |
 
 - The migration registers all five Permission rows and explicitly grants each to the existing `SUPER_ADMIN` Role. There is no wildcard, Role-name bypass, or token permission claim.
 - Sprint 1 current Admin/session/permission checks remain authoritative for every protected operation. Missing authentication returns the applicable stable `401`; authenticated insufficient permission returns `403 INSUFFICIENT_PERMISSION` and never triggers refresh.
@@ -243,13 +243,13 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `POST /api/v1/admin/catalog/products/{productId}/variants` | `catalog.manage` | Yes | Create Variant plus Inventory; `201`. |
 | `PATCH /api/v1/admin/catalog/variants/{variantId}` | `catalog.manage` | Yes | Update SKU/labels/price/active state; `200`. |
 | `PUT /api/v1/admin/catalog/variants/{variantId}/inventory` | `inventory.update` | Yes | Guarded absolute quantity update; `200` with quantity/version. |
-| `POST /api/v1/admin/catalog/products/{productId}/images` | `product-media.manage` | Yes | Validate/store/append one ready image; `201`. |
-| `PUT /api/v1/admin/catalog/products/{productId}/images/order` | `product-media.manage` | Yes | Atomically reorder all current ready images; `200` with ordered metadata. |
-| `POST /api/v1/admin/catalog/product-images/{imageId}/replacements` | `product-media.manage` | Yes | Create a replacement with a new immutable Image identity at the same position; `201`. |
-| `DELETE /api/v1/admin/catalog/product-images/{imageId}` | `product-media.manage` | Yes | Remove eligible image metadata/order and schedule recoverable cleanup; `204`. |
+| `POST /api/v1/admin/catalog/products/{productId}/images` | `product.media.manage` | Yes | Validate/store/append one ready image; `201`. |
+| `PUT /api/v1/admin/catalog/products/{productId}/images/order` | `product.media.manage` | Yes | Atomically reorder all current ready images; `200` with ordered metadata. |
+| `POST /api/v1/admin/catalog/product-images/{imageId}/replacements` | `product.media.manage` | Yes | Create a replacement with a new immutable Image identity at the same position; `201`. |
+| `DELETE /api/v1/admin/catalog/product-images/{imageId}` | `product.media.manage` | Yes | Remove eligible image metadata/order and schedule recoverable cleanup; `204`. |
 | `GET /api/v1/admin/catalog/product-images/{imageId}/content` | `catalog.read` | No | Controlled ready image content for any Product lifecycle. |
 | `GET /api/v1/admin/catalog/settings/price-display-unit` | `catalog.read` | No | Current global unit. |
-| `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price-display-unit.update` | Yes | Replace global unit; `200`. |
+| `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price.display.unit.update` | Yes | Replace global unit; `200`. |
 
 Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `updatedAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected in Sprint 2. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
 

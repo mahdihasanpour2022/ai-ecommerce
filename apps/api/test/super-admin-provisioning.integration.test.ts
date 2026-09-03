@@ -17,6 +17,14 @@ import { PrismaClient } from '../src/generated/prisma/client.js';
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 const SYSTEM_ROLE_ID = '00000000-0000-4000-8000-000000000001';
 const SYSTEM_PERMISSION_ID = '00000000-0000-4000-8000-000000000002';
+const EXPECTED_SYSTEM_PERMISSION_CODES = [
+  ADMIN_ACCESS_PERMISSION_CODE,
+  'catalog.manage',
+  'catalog.read',
+  'inventory.update',
+  'product.media.manage',
+  'settings.price.display.unit.update',
+];
 
 function createInput(sequence: number): SuperAdminInput {
   return {
@@ -100,10 +108,10 @@ void describe(
         [SUPER_ADMIN_ROLE_CODE],
       );
       assert.deepEqual(
-        admin.roles.flatMap(({ role }) =>
-          role.permissions.map(({ permission }) => permission.code),
-        ),
-        [ADMIN_ACCESS_PERMISSION_CODE],
+        admin.roles
+          .flatMap(({ role }) => role.permissions.map(({ permission }) => permission.code))
+          .sort(),
+        [...EXPECTED_SYSTEM_PERMISSION_CODES].sort(),
       );
       assert.equal(await prisma.authSession.count(), 0);
       assert.equal(await prisma.refreshToken.count(), 0);
@@ -139,7 +147,14 @@ void describe(
     });
 
     void test('fails closed when the required permission grant is missing', async () => {
-      await prisma.rolePermission.deleteMany();
+      await prisma.rolePermission.delete({
+        where: {
+          roleId_permissionId: {
+            roleId: SYSTEM_ROLE_ID,
+            permissionId: SYSTEM_PERMISSION_ID,
+          },
+        },
+      });
 
       try {
         await assert.rejects(

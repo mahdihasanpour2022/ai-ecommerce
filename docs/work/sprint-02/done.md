@@ -37,3 +37,21 @@ PostgreSQL 18.6 health and exact development/test database isolation passed. Pri
 **Follow-ups:** S2-T03 is Current and awaiting implementation approval. It owns only implementation and PostgreSQL verification of the accepted proposal; no runtime catalog contract or frontend work is included.
 
 <!-- Append concise records with Result, a `### Validation` section listing only checks actually executed/result, Important Decisions, Files / Areas Changed, Documentation Impact, and Follow-ups. -->
+
+## S2-T03 — Implement Approved Catalog Persistence
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented and PostgreSQL-verified the approved three enums, seven catalog models, additive transaction-wrapped migration, named scalar/relational/cross-row invariants, hierarchy and aggregate triggers, singleton Toman setting, five catalog Permission rows, and five explicit `SUPER_ADMIN` grants. No catalog HTTP/runtime or frontend behavior was added.
+
+### Validation
+
+PostgreSQL 18.6 health and exact `automotive_dev`/`automotive_test` isolation passed. Both migrations applied from empty disposable development and test databases; migration status passed and repeat deploy was a no-op. Prisma format/validate/generate passed. The catalog rollback-only SQL suite passed exact object/reference introspection plus hierarchy, cardinality, lifecycle, price, Inventory, Image, cleanup, singleton, and restrictive-relation invariants; the Sprint 1 SQL regression suite passed. Six independent-connection catalog race tests and the complete API suite passed (75 tests). API typecheck, lint, build, repository formatting, local Markdown links, `git diff --check`, prohibited-scope inspection, ignored generated-client inspection, clean Git index inspection, and post-test database cleanup/reference counts passed.
+
+**Important Decisions:** Preserved Sprint 1's lowercase alphanumeric dot-separated Permission convention by owner-approved renames to `product.media.manage` and `settings.price.display.unit.update`; meanings, UUIDs, grant scopes, and default-deny authorization remain unchanged. Kept PostgreSQL-only null-equal uniqueness, deferrable constraints, advisory locking, aggregate validation, version guards, and immutable identities in reviewed migration SQL.
+
+**Files / Areas Changed:** Extended the API Prisma schema; added one catalog migration, one rollback-only PostgreSQL suite, and focused source/concurrency tests; updated affected Sprint 1 authorization expectations and narrow catalog/database/Prisma documentation.
+
+**Documentation Impact:** Database and Prisma documentation now describe the implemented sixteen-model/two-migration foundation. The accepted S2-T02 proposal is marked implemented and remains the canonical detailed catalog persistence contract.
+
+**Follow-ups:** S2-T04 is Current and awaiting implementation approval. It owns only protected nested-Category runtime contracts, tests, and matching OpenAPI; Product/Variant and later catalog slices remain queued.
