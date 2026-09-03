@@ -73,3 +73,21 @@ PostgreSQL 18.6 development/test isolation passed. The focused Category unit and
 **Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Category contracts as implemented. Sprint execution records now route Product/Variant work to S2-T05.
 
 **Follow-ups:** S2-T05 is Current and awaiting implementation approval. It owns protected Product/Variant contracts and matching tests/OpenAPI only; Inventory mutation, Product Image, settings, public catalog, and frontend work remain later tasks.
+
+## S2-T05 — Implement Protected Product and Variant Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented six protected Admin Product/Variant routes for deterministic bounded Product summaries, full protected detail, atomic Draft Product/initial-Variant/Inventory creation, Product update/lifecycle transitions, retained Variant creation, and Variant update/reactivation. Exact catalog authorization, mutation CSRF, normalization, canonical rial pricing, aggregate locking, stable errors, explicit response projection, and synchronized Swagger/OpenAPI are enforced. No Inventory mutation, media operation, setting, public route, frontend, dependency, Prisma schema, migration, or reference-data change was introduced.
+
+### Validation
+
+PostgreSQL 18.6 development/test isolation passed. The focused Product/Variant parsing and real-PostgreSQL HTTP suite passed (11 tests), followed by the complete API suite including Sprint 1 authentication and S2-T03/S2-T04 persistence/Category regressions (95 tests). API typecheck, lint, and build passed; repository Prettier check and `git diff --check` passed. Exact Product/Variant OpenAPI path, method, security, CSRF, parameter, schema, status, and internal-field exclusion assertions passed. Prohibited-scope inspection found no Prisma, migration, package, lockfile, Admin, or Storefront changes. Post-test database cleanup verified zero Category/Product/Variant/Inventory/Image/test-Admin/test-Role fixtures.
+
+**Important Decisions:** Reused the catalog permission guard and explicit DTO/error boundaries. Product aggregate mutations serialize on the Product row and perform sequential in-transaction state reads before final validation, avoiding concurrent Prisma queries on one transaction connection. Product creation rolls back as one aggregate; inactive Variants remain retained; active default/named modes remain exclusive; zero Inventory remains valid for Active Products; and known Prisma/constraint outcomes map to approved stable domain errors.
+
+**Files / Areas Changed:** Added focused Product/Variant controller, service, repository, DTO, error-mapping, parsing, PostgreSQL HTTP/concurrency, and unit-test files under the existing API catalog module; registered the controller/providers; and updated narrow project/catalog/backend reality documentation.
+
+**Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Product/Variant contracts as implemented. Sprint execution records now route optimistic Inventory mutation to S2-T06.
+
+**Follow-ups:** S2-T06 is Current and awaiting implementation approval. It owns only the minimum exact Inventory read/update boundary and optimistic concurrency contract; Product Image, display-setting, public catalog, and frontend work remain later tasks.

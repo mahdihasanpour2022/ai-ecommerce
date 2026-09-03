@@ -1,6 +1,6 @@
 # Clothing Catalog Specification
 
-**Status:** Approved for Sprint 2 implementation; persistence and protected Category contracts implemented
+**Status:** Approved for Sprint 2 implementation; persistence and protected Category/Product/Variant contracts implemented
 
 ## Required Context
 
@@ -358,7 +358,7 @@ Database uniqueness/concurrency violations must map to these domain errors rathe
 - Public reads apply lifecycle/Variant/Image eligibility in the authoritative query/service, not only response filtering after loading protected rows.
 - Important list/detail queries are bounded, deterministically ordered, avoid N+1 access, and receive only indexes justified by these known contracts.
 
-S2-T02 determines exact Prisma models, database constraint/index forms, isolation/locking, cleanup persistence shape, and migration SQL. Those are Technical Lead decisions unless they alter the accepted semantics above.
+The accepted and implemented S2-T02 design owns exact Prisma models, database constraint/index forms, isolation/locking, cleanup persistence shape, and migration SQL. Later tasks must preserve those decisions unless a separately approved change alters the accepted semantics above.
 
 ## Swagger / OpenAPI requirements
 

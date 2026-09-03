@@ -6,10 +6,19 @@ import { CatalogAccessGuard } from './catalog-access.guard.js';
 import { CategoryController } from './category.controller.js';
 import { CategoryRepository } from './category.repository.js';
 import { CategoryService } from './category.service.js';
+import { ProductController } from './product.controller.js';
+import { ProductRepository } from './product.repository.js';
+import { ProductService } from './product.service.js';
 
 @Module({
   imports: [AuthenticationModule, DatabaseModule],
-  controllers: [CategoryController],
-  providers: [CatalogAccessGuard, CategoryRepository, CategoryService],
+  controllers: [CategoryController, ProductController],
+  providers: [
+    CatalogAccessGuard,
+    CategoryRepository,
+    CategoryService,
+    ProductRepository,
+    ProductService,
+  ],
 })
 export class CatalogModule {}

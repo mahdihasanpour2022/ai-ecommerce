@@ -2,7 +2,7 @@
 
 ## Shape
 
-The Backend API is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It contains the root application boundary, Admin authentication module, and catalog module with implemented protected nested-Category contracts. Product, Variant, Inventory, commerce-setting, media, order, and customer capabilities are added only by their approved tasks; this architecture is not a directive to create empty modules.
+The Backend API is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It contains the root application boundary, Admin authentication module, and catalog module with implemented protected Category, Product, and Product Variant contracts. Inventory mutation, commerce-setting, media, public catalog, order, and customer capabilities are added only by their approved tasks; this architecture is not a directive to create empty modules.
 
 Each implemented module owns a cohesive capability and exposes narrow interfaces. NestJS dependency injection wires explicit dependencies; circular module relationships are a design signal. Use pragmatic domain modeling—do not add aggregates, generic repositories, or other DDD layers solely for pattern purity.
 
@@ -19,7 +19,7 @@ Frontend authorization is never trusted. Protected operations are enforced serve
 
 ## API documentation foundation
 
-The NestJS application generates an OpenAPI description and exposes Swagger UI at `/api/docs` in development and test. Implemented authentication and protected Category controllers publish their contracts under `/api/v1`; each later module adds matching documentation with its controller and DTO implementation. Swagger maintenance is never deferred to a post-feature cleanup task. Production Swagger and generated document routes are unavailable unless protected by an explicitly approved access control, whose exact mechanism remains Open until deployment/security planning. Detailed content and completion rules live in [API conventions](../api/conventions.md) and the accepted [OpenAPI/Swagger ADR](adr/0012-use-openapi-swagger-for-api-documentation.md).
+The NestJS application generates an OpenAPI description and exposes Swagger UI at `/api/docs` in development and test. Implemented authentication and protected Category/Product/Variant controllers publish their contracts under `/api/v1`; each later module adds matching documentation with its controller and DTO implementation. Swagger maintenance is never deferred to a post-feature cleanup task. Production Swagger and generated document routes are unavailable unless protected by an explicitly approved access control, whose exact mechanism remains Open until deployment/security planning. Detailed content and completion rules live in [API conventions](../api/conventions.md) and the accepted [OpenAPI/Swagger ADR](adr/0012-use-openapi-swagger-for-api-documentation.md).
 
 ## Data integrity and integrations
 
