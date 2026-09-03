@@ -1,50 +1,52 @@
 # Current Task
 
-## S2-T04 — Implement Protected Nested-Category Contracts
+## S2-T05 — Implement Protected Product and Variant Contracts
 
 ## Goal
 
-Implement the authenticated protected Admin Category contract: complete bounded tree retrieval plus create, rename/atomic-move, and eligible empty-leaf deletion with exact authorization, CSRF, normalization, stable errors, concurrency safety, and synchronized Swagger/OpenAPI.
+Implement the authenticated protected Admin Product and Product Variant contracts: bounded retrieval, atomic Draft creation with initial Variants and Inventory, Product updates and lifecycle transitions, Variant creation/update/reactivation, exact normalization and invariants, stable errors, concurrency safety, and synchronized Swagger/OpenAPI.
 
 ## Why
 
-Products require a valid Category, and later Admin/Public catalog slices need one authoritative hierarchy service. Implementing Category behavior directly over the verified S2-T03 persistence boundary prevents later Product/UI tasks from duplicating hierarchy validation or weakening database-backed race safety.
+Product and Variant are the catalog's customer-facing and sellable identity boundaries. Their protected contracts must establish canonical Category membership, lifecycle, SKU, option-mode, price, and Inventory ownership behavior before later Inventory, Product Image, Admin UI, and public-catalog tasks can build on them safely.
 
 ## Minimum Sufficient Required Context
 
-- [Clothing Catalog specification](../../features/catalog/specification.md), narrowed to Category hierarchy/normalization, protected Category routes and DTOs, authorization, stable failures, transaction requirements, Swagger/OpenAPI, and Category tests.
-- [Sprint 2 plan](../../sprints/sprint-02.md), especially Category scope, authorization, Out of Scope, and Exit Criteria.
-- [Implemented S2-T02 persistence design](s2-t02-schema-proposal.md), narrowed to Category fields, null-equal sibling uniqueness, hierarchy trigger/advisory lock, restrictive relations, failure mapping, and transaction rules.
-- Existing API authentication/authorization/error/OpenAPI patterns in `apps/api/src/authentication/`, `apps/api/src/application.ts`, `apps/api/src/app.module.ts`, and `apps/api/src/database/prisma.service.ts`.
-- [Backend standards](../../standards/backend.md), [Backend architecture](../../architecture/backend-architecture.md), [Authorization](../../security/authorization.md), and [Testing standards](../../standards/testing.md), narrowed to protected HTTP behavior, transactions, safe errors, OpenAPI, and meaningful integration coverage.
+- [Clothing Catalog specification](../../features/catalog/specification.md), narrowed to shared validation, Product/Product Variant behavior, canonical pricing, protected routes and DTOs, authorization, stable failures, transaction requirements, Swagger/OpenAPI, and Product/Variant tests.
+- [Sprint 2 plan](../../sprints/sprint-02.md), especially Product/Variant decisions, protected capabilities, authorization, Out of Scope, and Exit Criteria.
+- [Implemented S2-T02 persistence design](s2-t02-schema-proposal.md), narrowed to Product, Product Variant, Inventory creation, Category relation, normalized keys, uniqueness, lifecycle/aggregate constraints, Product row locking, failure mapping, and indexes.
+- Existing Category/catalog and authentication patterns in `apps/api/src/catalog/`, `apps/api/src/authentication/`, `apps/api/src/application.ts`, and `apps/api/src/database/prisma.service.ts`.
+- [Backend standards](../../standards/backend.md), [Backend architecture](../../architecture/backend-architecture.md), [Authorization](../../security/authorization.md), and [Testing standards](../../standards/testing.md), narrowed to protected HTTP behavior, atomic aggregates, safe errors, OpenAPI, and meaningful integration coverage.
 
-Frontend/Next.js guides, Product/Variant/Inventory/Image/settings/public-catalog implementation details, future Role composition, and later commerce specifications are not required.
+Frontend/Next.js guides, Inventory mutation, Product Image file lifecycle/content routes, display-setting behavior, public catalog behavior, later commerce domains, and future Role composition are not required.
 
 ## Scope
 
-- Add the smallest coherent catalog/Category module boundary using the existing API-owned Prisma client and authentication infrastructure.
-- Implement `GET /api/v1/admin/catalog/categories` for the complete deterministic tree, capped by the persisted 1,000-Category invariant.
-- Implement `POST /api/v1/admin/catalog/categories` with normalized required name and optional nullable `parentId`.
-- Implement `PATCH /api/v1/admin/catalog/categories/{categoryId}` with at least one of name/nullable parent, supporting atomic rename and subtree move.
-- Implement `DELETE /api/v1/admin/catalog/categories/{categoryId}` for eligible empty leaves only.
-- Enforce `catalog.read` for retrieval and `catalog.manage` plus session CSRF for mutations through the existing Backend-authoritative guards.
-- Acquire the catalog advisory transaction lock before hierarchy validation reads/writes; map known constraints/trigger failures and operation context to stable Category errors without leaking database details.
-- Add exact DTO validation, response projection, deterministic tree construction, focused unit/integration/concurrency tests, and matching generated Swagger/OpenAPI assertions.
-- Update only narrow Category/API documentation required by implemented reality.
+- Extend the existing catalog module with focused Product/Variant controller, service, repository, DTO, and error boundaries.
+- Implement protected deterministic page-bounded Product summaries with accepted defaults, exact Category/status filters, and fixed ordering; implement protected Product detail with all retained Variants, exact Inventory, ready Image metadata/order, and explicit DTO projection.
+- Implement atomic Product creation as server-owned `DRAFT`, requiring a valid Category and one or more valid initial Variants, with exactly one Inventory row per Variant and accepted optional initial quantity.
+- Implement Product field updates and only accepted lifecycle transitions, including in-transaction completeness checks for every Active-state transition or mutation.
+- Implement Variant creation plus Inventory and Variant updates/reactivation while preserving immutable Product/Variant identities and Variant ownership.
+- Enforce normalized Product text, global normalized SKU uniqueness, within-Product normalized size/color uniqueness, default-versus-named active mode, canonical safe-integer rial price, retained-Variant, and Archived immutability rules.
+- Enforce `catalog.read` for reads and `catalog.manage` plus session CSRF for mutations through the existing Backend-authoritative catalog guard.
+- Lock/recheck the Product aggregate and relevant Category, Variant, Inventory, and ready-main-Image state within bounded transactions; map known persistence failures to stable Product/Variant errors without leaking database details.
+- Add exact validation, response projection, focused unit/integration/concurrency tests, and matching generated Swagger/OpenAPI assertions.
+- Update only narrow Product/Variant/API documentation required by implemented reality.
 
 ## Out of Scope
 
-- Product, Product Variant, Inventory, Product Image, cleanup, price-display setting, or public catalog routes/services.
+- Inventory update contracts, Product Image upload/content/reorder/replacement/removal, display-setting contracts, or public catalog routes.
 - Admin Panel or Storefront UI, forms, navigation, or frontend API integration.
-- Category publication/archive, slugs, search, selectable sorting, descendant-inclusive Product filtering, multi-category Product membership, or hard-delete cascade behavior.
-- Prisma schema/migration/reference-data changes, dependency changes, environment changes, production infrastructure, or unrelated authentication refactors.
+- Product hard delete, Variant hard delete, multi-category membership, Brand, slugs, search, selectable sorting, descendant Category filtering, generic attributes/options, price history, discounts, tax, reservations, or inventory history.
+- Creating a shortcut around activation completeness because Product Image upload is implemented later; tests may arrange persisted ready Image fixtures through the approved database boundary.
+- Prisma schema/migration/reference-data changes, dependency changes, environment changes, production infrastructure, or unrelated Category/authentication refactors.
 - Staging, committing, pushing, rebasing, branching, or destructive database reset without separate authorization.
 
 ## Expected Changes
 
-- Focused `apps/api/src/catalog/` Category module/controller/service/repository/DTO/error files, reusing existing cross-cutting infrastructure.
-- Minimal API module registration changes.
-- Focused `apps/api/test/` Category unit/integration/concurrency/OpenAPI tests.
+- Focused Product/Variant files under `apps/api/src/catalog/`, reusing existing catalog authorization and Category/database infrastructure.
+- Minimal catalog module/controller registration and CORS method adjustment only if an implemented method requires it.
+- Focused `apps/api/test/` Product/Variant unit, integration, concurrency, and OpenAPI tests.
 - Generated client remains reproducible and ignored; generated OpenAPI is verified through tests rather than committed unless an existing tracked workflow requires it.
 - Narrow catalog/API documentation and Sprint execution records only.
 
@@ -53,84 +55,90 @@ No Prisma schema, migration, package manifest, lockfile, Admin, or Storefront ch
 ## Relevant Existing Architecture
 
 - The API is a NestJS Modular Monolith with one API-owned Prisma client and PostgreSQL database.
-- S2-T03 implemented Category UUID/name/name-key/parent/timestamps, null-equal sibling uniqueness, restrictive child/Product foreign keys, a 1,000-row cap, six-level/cycle-safe trigger, and shared advisory lock `pg_advisory_xact_lock(1120002, 1)`.
-- Sprint 1 authentication resolves current session/role/permission state from PostgreSQL; Backend guards and session-bound CSRF remain authoritative.
-- Existing controllers use explicit DTOs, safe stable error envelopes, no-store behavior where applicable, and exact Swagger metadata.
+- S2-T03 implemented Product, Product Variant, Inventory, Category, ready Product Image metadata, lifecycle, normalized uniqueness, Product aggregate constraints, and row-locking-compatible persistence invariants.
+- S2-T04 implemented the catalog module, exact permission/CSRF guard, DTO/error conventions, and protected Category contracts.
+- Sprint 1 authentication resolves current session/role/permission state from PostgreSQL; Backend guards remain authoritative.
 
 ## API Changes
 
-- Add `GET /api/v1/admin/catalog/categories` requiring `catalog.read`; return the complete nested Category tree.
-- Add `POST /api/v1/admin/catalog/categories` requiring `catalog.manage` and CSRF; return `201` with the normalized Category DTO.
-- Add `PATCH /api/v1/admin/catalog/categories/{categoryId}` requiring `catalog.manage` and CSRF; return `200` with the normalized Category DTO.
-- Add `DELETE /api/v1/admin/catalog/categories/{categoryId}` requiring `catalog.manage` and CSRF; return `204`.
-- Use `400 VALIDATION_FAILED`, `401` existing authentication failures, `403 INSUFFICIENT_PERMISSION`/`CSRF_VALIDATION_FAILED`, `404 CATEGORY_NOT_FOUND`, and the approved `409` Category conflict codes.
+- Add `GET /api/v1/admin/catalog/products` requiring `catalog.read`; accept only `page`, `pageSize`, optional exact `categoryId`, and optional lifecycle `status`.
+- Add `GET /api/v1/admin/catalog/products/{productId}` requiring `catalog.read`; return the explicit protected Product detail DTO.
+- Add `POST /api/v1/admin/catalog/products` requiring `catalog.manage` and CSRF; atomically create a Draft Product, initial Variants, and Inventory; return `201`.
+- Add `PATCH /api/v1/admin/catalog/products/{productId}` requiring `catalog.manage` and CSRF; update fields and/or perform one accepted lifecycle transition; return `200`.
+- Add `POST /api/v1/admin/catalog/products/{productId}/variants` requiring `catalog.manage` and CSRF; create a retained Variant plus Inventory; return `201`.
+- Add `PATCH /api/v1/admin/catalog/variants/{variantId}` requiring `catalog.manage` and CSRF; update/reactivate a retained Variant; return `200`.
+- Use accepted validation, authentication, permission, CSRF, not-found, lifecycle, activation, SKU, combination, and mode error codes.
 
 ## Database Changes
 
-None. Use the implemented S2-T03 Category table, indexes, foreign keys, trigger, and advisory lock. No schema, migration, seed, or reference-data change is authorized.
+None. Use the implemented S2-T03 Product, Product Variant, Inventory, Category, and ready Product Image persistence boundaries. No schema, migration, seed, or reference-data change is authorized.
 
 ## Security Implications
 
-- Backend permission checks are authoritative; route visibility or possession of an Admin cookie is insufficient.
-- Every mutation requires the existing trusted Origin/session-bound CSRF boundary; reads do not mutate or issue credentials.
-- UUID/name/parent inputs are validated and normalized before persistence. Raw Prisma/PostgreSQL errors, SQL, internal name keys, and stack details never enter responses.
-- Advisory locking and in-transaction rechecks prevent concurrent moves/renames/deletes from bypassing hierarchy invariants.
-- Response DTOs expose only approved Category fields; persistence-only normalized keys remain internal.
+- Backend permission checks are authoritative; possession of an Admin cookie or UI visibility is insufficient.
+- Every mutation requires the existing trusted Origin/session-bound CSRF boundary.
+- IDs, filters, text, SKU, option labels, status, price, and quantity are validated/normalized before persistence. Raw Prisma/PostgreSQL errors, normalized keys, and internal storage/cleanup fields never enter responses.
+- Product aggregate locks and in-transaction rechecks prevent concurrent Product/Variant mutations from bypassing lifecycle, mode, or completeness invariants.
+- Explicit response DTOs expose exact protected Inventory and approved ready Image metadata but never cleanup state, storage keys/paths, credentials, or database rows.
 
 ## Edge Cases
 
-- Empty/whitespace/overlong names, unknown fields, malformed UUIDs, and empty PATCH bodies.
-- Root versus non-root normalized sibling conflicts, case/Unicode-equivalent names, and same name under different parents.
-- Missing parent/Category, self-parent, descendant cycle, six-level success, seventh-level/subtree overflow, and no-op/combined rename-move semantics.
-- Category cap at 1,000, deterministic complete-tree ordering, and safe construction without recursion failure.
-- Delete with direct children or any Product lifecycle reference; no cascade.
-- Concurrent sibling creates/renames, opposing moves, move versus delete, and stable domain-error classification.
+- Empty/whitespace/overlong text, control characters, unknown fields, malformed UUIDs/query values, unsafe pagination, empty PATCH bodies, and invalid enums/ranges.
+- Missing Category/Product/Variant, immutable Product/Variant IDs and Variant ownership, and same Category assignment no-ops.
+- Global case-normalized SKU conflicts across active/inactive Variants and concurrent Products.
+- Default unnamed versus named Variant shape, normalized nullable size/color combination conflicts, mixed active modes, and reactivation of retained rows.
+- Positive safe-integer `priceRial` divisible by 10; non-negative safe initial Inventory quantity with initial version 1.
+- Draft/Active/Archived transition matrix, Archived mutation rejection, activation completeness, same-request completeness restoration, last-active-Variant protection, and zero Inventory remaining valid for Active state.
+- Product creation rollback when any Variant/Inventory fails; concurrent aggregate updates and persistence-trigger failure classification.
+- Deterministic page ordering/tie-breaks, empty pages, exact Category/status filters, and response allowlists.
 - Missing authentication, insufficient permission, invalid CSRF/origin, disabled/revoked sessions, and safe unexpected failures.
 
 ## Constraints
 
-- Preserve the accepted routes, fields, normalization semantics, error codes, Category cap, six-level root-at-one model, and persisted permission names exactly.
-- Acquire the approved advisory lock before hierarchy reads in every mutation transaction; service prechecks alone are insufficient.
-- Reuse the existing authentication, CSRF, error-envelope, Prisma, and Swagger patterns without speculative shared abstractions.
-- Do not modify the S2-T03 schema/migration or pull Product/public/UI work forward.
+- Preserve accepted routes, fields, pagination defaults/bounds/order, normalization, lifecycle, error codes, canonical rial semantics, and persisted permission names exactly.
+- Acquire the Product row lock before aggregate validation/mutation and keep all Product/Variant/Inventory writes in the required bounded transaction.
+- Activation must enforce the persisted ready-main-Image and complete active-Variant state even though Product Image HTTP mutations arrive in S2-T08.
+- Reuse the existing authentication, CSRF, catalog guard, error-envelope, Prisma, and Swagger patterns without speculative shared abstractions.
+- Do not modify the S2-T03 schema/migration or pull Inventory mutation, Product Image, public, settings, or UI work forward.
 - No dependency, environment, or generated-artifact changes without separate approval.
 
 ## Acceptance Criteria
 
-- All four protected Category routes implement the exact methods, paths, statuses, permission/CSRF boundaries, request validation, and response DTOs.
-- Tree retrieval returns every Category once in a deterministic complete nested tree with correct immutable IDs, names, nullable parents, levels, and children; persistence-only keys are absent.
-- Create/rename/move normalize consistently and enforce root/non-root sibling uniqueness, parent existence, Category cap, cycles, and six-level subtree depth under concurrency.
-- Delete succeeds only for an empty leaf and maps child/Product references to `CATEGORY_NOT_EMPTY` without cascade.
-- Known uniqueness/FK/trigger outcomes map to the approved stable errors; unexpected database details remain internal.
+- All six protected Product/Variant routes implement the exact methods, paths, statuses, permissions/CSRF boundaries, request/query validation, and explicit response DTOs.
+- Product listing is deterministically page-bounded with only accepted filters; Product detail returns all retained Variants with exact Inventory and only approved ready Image metadata.
+- Product creation atomically persists one Draft Product, valid initial Variants, and exactly one Inventory per Variant, rolling back the entire aggregate on any failure.
+- Product updates and lifecycle transitions enforce the accepted transition matrix, Archived immutability, Category existence, and Active completeness under concurrency.
+- Variant create/update/reactivation preserve immutable identity/ownership and enforce SKU, normalized combination, active default/named mode, canonical price, Inventory, and last-active-Variant invariants.
+- Known uniqueness/FK/trigger outcomes map to approved stable errors; unexpected database details remain internal.
 - Authentication, permission, CSRF/origin, disabled/revoked state, and safe error-envelope behavior match existing API conventions.
-- Meaningful unit/integration/concurrency tests pass against PostgreSQL, including success, validation, conflict, authorization, rollback, and race cases.
-- Generated Swagger/OpenAPI exactly documents routes, schemas, UUIDs, nullable parent, authorization, CSRF requirements, success statuses, and stable failures; production documentation exposure remains unchanged.
-- Relevant Sprint 1 and S2-T03 regressions, API typecheck/lint/build/test, formatting, scope, and Git checks pass.
+- Meaningful unit/integration/concurrency tests pass against PostgreSQL, including success, validation, conflicts, authorization, rollback, lifecycle, and race cases.
+- Generated Swagger/OpenAPI exactly documents routes, pagination/filter parameters, UUIDs/enums/nullability, request/response schemas, authorization, CSRF, statuses, and stable failures; production documentation exposure remains unchanged.
+- Relevant Sprint 1 and S2-T03/S2-T04 regressions, API typecheck/lint/build/test, formatting, scope, and Git checks pass.
 
 ## Testing Impact
 
 Full Backend HTTP and PostgreSQL behavior testing required.
 
-- Unit-test deterministic normalization/tree mapping/error classification where isolated logic is meaningful.
-- Add real-PostgreSQL integration/API coverage for all routes, transaction rollback, hierarchy depth/cycle/cap, restrictive deletion, permission/CSRF, and stable envelopes.
-- Add independent-connection races for sibling uniqueness and conflicting hierarchy mutation where existing S2-T03 persistence tests do not already prove the service/HTTP boundary.
-- Run relevant authentication and catalog persistence regressions.
+- Unit-test normalization, pagination/query parsing, lifecycle transition logic, DTO projection, and error classification where isolated logic is meaningful.
+- Add real-PostgreSQL integration/API coverage for all routes, atomic create rollback, Category existence, lifecycle/completeness, Variant mode/uniqueness/price, retained rows, authorization/CSRF, and stable envelopes.
+- Add independent-connection races for global SKU and conflicting Product aggregate mutations where existing S2-T03 persistence tests do not already prove the service/HTTP boundary.
+- Run relevant authentication, Category, and catalog persistence regressions.
 
 ## Swagger / OpenAPI Impact
 
-Required. Add exact protected Category path/operation metadata, cookie authentication, permission and CSRF descriptions, request/response schemas, UUID/nullable-parent constraints, statuses, and stable error responses. Generated OpenAPI must match tested behavior and remain disabled in production.
+Required. Add exact protected Product/Variant paths and operation metadata, cookie authentication, permission and CSRF descriptions, pagination/filter parameters, request/response schemas, UUID/enums/nullability/ranges, statuses, and stable error responses. Generated OpenAPI must match tested behavior and remain disabled in production.
 
 ## Validation
 
 - Preflight the approved PostgreSQL test identity before integration work; no reset without separate approval.
-- Run focused Category unit/integration/concurrency/OpenAPI tests and the relevant existing authentication/persistence regressions.
-- Run API Prisma generation if required by ignored generated output, then API test, typecheck, lint, and build gates.
+- Run focused Product/Variant unit/integration/concurrency/OpenAPI tests and relevant authentication/Category/persistence regressions.
+- Run API Prisma generation only if required by ignored generated output, then API test, typecheck, lint, and build gates.
 - Run repository formatting, local Markdown-target, `git diff --check`, prohibited-scope, dependency/lockfile/environment/schema/migration/frontend, generated-artifact, database-cleanup, and read-only Git-index inspections.
 - Record only checks actually executed and their real results.
 
 ## Documentation Impact
 
-Update the catalog/API implementation reality and Sprint records only after executable verification passes. On success, archive S2-T04 and automatically prepare S2-T05; stop before Product/Variant implementation.
+Update catalog/API implementation reality and Sprint records only after executable verification passes. On success, archive S2-T05 and automatically prepare S2-T06; stop before Inventory implementation.
 
 ## Approval State
 

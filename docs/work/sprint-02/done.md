@@ -55,3 +55,21 @@ PostgreSQL 18.6 health and exact `automotive_dev`/`automotive_test` isolation pa
 **Documentation Impact:** Database and Prisma documentation now describe the implemented sixteen-model/two-migration foundation. The accepted S2-T02 proposal is marked implemented and remains the canonical detailed catalog persistence contract.
 
 **Follow-ups:** S2-T04 is Current and awaiting implementation approval. It owns only protected nested-Category runtime contracts, tests, and matching OpenAPI; Product/Variant and later catalog slices remain queued.
+
+## S2-T04 — Implement Protected Nested-Category Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented the protected Admin Category module with complete deterministic tree retrieval, normalized create/rename, atomic subtree moves, eligible empty-leaf deletion, exact `catalog.read`/`catalog.manage` authorization, session-bound CSRF, bounded hierarchy enforcement, stable safe errors, and synchronized Swagger/OpenAPI. No Product/Variant, frontend, dependency, Prisma schema, migration, or reference-data change was introduced.
+
+### Validation
+
+PostgreSQL 18.6 development/test isolation passed. The focused Category unit and real-PostgreSQL HTTP suite passed (9 tests), followed by the complete API suite including Sprint 1 authentication and S2-T03 persistence/concurrency regressions (84 tests). API typecheck, lint, and build passed; repository Prettier check and `git diff --check` passed. OpenAPI route/security/schema and CORS method assertions passed. Prohibited-scope inspection found no Prisma, migration, package, lockfile, Admin, or Storefront changes. Post-test database cleanup verified zero Category/Product/test-Admin/test-Role fixtures.
+
+**Important Decisions:** Reused Sprint 1 authentication/current-state and CSRF services behind a narrow catalog permission guard. All Category mutations acquire the implemented catalog advisory lock before validation reads and writes, while database uniqueness, restrictive relations, cap, cycle, and depth constraints remain authoritative. External DTOs exclude `nameKey`; expected persistence failures map to stable Category codes and unexpected failures use the safe server envelope.
+
+**Files / Areas Changed:** Added the API catalog Category controller, service, repository, DTO/error, authorization guard, and module; registered the module; extended CORS for implemented `PATCH`/`DELETE`; added focused Category unit/integration/OpenAPI tests; and updated narrow project/catalog/backend reality documentation.
+
+**Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Category contracts as implemented. Sprint execution records now route Product/Variant work to S2-T05.
+
+**Follow-ups:** S2-T05 is Current and awaiting implementation approval. It owns protected Product/Variant contracts and matching tests/OpenAPI only; Inventory mutation, Product Image, settings, public catalog, and frontend work remain later tasks.

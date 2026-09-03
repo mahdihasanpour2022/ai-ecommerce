@@ -1,6 +1,6 @@
 # Clothing Catalog Specification
 
-**Status:** Approved for Sprint 2 implementation planning
+**Status:** Approved for Sprint 2 implementation; persistence and protected Category contracts implemented
 
 ## Required Context
 
@@ -13,7 +13,7 @@
 - [Backend Standards](../../standards/backend.md)
 - [Testing Standards](../../standards/testing.md)
 
-This specification owns observable clothing-catalog behavior. The Sprint plan owns timing and scope; architecture/security documents own implementation boundaries; S2-T02 will own the separately approved schema/migration design. Later tasks should narrow this list to the exact sections their changes require.
+This specification owns observable clothing-catalog behavior. The Sprint plan owns timing and scope; architecture/security documents own implementation boundaries; the accepted S2-T02 design owns detailed persistence decisions. Later tasks should narrow this list to the exact sections their changes require.
 
 ## Purpose
 
