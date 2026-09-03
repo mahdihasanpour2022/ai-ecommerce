@@ -1,9 +1,12 @@
 # Sprint 2: Clothing Catalog Domain & Persistence Foundation
 
-**Status:** Planning — Awaiting Sprint Plan Approval
+**Status:** Active
+
+**Plan Approved:** 2026-09-03
 
 ## Required Context
 
+- [Clothing Catalog specification](../features/catalog/specification.md)
 - [Project Roadmap](../roadmap.md#sprint-2--catalog-domain--persistence-foundation)
 - [Product Requirements](../product/requirements.md)
 - [Minimum Viable Product](../product/mvp.md)
@@ -16,7 +19,7 @@
 - [Backend Standards](../standards/backend.md)
 - [Testing Standards](../standards/testing.md)
 
-Task preparation after Sprint activation must narrow this list to the Minimum Sufficient Required Context for that task. No task-level context exists while this plan awaits approval.
+Each Current task must narrow this list to its Minimum Sufficient Required Context. The active execution state is canonical under `docs/work/sprint-02/`.
 
 ## Goal
 
@@ -183,8 +186,8 @@ Exact field-length bounds, decoded-image limits, page caps, deterministic fixed 
 
 ## Ordered Task Queue
 
-The canonical ordered queue is maintained in [Sprint 2 Queue](../work/sprint-02/queue.md). Every task is Queued; none is Current while this Sprint awaits plan approval.
+The canonical ordered queue and sole Current task state are maintained under [Sprint 2 work](../work/sprint-02/queue.md); this Sprint plan does not duplicate the changing task identifier.
 
 ## Approval State
 
-Awaiting Sprint Plan Approval. This document does not authorize implementation, schema changes, migration generation/application, dependency changes, or task preparation.
+Sprint Plan Approved. Sprint activation and task preparation do not authorize implementation, schema changes, migration generation/application, or dependency changes. Each prepared Current task requires its own implementation approval.

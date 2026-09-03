@@ -31,3 +31,5 @@ The detailed field types, nullability, constraints, indexes, lifecycle, cleanup,
 Model business invariants with database constraints where practical, not application checks alone. Define nullability, uniqueness, foreign keys, indexes, precision, time zones, and delete policies intentionally. Preserve transaction-time facts on orders rather than relying on mutable catalog records. Avoid N+1 access and verify query plans for important paths.
 
 Every migration requires review for data loss, locking, deployment compatibility, rollback/forward-recovery, backfills, and indexes before application. Raw SQL is acceptable only when justified, reviewed, parameterized, and tested. Production data access, backup/restore, retention, privacy, and zero-downtime migration strategy are open operational decisions.
+
+Sprint 2 catalog persistence must implement the observable invariants in the [Clothing Catalog specification](../features/catalog/specification.md) through its separately approved schema/migration proposal; this architecture document does not pre-approve model fields or migration SQL.

@@ -8,9 +8,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Automotive Parts Commerce: Agent Guide
+# Clothing Commerce: Agent Guide
 
-This repository is a production-oriented automotive-parts commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; product behavior remains planned work.
+This repository is a production-oriented clothing-commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; Sprint 1 implemented Admin authentication, while clothing catalog and purchase behavior follow the active roadmap. Existing `@automotive-commerce/*` and authentication/database names are legacy technical identifiers until a separately approved compatibility-safe rename.
 
 Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, feature specifications, and sprint plans live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
 

@@ -1,12 +1,12 @@
 # Sprint 2 Queue
 
-Sprint 2 is Planning and awaiting Sprint Plan Approval. Its proposed goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
+Sprint 2 is Active. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
 
-No task is Current. Plan approval authorizes Sprint activation and automatic preparation of S2-T01 only; it does not authorize S2-T01 implementation.
+S2-T03 is the sole Current task and is awaiting implementation approval. Task preparation does not authorize Prisma, migration, database, runtime, or dependency changes.
 
 ## S2-T01 — Specify Clothing Catalog Behavior and Contracts
 
-Status: Queued
+Status: Done
 
 Classification: Required Now
 
@@ -18,7 +18,7 @@ Approved Sprint 2 plan and Sprint activation.
 
 ## S2-T02 — Design Catalog Schema and Migration Proposal
 
-Status: Queued
+Status: Done
 
 Classification: Required Now
 
@@ -30,7 +30,7 @@ S2-T01 Done. The resulting schema/migration proposal requires separate explicit 
 
 ## S2-T03 — Implement Approved Catalog Persistence
 
-Status: Queued
+Status: Current
 
 Classification: Required Now
 
@@ -126,4 +126,4 @@ S2-T01 through S2-T09 Done.
 
 ## Approval State
 
-Awaiting Sprint Plan Approval. All tasks remain Queued; no implementation or task-level execution context is authorized.
+Sprint Plan Approved. S2-T01 and S2-T02 are Done. S2-T03 is Current and awaiting implementation approval; S2-T04 through S2-T10 remain Queued.

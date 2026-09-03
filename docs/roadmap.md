@@ -64,7 +64,7 @@ Future Sprints remain high-level until their entry decisions are resolved. Their
 
 ## Sprint 2 — Catalog Domain & Persistence Foundation
 
-**Status:** Planning
+**Status:** Active
 
 ### Goal
 
@@ -97,7 +97,7 @@ Sprint 0 foundation and Sprint 1 Admin authentication/authorization.
 
 The Backend can securely persist and retrieve the approved minimum catalog, inventory, and product-image model with reviewed migrations and tested contracts, ready for Admin workflows and public browsing.
 
-See the proposed [Sprint 2 detailed plan](sprints/sprint-02.md) and [Sprint 2 queue](work/sprint-02/queue.md). Both await owner approval; Sprint 2 remains Planning and no task is Current.
+See the [Clothing Catalog specification](features/catalog/specification.md), approved [Sprint 2 detailed plan](sprints/sprint-02.md), and active [Sprint 2 queue](work/sprint-02/queue.md). Sprint 2 is Active; the queue and `current.md` own the sole Current task state.
 
 ## Sprint 3 — Admin Catalog Management
 

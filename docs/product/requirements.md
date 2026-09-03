@@ -36,3 +36,5 @@ Future non-Super-Admin catalog Role composition, cart persistence, guest/account
 ## Future considerations
 
 Advanced customer-account features, recommendations, advanced discounts/analytics, specialized search, complex fulfillment/shipping and returns/refunds, advanced media systems, BFF, Redis, event-driven integrations, and distributed services require explicit approval and evidence from real requirements or scale.
+
+The implemented planning boundary for the minimum clothing catalog is canonical in the [Clothing Catalog specification](../features/catalog/specification.md).
