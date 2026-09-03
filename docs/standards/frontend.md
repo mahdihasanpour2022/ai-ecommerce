@@ -7,6 +7,7 @@
 - Reuse components when behavior or presentation truly repeats; follow each application's design system consistently without premature cross-app abstraction.
 - Keep business rules and request orchestration out of presentation components. Centralize HTTP/auth behavior.
 - Validate forms on the client for usability and on the backend for authority. Provide actionable errors and prevent accidental duplicate submissions.
+- For future non-trivial Admin and Storefront forms, use React Hook Form by default with explicit client validation, accessible field associations, `aria-invalid`, announced error messages, and submission-state handling. A simpler native React/HTML form is allowed only when the task records why React Hook Form adds no meaningful value. This standard does not weaken Backend validation and does not by itself authorize adding or changing a dependency in a Workspace.
 - Model loading, empty, error, success, retry, disabled, and unauthorized states predictably.
 - Render external content safely; do not inject unsanitized HTML or construct unsafe URLs.
 - Prefer Server Components and small client boundaries according to [frontend architecture](../architecture/frontend-architecture.md). Do not add global state, memoization, or effects without a concrete need.

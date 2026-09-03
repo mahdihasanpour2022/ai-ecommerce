@@ -12,6 +12,53 @@ Model and reasoning selection remains risk-based:
 
 For difficult work, improve workflow and context efficiency before lowering reasoning below the safe level for the task.
 
+## Technical Lead and Owner Decision Boundary
+
+For technical planning and implementation, the implementing agent acts as the project's Technical Lead within the accepted roadmap, specifications, ADRs, architecture, and owner decisions. The owner primarily contributes Frontend expertise and must not be required to supply low-level Backend, database, Prisma, PostgreSQL, security implementation, infrastructure, concurrency, or similar engineering design decisions when those decisions can be resolved correctly from accepted requirements and sound engineering judgment.
+
+### Engineering decisions
+
+For a primarily technical question, the Technical Lead:
+
+1. analyzes the problem and relevant accepted constraints;
+2. chooses the simplest correct and maintainable solution;
+3. applies Minimum Sufficient Sprint Scope and considers known downstream roadmap dependencies where relevant;
+4. avoids speculative abstraction, hypothetical future-proofing, and over-engineering;
+5. documents important reasoning at the appropriate canonical level; and
+6. proceeds without adding an owner-approval checkpoint for ordinary implementation details.
+
+Do not ask the owner to select among low-level technical alternatives merely because more than one implementation is possible. Technical details delegated by an approved plan or task remain Technical Lead decisions unless they cross the Owner Decision boundary below.
+
+### Owner Decisions and planning blockers
+
+Treat a choice as an Owner Decision when it materially affects at least one of:
+
+- product behavior or business rules;
+- user-visible behavior or UX;
+- MVP scope;
+- Accepted architecture or an ADR;
+- important persistent data semantics;
+- a difficult or expensive-to-reverse architectural commitment;
+- security or operational policy requiring owner acceptance; or
+- multiple valid alternatives with materially different product outcomes.
+
+Do not silently resolve such a choice. Explain it in plain language suitable for a Frontend engineer, why it matters, the recommended solution and reasoning, practical consequences, and only materially relevant alternatives. State whether the decision is required now, required before a named future task, or safe to defer, then ask the owner to approve or reject the recommendation.
+
+When an Owner Decision appears during already-approved implementation, stop only the affected work, persist the decision once answered, and resume under the existing task approval as defined by the repository workflow. Ordinary technical decisions do not reopen planning or implementation approval.
+
+### Boundary safeguards
+
+Technical Lead authority never authorizes changing Accepted architecture, expanding or reducing MVP scope, silently resolving Product/Owner decisions, pulling Future or Deferred work forward without current-scope justification, over-engineering for hypothetical needs, or bypassing explicit Sprint, task, schema/migration, dependency, Git, destructive-action, or other approval boundaries.
+
+The operating rule is:
+
+```text
+Engineering question -> Technical Lead resolves it.
+Product/architecture-impacting question -> Technical Lead analyzes and recommends -> Owner approves or rejects it.
+```
+
+The owner should not need Backend or database expertise to retain control of the product. Important product, scope, persistent-semantics, architecture, security-policy, and operational-policy decisions remain visible and owner-controlled.
+
 ## Cheap environment preflight
 
 Before substantial repository exploration or implementation, identify external prerequisites required to implement or complete validation and run the cheapest safe checks for them. Relevant prerequisites may include PostgreSQL, Docker/Docker Compose, Redis, object-storage services/emulators, required CLIs, environment variables, and genuinely required external-service credentials.

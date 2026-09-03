@@ -22,6 +22,6 @@ This is the proportionate minimum for future implementation, not evidence that p
 
 ## File and media safety
 
-Trusted source-controlled SVG assets are allowed through an approved source/build-time path; untrusted SVG markup must not be injected. Product/media uploads permit only WebP, JPEG/JPG, and PNG. Backend validation must verify authorization, size, declared media type, actual content/signature as appropriate, and a safe generated storage key. Do not rely on extension or trust the original filename. SVG uploads are forbidden.
+Trusted source-controlled SVG assets are allowed through an approved source/build-time path; untrusted SVG markup must not be injected. Product/media uploads permit only WebP, JPEG/JPG, and PNG. Product Images must be strictly smaller than 400 KiB (409,600 bytes). Backend validation must verify authorization, byte size, declared media type, actual content/signature, decodability, conservative decoded dimensions/pixel count, and a safe generated storage key. Do not rely on extension or trust the original filename. SVG uploads are forbidden. Storage and metadata changes require a recoverable staged or compensating lifecycle so failures do not silently create broken public metadata or untracked cleanup debt.
 
 Advanced scanning, WAF/bot services, distributed rate limiting, and specialized security infrastructure are Deferred until risk or requirements justify them.

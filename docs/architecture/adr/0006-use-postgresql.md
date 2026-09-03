@@ -4,7 +4,7 @@
 
 ## Context
 
-Catalog, fitment, inventory, identity, and orders are relational and require transactional consistency.
+Nested clothing catalog, product variants where approved, inventory, identity, and orders are relational and require transactional consistency.
 
 ## Decision
 
@@ -21,4 +21,3 @@ MySQL-compatible databases; document databases; separate databases per domain.
 ## Consequences
 
 Schema, indexing, backup/restore, connection management, privacy, and migration operations require explicit design. One database does not remove module ownership boundaries.
-

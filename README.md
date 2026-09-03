@@ -1,6 +1,6 @@
-# Automotive Parts Commerce
+# Clothing Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL automotive-parts commerce platform. The engineering foundation and complete initial Admin authentication slice are implemented, including identity persistence/provisioning, Backend-enforced RBAC, login/bootstrap, refresh rotation/recovery, current-session logout, and the protected Admin frontend. Catalog, purchasing, deployment, and production infrastructure remain planned work.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL clothing-commerce platform. The engineering foundation and complete initial Admin authentication slice are implemented, including identity persistence/provisioning, Backend-enforced RBAC, login/bootstrap, refresh rotation/recovery, current-session logout, and the protected Admin frontend. Clothing catalog, purchasing, deployment, and production infrastructure remain planned work. Existing `@automotive-commerce/*` workspace names and authentication identifiers are legacy technical identifiers; changing them is not part of the product-direction update and requires separately approved runtime work.
 
 ## Repository applications
 

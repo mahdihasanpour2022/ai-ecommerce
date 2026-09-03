@@ -18,6 +18,8 @@ role.manage
 
 These examples are not the final permission matrix. Avoid relying only on role names once granular capabilities or resource scope are required.
 
+Sprint 2's accepted minimum clothing-catalog permission registry is `catalog.read`, `catalog.manage`, `inventory.update`, `product-media.manage`, and `settings.price-display-unit.update`. `catalog.read` governs protected Admin catalog and exact-inventory retrieval; each mutation permission remains independent. Public Active-catalog and display-setting reads use explicit public DTOs and require no Admin permission. `SUPER_ADMIN` receives explicit persisted grants for every registered permission; its special Role behavior never becomes a wildcard or authorization bypass. Sprint 2 introduces no additional Role or role-management workflow, and non-Super-Admin grant composition remains a Sprint 3 decision.
+
 ## Enforcement rules
 
 - UI visibility improves usability but is not authorization.

@@ -38,6 +38,8 @@ Architecture and security documents own **how** the system is intended to work. 
 
 ## Task execution and transitions
 
+- Apply the canonical [Technical Lead and Owner Decision Boundary](docs/standards/execution.md#technical-lead-and-owner-decision-boundary). Resolve ordinary technical planning and implementation choices using sound engineering judgment without shifting low-level Backend/database/security expertise to the owner. Surface only genuine Product/Owner decisions with a recommendation and approval request; this authority never overrides existing scope, architecture, schema/migration, dependency, Git, or implementation-approval boundaries.
+
 - Sprint execution state lives under `docs/work/<sprint>/`. Only the Active Sprint may have one Current task. Preparing a task is automatic within an Active Sprint; implementing it requires explicit owner approval. An unambiguous `Yes` to the implementation-approval question is equivalent to `Approve and implement the current task.` Normal context is this file, that task's `current.md`, and its Minimum Sufficient **Required Context**.
 - Every implementation task declares **Testing Impact**. A Backend HTTP-contract task also declares **Swagger / OpenAPI Impact** with matching acceptance and validation criteria. Detailed completion rules live in [testing standards](docs/standards/testing.md).
 - Once implementation is approved, continue until the Current task succeeds, reaches an explicit Open Decision, or is genuinely Blocked. Ask only the minimum necessary owner question for an explicit Open Decision; after the answer, persist it and resume the same already-approved task without another general approval. Ordinary implementation choices add no approval checkpoint.

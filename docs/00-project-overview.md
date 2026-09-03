@@ -2,7 +2,7 @@
 
 ## Vision
 
-Build a production-quality automotive replacement-parts commerce platform that helps customers discover parts and authorized staff manage catalog and inventory data. Initial product families include braking, lighting, glass, mirrors, and body parts.
+Build a production-quality clothing-commerce platform that helps customers discover apparel and authorized staff manage nested categories, products, images, pricing, and inventory data.
 
 ## Users and applications
 
@@ -18,7 +18,7 @@ The accepted target is a Yarn Workspaces/Turborepo monorepo containing `apps/sto
 
 ## Current stage and repository reality
 
-Sprint 0's engineering foundation and Sprint 1's complete initial Admin authentication/authorization slice are implemented. The repository uses Yarn Classic 1.22.22 Workspaces with Turborepo orchestration. The preserved Next.js 16.3.2 App Router starter and its dependency baseline live in `apps/storefront`; `apps/admin` contains the protected Persian RTL authentication shell; `apps/api` contains the strict-TypeScript NestJS Modular Monolith/OpenAPI foundation plus the Admin identity/session/authentication boundary; and the root owns repository orchestration.
+Sprint 0's engineering foundation and Sprint 1's complete initial Admin authentication/authorization slice are implemented. The product direction is now clothing commerce; legacy `automotive` workspace, database, issuer, and audience identifiers remain implemented technical identifiers until a separately approved compatibility-safe rename. The repository uses Yarn Classic 1.22.22 Workspaces with Turborepo orchestration. The preserved Next.js 16.3.2 App Router starter and its dependency baseline live in `apps/storefront`; `apps/admin` contains the protected Persian RTL authentication shell; `apps/api` contains the strict-TypeScript NestJS Modular Monolith/OpenAPI foundation plus the Admin identity/session/authentication boundary; and the root owns repository orchestration.
 
 Persian (`fa-IR`) and right-to-left layout are the accepted frontend language and direction. The initial browser topology communicates directly with the API; a BFF is deferred.
 

@@ -2,7 +2,7 @@
 
 ## Shape
 
-The Backend API foundation is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It currently contains only the root application module and shared bootstrap configuration. Domain-oriented modules such as auth, users, roles/permissions, products, categories, brands, vehicles, inventory, orders, customers, and media are candidates, not a directive to create empty modules.
+The Backend API foundation is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It currently contains the root application boundary and implemented Admin authentication module. Domain-oriented modules such as products, categories, product variants, inventory, commerce settings, orders, customers, and media are candidates for the clothing-commerce direction, not a directive to create empty modules.
 
 Each implemented module owns a cohesive capability and exposes narrow interfaces. NestJS dependency injection wires explicit dependencies; circular module relationships are a design signal. Use pragmatic domain modeling—do not add aggregates, generic repositories, or other DDD layers solely for pattern purity.
 

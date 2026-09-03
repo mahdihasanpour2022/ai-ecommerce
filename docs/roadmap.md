@@ -64,18 +64,20 @@ Future Sprints remain high-level until their entry decisions are resolved. Their
 
 ## Sprint 2 — Catalog Domain & Persistence Foundation
 
-**Status:** Future
+**Status:** Planning
 
 ### Goal
 
-Turn the approved catalog concepts into a reviewed persistent Backend foundation for products, required reference data, minimum inventory, and product images.
+Turn the approved clothing-catalog concepts into a reviewed persistent Backend foundation for nested categories, products, pricing/display settings, minimum inventory, and product images.
 
 ### Major Features
 
-- Feature specifications for Product, Product Image, Category, Brand, minimum vehicle compatibility, and minimum inventory behavior.
+- Feature specifications for clothing Product, optional Product Variant, Product Image, nested Category, application price-display setting, and minimum inventory behavior.
 - Reviewed Prisma model and migrations for only the approved catalog scope.
 - Validated, authorized Backend contracts for managing and retrieving approved catalog data and images.
-- Minimum product-media policy for WebP, JPEG/JPG, and PNG with SVG uploads forbidden; trusted source-controlled SVG assets remain allowed.
+- One main Product image plus up to eight ordered additional images, each below the approved 400 KB boundary.
+- Minimum product-media policy for content-verified WebP, JPEG/JPG, and PNG with SVG uploads forbidden; trusted source-controlled SVG assets remain allowed.
+- One Admin-managed rial/toman display-unit setting consumed consistently by later Admin and Storefront interfaces.
 - Transactional invariants, lifecycle behavior, stable errors, meaningful tests, and synchronized OpenAPI documentation.
 
 ### Depends On
@@ -84,16 +86,18 @@ Sprint 0 foundation and Sprint 1 Admin authentication/authorization.
 
 ### Decisions Required Before Sprint
 
-- **Open:** Product versus variant boundary, identifiers/SKU ownership, required fields, and lifecycle/publication behavior.
-- **Open:** Category hierarchy/cardinality and Brand relationships.
-- **Open:** Minimum fitment precision, supported vehicle dimensions, and source-quality expectations.
-- **Open:** Minimum inventory scope, availability meaning, location depth, and purchase-relevant quantity semantics.
-- **Open:** Pricing/currency representation required for catalog and later order totals.
-- **Open:** Product-image ownership, ordering, limits, storage lifecycle, and approved storage boundary. Advanced galleries, video, transformation pipelines, and DAM systems are Deferred.
+- **Accepted:** Product owns name, description, Category, lifecycle, and Product Images. `ProductVariant` is the sellable item/size-color combination and owns globally unique SKU, price, active status, and inventory. Every Product has at least one Product Variant; a Product without selectable options uses one default unnamed Variant. Generic attribute/EAV systems and speculative variant abstractions are excluded. Product lifecycle is `DRAFT`, `ACTIVE`, or `ARCHIVED`: Draft is never public/purchasable; Active is publicly retrievable and exposes only active Variants; Archived is retained but not public/purchasable. Transitions are Draft to/from Active, either to Archived, and Archived to Draft for revalidation. Sprint 2 provides no hard-delete Product contract. An Active Product must retain at least one active valid Variant; zero inventory leaves it visible as unavailable. Product and Variant use immutable opaque UUID identifiers; final Storefront URL/slug strategy is Deferred to Sprint 4. Product requires name and Category at creation, while description and one main image are activation requirements. Variant requires normalized globally unique SKU, integer-rial price, active status, and inventory. Size/color are optional trimmed labels; a selectable Variant has at least one, while a default unnamed Variant has neither. A Product uses either its single default unnamed Variant or named size/color Variants, never both, and normalized size/color combinations are unique within the Product. SKU is trimmed, uppercase-normalized, case-insensitively unique, and uses only letters, digits, hyphens, and underscores; exact length limits remain schema-proposal details.
+- **Accepted:** Categories use immutable opaque UUIDs, required normalized names, and nullable self-referencing `parentId`; `null` identifies a root. The hierarchy has a maximum depth of six levels and sibling names are case-insensitively unique, while the same name may exist under different parents. Moving a Category moves its subtree atomically and is rejected for self/descendant placement, excessive resulting depth, or a target sibling-name conflict; Products remain attached to their Category. Only an empty leaf Category may be deleted. A Category with children or any Product, including Draft or Archived Products, cannot be deleted, and deletion never cascades to Products or child Categories. Each Product belongs to exactly one Category, multi-category membership is Deferred, and final public Category slug/URL behavior remains Deferred to Sprint 4.
+- **Accepted:** Every Product Variant has exactly one Inventory record, created transactionally with the Variant and initialized to zero unless an approved initial quantity is supplied. Inventory stores database-constrained non-negative integer `onHandQuantity`; for Sprint 2, `availableQuantity` equals on-hand quantity. A Variant is available only when both it and its Product are Active and on-hand quantity is greater than zero. Admin contracts expose exact quantity; minimum public contracts expose availability but not exact stock, leaving customer quantity presentation to Sprint 4. Protected absolute-quantity updates require the last-read optimistic version and reject stale writes with a stable conflict response. Multi-location stock, reservations, adjustment history, Redis/distributed locking, and Checkout decrement/release rules are Deferred; later guarded atomic purchase behavior must preserve this on-hand meaning and Variant ownership.
+- **Accepted / permission Open:** Every Product Variant price is a required positive integer rial value divisible by 10; invalid values are rejected without rounding. The singleton global display/input setting is `RIAL` or `TOMAN`, defaults to `TOMAN`, and is read consistently by Admin and Storefront. Backend Product/Variant contracts always accept and return canonical `priceRial`, independent of the setting. Toman Admin input is multiplied by 10 before submission and Toman display divides canonical rials by 10 exactly. Setting changes affect display/input only and never rewrite prices. A separately approved dedicated permission protects setting changes. Later payment integration starts from canonical rial values and performs any provider-required conversion only at the provider boundary; the UI setting never affects payment calculations. Multi-currency, exchange rates, discounts, tax, and price history are Deferred.
+- **Accepted:** Product Images belong only to Product, never Variant. A Product has at most nine ordered images: position zero is its single main image and positions one through eight are additional images. Positions are contiguous and reordering is atomic. Draft Products may have none; Active Products require exactly one main image, which can be removed only through atomic replacement/reordering or after returning the Product to Draft. Uploads are strictly smaller than 400 KiB (409,600 bytes), content-verified and decodable WebP, JPEG/JPG, or PNG, with uploaded SVG always forbidden and conservative decoded dimension/pixel limits finalized in the implementation specification. PostgreSQL stores generated storage keys and required metadata, never binaries or trusted original filenames. Development/test use application-owned local filesystem storage behind a narrow Product Image interface; production upload remains disabled until object storage is approved later. Upload/replacement/deletion use a recoverable staged or compensating workflow, with failed post-commit deletion durably identifiable for retry, without a generalized media platform or job infrastructure. Public retrieval returns only ordered images of Active Products; authorized Admin retrieval may include Draft/Archived Product images. Sprint 4 owns gallery interaction, fallback presentation, enlargement, and zoom. Advanced video, transformation pipelines, and DAM systems are Deferred.
+- **Accepted:** Sprint 2 registers `catalog.read`, `catalog.manage`, `inventory.update`, `product-media.manage`, and `settings.price-display-unit.update`. Protected Admin operations remain Backend-enforced and default-deny. `catalog.read` covers exact protected catalog/inventory reads; the other permissions independently govern catalog mutation, inventory mutation, Product Image mutation, and display-setting mutation. Public Active-catalog and display-setting reads require no Admin permission and return only approved public DTOs. The existing `SUPER_ADMIN` Role receives explicit database grants for all five permissions, without wildcard or hard-coded bypass. Sprint 2 creates no other Role or role-management UI; future staff-role grants remain a Sprint 3 decision.
 
 ### Exit Outcome
 
 The Backend can securely persist and retrieve the approved minimum catalog, inventory, and product-image model with reviewed migrations and tested contracts, ready for Admin workflows and public browsing.
+
+See the proposed [Sprint 2 detailed plan](sprints/sprint-02.md) and [Sprint 2 queue](work/sprint-02/queue.md). Both await owner approval; Sprint 2 remains Planning and no task is Current.
 
 ## Sprint 3 — Admin Catalog Management
 
@@ -105,8 +109,8 @@ Enable authorized staff to manage the catalog data and required product images n
 
 ### Major Features
 
-- Protected Persian RTL management for Categories and Brands.
-- Minimum vehicle compatibility and inventory administration.
+- Protected Persian RTL management for nested Categories.
+- Clothing Product/Variant, price-display setting, and minimum inventory administration.
 - Product creation, listing, viewing, and editing with approved lifecycle behavior.
 - Required product-image upload, visibility, ordering/removal behavior, and safe validation under the accepted media policy.
 - Authorization-aware UX, validation, loading/empty/error states, meaningful automated tests, and end-to-end Admin/API verification.
@@ -117,7 +121,7 @@ Sprint 1 protected Admin foundation and Sprint 2 catalog persistence/contracts.
 
 ### Decisions Required Before Sprint
 
-- **Open:** Minimum catalog/media permission matrix and which roles may perform each operation.
+- **Open:** Which non-Super-Admin roles receive the approved Sprint 2 catalog/media/settings permissions; Backend permission codes themselves must be settled for Sprint 2 contracts.
 - **Open:** Admin workflow and validation rules for product completeness and publication/readiness.
 - **Open:** Inventory adjustment semantics and concurrency expectations.
 - **Open:** Media upload/storage UX and minimum image-management lifecycle.
@@ -138,7 +142,8 @@ Make approved persisted products and their images discoverable to customers thro
 ### Major Features
 
 - Public product listing and product detail experiences with required product images.
-- Approved Category, Brand, fitment, availability, and pricing presentation.
+- Approved nested-Category, size/color option where applicable, availability, and rial/toman pricing presentation.
+- Product detail gallery with one main image, up to eight selectable additional images, click-to-enlarge behavior, and zoom.
 - Bounded browsing/filtering needed for the approved catalog scope; specialized search infrastructure is excluded.
 - Safe image fallback plus essential loading, empty, not-found, error, and unavailable/inactive product states.
 - SEO, accessibility, responsive behavior, performance, and meaningful Storefront/API tests.
@@ -152,7 +157,7 @@ Sprint 2 public catalog/media contracts and sufficient Admin-managed data from S
 - **Open:** Public product visibility/publication rules and inactive-product behavior.
 - **Open:** Public URL/identifier strategy and exact safe response fields.
 - **Open:** Pagination, sorting, filtering, and whether text search is required for the Commerce MVP.
-- **Open:** Customer-facing fitment and inventory/availability presentation.
+- **Open:** Customer-facing size/color selection and inventory/availability presentation.
 - **Open:** Product-image ordering, responsive delivery, and fallback behavior.
 - **Open:** Final localization and SEO metadata requirements for catalog pages.
 

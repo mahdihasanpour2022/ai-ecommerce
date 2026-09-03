@@ -9,10 +9,10 @@ Product discovery alone is a **Catalog Milestone**, not the final Commerce MVP.
 ## Included capabilities
 
 1. Admin authentication, protected Admin workflows, and Backend-enforced authorization.
-2. Minimum management of Categories, Brands, fitment data, inventory, Products, and approved Product Images.
+2. Minimum management of nested Categories, clothing Products, approved Product Images, pricing, and inventory, including Product Variants if approved for size/color combinations.
 3. Product creation, listing, viewing, and editing through Admin and stable documented Backend contracts.
 4. PostgreSQL persistence with reviewed Prisma schemas/migrations for each approved feature slice.
-5. Product images visible in Admin and Storefront; uploads allow WebP, JPEG/JPG, and PNG, forbid SVG, and preserve trusted source-controlled SVG assets.
+5. Product images visible in Admin and Storefront as one main image plus up to eight ordered additional images; uploads remain below the approved 400 KB boundary, allow content-verified WebP, JPEG/JPG, and PNG, forbid SVG, and preserve trusted source-controlled SVG assets.
 6. Accessible, responsive Persian RTL Storefront product listing and detail pages.
 7. Cart add, quantity update, removal, totals, and stale/unavailable-product handling.
 8. Checkout with approved customer/contact and required delivery/address information; guest, authenticated, or both remains Open.
@@ -26,7 +26,7 @@ Product discovery alone is a **Catalog Milestone**, not the final Commerce MVP.
 
 ## Open MVP decisions
 
-- Exact product/variant, identifiers, lifecycle, category, fitment, pricing, inventory, and media ownership/storage rules.
+- Exact clothing product/size/color variant, identifiers, lifecycle, maximum category depth, canonical rial/toman pricing, inventory, and media ownership/storage rules.
 - Cart persistence and identity strategy.
 - Guest checkout, customer-account checkout, or both; customer account registration/login is not automatically required.
 - Minimum checkout/contact/address, shipping, tax, discount, currency, and rounding requirements.
