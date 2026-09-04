@@ -1,8 +1,8 @@
 # Sprint 2 Queue
 
-Sprint 2 is Active. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
+Sprint 2 is Completed. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
 
-S2-T10 is the sole Current task and is awaiting implementation approval. S2-T09 completed the minimum public catalog contracts.
+All ten approved Sprint 2 tasks are Done. No task is Current.
 
 ## S2-T01 — Specify Clothing Catalog Behavior and Contracts
 
@@ -114,7 +114,7 @@ S2-T04 through S2-T08 Done.
 
 ## S2-T10 — Complete Catalog Foundation Verification
 
-Status: Current
+Status: Done
 
 Classification: Required Now
 
@@ -126,4 +126,4 @@ S2-T01 through S2-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S2-T01 through S2-T09 are Done. S2-T10 is Current and awaiting implementation approval.
+Sprint Plan Approved and completed. S2-T01 through S2-T10 are Done. No implementation is currently authorized.

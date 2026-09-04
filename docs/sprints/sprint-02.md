@@ -1,8 +1,10 @@
 # Sprint 2: Clothing Catalog Domain & Persistence Foundation
 
-**Status:** Active
+**Status:** Completed
 
 **Plan Approved:** 2026-09-03
+
+**Completed:** 2026-09-04
 
 ## Required Context
 
@@ -190,4 +192,4 @@ The canonical ordered queue and sole Current task state are maintained under [Sp
 
 ## Approval State
 
-Sprint Plan Approved. Sprint activation and task preparation do not authorize implementation, schema changes, migration generation/application, or dependency changes. Each prepared Current task requires its own implementation approval.
+Sprint Plan Approved and completed. All ten approved tasks are Done, and the exit criteria passed on 2026-09-04. Sprint 3 remains Future until separately planned and activated.
