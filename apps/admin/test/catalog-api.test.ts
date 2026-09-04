@@ -5,6 +5,7 @@ import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 import { createCatalogApi } from '../app/catalog/catalog-api';
 import { createHttpClient } from '../app/http/http-client';
 import { httpFailureChannel } from '../app/http/http-failure-channel';
+import type { CsrfCredentialStore } from '../app/http/csrf-credential';
 
 const CATEGORY_ID = '11111111-1111-4111-8111-111111111111';
 const PRODUCT_ID = '22222222-2222-4222-8222-222222222222';
@@ -177,4 +178,103 @@ void test('publishes definitive authentication loss but keeps forbidden catalog 
   } finally {
     unsubscribe();
   }
+});
+
+void test('uses exact CSRF-protected Category mutation contracts and parses normalized responses', async () => {
+  const calls: InternalAxiosRequestConfig[] = [];
+  const credentials: CsrfCredentialStore = {
+    get: () => 'csrf-current',
+    set: () => undefined,
+    clear: () => undefined,
+  };
+  const adapter: AxiosAdapter = async (config) => {
+    calls.push(config);
+    const status = config.method === 'delete' ? 204 : config.method === 'post' ? 201 : 200;
+    return {
+      data:
+        config.method === 'delete'
+          ? undefined
+          : { ...category, name: config.method === 'post' ? 'پوشاک زنانه' : 'لباس زنانه' },
+      status,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
+  };
+  const api = createCatalogApi(
+    createHttpClient({
+      adapter,
+      baseURL: 'https://api.example.com/api/v1',
+      credentials,
+    }),
+  );
+
+  const created = await api.createCategory({ name: 'پوشاک زنانه', parentId: null });
+  const updated = await api.updateCategory(CATEGORY_ID, {
+    name: 'لباس زنانه',
+    parentId: '55555555-5555-4555-8555-555555555555',
+  });
+  await api.deleteCategory(CATEGORY_ID);
+
+  assert.equal(created.name, 'پوشاک زنانه');
+  assert.equal(updated.name, 'لباس زنانه');
+  assert.deepEqual(
+    calls.map(({ method, url }) => ({ method, url })),
+    [
+      { method: 'post', url: '/admin/catalog/categories' },
+      { method: 'patch', url: `/admin/catalog/categories/${CATEGORY_ID}` },
+      { method: 'delete', url: `/admin/catalog/categories/${CATEGORY_ID}` },
+    ],
+  );
+  assert.deepEqual(JSON.parse(calls[0]?.data as string), {
+    name: 'پوشاک زنانه',
+    parentId: null,
+  });
+  assert.deepEqual(JSON.parse(calls[1]?.data as string), {
+    name: 'لباس زنانه',
+    parentId: '55555555-5555-4555-8555-555555555555',
+  });
+  for (const call of calls) {
+    assert.deepEqual(call.authPolicy, {
+      csrf: 'required',
+      failure: 'caller',
+      refresh: 'eligible',
+    });
+    assert.equal(call.headers.get('X-CSRF-Token'), 'csrf-current');
+    assert.equal(call.withCredentials, true);
+  }
+});
+
+void test('rejects malformed Category mutations before the adapter and malformed normalized results', async () => {
+  let calls = 0;
+  const adapter: AxiosAdapter = async (config) => {
+    calls += 1;
+    return {
+      data: { ...category, level: 7 },
+      status: 201,
+      statusText: 'Created',
+      headers: {},
+      config,
+    };
+  };
+  const api = createCatalogApi(
+    createHttpClient({
+      adapter,
+      baseURL: 'https://api.example.com/api/v1',
+      credentials: { get: () => 'csrf', set: () => undefined, clear: () => undefined },
+    }),
+  );
+
+  await assert.rejects(api.updateCategory('bad-id', { name: 'نام' }), {
+    code: 'INVALID_CATALOG_REQUEST',
+  });
+  await assert.rejects(api.updateCategory(CATEGORY_ID, {}), {
+    code: 'INVALID_CATALOG_REQUEST',
+  });
+  assert.equal(calls, 0);
+  await assert.rejects(api.createCategory({ name: 'نام', parentId: null }), {
+    code: 'INVALID_RESPONSE',
+    status: 502,
+  });
+  assert.equal(calls, 1);
 });

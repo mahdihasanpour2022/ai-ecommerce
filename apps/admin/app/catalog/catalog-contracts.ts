@@ -134,7 +134,7 @@ function price(value: unknown): number {
   return parsed;
 }
 
-function category(value: unknown): CategoryDto {
+export function parseCategory(value: unknown): CategoryDto {
   const item = record(value);
   if (!Array.isArray(item.children)) invalidResponse();
   const parentId = item.parentId === null ? null : uuid(item.parentId);
@@ -143,7 +143,7 @@ function category(value: unknown): CategoryDto {
     name: stringValue(item.name) as string,
     parentId,
     level: integer(item.level, 1, 6),
-    children: item.children.map(category),
+    children: item.children.map(parseCategory),
     createdAt: dateTime(item.createdAt),
     updatedAt: dateTime(item.updatedAt),
   };
@@ -224,7 +224,7 @@ function summary(value: unknown): ProductSummaryDto {
 
 export function parseCategoryTree(value: unknown): readonly CategoryDto[] {
   if (!Array.isArray(value)) invalidResponse();
-  return value.map(category);
+  return value.map(parseCategory);
 }
 
 export function parseProductList(value: unknown): ProductListDto {

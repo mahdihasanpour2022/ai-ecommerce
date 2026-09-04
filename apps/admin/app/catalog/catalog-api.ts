@@ -1,6 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import {
   parseCategoryTree,
+  parseCategory,
   parsePriceDisplaySetting,
   parseProductDetail,
   parseProductList,
@@ -23,14 +24,28 @@ export interface ProductListQuery {
   readonly status?: ProductStatus;
 }
 
+export interface CreateCategoryInput {
+  readonly name: string;
+  readonly parentId: string | null;
+}
+
+export interface UpdateCategoryInput {
+  readonly name?: string;
+  readonly parentId?: string | null;
+}
+
 export interface CatalogApi {
   categories(signal?: AbortSignal): Promise<readonly CategoryDto[]>;
+  createCategory(input: CreateCategoryInput): Promise<CategoryDto>;
+  updateCategory(categoryId: string, input: UpdateCategoryInput): Promise<CategoryDto>;
+  deleteCategory(categoryId: string): Promise<void>;
   products(query?: ProductListQuery, signal?: AbortSignal): Promise<ProductListDto>;
   product(productId: string, signal?: AbortSignal): Promise<ProductDetailDto>;
   priceDisplaySetting(signal?: AbortSignal): Promise<PriceDisplaySettingDto>;
 }
 
 const READ_POLICY = { csrf: 'omit', failure: 'caller', refresh: 'eligible' } as const;
+const MUTATION_POLICY = { csrf: 'required', failure: 'caller', refresh: 'eligible' } as const;
 const PRODUCT_STATUSES = new Set<ProductStatus>(['DRAFT', 'ACTIVE', 'ARCHIVED']);
 
 function invalidRequest(): never {
@@ -52,6 +67,23 @@ function validateProductQuery(query: ProductListQuery): ProductListQuery {
 function validateProductId(productId: string): string {
   if (!isCatalogUuid(productId)) invalidRequest();
   return productId;
+}
+
+function validateCategoryInput(input: CreateCategoryInput | UpdateCategoryInput, update = false) {
+  const keys = Object.keys(input);
+  if (
+    (update && keys.length === 0) ||
+    keys.some((key) => key !== 'name' && key !== 'parentId') ||
+    ('name' in input && typeof input.name !== 'string') ||
+    ('parentId' in input && input.parentId !== null && !isCatalogUuid(input.parentId))
+  ) {
+    invalidRequest();
+  }
+  return input;
+}
+
+function mutationConfig() {
+  return { authPolicy: MUTATION_POLICY };
 }
 
 function publishDefinitiveAuthFailure(error: unknown): never {
@@ -77,6 +109,42 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           signalConfig(signal),
         );
         return parseCategoryTree(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async createCategory(input) {
+      try {
+        const response = await client.post<unknown>(
+          '/admin/catalog/categories',
+          validateCategoryInput(input),
+          mutationConfig(),
+        );
+        return parseCategory(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async updateCategory(categoryId, input) {
+      try {
+        const id = validateProductId(categoryId);
+        const response = await client.patch<unknown>(
+          `/admin/catalog/categories/${id}`,
+          validateCategoryInput(input, true),
+          mutationConfig(),
+        );
+        return parseCategory(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async deleteCategory(categoryId) {
+      try {
+        const id = validateProductId(categoryId);
+        const response = await client.delete(`/admin/catalog/categories/${id}`, mutationConfig());
+        if (response.status !== 204) {
+          throw new AdminHttpError('http', 502, 'INVALID_RESPONSE');
+        }
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }

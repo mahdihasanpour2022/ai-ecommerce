@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react';
 
-export function DocumentShell({ children }: Readonly<{ children: ReactNode }>) {
+export function DocumentShell({
+  children,
+  bodyClassName,
+}: Readonly<{ children: ReactNode; bodyClassName?: string }>) {
   return (
     <html lang="fa-IR" dir="rtl">
-      <body>{children}</body>
+      <body className={bodyClassName}>{children}</body>
     </html>
   );
 }
