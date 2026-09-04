@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './auth/auth-provider';
 import { loginDestination } from './auth/return-destination';
@@ -35,7 +36,8 @@ export function ProtectedHome() {
     );
   }
 
-  const { admin } = state.current;
+  const { admin, authorization } = state.current;
+  const canReadCatalog = authorization.permissions.includes('catalog.read');
   return (
     <div className="admin-shell">
       <header className="shell-header">
@@ -59,6 +61,13 @@ export function ProtectedHome() {
           <p className="permission-note">
             نمایش این صفحه جایگزین مجوز سمت سرور نیست؛ همه عملیات مدیریتی باید در API مجاز شوند.
           </p>
+          {canReadCatalog ? (
+            <Link className="primary-link" href="/catalog/products">
+              ورود به مدیریت کاتالوگ
+            </Link>
+          ) : (
+            <p className="permission-note">برای این حساب دسترسی مشاهده کاتالوگ ثبت نشده است.</p>
+          )}
         </section>
       </main>
     </div>

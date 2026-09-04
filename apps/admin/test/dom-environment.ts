@@ -2,6 +2,7 @@ import { JSDOM } from 'jsdom';
 
 const GLOBAL_NAMES = [
   'window',
+  'self',
   'document',
   'navigator',
   'HTMLElement',
@@ -28,6 +29,7 @@ export function installDomEnvironment(): () => void {
   }));
   const values: Readonly<Record<(typeof GLOBAL_NAMES)[number], unknown>> = {
     window: dom.window,
+    self: dom.window,
     document: dom.window.document,
     navigator: dom.window.navigator,
     HTMLElement: dom.window.HTMLElement,

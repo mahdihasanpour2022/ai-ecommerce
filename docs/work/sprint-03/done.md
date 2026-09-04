@@ -35,3 +35,21 @@ Exact manifest resolution and frozen-lock installation passed. Admin typecheck, 
 **Documentation Impact:** Documented the installed Admin UI/form/test architecture and CI Chromium behavior without claiming catalog features exist.
 
 **Follow-ups:** S3-T03 is Current and awaiting implementation approval for the protected catalog shell and typed client boundary.
+
+## S3-T03 — Implement the Protected Catalog Shell and Client Boundary
+
+**Completed:** 2026-09-04
+
+**Result:** Added the protected Persian RTL `/catalog/**` route tree, responsive keyboard-operable navigation, exact permission-capability presentation, safe return-route allowlisting, strictly typed Category/Product/detail/price-setting reads over the existing credentialed Axios/refresh boundary, and shared loading/empty/error/retry/forbidden/not-found surfaces. Route placeholders establish composition only; no Category/Product mutation workflow, Backend/API, schema/migration, Storefront, global-state package, or dependency change was introduced.
+
+### Validation
+
+Admin typecheck, lint, all 43 Node unit/component tests, production build, and both production-build Chromium/axe journeys passed. The browser evidence covered protected return routing, Persian RTL, narrow-screen keyboard navigation, active links, independent mutation permission presentation, direct-route denial, and runtime loss of `catalog.read`. Repository-wide typecheck, lint, all real tests, and all application builds passed. Formatting, local links, `git diff --check`, dependency/scope/generated-artifact review, and clean Git-index checks passed.
+
+**Important Decisions:** Server route layouts/pages remain the default; one client shell owns only session snapshot, current pathname, disclosure state, and logout. `catalog.read` gates all catalog capability presentation, while mutation permissions remain independent and Backend authorization remains authoritative. Safe reads omit CSRF, retain bounded refresh eligibility, keep domain/permission failures local, publish definitive authentication loss globally, and reject malformed request identifiers or success envelopes before UI use.
+
+**Files / Areas Changed:** Admin catalog routes, shell/navigation/state components, permission and return-route helpers, catalog contracts/read client/error mapping, responsive styles, JSDOM and Chromium evidence, frontend architecture/project reality, and Sprint execution records.
+
+**Documentation Impact:** Recorded the implemented protected shell/read-client boundary without claiming Category or Product workflows exist.
+
+**Follow-ups:** S3-T04 is Current and awaiting implementation approval for bounded Category management.
