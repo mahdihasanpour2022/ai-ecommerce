@@ -101,7 +101,7 @@ See the [Clothing Catalog specification](features/catalog/specification.md), app
 
 ## Sprint 3 — Admin Catalog Management
 
-**Status:** Future
+**Status:** Active
 
 ### Goal
 
@@ -119,17 +119,19 @@ Enable authorized staff to manage the catalog data and required product images n
 
 Sprint 1 protected Admin foundation and Sprint 2 catalog persistence/contracts.
 
-### Decisions Required Before Sprint
+### Accepted Decisions
 
-- **Open:** Which non-Super-Admin roles receive the approved Sprint 2 catalog/media/settings permissions; Backend permission codes themselves must be settled for Sprint 2 contracts.
-- **Open:** Admin workflow and validation rules for product completeness and publication/readiness.
-- **Open:** Inventory adjustment semantics and concurrency expectations.
-- **Open:** Media upload/storage UX and minimum image-management lifecycle.
-- **Open:** Required audit history and retention for catalog changes.
+- **Accepted:** No new Role, grant, or Role-management UI is added; the seeded `SUPER_ADMIN` is the only provisioned operator, while UI actions reflect independent effective permissions and Backend authorization remains authoritative.
+- **Accepted:** Use a Product list, focused Draft creation, and one sectioned Product workspace with explicit readiness and confirmed Backend-authoritative publication.
+- **Accepted:** Inventory uses absolute on-hand updates with optimistic versions; stale conflicts reload and require a fresh intentional submission. Adjustment history and bulk/multi-location behavior remain Deferred.
+- **Accepted:** Product Images are managed in the Product workspace with accessible upload/preview/reorder/replace/remove behavior and exact existing validation/version rules; advanced media behavior remains Deferred.
+- **Accepted:** Persistent catalog audit history and its UI are Deferred for a policy decision before Sprint 9 production hardening.
 
 ### Exit Outcome
 
 An authorized Admin can create and maintain all prerequisite data, inventory, required images, and a valid persisted product through the protected Admin application and Backend API.
+
+The [Sprint 3 detailed plan](sprints/sprint-03.md) is approved and the [active queue](work/sprint-03/queue.md) owns task state. Sprint 3 is Active; S3-T01 is Current and awaiting implementation approval.
 
 ## Sprint 4 — Storefront Catalog Discovery
 
