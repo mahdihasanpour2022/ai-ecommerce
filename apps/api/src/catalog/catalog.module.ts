@@ -27,6 +27,9 @@ import { ProductImageRepository } from './product-image.repository.js';
 import { ProductImageService } from './product-image.service.js';
 import { ProductImageStorage } from './product-image.storage.js';
 import { ProductImageValidator } from './product-image.validation.js';
+import { PublicCatalogController } from './public-catalog.controller.js';
+import { PublicCatalogRepository } from './public-catalog.repository.js';
+import { PublicCatalogService } from './public-catalog.service.js';
 
 @Module({
   imports: [AuthenticationModule, DatabaseModule],
@@ -38,6 +41,7 @@ import { ProductImageValidator } from './product-image.validation.js';
     PublicPriceDisplaySettingController,
     AdminProductImageController,
     PublicProductImageController,
+    PublicCatalogController,
   ],
   providers: [
     CatalogAccessGuard,
@@ -54,6 +58,8 @@ import { ProductImageValidator } from './product-image.validation.js';
     ProductImageService,
     ProductImageStorage,
     ProductImageValidator,
+    PublicCatalogRepository,
+    PublicCatalogService,
   ],
 })
 export class CatalogModule {}

@@ -280,6 +280,8 @@ Normalized values returned by successful mutations are authoritative. Validation
 
 ### Public contracts
 
+Implementation status: the bounded public Category tree, Active Product summary list with exact-Category filtering, and Active Product detail projections below are implemented alongside the existing public Image content and price-display-setting reads.
+
 | Method and path | Success behavior |
 | --- | --- |
 | `GET /api/v1/catalog/categories` | Complete six-level Category tree of at most 1,000 Categories. |

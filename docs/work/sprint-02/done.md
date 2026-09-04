@@ -145,3 +145,21 @@ PostgreSQL 18.6 development/test reachability and isolation passed. Focused pars
 **Documentation Impact:** Project overview, Backend architecture, catalog specification, and environment strategy now describe the implemented secure Product Image boundary and production storage limitation. Sprint execution records now route minimum public catalog work to S2-T09.
 
 **Follow-ups:** S2-T09 is Current and awaiting implementation approval. It owns only the accepted bounded public Category tree and Active Product summary/detail contracts; Admin/Storefront UI, slugs/SEO, search, descendant browsing, selectable sorting, and later commerce behavior remain out of scope.
+
+## S2-T09 — Implement Minimum Public Catalog Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented unauthenticated public Category tree, deterministic page-bounded Active Product summaries with optional exact-Category filtering, and Active Product detail. Explicit public DTOs expose only Category identity/nesting, controlled Image URLs, active-Variant canonical prices and boolean availability, while omitting lifecycle management, inactive Variants, SKU, exact Inventory/version, timestamps, normalized keys, and storage state. Missing, Draft, and Archived detail share one not-found boundary. Existing public Image content and price-display-setting routes interoperate without duplication. No schema, migration, dependency, reference-data, authentication, frontend, or media-storage behavior changed.
+
+### Validation
+
+PostgreSQL 18.6 development/test reachability and isolation passed. Focused parser/tree-projection, safe-controller-failure, real-PostgreSQL lifecycle/filter/pagination/tie-order/availability/Image-content, and exact OpenAPI coverage passed (9 tests). The complete API suite passed (142 tests), including Sprint 1 authentication and S2-T03 through S2-T08 persistence/catalog/media regressions. API typecheck, lint, and build passed; repository Prettier check and `git diff --check` passed. Read-only PostgreSQL EXPLAIN confirmed the accepted Active/default and exact-Category Product indexes, Product/Image position index, and indexed Variant/Inventory aggregate path. Prohibited-scope, dependency/schema/migration/frontend, storage cleanup, and clean Git-index inspections passed.
+
+**Important Decisions:** Used a dedicated public controller/DTO/service/repository boundary so protected records cannot be serialized accidentally. Public list queries select at most 60 Product/category/main-Image rows and use one parameterized PostgreSQL aggregate over only those Product IDs for active-Variant min/max price and availability, avoiding an unbounded Variant payload per list item. Detail uses an Active predicate, ordered ready Images, active Variants only, and a bounded recursive Category-path query. Stable relative Image content URLs reuse the implemented public media route.
+
+**Files / Areas Changed:** Added focused public catalog controller, DTO/parser, repository, service, unit/safe-failure tests, and real-PostgreSQL HTTP/lifecycle/filter/paging/projection/OpenAPI tests under the API catalog module; registered the boundary; and updated narrow project/catalog/backend implementation reality.
+
+**Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify the minimum public Category/Product contracts as implemented. Sprint execution records now route the complete Sprint 2 catalog-foundation audit to S2-T10.
+
+**Follow-ups:** S2-T10 is Current and awaiting implementation approval. It owns the final Sprint 2 specification/exit-criteria audit, in-scope gap closure, complete validation, and readiness handoff; it does not add new catalog features or frontend behavior.
