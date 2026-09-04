@@ -34,4 +34,4 @@ Authentication return destinations are allowlisted application-relative paths. R
 
 Trusted source-controlled SVG assets such as logos, icons, and illustrations are allowed and may use an approved build-time component import approach. Never inject arbitrary untrusted SVG markup. Uploaded product/media SVG is forbidden; upload rules live in the [security baseline](../security/baseline.md).
 
-See [frontend standards](../standards/frontend.md), [authentication](../security/authentication.md), and [Next.js ADR](adr/0004-use-nextjs-for-web-apps.md).
+See [frontend standards](../standards/frontend.md), [authentication](../security/authentication.md), and [Next.js ADR](adr/0004-use-nextjs-for-web-apps.md). The approved [Admin catalog behavior specification](../features/admin-catalog/specification.md) owns Sprint 3 routes, permission-aware UX, forms, conflicts, accessibility, and the bounded UI/test dependency proposal; it does not claim those screens are implemented.
