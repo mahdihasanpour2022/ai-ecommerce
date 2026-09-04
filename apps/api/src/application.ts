@@ -23,7 +23,7 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
         origin === undefined || environment.authentication.corsAllowedOrigins.has(origin),
       );
     },
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-CSRF-Token'],
   });
 

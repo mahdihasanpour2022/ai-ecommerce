@@ -2,7 +2,7 @@
 
 Sprint 2 is Active. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
 
-S2-T06 is the sole Current task and is awaiting implementation approval. S2-T05 is Done; its protected Product/Variant contracts and Product aggregate boundary are prerequisites for Inventory mutation.
+S2-T07 is the sole Current task and is awaiting implementation approval. S2-T06 is Done; its protected Inventory contract and canonical Variant price behavior are prerequisites for later Admin catalog workflows and the display-setting contract.
 
 ## S2-T01 — Specify Clothing Catalog Behavior and Contracts
 
@@ -66,7 +66,7 @@ S2-T03 and S2-T04 Done.
 
 ## S2-T06 — Implement Minimum Inventory Contracts
 
-Status: Current
+Status: Done
 
 Classification: Required Dependency
 
@@ -78,7 +78,7 @@ S2-T03 and S2-T05 Done.
 
 ## S2-T07 — Implement Rial/Toman Display-Setting Contracts
 
-Status: Queued
+Status: Current
 
 Classification: Required Dependency
 
@@ -126,4 +126,4 @@ S2-T01 through S2-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S2-T01 through S2-T05 are Done. S2-T06 is Current and awaiting implementation approval; S2-T07 through S2-T10 remain Queued.
+Sprint Plan Approved. S2-T01 through S2-T06 are Done. S2-T07 is Current and awaiting implementation approval; S2-T08 through S2-T10 remain Queued.

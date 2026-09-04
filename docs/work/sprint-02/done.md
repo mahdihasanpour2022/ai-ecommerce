@@ -91,3 +91,21 @@ PostgreSQL 18.6 development/test isolation passed. The focused Product/Variant p
 **Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Product/Variant contracts as implemented. Sprint execution records now route optimistic Inventory mutation to S2-T06.
 
 **Follow-ups:** S2-T06 is Current and awaiting implementation approval. It owns only the minimum exact Inventory read/update boundary and optimistic concurrency contract; Product Image, display-setting, public catalog, and frontend work remain later tasks.
+
+## S2-T06 — Implement Minimum Inventory Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented the protected Admin absolute Inventory update contract with strict bounded input, exact `inventory.update` authorization, session-bound CSRF, Product aggregate locking, Archived lifecycle rejection, one version-matched atomic update/increment, missing-state versus stale-version classification, minimal safe response projection, stable errors, CORS `PUT`, and synchronized Swagger/OpenAPI. Existing protected Product detail remains the exact Inventory read boundary. No Prisma schema, migration, dependency, frontend, media, setting, public-catalog, reservation, history, or Checkout behavior changed.
+
+### Validation
+
+The disposable PostgreSQL service health and exact development/test identity/isolation checks passed. Focused Inventory parser, service classification, real-PostgreSQL HTTP, authorization/current-state, rollback, concurrency, CORS, and OpenAPI coverage passed (10 tests). The complete API suite passed (105 tests), including Sprint 1 authentication and S2-T03 through S2-T05 persistence/catalog regressions. API typecheck, lint, and build passed; repository Prettier check, changed-document local-link validation, `git diff --check`, prohibited-scope and generated/tracked-artifact inspection, and clean Git-index inspection passed. Post-test database cleanup verified zero catalog and Inventory-specific Admin/Role fixtures.
+
+**Important Decisions:** Reused the catalog guard and Product row as the aggregate serialization boundary. The repository issues one parameterized PostgreSQL `UPDATE ... WHERE variant_id AND version ... RETURNING` and never retries; a zero-row result is classified inside the same transaction without exposing the current quantity/version. Raw SQL is limited to the accepted row lock and atomic-returning operation Prisma cannot express as one equivalent guarded statement.
+
+**Files / Areas Changed:** Added focused Inventory controller, DTO/parser, service, repository, error mapping, unit tests, and PostgreSQL HTTP/concurrency/OpenAPI tests under the API catalog module; registered the Inventory boundary; added CORS `PUT`; and updated narrow project/catalog/backend reality documentation.
+
+**Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Inventory mutation as implemented. Sprint execution records now route the singleton rial/toman display-setting contracts to S2-T07.
+
+**Follow-ups:** S2-T07 is Current and awaiting implementation approval. It owns only consistent protected update plus safe Admin/public reads for the singleton price display/input unit; Product Image operations, broader public catalog, and all frontend work remain later tasks.
