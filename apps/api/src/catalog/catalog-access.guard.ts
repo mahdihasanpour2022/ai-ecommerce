@@ -15,7 +15,8 @@ import { CsrfService } from '../authentication/csrf.service.js';
 import { ProtectedAuthenticationService } from '../authentication/protected-authentication.service.js';
 import { INSUFFICIENT_PERMISSION_MESSAGE } from '../authentication/authentication.constants.js';
 
-export type CatalogPermissionCode = 'catalog.manage' | 'catalog.read' | 'inventory.update';
+export type CatalogPermissionCode =
+  'catalog.manage' | 'catalog.read' | 'inventory.update' | 'settings.price.display.unit.update';
 const CATALOG_PERMISSION = 'catalog:permission';
 
 export const CatalogPermission = (permission: CatalogPermissionCode): MethodDecorator =>

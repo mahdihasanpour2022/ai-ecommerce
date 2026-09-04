@@ -1,6 +1,6 @@
 # Clothing Catalog Specification
 
-**Status:** Approved for Sprint 2 implementation; persistence and protected Category/Product/Variant/Inventory contracts implemented
+**Status:** Approved for Sprint 2 implementation; persistence, protected Category/Product/Variant/Inventory, and protected/public price-display-setting contracts implemented
 
 ## Required Context
 

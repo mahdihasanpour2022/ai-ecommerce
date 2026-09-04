@@ -12,10 +12,22 @@ import { InventoryService } from './inventory.service.js';
 import { ProductController } from './product.controller.js';
 import { ProductRepository } from './product.repository.js';
 import { ProductService } from './product.service.js';
+import {
+  AdminPriceDisplaySettingController,
+  PublicPriceDisplaySettingController,
+} from './price-display-setting.controller.js';
+import { PriceDisplaySettingRepository } from './price-display-setting.repository.js';
+import { PriceDisplaySettingService } from './price-display-setting.service.js';
 
 @Module({
   imports: [AuthenticationModule, DatabaseModule],
-  controllers: [CategoryController, ProductController, InventoryController],
+  controllers: [
+    CategoryController,
+    ProductController,
+    InventoryController,
+    AdminPriceDisplaySettingController,
+    PublicPriceDisplaySettingController,
+  ],
   providers: [
     CatalogAccessGuard,
     CategoryRepository,
@@ -24,6 +36,8 @@ import { ProductService } from './product.service.js';
     InventoryService,
     ProductRepository,
     ProductService,
+    PriceDisplaySettingRepository,
+    PriceDisplaySettingService,
   ],
 })
 export class CatalogModule {}

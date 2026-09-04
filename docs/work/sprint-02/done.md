@@ -109,3 +109,21 @@ The disposable PostgreSQL service health and exact development/test identity/iso
 **Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected Inventory mutation as implemented. Sprint execution records now route the singleton rial/toman display-setting contracts to S2-T07.
 
 **Follow-ups:** S2-T07 is Current and awaiting implementation approval. It owns only consistent protected update plus safe Admin/public reads for the singleton price display/input unit; Product Image operations, broader public catalog, and all frontend work remain later tasks.
+
+## S2-T07 — Implement Rial/Toman Display-Setting Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented protected Admin read/update and unauthenticated public read contracts for the fixed rial/toman display/input setting. The routes enforce exact `catalog.read` and `settings.price.display.unit.update` permissions, session-bound CSRF on mutation, strict `RIAL`/`TOMAN` input, singleton-only persistence, explicit `{ unit }` projection, stable safe failures, and synchronized Swagger/OpenAPI security. Setting changes never query or mutate canonical Variant `priceRial`. No Prisma schema, migration, reference-data, dependency, frontend, media, Inventory, or broader public-catalog behavior changed.
+
+### Validation
+
+The disposable PostgreSQL service health and exact development/test identity/isolation checks passed. Focused DTO, safe-controller-failure, real-PostgreSQL HTTP, authorization/current-state, canonical-price non-mutation, and OpenAPI coverage passed (8 tests). The complete API suite passed (113 tests), including Sprint 1 authentication and S2-T03 through S2-T06 persistence/catalog regressions. API typecheck, lint, and build passed; repository Prettier check, changed-document local-link validation, `git diff --check`, prohibited-scope and generated/tracked-artifact inspection, and clean Git-index inspection passed. Post-test database cleanup verified zero catalog and setting-specific Admin/Role fixtures and singleton unit `TOMAN`.
+
+**Important Decisions:** Used separate Admin and public controllers so public OpenAPI and runtime behavior cannot inherit cookie security or catalog guards. Both share one narrow service/repository that reads or updates only fixed row `id = 1`; missing/corrupt singleton state fails safely and is never recreated implicitly. Same-value updates remain valid absolute replacement operations.
+
+**Files / Areas Changed:** Added focused price-display-setting controller, DTO/parser, service, repository, error boundary, unit tests, and PostgreSQL HTTP/authorization/OpenAPI tests under the API catalog module; extended the catalog permission metadata type and module registration; and updated narrow project/catalog/backend reality documentation.
+
+**Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected/public price-display-setting contracts as implemented. Sprint execution records now route secure Product Image work to S2-T08.
+
+**Follow-ups:** S2-T08 is Current and awaiting implementation approval. It owns only secure Product-owned image upload/retrieval/order/replacement/removal plus recoverable local development/test storage behavior; broader public Product contracts and all frontend work remain later tasks.
