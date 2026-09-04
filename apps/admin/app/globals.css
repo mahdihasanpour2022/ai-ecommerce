@@ -370,6 +370,22 @@ h2 {
   margin: 0.75rem 0;
   color: #216e39;
 }
+.category-refresh-status,
+.category-refresh-error {
+  margin: 0 0 0.75rem;
+}
+.category-refresh-status {
+  color: var(--muted);
+}
+.category-refresh-error {
+  padding: 0.8rem 0.9rem;
+  border-inline-start: 4px solid var(--danger);
+  border-radius: 0.4rem;
+  background: #fff1f1;
+}
+.category-refresh-error p {
+  margin-top: 0;
+}
 .category-tree-panel {
   padding: 0.5rem;
   overflow: hidden;

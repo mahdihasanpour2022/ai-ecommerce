@@ -64,6 +64,28 @@ Architecture and security documents own **how** the system is intended to work. 
 - Minimize routine conversational output, but never reduce correctness, validation, traceability, or important owner decisions to save context.
 - Detailed preflight, context-budget, and execution-efficiency policy is canonical in [Task Execution and Context Efficiency](docs/standards/execution.md); validation breadth/reuse is canonical in [testing standards](docs/standards/testing.md).
 
+### Token-efficient host-assisted workflow
+
+Optimize for minimal unnecessary tool usage, retries, logs, and token consumption while still completing the task correctly. The owner has direct access to the Windows host and PowerShell for this repository.
+
+After the first clear environment, tooling, network, permission, browser, authentication, or system-level failure, determine whether the owner can resolve it more efficiently on the host. Do not attempt multiple workarounds unless one is trivial and highly likely to succeed. If host assistance is appropriate, pause only that operation and provide: (1) exact PowerShell command(s), (2) the exact working directory, (3) one short sentence explaining the purpose, and (4) exactly what output/result to return. Once supplied, treat the result as evidence for that gate and resume without repeating completed work.
+
+Prefer host assistance for package/runtime/browser/SDK/CLI or large-binary installation and downloads, Windows/system configuration, environment or PATH changes, starting/stopping host services, installed-software detection/use, administrator-only commands, network/CDN/geographic restrictions, authentication/permission limitations, and other capabilities unavailable in the execution environment.
+
+Do not delegate normal repository work that is reliably available to the agent: reading/editing code, repository searches, implementation, targeted unit/component tests, typechecking, linting, builds, diff review, documentation, static analysis, and small diagnostics.
+
+Use targeted checks during implementation, then the minimum required final regression gates. Do not rerun already-passing gates without invalidating changes, repeat near-identical searches, retry the same environment failure, dump or reread large logs, inspect unrelated files speculatively, or run full-repository checks when a targeted iteration check is sufficient. Prefer one decisive diagnostic command and summarize only its relevant result.
+
+For Admin Playwright E2E runs, the Playwright CDN returns HTTP 403 in this location. The Windows host has usable system Chrome. When a rerun is required, ask the owner to run from the repository root instead of attempting to download Playwright Chromium:
+
+```powershell
+cd "E:\------------- my ai proj\e-commerce"
+$env:PLAYWRIGHT_USE_SYSTEM_CHROME='1'
+yarn workspace @automotive-commerce/admin test:e2e
+```
+
+The owner confirmed this command passed repeatedly on 2026-09-04 with `Running 2 tests using 1 worker` and `2 passed` (latest approximately 6.5 seconds). Treat that Admin browser gate as passed for unchanged code; rerun it only when subsequent code changes invalidate the evidence.
+
 ## Required workflow
 
 Before any non-trivial implementation:

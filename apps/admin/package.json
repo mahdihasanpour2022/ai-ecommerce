@@ -8,7 +8,7 @@
     "start": "next start --port 3001",
     "lint": "eslint .",
     "typecheck": "tsc --project tsconfig.json --noEmit",
-    "test": "tsc --project tsconfig.test.json && node --test \"dist-test/test/**/*.test.js\"",
+    "test": "tsc --project tsconfig.test.json && node --test --test-force-exit \"dist-test/test/**/*.test.js\"",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list"
   },

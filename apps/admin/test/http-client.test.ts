@@ -134,13 +134,28 @@ void test('classifies HTTP, timeout, cancellation, network, and unexpected failu
     isAxiosError: true,
     response: {
       status: 429,
-      data: { code: 'AUTH_RATE_LIMITED' },
+      data: {
+        code: 'AUTH_RATE_LIMITED',
+        details: ['name', 'parentId', 'unsafe detail with spaces', 42],
+      },
       headers: { 'retry-after': '30' },
     },
   });
   assert.deepEqual(
-    { kind: http.kind, status: http.status, code: http.code, retryAfter: http.retryAfter },
-    { kind: 'http', status: 429, code: 'AUTH_RATE_LIMITED', retryAfter: '30' },
+    {
+      kind: http.kind,
+      status: http.status,
+      code: http.code,
+      retryAfter: http.retryAfter,
+      details: http.details,
+    },
+    {
+      kind: 'http',
+      status: 429,
+      code: 'AUTH_RATE_LIMITED',
+      retryAfter: '30',
+      details: ['name', 'parentId'],
+    },
   );
   assert.equal(normalizeHttpFailure({ isAxiosError: true, code: 'ETIMEDOUT' }).kind, 'timeout');
   assert.equal(normalizeHttpFailure(new axios.CanceledError()).kind, 'canceled');

@@ -53,3 +53,21 @@ Admin typecheck, lint, all 43 Node unit/component tests, production build, and b
 **Documentation Impact:** Recorded the implemented protected shell/read-client boundary without claiming Category or Product workflows exist.
 
 **Follow-ups:** S3-T04 is Current and awaiting implementation approval for bounded Category management.
+
+## S3-T04 — Implement Category Management
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented the protected Persian RTL Category tree and complete create, rename, move, and eligible-delete workflows over the existing Backend contracts. The UI provides exact reader/manager presentation, semantic keyboard-operable hierarchy, normalized mutation reconciliation followed by authoritative refresh, duplicate-submit prevention, labelled confirmations, predictable focus, and stable safe conflict recovery without changing Backend/API, schema/migrations, Storefront, or dependencies.
+
+### Validation
+
+Focused Category/client/HTTP tests passed (30 tests), the complete Admin suite passed (58 tests), and repository tests passed (Admin 58; API 73, with environment-dependent integration coverage skipped as designed). Repository typecheck, lint, production builds, and formatting passed. The owner ran the existing Admin production-build Playwright smoke with system Chrome after the Playwright CDN returned a geographic HTTP 403; both tests passed repeatedly, with the latest `2 passed` run completing in approximately 6.5 seconds. `git diff --check`, scope, generated-artifact, dependency-integrity, and clean-index checks passed.
+
+**Important Decisions:** Category state remains route-local. Parent options exclude the edited Category and visible descendants only as guidance; Backend validation remains authoritative. Successful mutations use normalized responses for immediate reconciliation and then refresh the complete tree. Stable hierarchy/not-found conflicts expose an explicit refresh path, unsafe mutations are single-flight and never retried automatically, and only allowlisted validation detail identifiers can select a field.
+
+**Files / Areas Changed:** Admin Category route UI/state/styles, Category model and stable failure mapping, typed catalog mutation client and safe HTTP validation-detail parsing, focused interaction/model/client tests, frontend architecture/project reality, and Sprint execution records.
+
+**Documentation Impact:** Recorded implemented Category management and retained Product workflows as future Sprint 3 work.
+
+**Follow-ups:** S3-T05 is Current and awaiting implementation approval for Product listing and Draft creation.

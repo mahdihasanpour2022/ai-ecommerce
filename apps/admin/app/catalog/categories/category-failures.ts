@@ -16,17 +16,32 @@ export interface CategoryFailurePresentation {
   readonly code: string;
   readonly message: string;
   readonly field?: 'name' | 'parentId';
+  readonly refreshTree: boolean;
 }
 
 export function categoryFailurePresentation(error: unknown): CategoryFailurePresentation {
   const failure = classifyCatalogFailure(error);
+  const validationField =
+    error instanceof Error && 'details' in error && Array.isArray(error.details)
+      ? error.details.find((detail) => detail === 'name' || detail === 'parentId')
+      : undefined;
+  const field =
+    failure.code === 'CATEGORY_NAME_CONFLICT'
+      ? 'name'
+      : failure.code === 'CATEGORY_MOVE_INVALID'
+        ? 'parentId'
+        : failure.code === 'VALIDATION_FAILED'
+          ? validationField
+          : undefined;
   return {
     code: failure.code,
     message: CATEGORY_MESSAGES[failure.code] ?? failure.message,
-    ...(failure.code === 'CATEGORY_NAME_CONFLICT'
-      ? { field: 'name' as const }
-      : failure.code === 'CATEGORY_MOVE_INVALID'
-        ? { field: 'parentId' as const }
-        : {}),
+    ...(field ? { field } : {}),
+    refreshTree: [
+      'CATEGORY_MOVE_INVALID',
+      'CATEGORY_NAME_CONFLICT',
+      'CATEGORY_NOT_EMPTY',
+      'CATEGORY_NOT_FOUND',
+    ].includes(failure.code),
   };
 }

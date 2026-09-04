@@ -42,6 +42,7 @@ export class AdminHttpError extends Error {
     readonly status: number | null,
     readonly code: string,
     readonly retryAfter: string | null = null,
+    readonly details: readonly string[] = [],
   ) {
     super(`Admin HTTP request failed: ${kind}/${status ?? 'no-status'}/${code}.`);
     this.name = 'AdminHttpError';
@@ -111,6 +112,19 @@ function responseCode(error: AxiosError): string {
   return 'UNKNOWN_ERROR';
 }
 
+function responseDetails(error: AxiosError): readonly string[] {
+  const data: unknown = error.response?.data;
+  if (typeof data !== 'object' || data === null || !('details' in data)) return [];
+  const details = (data as { readonly details?: unknown }).details;
+  if (!Array.isArray(details)) return [];
+  return details
+    .slice(0, 20)
+    .filter(
+      (detail): detail is string =>
+        typeof detail === 'string' && /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/u.test(detail),
+    );
+}
+
 function isRefreshEligible(
   error: unknown,
 ): error is AxiosError & { config: InternalAxiosRequestConfig } {
@@ -142,6 +156,7 @@ export function normalizeHttpFailure(error: unknown): AdminHttpError {
       error.response.status,
       responseCode(error),
       error.response.headers['retry-after']?.toString() ?? null,
+      responseDetails(error),
     );
   }
   return new AdminHttpError('network', null, 'NETWORK_ERROR');

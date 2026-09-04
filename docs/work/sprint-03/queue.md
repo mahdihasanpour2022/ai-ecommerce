@@ -2,7 +2,7 @@
 
 Sprint 3 is Active. Its approved goal, scope, Owner Decisions, exclusions, dependencies, and exit criteria are canonical in the [Sprint 3 plan](../../sprints/sprint-03.md).
 
-S3-T04 is the sole Current task and is awaiting implementation approval. S3-T03 completed the protected responsive catalog shell, permission presentation, typed read boundary, and shared route states.
+S3-T05 is the sole Current task and is awaiting implementation approval. S3-T04 completed protected accessible Category management over the existing Backend contracts.
 
 ## S3-T01 — Specify Admin Catalog Behavior and UX
 
@@ -42,7 +42,7 @@ S3-T02 Done.
 
 ## S3-T04 — Implement Category Management
 
-Status: Current
+Status: Done
 
 Classification: Required Now
 
@@ -54,7 +54,7 @@ S3-T03 Done.
 
 ## S3-T05 — Implement Product Listing and Draft Creation
 
-Status: Queued
+Status: Current
 
 Classification: Required Now
 
@@ -126,4 +126,4 @@ S3-T01 through S3-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S3-T01 through S3-T03 are Done. S3-T04 is Current and awaiting implementation approval. S3-T05 through S3-T10 are Queued. No S3-T04 implementation is currently authorized.
+Sprint Plan Approved. S3-T01 through S3-T04 are Done. S3-T05 is Current and awaiting implementation approval. S3-T06 through S3-T10 are Queued. No S3-T05 implementation is currently authorized.

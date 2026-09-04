@@ -90,11 +90,54 @@ function renderManagement(canManage: boolean, api: CatalogApi) {
   );
 }
 
+void test('presents loading, retryable read failure, and the actionable empty state', async () => {
+  let reads = 0;
+  const api = client({
+    categories: async () => {
+      reads += 1;
+      if (reads === 1) throw new AdminHttpError('network', null, 'NETWORK_ERROR');
+      return [];
+    },
+  });
+  const view = renderManagement(true, api);
+  assert.ok(view.getByText('در حال دریافت دسته‌بندی‌ها'));
+  assert.ok(await view.findByText(/ارتباط با سرور برقرار نشد/u));
+  await userEvent
+    .setup({ document: globalThis.document })
+    .click(view.getByRole('button', { name: 'تلاش دوباره' }));
+  assert.ok(await view.findByRole('heading', { name: 'هنوز دسته‌بندی‌ای ثبت نشده است' }));
+  assert.equal(reads, 2);
+});
+
+void test('turns a forbidden read into a protected state and refreshes identity once', async () => {
+  let denied = 0;
+  const view = render(
+    <AdminUiProvider>
+      <CategoryManagementView
+        canManage
+        client={client({
+          categories: async () => {
+            throw new AdminHttpError('http', 403, 'INSUFFICIENT_PERMISSION');
+          },
+        })}
+        onPermissionDenied={() => {
+          denied += 1;
+        }}
+      />
+    </AdminUiProvider>,
+  );
+  assert.ok(await view.findByRole('heading', { name: 'دسترسی مجاز نیست' }));
+  assert.equal(denied, 1);
+  assert.equal(view.queryByRole('button', { name: 'تلاش دوباره' }), null);
+});
+
 void test('renders the ordered nested tree read-only and supports keyboard disclosure', async () => {
   const view = renderManagement(false, client());
   await view.findByRole('tree', { name: 'درخت دسته‌بندی‌ها' });
   assert.deepEqual(
-    view.getAllByRole('treeitem').map((item) => item.querySelector('.category-node-name')?.textContent),
+    view
+      .getAllByRole('treeitem')
+      .map((item) => item.querySelector('.category-node-name')?.textContent),
     ['پوشاک', 'زنانه', 'اکسسوری'],
   );
   assert.equal(view.queryByRole('button', { name: 'افزودن دسته‌بندی' }), null);
@@ -172,11 +215,44 @@ void test('preserves edit input and focuses the field on a stable name conflict'
   await user.clear(input);
   await user.type(input, 'پوشاک تازه');
   await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
-  const errors = await within(dialog).findAllByRole('alert');
-  assert.ok(errors.some((error) => /همین نام/u.test(error.textContent ?? '')));
+  const errors = await within(dialog).findAllByText(/همین نام/u);
+  assert.ok(errors.every((error) => error.getAttribute('role') === 'alert'));
   assert.equal((input as HTMLInputElement).value, 'پوشاک تازه');
   await waitFor(() => assert.equal(globalThis.document.activeElement, input));
   cleanup();
+});
+
+void test('keeps edit input while explicitly refreshing after a hierarchy conflict', async () => {
+  let reads = 0;
+  const api = client({
+    categories: async () => {
+      reads += 1;
+      return tree;
+    },
+    updateCategory: async () => {
+      throw new AdminHttpError('http', 409, 'CATEGORY_MOVE_INVALID');
+    },
+  });
+  const view = renderManagement(true, api);
+  const user = userEvent.setup({ document: globalThis.document });
+  await view.findByRole('tree');
+  const node = view.getByText('اکسسوری').closest('.category-node');
+  assert.ok(node);
+  await user.click(within(node as HTMLElement).getByRole('button', { name: 'ویرایش' }));
+  const dialog = view.getByRole('dialog', { name: 'ویرایش اکسسوری' });
+  const input = within(dialog).getByRole('textbox', { name: 'نام دسته‌بندی (الزامی)' });
+  await user.clear(input);
+  await user.type(input, 'اکسسوری تازه');
+  await user.click(within(dialog).getByRole('button', { name: 'ذخیره' }));
+  const errors = await within(dialog).findAllByText(/انتقال به این والد مجاز نیست/u);
+  assert.ok(errors.every((error) => error.getAttribute('role') === 'alert'));
+  await waitFor(() =>
+    assert.equal(globalThis.document.activeElement?.getAttribute('role'), 'combobox'),
+  );
+  await user.click(within(dialog).getByRole('button', { name: 'تازه‌سازی ساختار' }));
+  await waitFor(() => assert.equal(reads, 2));
+  assert.equal((input as HTMLInputElement).value, 'اکسسوری تازه');
+  assert.ok(view.getByRole('dialog', { name: 'ویرایش اکسسوری' }));
 });
 
 void test('labels leaf deletion, retains the node on conflict, and returns focus on cancel', async () => {
@@ -203,7 +279,59 @@ void test('labels leaf deletion, retains the node on conflict, and returns focus
   dialog = view.getByRole('dialog', { name: 'حذف زنانه' });
   await user.click(within(dialog).getByRole('button', { name: 'حذف دسته‌بندی' }));
   assert.equal(deleteCalls, 1);
-  assert.match((await within(dialog).findByRole('alert')).textContent ?? '', /زیرمجموعه یا محصول/u);
+  const error = await within(dialog).findByText(/زیرمجموعه یا محصول/u);
+  assert.equal(error.closest('[role="alert"]')?.getAttribute('role'), 'alert');
   assert.ok(view.getByText('زنانه'));
   cleanup();
+});
+
+void test('reconciles successful deletion and focuses the nearest surviving node after refetch', async () => {
+  let reads = 0;
+  const api = client({
+    categories: async () => {
+      reads += 1;
+      return reads === 1 ? tree : [{ ...root, children: [] }, other];
+    },
+  });
+  const view = renderManagement(true, api);
+  const user = userEvent.setup({ document: globalThis.document });
+  await view.findByRole('tree');
+  const childNode = view.getByText('زنانه').closest('.category-node');
+  assert.ok(childNode);
+  await user.click(within(childNode as HTMLElement).getByRole('button', { name: 'حذف' }));
+  await user.click(
+    within(view.getByRole('dialog', { name: 'حذف زنانه' })).getByRole('button', {
+      name: 'حذف دسته‌بندی',
+    }),
+  );
+  assert.ok(await view.findByText('دسته‌بندی «زنانه» حذف شد.'));
+  await waitFor(() => assert.equal(reads, 2));
+  await waitFor(() =>
+    assert.equal(globalThis.document.activeElement?.getAttribute('data-category-id'), ROOT_ID),
+  );
+  assert.equal(view.queryByText('زنانه'), null);
+});
+
+void test('closes mutation UI and returns focus when manage permission is revoked', async () => {
+  const api = client();
+  const view = renderManagement(true, api);
+  const user = userEvent.setup({ document: globalThis.document });
+  await view.findByRole('tree');
+  const node = view.getByText('اکسسوری').closest('.category-node');
+  assert.ok(node);
+  const edit = within(node as HTMLElement).getByRole('button', { name: 'ویرایش' });
+  await user.click(edit);
+  assert.ok(view.getByRole('dialog', { name: 'ویرایش اکسسوری' }));
+  view.rerender(
+    <AdminUiProvider>
+      <CategoryManagementView canManage={false} client={api} />
+    </AdminUiProvider>,
+  );
+  assert.equal(view.container.querySelector('[role="dialog"]'), null);
+  assert.equal(view.container.textContent?.includes('ویرایش'), false);
+  await new Promise((resolve) => globalThis.setTimeout(resolve, 10));
+  assert.equal(
+    globalThis.document.activeElement,
+    view.container.querySelector('#categories-heading'),
+  );
 });

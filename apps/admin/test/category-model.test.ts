@@ -6,6 +6,9 @@ import {
   categoryOptions,
   findCategory,
   normalizeCategoryName,
+  reconcileCreatedCategory,
+  reconcileDeletedCategory,
+  reconcileUpdatedCategory,
 } from '../app/catalog/categories/category-model';
 import { categoryFailurePresentation } from '../app/catalog/categories/category-failures';
 import type { CategoryDto } from '../app/catalog/catalog-contracts';
@@ -61,6 +64,26 @@ void test('excludes an edited Category and every visible descendant from parent 
   assert.equal(findCategory(tree, CHILD_ID)?.name, 'زنانه');
 });
 
+void test('reconciles only authoritative mutation fields before the complete tree refetch', () => {
+  const created: CategoryDto = {
+    ...tree[1]!,
+    id: '44444444-4444-4444-8444-444444444444',
+    name: 'کیف',
+    parentId: ROOT_ID,
+    level: 2,
+  };
+  const afterCreate = reconcileCreatedCategory(tree, created);
+  assert.equal(findCategory(afterCreate, created.id)?.name, 'کیف');
+
+  const moved = { ...tree[1]!, name: 'زیورآلات', parentId: ROOT_ID, level: 2 };
+  const afterUpdate = reconcileUpdatedCategory(afterCreate, moved);
+  assert.equal(findCategory(afterUpdate, OTHER_ID)?.name, 'زیورآلات');
+  assert.equal(findCategory(afterUpdate, OTHER_ID)?.parentId, null);
+
+  const afterDelete = reconcileDeletedCategory(afterUpdate, CHILD_ID);
+  assert.equal(findCategory(afterDelete, CHILD_ID), undefined);
+});
+
 void test('maps every Category conflict, validation, permission, CSRF, and transport family safely', () => {
   const cases = [
     ['CATEGORY_NAME_CONFLICT', 'name'],
@@ -84,4 +107,10 @@ void test('maps every Category conflict, validation, permission, CSRF, and trans
   );
   assert.match(connectivity.message, /ارتباط/u);
   assert.equal(connectivity.message.includes('NETWORK_ERROR'), false);
+
+  const validation = categoryFailurePresentation(
+    new AdminHttpError('http', 400, 'VALIDATION_FAILED', null, ['parentId', 'internal']),
+  );
+  assert.equal(validation.field, 'parentId');
+  assert.equal(validation.refreshTree, false);
 });

@@ -57,3 +57,50 @@ export function findCategory(
   }
   return undefined;
 }
+
+export function reconcileCreatedCategory(
+  tree: readonly CategoryDto[],
+  created: CategoryDto,
+): readonly CategoryDto[] {
+  if (created.parentId === null) return [...tree, created];
+  let inserted = false;
+  const visit = (nodes: readonly CategoryDto[]): readonly CategoryDto[] =>
+    nodes.map((node) => {
+      if (node.id === created.parentId) {
+        inserted = true;
+        return { ...node, children: [...node.children, created] };
+      }
+      const children = visit(node.children);
+      return children === node.children ? node : { ...node, children };
+    });
+  const next = visit(tree);
+  return inserted ? next : tree;
+}
+
+export function reconcileUpdatedCategory(
+  tree: readonly CategoryDto[],
+  updated: CategoryDto,
+): readonly CategoryDto[] {
+  return tree.map((node) => {
+    if (node.id === updated.id) {
+      if (node.parentId !== updated.parentId) {
+        return { ...node, name: updated.name, updatedAt: updated.updatedAt };
+      }
+      return { ...updated, children: node.children };
+    }
+    const children = reconcileUpdatedCategory(node.children, updated);
+    return children === node.children ? node : { ...node, children };
+  });
+}
+
+export function reconcileDeletedCategory(
+  tree: readonly CategoryDto[],
+  deletedId: string,
+): readonly CategoryDto[] {
+  return tree
+    .filter((node) => node.id !== deletedId)
+    .map((node) => {
+      const children = reconcileDeletedCategory(node.children, deletedId);
+      return children === node.children ? node : { ...node, children };
+    });
+}
