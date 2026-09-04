@@ -16,7 +16,9 @@
     "app/auth/return-destination.ts",
     "app/auth/submission-gate.ts",
     "app/components/login-form.tsx",
+    "app/admin-ui-provider.tsx",
     "app/document-shell.tsx",
+    "app/forms/**/*.tsx",
     "app/http/**/*.ts",
     "test/**/*.ts",
     "test/**/*.tsx"

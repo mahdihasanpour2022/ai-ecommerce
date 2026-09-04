@@ -14,7 +14,7 @@ Per the installed Next.js 16 guide, layouts and pages are Server Components by d
 - Components must not scatter arbitrary API calls or duplicate server business rules.
 - Introduce global state only for genuinely cross-route client state. Prefer server data, URL state, local state, and focused context first.
 - Do not use `useMemo` or `useCallback` without a measured or behaviorally necessary reason. Avoid `any` unless documented and strongly justified.
-- TanStack Query, Zustand, and React Hook Form remain optional tools selected only for concrete feature needs; installed packages do not dictate architecture. Dependency retention is governed by [general standards](../standards/general.md).
+- React Hook Form is installed in Admin for the approved catalog forms and composes with Ant Design through small typed controlled-field adapters. TanStack Query and Zustand remain optional and uninstalled; installed packages do not dictate architecture. Dependency retention is governed by [general standards](../standards/general.md).
 
 ## Forms and asynchronous experiences
 
@@ -29,6 +29,8 @@ Target WCAG 2.2 AA. Use semantic HTML and keyboard-operable native controls firs
 Storefront routes need intentional Persian metadata, crawlability, canonical strategy, semantic content, structured data where validated, optimized images, and performance budgets aligned with Core Web Vitals. Keep client JavaScript narrow, avoid layout shifts, and select caching/revalidation per data freshness requirements.
 
 Admin prioritizes accessible dense data, forms, permissions-aware actions, and resilient CRUD states. Hiding an action is usability only; the API must authorize every operation.
+
+The Admin root layout remains a Server Component. It places `AntdRegistry` at the App Router boundary for first-render styles, then a narrow Client `ConfigProvider` supplies the Persian locale and RTL direction before the existing Auth Provider. Component interaction evidence uses Testing Library/user-event in an isolated JSDOM worker; a single Chromium Playwright project supplies production-build smoke and axe coverage. This foundation does not itself implement catalog screens.
 
 Authentication return destinations are allowlisted application-relative paths. Reject external/protocol-relative URLs, backslashes, control characters, and unknown routes rather than forwarding attacker-controlled navigation.
 

@@ -8,7 +8,8 @@ GitHub Actions is the repository's CI provider, matching the configured GitHub `
 - Official GitHub actions are pinned to immutable commit SHAs, with the reviewed stable release beside each pin. Updates require verifying a current stable compatible release and replacing both its full SHA and version comment.
 - Workflow permissions are limited to read-only repository contents. Checkout does not persist GitHub credentials.
 - Yarn Classic is installed at the repository's exact `1.22.22` version, then `yarn install --frozen-lockfile` must reproduce `yarn.lock` without mutation.
-- Dependency and remote build caches are intentionally disabled for this initial workflow. This keeps the clean-checkout path explicit and avoids adding cache trust/invalidation complexity before CI duration demonstrates a need.
+- Dependency, browser, and remote build caches are intentionally disabled for this initial workflow. This keeps the clean-checkout path explicit and avoids adding cache trust/invalidation complexity before CI duration demonstrates a need.
+- The Admin test foundation installs only Playwright Chromium with its Linux system dependencies. Firefox/WebKit matrices remain deferred; browser binaries and failure artifacts are generated runner state, never repository content.
 - Superseded runs on the same workflow/ref are cancelled to avoid spending capacity on stale revisions.
 
 ## Quality gates
@@ -21,7 +22,8 @@ The single quality job fails immediately when any ordered gate fails:
 4. repository-wide TypeScript typecheck;
 5. repository-wide lint;
 6. repository-wide build; and
-7. all real Workspace tests orchestrated by the root test command.
+7. all real Workspace tests orchestrated by the root test command; and
+8. the focused Admin production-build Chromium smoke test with synthetic intercepted authentication responses.
 
 Prisma receives a visibly non-production, process-only `DATABASE_URL`. Validation and generation parse configuration but do not connect to PostgreSQL, so CI starts no database or Docker service and stores no database secret. The workflow must not replace these checks with migration application; production migration/deployment remains separately approved work.
 
@@ -38,6 +40,8 @@ yarn typecheck
 yarn lint
 yarn build
 yarn test
+yarn workspace @automotive-commerce/admin playwright install chromium
+yarn workspace @automotive-commerce/admin test:e2e
 ```
 
 Set `DATABASE_URL` only in the invoking process for the two Prisma commands. A safe validation-only example is `postgresql://ci:ci@127.0.0.1:5432/ci?schema=public`; it is not a deployment credential and does not need a running server.

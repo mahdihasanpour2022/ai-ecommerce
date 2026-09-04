@@ -12,6 +12,8 @@ node_modules/
 
 # testing
 coverage/
+/apps/admin/playwright-report/
+/apps/admin/test-results/
 
 # next.js
 .next/

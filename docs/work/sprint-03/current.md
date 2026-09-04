@@ -1,100 +1,89 @@
 # Current Task
 
-## S3-T02 — Establish the Approved Admin UI and Test Foundation
+## S3-T03 — Implement the Protected Catalog Shell and Client Boundary
 
 ## Goal
 
-Install the exact approved Admin runtime/testing dependencies and establish a first-render-safe Persian RTL Ant Design App Router boundary, React Hook Form integration pattern, JSDOM interaction-test harness, and bounded Chromium Playwright harness while preserving the existing authentication behavior.
+Add the protected Persian RTL catalog route shell, responsive permission-aware navigation, typed catalog client/error boundary, and reusable route/data states over the existing authenticated Axios infrastructure so later feature screens share one secure and accessible foundation.
 
 ## Why
 
-The Admin catalog screens require the already accepted Ant Design system, non-trivial accessible forms, realistic interaction tests, and one later critical browser journey. These packages are not currently installed. Establishing and verifying the minimum shared foundation once prevents feature tasks from creating competing providers, form conventions, DOM harnesses, or browser orchestration.
+Category, Product, Inventory, setting, Image, and lifecycle tasks need consistent protected routing, exact permission presentation, contract parsing, refresh/CSRF behavior, and loading/empty/error handling. Establishing those seams first prevents each feature from duplicating authentication or Backend contract logic.
 
 ## Minimum Sufficient Required Context
 
-- [Admin catalog specification](../../features/admin-catalog/specification.md), especially shared interaction/accessibility rules and the exact S3-T02 dependency proposal.
-- [Frontend architecture](../../architecture/frontend-architecture.md) and [frontend standards](../../standards/frontend.md), limited to App Router boundaries, Persian RTL, forms, accessibility, and dependency restraint.
-- Existing `apps/admin` layout/document shell, Auth Provider, HTTP boundary, tests, package scripts, TypeScript configuration, and global styles as the implementation patterns to preserve.
-- Installed Next.js 16.3.2 guides for Server/Client Components, `use client`, and Playwright testing; current primary Ant Design 6, React Hook Form 7, Testing Library, JSDOM, Playwright, and axe documentation for the exact integrations in scope.
-- [Testing standards](../../standards/testing.md) and [CI documentation](../../development/ci.md) only for the focused harness and repository-gate impact.
+- [Admin catalog specification](../../features/admin-catalog/specification.md), limited to routes/navigation, permission matrix, shared states, responsive/accessibility behavior, and Backend error handling.
+- [Frontend architecture](../../architecture/frontend-architecture.md) and [frontend standards](../../standards/frontend.md), limited to App Router boundaries, state/data access, Persian RTL, and accessibility.
+- [Authentication specification](../../features/admin-auth/specification.md) and [authorization policy](../../security/authorization.md), limited to the current identity permission snapshot, protected entry, session recovery, and Backend-authoritative authorization.
+- Existing `apps/admin` document/provider/auth/HTTP/error boundaries, new Ant Design foundation, tests, and installed Next.js 16.3.2 App Router guides relevant to protected routes, navigation, loading, and error/not-found composition.
+- Implemented protected catalog controllers/DTOs and [catalog specification](../../features/catalog/specification.md) only for exact request/response envelopes, stable codes, permissions, paging, and canonical `priceRial`/version fields consumed by the client.
+- [Testing standards](../../standards/testing.md) for meaningful shell/client interaction and regression evidence.
 
-Catalog feature screens, Backend internals, Prisma/database documents, Storefront guides, and later Sprint work are not required.
+Category mutation details, Product forms, Inventory editing, price-setting UI, Image workflows, lifecycle integration, real browser fixtures, database internals, Storefront, and later Sprint work are not required.
 
 ## Scope
 
-- Add these exact Admin runtime dependencies: `antd@6.6.2`, `@ant-design/nextjs-registry@1.3.0`, `@ant-design/cssinjs@2.1.2`, and `react-hook-form@7.87.0`.
-- Add these exact Admin development dependencies: `@testing-library/dom@10.4.1`, `@testing-library/react@16.3.3`, `@testing-library/user-event@14.6.7`, `jsdom@28.1.0`, `@types/jsdom@28.0.3`, `@playwright/test@1.62.1`, and `@axe-core/playwright@4.13.0`.
-- Update only the Admin workspace manifest and root Yarn Classic lockfile through accepted Yarn commands; verify exact resolution and peer compatibility without unrelated upgrades.
-- Wrap App Router output with `AntdRegistry` and a narrow Client `ConfigProvider` using Persian locale and RTL direction while preserving server-owned document markup, the Auth Provider, metadata, and existing login/protected states.
-- Add the minimum typed React Hook Form plus Ant Design controlled-input example/pattern required to verify labels, errors, submission state, and authoritative reset behavior without building catalog feature forms.
-- Add JSDOM setup/cleanup for the existing Node test runner and meaningful interaction tests proving keyboard input, focus, announced errors, and pending/normalized-reset behavior.
-- Configure one Chromium Playwright project and Admin scripts. Add a bounded production-build authentication-shell smoke test with API responses intercepted at the browser boundary; do not implement the real catalog journey yet.
-- Add CI browser installation and focused Admin e2e execution at the correct post-build point, using only Chromium and no persisted credentials or artifacts on success.
-- Keep generated browser binaries, reports, traces, screenshots, test output, and build artifacts ignored.
+- Add protected Admin catalog route composition and responsive navigation for the approved catalog destinations while preserving the existing login, bootstrap, protected-entry, and logout behavior.
+- Present navigation and direct-route states from the current `/auth/me` permission snapshot using the exact independent permission matrix; UI presentation never replaces Backend authorization.
+- Add a typed catalog client boundary over the existing credentialed Axios, CSRF, stable-error, and single-flight refresh/replay infrastructure. Implement only the read methods required to support the shared shell and upcoming Category/Product entry points.
+- Parse and expose exact catalog DTO/error envelopes without duplicating Backend domain validation, storing credentials, or introducing a new global-state package.
+- Add reusable Persian RTL loading, empty, safe error, retry, forbidden, and not-found presentation patterns with semantic focus/announcement behavior.
+- Add focused tests for protected routing, independent permissions, client request/error parsing, responsive navigation semantics, and shared state behavior.
 
 ## Out of Scope
 
-- Category, Product, Variant, Inventory, setting, Image, or lifecycle feature UI; typed catalog API clients; real catalog browser fixtures/journey; or any Backend/API/OpenAPI behavior.
-- Database/schema/migration/reference-data changes, new environment secrets, Roles/grants, audit behavior, Storefront work, or production storage.
-- Jest, Vitest, Cypress, Storybook, MSW, Zod, TanStack Query, Zustand, drag-and-drop/icon/date packages, Firefox/WebKit matrices, visual regression infrastructure, or a generic component library.
-- Redesigning the existing login/authentication experience beyond the provider integration necessary to preserve it.
+- Category CRUD; Product listing/creation/editing; Variant, Inventory, price-setting, Image, readiness, or lifecycle workflows.
+- New Backend routes/DTOs/OpenAPI behavior, database/schema/migration/reference-data changes, Roles/grants, Storefront changes, or a real cross-application browser journey.
+- TanStack Query, Zustand, schema packages, a generic design system, dashboards, analytics, or broad Admin redesign.
 
 ## Expected Changes
 
-- `apps/admin/package.json` and root `yarn.lock` for only the explicitly approved exact packages.
-- Admin App Router provider/layout wiring plus a minimal reusable form-integration seam.
-- Admin JSDOM setup, interaction tests, Playwright configuration/smoke test, scripts, and ignores.
-- Root CI workflow and narrow CI documentation updates for Chromium installation/e2e execution.
-- Focused frontend architecture/implementation-reality documentation reflecting the installed foundation, not unimplemented catalog screens.
-- Sprint execution records; on success S3-T03 becomes Current and awaits implementation approval.
+- `apps/admin` protected catalog routes/layout/navigation and focused shared state components.
+- Typed catalog DTO/error/client modules that reuse the existing Admin HTTP/auth boundary.
+- Focused Admin interaction/client tests and minimal styling needed by the responsive shell.
+- Frontend/project documentation and Sprint execution records reflecting only implemented shell/client behavior.
 
 ## Constraints
 
-- Use Yarn Classic 1.22.22 Workspaces and exact versions. Do not accept transitive manifest drift or upgrade existing packages.
-- Preserve Next.js 16.3.2, React/React DOM 19.2.8, Axios 1.19.0, current authentication semantics, and the repository Node 20.19-compatible floor.
-- Keep `AntdRegistry` at the server layout boundary and the interactive `ConfigProvider` boundary as narrow as the library requires. Props crossing Server/Client boundaries must be serializable.
-- Do not persist credentials, CSRF, form values, or test secrets. Browser request interception must use synthetic responses and must not weaken the real HTTP client policy.
-- Accessibility tests supplement semantic implementation; axe results never replace keyboard, focus, label, announcement, and user-flow assertions.
-- Dependency installation is authorized only if the owner approves this Current task with the exact list above.
+- Preserve Next.js 16.3.2, React 19.2.8, the exact S3-T02 dependency set, existing auth semantics, and the accepted Yarn toolchain; no dependency change is authorized.
+- Keep Server Components by default and Client boundaries only where session state, interaction, or browser behavior requires them; crossing props must be serializable.
+- Never persist Access, Refresh, CSRF, permission, or catalog state in browser storage, and never construct Bearer authorization.
+- Use exact permission codes and stable Backend envelopes. Hidden/disabled navigation is usability only; direct access and every operation remain Backend-authorized.
+- Avoid speculative feature abstractions: shared seams must be directly exercised by this shell or the immediately following catalog tasks.
 
 ## Acceptance Criteria
 
-- The Admin manifest contains exactly the four runtime and seven development packages at the approved exact versions; the lockfile resolves them without changing existing direct dependency versions.
-- `AntdRegistry` prevents first-render style loss and a Persian RTL `ConfigProvider` composes with the existing server document shell and Auth Provider without turning the whole layout into an unnecessary Client Component.
-- Existing login, bootstrap, refresh, protected-entry, and logout behavior and tests remain passing with correct Persian RTL output.
-- A minimal React Hook Form/Ant Design seam demonstrates controlled value wiring, visible labels, linked errors, disabled/busy duplicate-submit prevention, first-invalid focus, and reset from an authoritative normalized result.
-- The existing Node test runner can execute Testing Library/user-event tests in isolated JSDOM state with deterministic cleanup and no leaked globals/timers.
-- The Chromium Playwright configuration starts or reuses the Admin production server safely, and a focused intercepted-API smoke test verifies protected/login routing plus Persian RTL/semantic behavior without real credentials or database state.
-- A focused axe scan has no serious/critical violations in the smoke surface, while explicit keyboard/focus assertions also pass.
-- CI installs only Chromium, runs the e2e smoke after the production build, retains useful failure artifacts only, and stays within a justified timeout.
-- Generated browser/test/build artifacts are ignored; no catalog feature, Backend, API, schema, migration, reference-data, Storefront, or unapproved package is introduced.
-- Relevant Admin tests, typecheck, lint, production build, e2e smoke, root formatting/build gates affected by CI/config changes, lockfile integrity, local links, `git diff --check`, scope, generated-artifact, and clean-index checks pass.
+- Authenticated authorized users can enter a protected catalog shell with Persian RTL responsive navigation to the approved destinations; existing login, bootstrap, refresh, protected entry, and logout behavior remains passing.
+- Navigation and direct-route presentation handle the exact independent read/catalog/inventory/media/setting permissions without assuming `SUPER_ADMIN`, while the client still sends requests to the authoritative Backend.
+- Catalog calls reuse the centralized credentialed Axios/CSRF/refresh/error behavior and expose typed exact DTOs, paging/version fields, and stable safe failures without duplicating auth interceptors or domain rules.
+- Shared loading, empty, error/retry, forbidden, and not-found states are semantic, keyboard/focus conscious, and suitable for later feature routes.
+- Responsive navigation is keyboard operable and has deterministic accessible naming/state on narrow and wide layouts.
+- No feature mutation UI, Backend/API/schema/migration/Storefront behavior, persisted credential/state, new global state abstraction, or dependency change is introduced.
+- Focused new tests plus the complete Admin suite, typecheck, lint, production build, formatting, relevant root gates, local links, `git diff --check`, scope, generated-artifact, and clean-index checks pass.
 
 ## Testing Impact
 
 Automated tests required.
 
-- Update existing Admin tests only where the provider boundary changes rendered output, preserving behavior assertions.
-- Add frontend component/integration tests for the provider and minimal form seam using Testing Library/user-event/JSDOM.
-- Add one critical-user-flow harness smoke test in Chromium with browser-intercepted synthetic auth responses; the real catalog/API/PostgreSQL journey remains S3-T10.
-- Run the complete Admin suite because shared layout/providers and test infrastructure affect all Admin behavior.
+- Add client contract tests for exact request construction, DTO parsing, paging/version preservation, stable error classification, and reuse of the existing auth/refresh boundary.
+- Add component/integration tests for protected shell routing, independent permission combinations, responsive navigation semantics, and shared loading/error/retry/forbidden/not-found behavior.
+- Preserve and run the complete Admin authentication, UI-foundation, and intercepted Chromium smoke suites because the protected shell composes with shared providers and routing.
 
 ## Swagger / OpenAPI Impact
 
-None. No Backend route, DTO, status, security declaration, or generated OpenAPI behavior changes.
+None. Existing protected catalog contracts are consumed without Backend route, DTO, status, security declaration, or generated OpenAPI changes.
 
 ## Validation
 
-- Preflight Node/Yarn versions, package-registry access, exact package metadata, and Chromium installation/runtime before implementation.
-- Install only the exact approved packages with Yarn Workspace commands and inspect manifest/lockfile/direct-version drift.
-- Run focused new interaction/provider tests, then the complete Admin test suite.
-- Run Admin typecheck, lint, production build, and Playwright Chromium smoke; run repository formatting and the root gates affected by CI/shared lockfile changes.
-- Validate CI YAML, ignored/generated artifacts, local Markdown links, `git diff --check`, prohibited Backend/schema/migration/Storefront/catalog-feature scope, dependency inventory, and read-only Git index.
+- Inspect the exact implemented Admin auth/HTTP seams and only the protected catalog contracts required by the shell/client boundary.
+- Run focused client and shell interaction tests, then the complete Admin test suite and existing Chromium smoke.
+- Run Admin typecheck, lint, production build, repository formatting, and root gates affected by shared routing/client changes.
+- Validate local Markdown links, `git diff --check`, dependency/direct-version integrity, generated artifacts, prohibited Backend/schema/migration/Storefront/feature scope, and read-only Git index.
 
 ## Documentation Impact
 
-Update frontend architecture and CI/development reality for the installed Ant Design/Form/testing foundation and link the canonical Admin catalog behavior specification. Do not claim catalog screens or the real cross-application journey are implemented.
+Update frontend architecture and project implementation reality for the protected catalog shell/client boundary. Do not claim Category or Product workflows are implemented.
 
 ## Approval State
 
-Awaiting Implementation Approval for exactly the four runtime and seven development dependency pins listed in Scope.
+Awaiting Implementation Approval. No dependency, Backend/API, database, or migration change is proposed.

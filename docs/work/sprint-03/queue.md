@@ -2,7 +2,7 @@
 
 Sprint 3 is Active. Its approved goal, scope, Owner Decisions, exclusions, dependencies, and exit criteria are canonical in the [Sprint 3 plan](../../sprints/sprint-03.md).
 
-S3-T02 is the sole Current task and is awaiting implementation approval. S3-T01 completed the canonical Admin catalog behavior/UX specification and exact dependency proposal.
+S3-T03 is the sole Current task and is awaiting implementation approval. S3-T02 completed the exact approved Admin UI, form, interaction-test, and Chromium smoke foundation.
 
 ## S3-T01 — Specify Admin Catalog Behavior and UX
 
@@ -18,7 +18,7 @@ Approved Sprint 3 plan and Owner Decisions.
 
 ## S3-T02 — Establish the Approved Admin UI and Test Foundation
 
-Status: Current
+Status: Done
 
 Classification: Required Dependency
 
@@ -30,7 +30,7 @@ S3-T01 Done and explicit task approval for the exact dependency set.
 
 ## S3-T03 — Implement the Protected Catalog Shell and Client Boundary
 
-Status: Queued
+Status: Current
 
 Classification: Required Dependency
 
@@ -126,4 +126,4 @@ S3-T01 through S3-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S3-T01 is Done. S3-T02 is Current and awaiting implementation approval for its exact dependency set. S3-T03 through S3-T10 are Queued. No implementation or dependency change is currently authorized.
+Sprint Plan Approved. S3-T01 and S3-T02 are Done. S3-T03 is Current and awaiting implementation approval. S3-T04 through S3-T10 are Queued. No S3-T03 implementation is currently authorized.

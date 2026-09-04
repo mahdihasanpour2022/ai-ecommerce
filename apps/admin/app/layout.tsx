@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { AntdRegistry } from '@ant-design/nextjs-registry';
+import { AdminUiProvider } from './admin-ui-provider';
 import { AuthProvider } from './auth/auth-provider';
 import { DocumentShell } from './document-shell';
+import 'antd/dist/reset.css';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -12,7 +15,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <DocumentShell>
-      <AuthProvider>{children}</AuthProvider>
+      <AntdRegistry>
+        <AdminUiProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </AdminUiProvider>
+      </AntdRegistry>
     </DocumentShell>
   );
 }

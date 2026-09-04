@@ -41,6 +41,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Install Admin Chromium
+        run: yarn workspace @automotive-commerce/admin playwright install --with-deps chromium
+
       - name: Validate Prisma schema
         run: yarn workspace @automotive-commerce/api prisma:validate
 
@@ -61,3 +64,6 @@ jobs:
 
       - name: Test
         run: yarn test
+
+      - name: Test Admin browser smoke
+        run: yarn workspace @automotive-commerce/admin test:e2e
