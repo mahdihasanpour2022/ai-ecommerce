@@ -71,3 +71,21 @@ Focused Category/client/HTTP tests passed (30 tests), the complete Admin suite p
 **Documentation Impact:** Recorded implemented Category management and retained Product workflows as future Sprint 3 work.
 
 **Follow-ups:** S3-T05 is Current and awaiting implementation approval for Product listing and Draft creation.
+
+## S3-T05 — Implement Product Listing and Draft Creation
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented the protected Persian RTL Product list and focused atomic Draft Product creator over the existing Backend contracts. The list owns canonical exact filters/pagination, responsive summaries, price-unit display, empty/error states, and permission-aware creation access. The creator supports fixed default/named Variant modes, dynamic initial Variants, normalized text/SKU, exact rial/toman conversion, initial absolute Inventory, dirty-navigation protection, validation focus, single-flight submission, and normalized success routing without Backend/API, schema/migration, Storefront, or dependency changes.
+
+### Validation
+
+Focused Product transformation/failure/client/component evidence passed (19 tests), the complete Admin suite passed (72 tests), and repository tests passed (Admin 72; API 73, with environment-dependent integration coverage skipped as designed). Repository typecheck, lint, production builds, formatting, Playwright discovery, local links, `git diff --check`, scope, generated-artifact, dependency-integrity, and clean-index checks passed. The owner ran the updated Admin production-build Playwright smoke with system Chrome; both tests passed in 19.5 seconds.
+
+**Important Decisions:** Product list URL state contains only canonical page, page-size, exact Category, and lifecycle values; API ordering remains authoritative. The Draft form retains its loaded price unit for its lifetime and submits canonical `priceRial`. Default mode creates exactly one optionless Variant; named mode requires size or color for every Variant. Client guidance never replaces Backend authorization, normalization, uniqueness, mode, range, or transaction authority.
+
+**Files / Areas Changed:** Admin Product list/create routes and responsive styles, Product query/price/form/error helpers, typed atomic create client boundary, focused unit/component/client tests, updated Chromium smoke, frontend architecture/project reality, and Sprint execution records.
+
+**Documentation Impact:** Recorded implemented Product listing and Draft creation while retaining Product maintenance, Inventory, media, setting mutation, and publication as later Sprint tasks.
+
+**Follow-ups:** S3-T06 is Current and awaiting implementation approval for Product and retained-Variant maintenance.

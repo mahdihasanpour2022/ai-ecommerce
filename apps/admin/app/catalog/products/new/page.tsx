@@ -1,6 +1,5 @@
 import { CatalogPage } from '../../catalog-page';
-import { RequireCatalogCapability } from '../../catalog-shell';
-import { CatalogState } from '../../catalog-state';
+import { ProductCreate } from '../product-create';
 
 export default function NewProductPage() {
   return (
@@ -11,13 +10,7 @@ export default function NewProductPage() {
         { label: 'محصول جدید' },
       ]}
     >
-      <RequireCatalogCapability capability="manage" title="ایجاد محصول مجاز نیست">
-        <CatalogState
-          kind="empty"
-          title="ایجاد محصول پیش‌نویس"
-          message="مسیر محافظت‌شده آماده است. فرم ایجاد محصول در مرحله پیاده‌سازی فهرست و پیش‌نویس افزوده می‌شود."
-        />
-      </RequireCatalogCapability>
+      <ProductCreate />
     </CatalogPage>
   );
 }

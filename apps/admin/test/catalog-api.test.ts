@@ -278,3 +278,58 @@ void test('rejects malformed Category mutations before the adapter and malformed
   });
   assert.equal(calls, 1);
 });
+
+void test('uses the exact CSRF-protected atomic Draft Product creation contract', async () => {
+  let call: InternalAxiosRequestConfig | undefined;
+  const adapter: AxiosAdapter = async (config) => {
+    call = config;
+    return { data: detail, status: 201, statusText: 'Created', headers: {}, config };
+  };
+  const api = createCatalogApi(
+    createHttpClient({
+      adapter,
+      baseURL: 'https://api.example.com/api/v1',
+      credentials: { get: () => 'csrf-product', set: () => undefined, clear: () => undefined },
+    }),
+  );
+  const created = await api.createProduct({
+    name: 'پیراهن نخی',
+    description: null,
+    categoryId: CATEGORY_ID,
+    variants: [
+      {
+        sku: 'SHIRT-ONE',
+        size: null,
+        color: null,
+        priceRial: 1_000,
+        isActive: true,
+        onHandQuantity: 7,
+      },
+    ],
+  });
+
+  assert.equal(created.id, PRODUCT_ID);
+  assert.equal(call?.method, 'post');
+  assert.equal(call?.url, '/admin/catalog/products');
+  assert.equal(call?.headers.get('X-CSRF-Token'), 'csrf-product');
+  assert.deepEqual(call?.authPolicy, {
+    csrf: 'required',
+    failure: 'caller',
+    refresh: 'eligible',
+  });
+  assert.deepEqual(JSON.parse(call?.data as string), {
+    name: 'پیراهن نخی',
+    description: null,
+    categoryId: CATEGORY_ID,
+    variants: [
+      {
+        sku: 'SHIRT-ONE',
+        size: null,
+        color: null,
+        priceRial: 1000,
+        isActive: true,
+        onHandQuantity: 7,
+      },
+    ],
+  });
+});

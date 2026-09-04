@@ -6,7 +6,9 @@ export function DocumentShell({
 }: Readonly<{ children: ReactNode; bodyClassName?: string }>) {
   return (
     <html lang="fa-IR" dir="rtl">
-      <body className={bodyClassName}>{children}</body>
+      <body cz-shortcut-listen="true" className={bodyClassName}>
+        {children}
+      </body>
     </html>
   );
 }

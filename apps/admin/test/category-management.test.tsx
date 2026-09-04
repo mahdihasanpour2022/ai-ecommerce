@@ -74,6 +74,9 @@ function client(overrides: Partial<CatalogApi> = {}): CatalogApi {
       totalItems: 0,
       totalPages: 0,
     }),
+    createProduct: async () => {
+      throw new Error('Not used by Category tests.');
+    },
     product: async () => {
       throw new Error('unused');
     },

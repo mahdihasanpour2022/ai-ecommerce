@@ -32,7 +32,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${iranSans.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body cz-shortcut-listen="true" className="min-h-full flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }

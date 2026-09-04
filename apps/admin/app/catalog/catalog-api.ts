@@ -34,12 +34,29 @@ export interface UpdateCategoryInput {
   readonly parentId?: string | null;
 }
 
+export interface CreateProductVariantInput {
+  readonly sku: string;
+  readonly size: string | null;
+  readonly color: string | null;
+  readonly priceRial: number;
+  readonly isActive: boolean;
+  readonly onHandQuantity: number;
+}
+
+export interface CreateProductInput {
+  readonly name: string;
+  readonly description: string | null;
+  readonly categoryId: string;
+  readonly variants: readonly CreateProductVariantInput[];
+}
+
 export interface CatalogApi {
   categories(signal?: AbortSignal): Promise<readonly CategoryDto[]>;
   createCategory(input: CreateCategoryInput): Promise<CategoryDto>;
   updateCategory(categoryId: string, input: UpdateCategoryInput): Promise<CategoryDto>;
   deleteCategory(categoryId: string): Promise<void>;
   products(query?: ProductListQuery, signal?: AbortSignal): Promise<ProductListDto>;
+  createProduct(input: CreateProductInput): Promise<ProductDetailDto>;
   product(productId: string, signal?: AbortSignal): Promise<ProductDetailDto>;
   priceDisplaySetting(signal?: AbortSignal): Promise<PriceDisplaySettingDto>;
 }
@@ -76,6 +93,45 @@ function validateCategoryInput(input: CreateCategoryInput | UpdateCategoryInput,
     keys.some((key) => key !== 'name' && key !== 'parentId') ||
     ('name' in input && typeof input.name !== 'string') ||
     ('parentId' in input && input.parentId !== null && !isCatalogUuid(input.parentId))
+  ) {
+    invalidRequest();
+  }
+  return input;
+}
+
+function validateCreateProductInput(input: CreateProductInput): CreateProductInput {
+  if (
+    Object.keys(input).some(
+      (key) =>
+        key !== 'name' && key !== 'description' && key !== 'categoryId' && key !== 'variants',
+    ) ||
+    typeof input.name !== 'string' ||
+    (input.description !== null && typeof input.description !== 'string') ||
+    !isCatalogUuid(input.categoryId) ||
+    !Array.isArray(input.variants) ||
+    input.variants.length === 0 ||
+    input.variants.some(
+      (variant) =>
+        Object.keys(variant).some(
+          (key) =>
+            key !== 'sku' &&
+            key !== 'size' &&
+            key !== 'color' &&
+            key !== 'priceRial' &&
+            key !== 'isActive' &&
+            key !== 'onHandQuantity',
+        ) ||
+        typeof variant.sku !== 'string' ||
+        (variant.size !== null && typeof variant.size !== 'string') ||
+        (variant.color !== null && typeof variant.color !== 'string') ||
+        !Number.isSafeInteger(variant.priceRial) ||
+        variant.priceRial < 10 ||
+        variant.priceRial % 10 !== 0 ||
+        typeof variant.isActive !== 'boolean' ||
+        !Number.isInteger(variant.onHandQuantity) ||
+        variant.onHandQuantity < 0 ||
+        variant.onHandQuantity > 2_147_483_647,
+    )
   ) {
     invalidRequest();
   }
@@ -162,6 +218,18 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           },
         });
         return parseProductList(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async createProduct(input) {
+      try {
+        const response = await client.post<unknown>(
+          '/admin/catalog/products',
+          validateCreateProductInput(input),
+          mutationConfig(),
+        );
+        return parseProductDetail(response.data);
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }

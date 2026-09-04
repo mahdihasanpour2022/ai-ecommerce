@@ -40,10 +40,11 @@ test('renders the production authentication shell in accessible Persian RTL', as
   expect(seriousViolations).toEqual([]);
 });
 
-test('protects the responsive catalog shell with independent permission presentation', async ({
+test('protects the responsive Product routes with exact permission presentation', async ({
   page,
 }) => {
   let permissions = ['admin.access', 'catalog.read', 'inventory.update'];
+  const categoryId = '11111111-1111-4111-8111-111111111111';
   await page.route('**/api/v1/auth/csrf', async (route) => {
     await route.fulfill({
       status: 200,
@@ -61,11 +62,39 @@ test('protects the responsive catalog shell with independent permission presenta
           email: 'catalog@example.com',
           displayName: 'مدیر کاتالوگ',
         },
-        authorization: {
-          roles: ['CATALOG_READER'],
-          permissions,
-        },
+        authorization: { roles: ['CATALOG_READER'], permissions },
       }),
+    });
+  });
+  await page.route('**/api/v1/admin/catalog/categories', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          id: categoryId,
+          name: 'پیراهن',
+          parentId: null,
+          level: 1,
+          children: [],
+          createdAt: '2026-09-04T08:00:00.000Z',
+          updatedAt: '2026-09-04T08:00:00.000Z',
+        },
+      ]),
+    });
+  });
+  await page.route('**/api/v1/admin/catalog/settings/price-display-unit', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ unit: 'TOMAN' }),
+    });
+  });
+  await page.route('**/api/v1/admin/catalog/products**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items: [], page: 1, pageSize: 25, totalItems: 0, totalPages: 0 }),
     });
   });
 
@@ -73,13 +102,13 @@ test('protects the responsive catalog shell with independent permission presenta
   await page.goto('/catalog/products');
 
   await expect(page.getByRole('heading', { level: 1, name: 'محصولات' })).toBeVisible();
+  await expect(page.getByText('محصولات برای حساب شما فقط خواندنی هستند.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ایجاد محصول پیش‌نویس' })).toHaveCount(0);
   const toggle = page.getByRole('button', { name: 'فهرست بخش‌ها' });
   await expect(toggle).toBeVisible();
   await toggle.press('Enter');
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   await expect(page.getByRole('link', { name: 'محصولات' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.getByText('موجودی برای حساب شما فقط خواندنی خواهد بود.')).toHaveCount(0);
-  await expect(page.getByText('حساب شما مجوز به‌روزرسانی موجودی را دارد.')).toBeVisible();
 
   await page.goto('/catalog/products/new');
   await expect(

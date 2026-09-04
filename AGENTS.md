@@ -76,6 +76,19 @@ Do not delegate normal repository work that is reliably available to the agent: 
 
 Use targeted checks during implementation, then the minimum required final regression gates. Do not rerun already-passing gates without invalidating changes, repeat near-identical searches, retry the same environment failure, dump or reread large logs, inspect unrelated files speculatively, or run full-repository checks when a targeted iteration check is sufficient. Prefer one decisive diagnostic command and summarize only its relevant result.
 
+For every task, apply these token-efficiency rules without weakening scope or quality:
+
+- Start with this file, the Current task, and only the exact authoritative sections and implementation files needed. Do not print or load whole broad documents when targeted headings, line ranges, or searches are sufficient.
+- Reuse established repository patterns and already-fetched documentation when still applicable. Do not repeat documentation lookups or repository searches unless the code, version, question, or evidence has changed; mandatory current-documentation rules still apply when triggered.
+- Inspect concise status, diffs, and failure excerpts. Suppress routine success detail and summarize large command output instead of reproducing or rereading it.
+- Group related edits and fix discovered type, lint, and test failures in batches. Avoid one-command-per-error iteration when one focused diagnostic identifies the set safely.
+- Run the narrowest relevant tests while developing. After the change stabilizes, run each Acceptance Criteria/Definition of Done final gate once; repeat only a gate invalidated by later changes.
+- Preserve passing evidence across interruptions and user-provided host results. Do not restart completed analysis or validation after resuming a task.
+- Keep commentary concise and decision-oriented. Durable implementation and validation detail belongs in task documentation; chat should carry approvals, blockers, owner decisions, and short status updates.
+- Avoid speculative abstractions, optional enhancements, duplicated tests, and unrelated cleanup. Implement the smallest coherent change that satisfies the approved task.
+
+Token reduction never authorizes omitting Acceptance Criteria, meaningful automated tests, typechecking, linting, required builds, security/authorization review, API/schema/documentation impact checks, scope validation, required browser evidence, or any applicable Definition of Done item. Optimize how evidence is obtained and communicated, not which essential evidence is required.
+
 For Admin Playwright E2E runs, the Playwright CDN returns HTTP 403 in this location. The Windows host has usable system Chrome. When a rerun is required, ask the owner to run from the repository root instead of attempting to download Playwright Chromium:
 
 ```powershell
