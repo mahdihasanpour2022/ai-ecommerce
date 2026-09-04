@@ -16,7 +16,11 @@ import { ProtectedAuthenticationService } from '../authentication/protected-auth
 import { INSUFFICIENT_PERMISSION_MESSAGE } from '../authentication/authentication.constants.js';
 
 export type CatalogPermissionCode =
-  'catalog.manage' | 'catalog.read' | 'inventory.update' | 'settings.price.display.unit.update';
+  | 'catalog.manage'
+  | 'catalog.read'
+  | 'inventory.update'
+  | 'product.media.manage'
+  | 'settings.price.display.unit.update';
 const CATALOG_PERMISSION = 'catalog:permission';
 
 export const CatalogPermission = (permission: CatalogPermissionCode): MethodDecorator =>

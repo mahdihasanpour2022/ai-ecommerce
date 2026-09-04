@@ -18,6 +18,15 @@ import {
 } from './price-display-setting.controller.js';
 import { PriceDisplaySettingRepository } from './price-display-setting.repository.js';
 import { PriceDisplaySettingService } from './price-display-setting.service.js';
+import {
+  AdminProductImageController,
+  ProductImageMultipartErrorInterceptor,
+  PublicProductImageController,
+} from './product-image.controller.js';
+import { ProductImageRepository } from './product-image.repository.js';
+import { ProductImageService } from './product-image.service.js';
+import { ProductImageStorage } from './product-image.storage.js';
+import { ProductImageValidator } from './product-image.validation.js';
 
 @Module({
   imports: [AuthenticationModule, DatabaseModule],
@@ -27,6 +36,8 @@ import { PriceDisplaySettingService } from './price-display-setting.service.js';
     InventoryController,
     AdminPriceDisplaySettingController,
     PublicPriceDisplaySettingController,
+    AdminProductImageController,
+    PublicProductImageController,
   ],
   providers: [
     CatalogAccessGuard,
@@ -38,6 +49,11 @@ import { PriceDisplaySettingService } from './price-display-setting.service.js';
     ProductService,
     PriceDisplaySettingRepository,
     PriceDisplaySettingService,
+    ProductImageMultipartErrorInterceptor,
+    ProductImageRepository,
+    ProductImageService,
+    ProductImageStorage,
+    ProductImageValidator,
   ],
 })
 export class CatalogModule {}

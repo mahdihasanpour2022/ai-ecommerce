@@ -2,7 +2,7 @@
 
 Sprint 2 is Active. Its approved goal, scope, accepted decisions, exclusions, and exit criteria are canonical in [Sprint 2](../../sprints/sprint-02.md).
 
-S2-T08 is the sole Current task and is awaiting implementation approval. S2-T07 is Done; canonical prices and the protected/public display-setting contract are now available for later Admin and Storefront consumers.
+S2-T09 is the sole Current task and is awaiting implementation approval. S2-T08 completed with its separately approved pinned `sharp@0.35.3` image-decoding dependency.
 
 ## S2-T01 — Specify Clothing Catalog Behavior and Contracts
 
@@ -90,7 +90,7 @@ S2-T03 Done. S2-T05 must have established canonical Product Variant price behavi
 
 ## S2-T08 — Implement Secure Product Image Contracts
 
-Status: Current
+Status: Done
 
 Classification: Required Now
 
@@ -102,7 +102,7 @@ S2-T03 and S2-T05 Done.
 
 ## S2-T09 — Implement Minimum Public Catalog Contracts
 
-Status: Queued
+Status: Current
 
 Classification: Required Dependency
 
@@ -126,4 +126,4 @@ S2-T01 through S2-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S2-T01 through S2-T07 are Done. S2-T08 is Current and awaiting implementation approval; S2-T09 through S2-T10 remain Queued.
+Sprint Plan Approved. S2-T01 through S2-T08 are Done. S2-T09 is Current and awaiting implementation approval; S2-T10 remains Queued.

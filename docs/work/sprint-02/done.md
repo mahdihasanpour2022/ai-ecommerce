@@ -127,3 +127,21 @@ The disposable PostgreSQL service health and exact development/test identity/iso
 **Documentation Impact:** Project overview, Backend architecture, and the catalog specification now identify protected/public price-display-setting contracts as implemented. Sprint execution records now route secure Product Image work to S2-T08.
 
 **Follow-ups:** S2-T08 is Current and awaiting implementation approval. It owns only secure Product-owned image upload/retrieval/order/replacement/removal plus recoverable local development/test storage behavior; broader public Product contracts and all frontend work remain later tasks.
+
+## S2-T08 — Implement Secure Product Image Contracts
+
+**Completed:** 2026-09-04
+
+**Result:** Implemented protected Product Image upload, reorder, immutable-identity replacement, eligible removal, and authorized content retrieval plus Active-only public content retrieval. The slice enforces strict multipart/version input, static JPEG/PNG/WebP signature-container-full-decode agreement, byte/dimension/pixel limits, generated confined local development/test keys, production fail-closed behavior, Product locking and optimistic `imageVersion`, lifecycle/main-image rules, stable safe errors, response headers, compensating cleanup, durable retry state, and synchronized Swagger/OpenAPI. No Prisma schema, migration, reference-data, Admin, Storefront, transformation, CDN, or broader public-catalog behavior changed. The owner separately approved the pinned `sharp@0.35.3` decoder dependency.
+
+### Validation
+
+PostgreSQL 18.6 development/test reachability and isolation passed. Focused parser, decoder/container, local-storage confinement, production fail-closed, compensation/cleanup retry, real-PostgreSQL HTTP, authorization, lifecycle, rollback, cap, content, concurrency, and OpenAPI coverage passed. The complete API suite passed (133 tests), including Sprint 1 authentication and S2-T03 through S2-T07 persistence/catalog regressions. API typecheck, lint, and build passed; repository Prettier check, `git diff --check`, prohibited-scope/dependency/schema/frontend inspection, storage cleanup, and read-only Git-index inspection passed.
+
+**Important Decisions:** Used a Product Image-specific storage/validation boundary rather than a generic file service. Image bytes are decoded before any database transaction, promoted under generated UUID keys before metadata publication, and compensated on transaction failure. Replacement/removal create cleanup state in the metadata transaction; deletion is idempotent and failures are retried by bounded later media mutations. Product row locks serialize collection mutations, exact membership and `imageVersion` prevent lost updates, replacement creates a new cache-safe identity, and public lookup filters Active ownership without exposing eligibility distinctions.
+
+**Files / Areas Changed:** Added focused Product Image controller, DTO/parser, error, repository, service, Sharp validator, local-storage adapter, and unit/PostgreSQL HTTP/security/concurrency/OpenAPI tests under the API catalog module; registered the boundary; added validated Product Image storage environment configuration and the approved Sharp dependency; and updated narrow project/catalog/backend/environment reality documentation.
+
+**Documentation Impact:** Project overview, Backend architecture, catalog specification, and environment strategy now describe the implemented secure Product Image boundary and production storage limitation. Sprint execution records now route minimum public catalog work to S2-T09.
+
+**Follow-ups:** S2-T09 is Current and awaiting implementation approval. It owns only the accepted bounded public Category tree and Active Product summary/detail contracts; Admin/Storefront UI, slugs/SEO, search, descendant browsing, selectable sorting, and later commerce behavior remain out of scope.

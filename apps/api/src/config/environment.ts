@@ -1,4 +1,5 @@
 import { createPrivateKey, createPublicKey, type KeyObject } from 'node:crypto';
+import { parse, resolve } from 'node:path';
 
 export const DEFAULT_API_PORT = 3002;
 
@@ -40,6 +41,11 @@ export interface ApiEnvironment {
   readonly port: number;
   readonly databaseUrl: string;
   readonly authentication: AuthenticationEnvironment;
+  readonly productImages: ProductImageEnvironment;
+}
+
+export interface ProductImageEnvironment {
+  readonly localStorageRoot: string | null;
 }
 
 type EnvironmentSource = Readonly<Record<string, string | undefined>>;
@@ -113,6 +119,21 @@ function parseDatabaseUrl(value: string | undefined): string {
     invalid('DATABASE_URL', 'expected a PostgreSQL URL');
   }
   return input;
+}
+
+function parseProductImages(
+  source: EnvironmentSource,
+  nodeEnv: RuntimeEnvironment,
+): ProductImageEnvironment {
+  if (nodeEnv === 'production') return Object.freeze({ localStorageRoot: null });
+  const input = required(source, 'PRODUCT_IMAGE_STORAGE_ROOT');
+  if (input.includes('\0'))
+    invalid('PRODUCT_IMAGE_STORAGE_ROOT', 'expected a safe filesystem path');
+  const localStorageRoot = resolve(input);
+  if (localStorageRoot === parse(localStorageRoot).root) {
+    invalid('PRODUCT_IMAGE_STORAGE_ROOT', 'must not be a filesystem root');
+  }
+  return Object.freeze({ localStorageRoot });
 }
 
 function decodePem(value: string): string {
@@ -409,10 +430,12 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
 }
 
 export function parseEnvironment(source: EnvironmentSource = process.env): ApiEnvironment {
+  const nodeEnv = parseRuntimeEnvironment(source.NODE_ENV);
   return Object.freeze({
-    nodeEnv: parseRuntimeEnvironment(source.NODE_ENV),
+    nodeEnv,
     port: parsePort(source.PORT),
     databaseUrl: parseDatabaseUrl(source.DATABASE_URL),
     authentication: parseAuthentication(source),
+    productImages: parseProductImages(source, nodeEnv),
   });
 }

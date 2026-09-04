@@ -8,7 +8,7 @@ Environment configuration is application-owned, validated at its consumption bou
 | --- | --- | ---: | --- | --- |
 | Storefront | `@automotive-commerce/storefront` | 3000 | `http://localhost:3000` | None currently |
 | Admin | `@automotive-commerce/admin` | 3001 | `http://localhost:3001` | Public API base URL below |
-| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database and implemented authentication values below |
+| API | `@automotive-commerce/api` | 3002 | `http://localhost:3002` | Runtime/database, authentication, and Product Image storage values below |
 
 The REST base URL is `http://localhost:3002/api/v1`. Swagger UI is available at `http://localhost:3002/api/docs` in development and test only. The authentication backend enables credentialed CORS for exact configured origins; the accepted Admin development origin is `http://localhost:3001`.
 
@@ -30,6 +30,7 @@ The Storefront and Admin scripts pin their development and production-server por
 | `PORT` | API | Base-10 integer from 1 through 65535 | Optional; defaults to `3002` | Server-only, non-secret |
 | `DATABASE_URL` | API Prisma CLI / trusted Admin provisioner | PostgreSQL connection URL for the explicitly selected target | Required for Prisma configuration and provisioning; no implicit file loading | Server-only; credential-bearing |
 | `TEST_DATABASE_URL` | API persistence integration tests | PostgreSQL connection URL for `automotive_test` | Optional outside database integration validation | Server-only; credential-bearing |
+| `PRODUCT_IMAGE_STORAGE_ROOT` | API Product Image storage | Non-root filesystem path resolved by the API | Required in development/test; disabled and ignored in production | Server-only, non-secret |
 | `ADMIN_BOOTSTRAP_EMAIL` | Trusted Admin provisioner | Email, trimmed/lowercased; maximum 254 characters | Required only for the one-shot provisioning process | Server-only, identity data |
 | `ADMIN_BOOTSTRAP_DISPLAY_NAME` | Trusted Admin provisioner | Trimmed non-control string; maximum 120 characters | Required only for the one-shot provisioning process | Server-only, identity data |
 | `ADMIN_BOOTSTRAP_PASSWORD` | Trusted Admin provisioner | 15–128 characters; no silent normalization/truncation | Required only for the one-shot provisioning process | Secret; never tracked, logged, or passed in argv |

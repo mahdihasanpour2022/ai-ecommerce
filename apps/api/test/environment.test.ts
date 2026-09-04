@@ -12,6 +12,7 @@ void describe('API environment parsing', () => {
     assert.equal(environment.authentication.refreshReuseGraceSeconds, 10);
     assert.equal(environment.authentication.refreshSessionLimitPerMinute, 10);
     assert.equal(environment.authentication.refreshIpLimitPerMinute, 30);
+    assert.ok(environment.productImages.localStorageRoot);
   });
 
   void test('parses every supported runtime environment and an explicit port', () => {
@@ -21,6 +22,7 @@ void describe('API environment parsing', () => {
       );
       assert.equal(environment.nodeEnv, nodeEnv);
       assert.equal(environment.port, 4100);
+      assert.equal(environment.productImages.localStorageRoot === null, nodeEnv === 'production');
     }
   });
 
@@ -105,6 +107,17 @@ void describe('API environment parsing', () => {
           }),
         ),
       /^Error: Invalid AUTH_REFRESH_RECOVERY_KEYRING:/,
+    );
+  });
+
+  void test('requires a non-root Product Image storage path outside production', () => {
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ PRODUCT_IMAGE_STORAGE_ROOT: undefined })),
+      /^Error: Invalid PRODUCT_IMAGE_STORAGE_ROOT:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ PRODUCT_IMAGE_STORAGE_ROOT: '/' })),
+      /^Error: Invalid PRODUCT_IMAGE_STORAGE_ROOT:/,
     );
   });
 });

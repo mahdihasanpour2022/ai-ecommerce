@@ -172,6 +172,8 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 ## Product Images
 
+Implementation status: the protected upload, reorder, immutable-identity replacement, eligible removal and content routes, the Active-only public content route, strict static-image validation, development/test local storage, and durable cleanup retry described below are implemented. Production storage remains deliberately unavailable pending a separately approved provider.
+
 ### Ready image model
 
 - A ready Product Image has immutable UUID, Product ownership, generated opaque storage key, detected media type, byte size, decoded width/height, integer position, and implementation timestamps.
