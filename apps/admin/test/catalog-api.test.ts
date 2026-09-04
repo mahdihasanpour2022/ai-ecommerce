@@ -333,3 +333,70 @@ void test('uses the exact CSRF-protected atomic Draft Product creation contract'
     ],
   });
 });
+
+void test('uses exact Product and retained-Variant maintenance contracts', async () => {
+  const calls: InternalAxiosRequestConfig[] = [];
+  const adapter: AxiosAdapter = async (config) => {
+    calls.push(config);
+    return {
+      data: config.url?.includes('/variants') ? detail.variants[0] : detail,
+      status: config.method === 'post' ? 201 : 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
+  };
+  const api = createCatalogApi(
+    createHttpClient({
+      adapter,
+      baseURL: 'https://api.example.com/api/v1',
+      credentials: { get: () => 'csrf-maintenance', set: () => undefined, clear: () => undefined },
+    }),
+  );
+  await api.updateProduct(PRODUCT_ID, { name: 'نام تازه', description: null });
+  await api.createVariant(PRODUCT_ID, {
+    sku: 'SHIRT-M',
+    size: 'M',
+    color: null,
+    priceRial: 2_000,
+    isActive: true,
+    onHandQuantity: 0,
+  });
+  await api.updateVariant(VARIANT_ID, { sku: 'SHIRT-L', size: 'L', isActive: false });
+
+  assert.deepEqual(
+    calls.map((call) => ({
+      method: call.method,
+      url: call.url,
+      body: JSON.parse(call.data as string),
+    })),
+    [
+      {
+        method: 'patch',
+        url: `/admin/catalog/products/${PRODUCT_ID}`,
+        body: { name: 'نام تازه', description: null },
+      },
+      {
+        method: 'post',
+        url: `/admin/catalog/products/${PRODUCT_ID}/variants`,
+        body: {
+          sku: 'SHIRT-M',
+          size: 'M',
+          color: null,
+          priceRial: 2000,
+          isActive: true,
+          onHandQuantity: 0,
+        },
+      },
+      {
+        method: 'patch',
+        url: `/admin/catalog/variants/${VARIANT_ID}`,
+        body: { sku: 'SHIRT-L', size: 'L', isActive: false },
+      },
+    ],
+  );
+  for (const call of calls) {
+    assert.equal(call.headers.get('X-CSRF-Token'), 'csrf-maintenance');
+    assert.deepEqual(call.authPolicy, { csrf: 'required', failure: 'caller', refresh: 'eligible' });
+  }
+});

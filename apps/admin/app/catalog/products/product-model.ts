@@ -1,5 +1,11 @@
-import type { CategoryDto, PriceDisplayUnit, ProductStatus } from '../catalog-contracts';
-import type { ProductListQuery } from '../catalog-api';
+import type {
+  CategoryDto,
+  PriceDisplayUnit,
+  ProductDetailDto,
+  ProductStatus,
+  ProductVariantDto,
+} from '../catalog-contracts';
+import type { ProductListQuery, UpdateProductInput, UpdateVariantInput } from '../catalog-api';
 
 export type RawSearchParams = Record<string, string | readonly string[] | undefined>;
 
@@ -159,6 +165,63 @@ export function priceInputToRial(value: string, unit: PriceDisplayUnit): number 
 export function formatPrice(priceRial: number, unit: PriceDisplayUnit): string {
   const amount = unit === 'TOMAN' ? priceRial / 10 : priceRial;
   return `${amount.toLocaleString('fa-IR')} ${unit === 'TOMAN' ? 'تومان' : 'ریال'}`;
+}
+
+export function priceRialToInput(priceRial: number, unit: PriceDisplayUnit): string {
+  return String(unit === 'TOMAN' ? priceRial / 10 : priceRial);
+}
+
+export type ProductVariantMode = 'default' | 'named';
+
+export function productVariantMode(product: ProductDetailDto): ProductVariantMode {
+  const active = product.variants.filter((variant) => variant.isActive);
+  return active.length === 1 && active[0]?.size === null && active[0]?.color === null
+    ? 'default'
+    : 'named';
+}
+
+export interface ProductCoreValues {
+  readonly name: string;
+  readonly description: string;
+  readonly categoryId: string;
+}
+
+export function changedProductFields(
+  product: ProductDetailDto,
+  values: ProductCoreValues,
+): UpdateProductInput {
+  const name = normalizeSingleLine(values.name);
+  const description = normalizeDescription(values.description);
+  return {
+    ...(name === product.name ? {} : { name }),
+    ...(description === product.description ? {} : { description }),
+    ...(values.categoryId === product.category.id ? {} : { categoryId: values.categoryId }),
+  };
+}
+
+export interface VariantEditValues {
+  readonly sku: string;
+  readonly size: string;
+  readonly color: string;
+  readonly price: string;
+}
+
+export function changedVariantFields(
+  variant: ProductVariantDto,
+  values: VariantEditValues,
+  unit: PriceDisplayUnit,
+): UpdateVariantInput | null {
+  const sku = normalizeSku(values.sku);
+  const size = normalizeSingleLine(values.size) || null;
+  const color = normalizeSingleLine(values.color) || null;
+  const priceRial = priceInputToRial(values.price, unit);
+  if (priceRial === null) return null;
+  return {
+    ...(sku === variant.sku ? {} : { sku }),
+    ...(size === variant.size ? {} : { size }),
+    ...(color === variant.color ? {} : { color }),
+    ...(priceRial === variant.priceRial ? {} : { priceRial }),
+  };
 }
 
 export function productNameError(value: string): string | undefined {

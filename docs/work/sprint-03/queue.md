@@ -2,7 +2,7 @@
 
 Sprint 3 is Active. Its approved goal, scope, Owner Decisions, exclusions, dependencies, and exit criteria are canonical in the [Sprint 3 plan](../../sprints/sprint-03.md).
 
-S3-T06 is the sole Current task and is awaiting implementation approval. S3-T05 completed canonical Product listing and atomic Draft Product creation over the existing Backend contracts.
+S3-T07 is the sole Current task and is awaiting implementation approval. S3-T06 completed Product core and retained-Variant maintenance over the existing Backend contracts.
 
 ## S3-T01 — Specify Admin Catalog Behavior and UX
 
@@ -66,7 +66,7 @@ S3-T03 and S3-T04 Done.
 
 ## S3-T06 — Implement Product and Variant Maintenance
 
-Status: Current
+Status: Done
 
 Classification: Required Now
 
@@ -78,7 +78,7 @@ S3-T05 Done.
 
 ## S3-T07 — Implement Inventory and Price Display-Setting Management
 
-Status: Queued
+Status: Current
 
 Classification: Required Now
 
@@ -126,4 +126,4 @@ S3-T01 through S3-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S3-T01 through S3-T05 are Done. S3-T06 is Current and awaiting implementation approval. S3-T07 through S3-T10 are Queued. No S3-T06 implementation is currently authorized.
+Sprint Plan Approved. S3-T01 through S3-T06 are Done. S3-T07 is Current and awaiting implementation approval. S3-T08 through S3-T10 are Queued. No S3-T07 implementation is currently authorized.

@@ -5,6 +5,7 @@ import {
   parsePriceDisplaySetting,
   parseProductDetail,
   parseProductList,
+  parseProductVariant,
   isCatalogUuid,
 } from './catalog-contracts';
 import type {
@@ -13,6 +14,7 @@ import type {
   ProductDetailDto,
   ProductListDto,
   ProductStatus,
+  ProductVariantDto,
 } from './catalog-contracts';
 import { AdminHttpError, httpClient } from '../http/http-client';
 import { httpFailureChannel } from '../http/http-failure-channel';
@@ -50,6 +52,22 @@ export interface CreateProductInput {
   readonly variants: readonly CreateProductVariantInput[];
 }
 
+export interface UpdateProductInput {
+  readonly name?: string;
+  readonly description?: string | null;
+  readonly categoryId?: string;
+}
+
+export type CreateVariantInput = CreateProductVariantInput;
+
+export interface UpdateVariantInput {
+  readonly sku?: string;
+  readonly size?: string | null;
+  readonly color?: string | null;
+  readonly priceRial?: number;
+  readonly isActive?: boolean;
+}
+
 export interface CatalogApi {
   categories(signal?: AbortSignal): Promise<readonly CategoryDto[]>;
   createCategory(input: CreateCategoryInput): Promise<CategoryDto>;
@@ -58,6 +76,9 @@ export interface CatalogApi {
   products(query?: ProductListQuery, signal?: AbortSignal): Promise<ProductListDto>;
   createProduct(input: CreateProductInput): Promise<ProductDetailDto>;
   product(productId: string, signal?: AbortSignal): Promise<ProductDetailDto>;
+  updateProduct(productId: string, input: UpdateProductInput): Promise<ProductDetailDto>;
+  createVariant(productId: string, input: CreateVariantInput): Promise<ProductVariantDto>;
+  updateVariant(variantId: string, input: UpdateVariantInput): Promise<ProductVariantDto>;
   priceDisplaySetting(signal?: AbortSignal): Promise<PriceDisplaySettingDto>;
 }
 
@@ -132,6 +153,57 @@ function validateCreateProductInput(input: CreateProductInput): CreateProductInp
         variant.onHandQuantity < 0 ||
         variant.onHandQuantity > 2_147_483_647,
     )
+  ) {
+    invalidRequest();
+  }
+  return input;
+}
+
+function validateUpdateProductInput(input: UpdateProductInput): UpdateProductInput {
+  const keys = Object.keys(input);
+  if (
+    keys.length === 0 ||
+    keys.some((key) => key !== 'name' && key !== 'description' && key !== 'categoryId') ||
+    ('name' in input && typeof input.name !== 'string') ||
+    ('description' in input &&
+      input.description !== null &&
+      typeof input.description !== 'string') ||
+    ('categoryId' in input && !isCatalogUuid(input.categoryId))
+  ) {
+    invalidRequest();
+  }
+  return input;
+}
+
+function validateVariantInput(
+  input: CreateVariantInput | UpdateVariantInput,
+  update = false,
+): CreateVariantInput | UpdateVariantInput {
+  const keys = Object.keys(input);
+  if (
+    (update && keys.length === 0) ||
+    (!update && (!('sku' in input) || !('priceRial' in input))) ||
+    keys.some(
+      (key) =>
+        key !== 'sku' &&
+        key !== 'size' &&
+        key !== 'color' &&
+        key !== 'priceRial' &&
+        key !== 'isActive' &&
+        (update || key !== 'onHandQuantity'),
+    ) ||
+    ('sku' in input && typeof input.sku !== 'string') ||
+    ('size' in input && input.size !== null && typeof input.size !== 'string') ||
+    ('color' in input && input.color !== null && typeof input.color !== 'string') ||
+    ('priceRial' in input &&
+      (!Number.isSafeInteger(input.priceRial) ||
+        input.priceRial < 10 ||
+        input.priceRial % 10 !== 0)) ||
+    ('isActive' in input && typeof input.isActive !== 'boolean') ||
+    ('onHandQuantity' in input &&
+      (!Number.isInteger(input.onHandQuantity) ||
+        input.onHandQuantity < 0 ||
+        input.onHandQuantity > 2_147_483_647))
   ) {
     invalidRequest();
   }
@@ -242,6 +314,45 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           signalConfig(signal),
         );
         return parseProductDetail(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async updateProduct(productId, input) {
+      try {
+        const id = validateProductId(productId);
+        const response = await client.patch<unknown>(
+          `/admin/catalog/products/${id}`,
+          validateUpdateProductInput(input),
+          mutationConfig(),
+        );
+        return parseProductDetail(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async createVariant(productId, input) {
+      try {
+        const id = validateProductId(productId);
+        const response = await client.post<unknown>(
+          `/admin/catalog/products/${id}/variants`,
+          validateVariantInput(input),
+          mutationConfig(),
+        );
+        return parseProductVariant(response.data);
+      } catch (error) {
+        return publishDefinitiveAuthFailure(error);
+      }
+    },
+    async updateVariant(variantId, input) {
+      try {
+        const id = validateProductId(variantId);
+        const response = await client.patch<unknown>(
+          `/admin/catalog/variants/${id}`,
+          validateVariantInput(input, true),
+          mutationConfig(),
+        );
+        return parseProductVariant(response.data);
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }

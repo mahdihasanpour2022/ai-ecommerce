@@ -632,6 +632,72 @@ h2 {
   flex-wrap: wrap;
   gap: 0.75rem;
 }
+.product-workspace,
+.workspace-variants,
+.workspace-form {
+  display: grid;
+  gap: 1rem;
+}
+.workspace-heading,
+.variant-heading,
+.variant-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.workspace-heading h1,
+.variant-heading h3,
+.variant-section-heading h2,
+.add-variant-form h3 {
+  margin: 0;
+}
+.workspace-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.workspace-tabs a {
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.6rem 0.6rem 0 0;
+  color: var(--primary);
+  text-decoration: none;
+}
+.workspace-tabs a[aria-current='page'] {
+  background: var(--primary);
+  color: #fff;
+}
+.workspace-form {
+  max-width: 54rem;
+}
+.workspace-variant,
+.add-variant-form {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+.workspace-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+.workspace-facts dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.workspace-facts dd {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.variant-maintenance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
 .logout-control {
   position: relative;
 }
@@ -695,6 +761,11 @@ h2 {
   }
   .category-page-heading,
   .product-page-heading {
+    flex-direction: column;
+  }
+  .workspace-heading,
+  .variant-heading,
+  .variant-section-heading {
     flex-direction: column;
   }
   .category-page-heading .primary-button,

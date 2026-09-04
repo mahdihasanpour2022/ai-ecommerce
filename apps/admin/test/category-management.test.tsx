@@ -77,6 +77,15 @@ function client(overrides: Partial<CatalogApi> = {}): CatalogApi {
     createProduct: async () => {
       throw new Error('Not used by Category tests.');
     },
+    updateProduct: async () => {
+      throw new Error('Not used by Category tests.');
+    },
+    createVariant: async () => {
+      throw new Error('Not used by Category tests.');
+    },
+    updateVariant: async () => {
+      throw new Error('Not used by Category tests.');
+    },
     product: async () => {
       throw new Error('unused');
     },

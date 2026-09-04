@@ -45,6 +45,7 @@ test('protects the responsive Product routes with exact permission presentation'
 }) => {
   let permissions = ['admin.access', 'catalog.read', 'inventory.update'];
   const categoryId = '11111111-1111-4111-8111-111111111111';
+  const productId = '22222222-2222-4222-8222-222222222222';
   await page.route('**/api/v1/auth/csrf', async (route) => {
     await route.fulfill({
       status: 200,
@@ -91,6 +92,38 @@ test('protects the responsive Product routes with exact permission presentation'
     });
   });
   await page.route('**/api/v1/admin/catalog/products**', async (route) => {
+    if (new URL(route.request().url()).pathname.endsWith(`/products/${productId}`)) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: productId,
+          name: 'پیراهن نخی',
+          description: null,
+          category: { id: categoryId, name: 'پیراهن' },
+          status: 'DRAFT',
+          imageVersion: 1,
+          variants: [
+            {
+              id: '33333333-3333-4333-8333-333333333333',
+              productId,
+              sku: 'SHIRT-M',
+              size: 'M',
+              color: null,
+              priceRial: 12_300,
+              isActive: true,
+              inventory: { onHandQuantity: 5, version: 1 },
+              createdAt: '2026-09-04T08:00:00.000Z',
+              updatedAt: '2026-09-04T08:00:00.000Z',
+            },
+          ],
+          images: [],
+          createdAt: '2026-09-04T08:00:00.000Z',
+          updatedAt: '2026-09-04T08:00:00.000Z',
+        }),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -115,6 +148,11 @@ test('protects the responsive Product routes with exact permission presentation'
     page.getByRole('heading', { level: 1, name: 'ایجاد محصول مجاز نیست' }),
   ).toBeFocused();
   await expect(page.getByRole('link', { name: 'بازگشت به محصولات' })).toBeVisible();
+
+  await page.goto(`/catalog/products/${productId}?section=variants`);
+  await expect(page.getByRole('heading', { level: 1, name: 'پیراهن نخی' })).toBeVisible();
+  await expect(page.getByText('موجودی دقیق: ۵')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ذخیره تنوع' })).toHaveCount(0);
 
   permissions = ['admin.access'];
   await page.reload();

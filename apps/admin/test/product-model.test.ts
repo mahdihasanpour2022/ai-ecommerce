@@ -1,15 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  changedProductFields,
+  changedVariantFields,
   formatPrice,
   normalizeDescription,
   normalizeSku,
   parseProductListLocation,
   parseQuantityInput,
   priceInputToRial,
+  priceRialToInput,
+  productVariantMode,
   productListHref,
   withProductListQuery,
 } from '../app/catalog/products/product-model';
+import type { ProductDetailDto } from '../app/catalog/catalog-contracts';
 
 const CATEGORY_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -76,4 +81,50 @@ void test('normalizes Product text and SKU without inventing content', () => {
   assert.equal(normalizeSku(' shirt_one '), 'SHIRT_ONE');
   assert.equal(normalizeDescription('  خط اول\r\nخط دوم  '), 'خط اول\nخط دوم');
   assert.equal(normalizeDescription('   '), null);
+});
+
+void test('infers fixed Variant mode and emits only normalized changed fields', () => {
+  const product: ProductDetailDto = {
+    id: '22222222-2222-4222-8222-222222222222',
+    name: 'پیراهن',
+    description: null,
+    category: { id: CATEGORY_ID, name: 'پوشاک' },
+    status: 'DRAFT',
+    imageVersion: 1,
+    variants: [
+      {
+        id: '33333333-3333-4333-8333-333333333333',
+        productId: '22222222-2222-4222-8222-222222222222',
+        sku: 'SHIRT-ONE',
+        size: null,
+        color: null,
+        priceRial: 12_300,
+        isActive: true,
+        inventory: { onHandQuantity: 2, version: 1 },
+        createdAt: '2026-09-04T10:00:00.000Z',
+        updatedAt: '2026-09-04T10:00:00.000Z',
+      },
+    ],
+    images: [],
+    createdAt: '2026-09-04T10:00:00.000Z',
+    updatedAt: '2026-09-04T10:00:00.000Z',
+  };
+  assert.equal(productVariantMode(product), 'default');
+  assert.deepEqual(
+    changedProductFields(product, {
+      name: '  پیراهن  ',
+      description: ' توضیح ',
+      categoryId: CATEGORY_ID,
+    }),
+    { description: 'توضیح' },
+  );
+  assert.deepEqual(
+    changedVariantFields(
+      product.variants[0]!,
+      { sku: 'shirt-one', size: '', color: '', price: '۱٬۲۳۰' },
+      'TOMAN',
+    ),
+    {},
+  );
+  assert.equal(priceRialToInput(12_300, 'TOMAN'), '1230');
 });

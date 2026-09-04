@@ -89,3 +89,21 @@ Focused Product transformation/failure/client/component evidence passed (19 test
 **Documentation Impact:** Recorded implemented Product listing and Draft creation while retaining Product maintenance, Inventory, media, setting mutation, and publication as later Sprint tasks.
 
 **Follow-ups:** S3-T06 is Current and awaiting implementation approval for Product and retained-Variant maintenance.
+
+## S3-T06 — Implement Product and Variant Maintenance
+
+**Completed:** 2026-09-05
+
+**Result:** Implemented the protected Persian RTL Product workspace for authoritative core data, retained Variants, and exact read-only Inventory context. Managers can submit changed-only Product fields, create named-mode Variants, edit retained Variant SKU/size/color/canonical price, and explicitly reactivate or confirm deactivation; readers and Archived Products remain read-only. Stable permission, validation, lifecycle, mode, combination, last-active, missing, CSRF, and transport outcomes stay safe and refresh authoritative state where required. No Inventory mutation, Image, setting mutation, lifecycle action, Backend/API, schema/migration, Storefront, or dependency behavior was introduced.
+
+### Validation
+
+Product model/failure/client/component coverage and the complete Admin suite passed (80 tests). Repository typecheck, lint, tests (Admin 80; API 73, with environment-dependent integration coverage skipped as designed), all production builds, formatting, Playwright discovery, `git diff --check`, scope, generated-artifact, dependency-integrity, and clean-index checks passed. The owner ran the updated Admin production-build Playwright smoke with system Chrome; both tests passed in 8.8 seconds.
+
+**Important Decisions:** Product and Variant form state remains route-local and reconciles normalized mutation responses. The fixed default/named mode is inferred from retained Variants and never converted. Variant deactivation retains the record behind a labelled keyboard-contained confirmation; reactivation is explicit. Exact Inventory is visible but immutable until S3-T07. A stable default permission callback prevents background reloads from overwriting successful mutation reconciliation.
+
+**Files / Areas Changed:** Admin Product workspace route, forms, retained-Variant dialog and responsive styles; typed Product/Variant mutation client and contract parser; normalization, changed-field, price, and safe failure helpers; focused unit/component/client tests and updated Chromium smoke; frontend architecture and project reality.
+
+**Documentation Impact:** Recorded implemented Product and retained-Variant maintenance while retaining Inventory mutation, media, setting mutation, lifecycle/publication, and Storefront workflows as later work.
+
+**Follow-ups:** S3-T07 is Current and awaiting implementation approval for exact Inventory and price display-setting management.

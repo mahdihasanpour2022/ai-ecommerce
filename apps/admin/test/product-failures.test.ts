@@ -11,6 +11,7 @@ void test('maps Product conflicts and allowlisted validation details to safe Per
     {
       code: 'VALIDATION_FAILED',
       message: 'اطلاعات فرم معتبر نیست. فیلدهای مشخص‌شده را بررسی کنید.',
+      refreshProduct: false,
       field: 'price',
     },
   );
@@ -37,4 +38,16 @@ void test('maps CSRF, permission, missing Category, and transport outcomes witho
     assert.equal(result.message.includes('Admin HTTP'), false);
     assert.equal(result.message.length > 0, true);
   }
+});
+
+void test('marks only stale Product and Variant outcomes for authoritative refresh', () => {
+  assert.equal(
+    productFailurePresentation(new AdminHttpError('http', 409, 'PRODUCT_LIFECYCLE_CONFLICT'))
+      .refreshProduct,
+    true,
+  );
+  assert.equal(
+    productFailurePresentation(new AdminHttpError('http', 409, 'SKU_CONFLICT')).refreshProduct,
+    false,
+  );
 });

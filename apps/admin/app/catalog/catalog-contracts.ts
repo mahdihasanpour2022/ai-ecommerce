@@ -187,7 +187,7 @@ function status(value: unknown): ProductStatus {
   return value as ProductStatus;
 }
 
-function variant(value: unknown): ProductVariantDto {
+export function parseProductVariant(value: unknown): ProductVariantDto {
   const item = record(value);
   if (typeof item.isActive !== 'boolean') invalidResponse();
   return {
@@ -249,7 +249,7 @@ export function parseProductDetail(value: unknown): ProductDetailDto {
     category: productCategory(body.category),
     status: status(body.status),
     imageVersion: integer(body.imageVersion, 1, MAX_DATABASE_INTEGER),
-    variants: body.variants.map(variant),
+    variants: body.variants.map(parseProductVariant),
     images: body.images.map(image),
     createdAt: dateTime(body.createdAt),
     updatedAt: dateTime(body.updatedAt),

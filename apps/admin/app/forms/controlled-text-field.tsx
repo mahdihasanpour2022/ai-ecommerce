@@ -14,10 +14,11 @@ interface ControlledTextFieldProps<TValues extends FieldValues, TName extends Fi
   >;
   readonly disabled?: boolean;
   readonly autoComplete?: string;
+  readonly idPrefix?: string;
 }
 
-function fieldId(name: string): string {
-  return `field-${name.replace(/[^a-zA-Z0-9_-]/gu, '-')}`;
+function fieldId(name: string, prefix = 'field'): string {
+  return `${prefix}-${name.replace(/[^a-zA-Z0-9_-]/gu, '-')}`;
 }
 
 export function ControlledTextField<TValues extends FieldValues, TName extends FieldPath<TValues>>({
@@ -27,8 +28,9 @@ export function ControlledTextField<TValues extends FieldValues, TName extends F
   rules,
   disabled = false,
   autoComplete,
+  idPrefix,
 }: ControlledTextFieldProps<TValues, TName>) {
-  const id = fieldId(name);
+  const id = fieldId(name, idPrefix);
   const errorId = `${id}-error`;
 
   return (

@@ -1,9 +1,10 @@
 import { notFound } from 'next/navigation';
 import { isCatalogUuid } from '../../catalog-contracts';
 import { CatalogPage } from '../../catalog-page';
-import { CatalogState } from '../../catalog-state';
+import { ProductWorkspace } from '../product-workspace';
+import type { ProductWorkspaceSection } from '../product-workspace';
 
-const SECTIONS = new Set(['overview', 'variants', 'inventory', 'images']);
+const SECTIONS = new Set<ProductWorkspaceSection>(['overview', 'variants', 'inventory', 'images']);
 
 interface ProductWorkspacePageProps {
   readonly params: Promise<{ productId: string }>;
@@ -15,14 +16,14 @@ export default async function ProductWorkspacePage({
   searchParams,
 }: ProductWorkspacePageProps) {
   const { productId } = await params;
-  const { section } = await searchParams;
+  const { section: rawSection } = await searchParams;
   if (
     !isCatalogUuid(productId) ||
-    (section !== undefined && (typeof section !== 'string' || !SECTIONS.has(section)))
-  ) {
+    (rawSection !== undefined &&
+      (typeof rawSection !== 'string' || !SECTIONS.has(rawSection as ProductWorkspaceSection)))
+  )
     notFound();
-  }
-
+  const section = (rawSection ?? 'overview') as ProductWorkspaceSection;
   return (
     <CatalogPage
       breadcrumbs={[
@@ -31,11 +32,7 @@ export default async function ProductWorkspacePage({
         { label: 'فضای محصول' },
       ]}
     >
-      <CatalogState
-        kind="empty"
-        title="فضای محصول"
-        message="شناسه و بخش مسیر معتبر است. نمایش جزئیات محصول در مرحله نگه‌داری محصول افزوده می‌شود."
-      />
+      <ProductWorkspace productId={productId} section={section} />
     </CatalogPage>
   );
 }
