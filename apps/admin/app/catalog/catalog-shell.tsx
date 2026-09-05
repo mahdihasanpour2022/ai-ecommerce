@@ -1,15 +1,15 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import type { ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useAuth } from '../auth/auth-provider';
 import { loginDestination } from '../auth/return-destination';
 import { LogoutButton } from '../components/logout-button';
-import { CatalogState } from './catalog-state';
-import { catalogCapabilities } from './catalog-permissions';
 import type { CatalogCapabilities, CatalogCapability } from './catalog-permissions';
+import { catalogCapabilities } from './catalog-permissions';
+import { CatalogState } from './catalog-state';
 
 const CatalogCapabilityContext = createContext<CatalogCapabilities | null>(null);
 
@@ -58,7 +58,7 @@ export function CatalogShellView({
         <div>
           <p className="shell-brand">پنل مدیریت فروشگاه</p>
           <p className="shell-user">
-            {displayName} — <bdi className="ltr-value">{email}</bdi>
+            {displayName ?? `${(<bdi className="ltr-value">{email}</bdi>)}`}
           </p>
         </div>
         <div className="catalog-header-actions">

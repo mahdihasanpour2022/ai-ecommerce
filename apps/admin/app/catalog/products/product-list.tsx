@@ -9,6 +9,7 @@ import { useAuth } from '../../auth/auth-provider';
 import { getApiBaseUrl } from '../../http/http-client';
 import type { CatalogApi } from '../catalog-api';
 import { catalogApi } from '../catalog-api';
+import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
 import type {
   CategoryDto,
   PriceDisplayUnit,
@@ -47,7 +48,7 @@ function imageContentUrl(imageId: string): string {
 export function ProductListView({
   location,
   canManage,
-  client = catalogApi,
+  client: baseClient = catalogApi,
   onNavigate,
   onCreate,
   onPermissionDenied = () => undefined,
@@ -59,6 +60,7 @@ export function ProductListView({
   onCreate(): void;
   onPermissionDenied?: () => void;
 }>) {
+  const client = useCatalogRQClient(baseClient as CatalogApi);
   const requestVersion = useRef(0);
   const [state, setState] = useState<'loading' | 'ready' | 'error' | 'forbidden'>('loading');
   const [message, setMessage] = useState('');

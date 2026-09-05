@@ -15,9 +15,18 @@ function setup() {
 
 void test('clears readable CSRF state and authentication state after logout success', async () => {
   const context = setup();
-  await performLogout({ logout: async () => undefined }, context.credentials, context.dispatch);
+  let cacheClears = 0;
+  await performLogout(
+    { logout: async () => undefined },
+    context.credentials,
+    context.dispatch,
+    () => {
+      cacheClears += 1;
+    },
+  );
 
   assert.equal(context.credentials.get(), null);
+  assert.equal(cacheClears, 1);
   assert.deepEqual(context.actions, [{ type: 'logout-started' }, { type: 'unauthenticated' }]);
 });
 
@@ -47,6 +56,7 @@ void test('retains authenticated credentials and exposes retryable connectivity 
 void test('clears credentials and transitions on definitive session loss', async () => {
   const context = setup();
   const failure = new AdminHttpError('http', 401, 'REFRESH_TOKEN_EXPIRED');
+  let cacheClears = 0;
   await assert.rejects(
     performLogout(
       {
@@ -56,10 +66,14 @@ void test('clears credentials and transitions on definitive session loss', async
       },
       context.credentials,
       context.dispatch,
+      () => {
+        cacheClears += 1;
+      },
     ),
     (error: unknown) => error === failure,
   );
 
   assert.equal(context.credentials.get(), null);
+  assert.equal(cacheClears, 1);
   assert.deepEqual(context.actions, [{ type: 'logout-started' }, { type: 'unauthenticated' }]);
 });

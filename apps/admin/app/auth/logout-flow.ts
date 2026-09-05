@@ -7,6 +7,7 @@ export async function performLogout(
   api: Pick<AuthApi, 'logout'>,
   credentials: CsrfCredentialStore,
   dispatch: (action: AuthAction) => void,
+  onCredentialsCleared: () => void = () => undefined,
 ): Promise<void> {
   dispatch({ type: 'logout-started' });
   try {
@@ -14,6 +15,9 @@ export async function performLogout(
   } catch (error) {
     const action = mapBootstrapFailure(error);
     applyCredentialPolicy(action, credentials);
+    if (action.type === 'unauthenticated' || (action.type === 'failed' && !action.recoverable)) {
+      onCredentialsCleared();
+    }
     if (action.type === 'failed' && action.recoverable) {
       dispatch({ type: 'logout-failed', message: action.message });
     } else {
@@ -23,5 +27,6 @@ export async function performLogout(
   }
 
   credentials.clear();
+  onCredentialsCleared();
   dispatch({ type: 'unauthenticated' });
 }

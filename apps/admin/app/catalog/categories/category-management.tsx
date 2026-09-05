@@ -9,6 +9,7 @@ import { useAuth } from '../../auth/auth-provider';
 import { createSubmissionGate } from '../../auth/submission-gate';
 import { catalogApi } from '../catalog-api';
 import type { CatalogApi, CreateCategoryInput, UpdateCategoryInput } from '../catalog-api';
+import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
 import type { CategoryDto } from '../catalog-contracts';
 import { classifyCatalogFailure } from '../catalog-errors';
 import { useCatalogCapabilities } from '../catalog-shell';
@@ -551,13 +552,14 @@ function parentIds(tree: readonly CategoryDto[]): Set<string> {
 
 export function CategoryManagementView({
   canManage,
-  client = catalogApi,
+  client: baseClient = catalogApi,
   onPermissionDenied = NOOP,
 }: Readonly<{
   canManage: boolean;
   client?: CategoryClient;
   onPermissionDenied?: () => void;
 }>) {
+  const client = useCatalogRQClient(baseClient as CatalogApi);
   const heading = useRef<HTMLHeadingElement>(null);
   const requestVersion = useRef(0);
   const [tree, setTree] = useState<readonly CategoryDto[]>([]);

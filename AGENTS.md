@@ -126,6 +126,19 @@ For every frontend/UI implementation task, make the relevant application availab
 - Migrate existing forms in bounded, tested slices. Do not perform an unreviewed repository-wide rewrite or mix unrelated form migrations into feature tasks; nevertheless, all existing frontend forms remain migration targets until they use the approved React Hook Form/Zod pattern.
 - Add Zod and resolver dependencies only to an application that has forms and only after the exact versions are explicitly approved under the dependency boundary. Do not add form dependencies speculatively to applications without a current form workflow.
 
+### Frontend server-state and request direction
+
+- TanStack Query is the accepted server-state/cache manager for Client Components. Admin uses exact `@tanstack/react-query` `5.102.8` and development-only `@tanstack/react-query-devtools` `5.102.8`; apply the same architecture independently when Storefront client data is developed, with separately approved Storefront dependencies.
+- Admin thin adapters live under `apps/admin/hooks/rq_hooks/` as `useRQFetcher.ts`, `useRQSender.ts`, and `useRQDeleter.ts`. Feature-specific hooks own endpoint DTOs, runtime response parsing, complete query keys, cache reconciliation, invalidation, and domain-safe outcomes. Storefront later mirrors this separation in its own application boundary rather than importing Admin credentials or feature behavior.
+- All Backend requests initiated by Client feature components go through feature hooks over those adapters. Next.js Proxy/bootstrap, BFF Route Handlers, Server Component prefetching, and low-level authentication transport are non-hook infrastructure exceptions.
+- Preserve the existing Axios -> same-origin `/api/v1/**` BFF -> Backend path, CSRF policy, normalized failures, exact `ACCESS_TOKEN_EXPIRED` refresh eligibility, single-flight Refresh, and one-time replay. Browser Refresh calls remain visible in Network; do not add `axios-auth-refresh`, a duplicate `/api/proxy`, or a second refresh/retry authority.
+- Never extract HttpOnly Access/Refresh cookies into frontend data or an invented token header. BFF forwards cookies and Backend `Set-Cookie`; frontend JavaScript reads only the session CSRF cookie for unsafe-request headers.
+- Query keys are readonly arrays containing every request variable and should come from feature key factories. Invalidation accepts `readonly QueryKey[]`, passes each key unchanged to `invalidateQueries`, and awaits relevant invalidations; do not delay invalidation with timers.
+- Configure stale time, garbage collection, focus/reconnect refetch, and retry deliberately. Retry only bounded eligible safe reads; never automatically retry mutations, `4xx`, cancellation, validation, conflict, forbidden, not-found, configuration, or definitive authentication failures. `Infinity` requires genuinely stable or explicitly invalidated data.
+- Keep QueryClient browser-stable and server-request-scoped when prefetch/hydration is used. Never share server cache across users. Clear all user-scoped query data on logout, terminal authentication loss, or identity change.
+- Query cache never establishes authorization and does not replace URL state, local form state, React Hook Form, Proxy/AuthProvider authentication truth, runtime response validation, or Backend authority. Do not persist it to Web Storage without a separate security/UX decision.
+- Any later dependency/version change still requires explicit approval. Canonical detail is [ADR 0014](docs/architecture/adr/0014-adopt-tanstack-query-client-server-state.md).
+
 ### Admin visual references and approval workflow
 
 The following repository-owned images are the primary visual references for all current and future Admin UI work:

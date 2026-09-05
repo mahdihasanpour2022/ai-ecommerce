@@ -10,6 +10,7 @@
 - Future scope may move as product requirements are clarified, but the MVP boundary must not expand or contract silently.
 - A planned or future Sprint is not authorization to implement it. Only the active approved task may be implemented.
 - Admin uses the approved same-origin BFF and pre-render Proxy gate. Storefront remains public and must reuse the same independent pattern when Customer authentication is approved. PostgreSQL remains primary persistence; Redis requires a concrete future need.
+- TanStack Query is the accepted client server-state/cache layer: Admin uses it through feature hooks over thin RQ adapters and the existing Axios/BFF/auth boundary; future Storefront client data follows the same independent pattern. Storefront dependency installation and later version changes remain task-level approval decisions.
 
 ## Sprint 0 — Engineering Foundation
 

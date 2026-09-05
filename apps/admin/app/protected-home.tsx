@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useAuth } from './auth/auth-provider';
 import { loginDestination } from './auth/return-destination';
-import { StatusPanel } from './components/status-panel';
 import { LogoutButton } from './components/logout-button';
+import { StatusPanel } from './components/status-panel';
 
 export function ProtectedHome() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export function ProtectedHome() {
         <p className="shell-brand">پنل مدیریت فروشگاه</p>
         <div className="shell-session">
           <p className="shell-user">
-            {admin.displayName} — <bdi className="ltr-value">{admin.email}</bdi>
+            {admin.displayName ?? `${(<bdi className="ltr-value">{admin.email}</bdi>)}`}
           </p>
           <LogoutButton
             submitting={state.logout.submitting}

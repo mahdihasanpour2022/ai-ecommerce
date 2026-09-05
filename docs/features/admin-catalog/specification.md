@@ -28,14 +28,14 @@ Backend validation and authorization remain authoritative. Client checks explain
 
 All routes live in the Admin Next.js App Router and require the existing authenticated Admin entry boundary.
 
-| Route | Persian page purpose | Minimum permission to render data | URL state |
-| --- | --- | --- | --- |
-| `/` | Existing Admin home with catalog navigation | `admin.access` | None |
-| `/catalog/categories` | Category tree and management | `catalog.read` | None |
-| `/catalog/products` | Protected Product list | `catalog.read` | `page`, `pageSize`, optional `categoryId`, optional `status` |
-| `/catalog/products/new` | Focused Draft Product creation | `catalog.read` + `catalog.manage` | None |
-| `/catalog/products/[productId]` | Sectioned Product workspace | `catalog.read` | Optional allowlisted `section` for `overview`, `variants`, `inventory`, or `images` |
-| `/catalog/settings/price-display-unit` | Global display/input unit | `catalog.read` | None |
+| Route                                  | Persian page purpose                        | Minimum permission to render data | URL state                                                                           |
+| -------------------------------------- | ------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------- |
+| `/`                                    | Existing Admin home with catalog navigation | `admin.access`                    | None                                                                                |
+| `/catalog/categories`                  | Category tree and management                | `catalog.read`                    | None                                                                                |
+| `/catalog/products`                    | Protected Product list                      | `catalog.read`                    | `page`, `pageSize`, optional `categoryId`, optional `status`                        |
+| `/catalog/products/new`                | Focused Draft Product creation              | `catalog.read` + `catalog.manage` | None                                                                                |
+| `/catalog/products/[productId]`        | Sectioned Product workspace                 | `catalog.read`                    | Optional allowlisted `section` for `overview`, `variants`, `inventory`, or `images` |
+| `/catalog/settings/price-display-unit` | Global display/input unit                   | `catalog.read`                    | None                                                                                |
 
 Unknown or malformed filter, page, Product ID, or `section` values are not forwarded. The UI restores the nearest canonical route or presents a safe not-found state as appropriate. Product list filter and page state remain shareable in the URL. Form values, credentials, CSRF material, image bytes, and server errors never enter URLs.
 
@@ -57,14 +57,14 @@ Frontend visibility is the intersection of the read permission needed to underst
 
 ### Permission matrix
 
-| Capability | Required effective permissions | UI behavior without mutation permission |
-| --- | --- | --- |
-| View Categories, Products, Variants, exact Inventory, Image metadata/content, setting | `catalog.read` | Catalog navigation and direct routes are unavailable without it. |
-| Create/rename/move/delete Category | `catalog.read` + `catalog.manage` | Read-only tree; mutation controls are absent, with no misleading disabled primary action. |
-| Create/edit/transition Product or create/edit/reactivate Variant | `catalog.read` + `catalog.manage` | Product screens remain read-only and explain that editing access is unavailable. |
-| Set exact Inventory | `catalog.read` + `inventory.update` | Quantities remain visible; edit controls are absent. |
-| Upload/reorder/replace/remove Images | `catalog.read` + `product.media.manage` | Gallery and protected Images remain visible; mutation controls are absent. |
-| Change global display/input unit | `catalog.read` + `settings.price.display.unit.update` | Current unit remains visible; update control is absent. |
+| Capability                                                                            | Required effective permissions                        | UI behavior without mutation permission                                                   |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| View Categories, Products, Variants, exact Inventory, Image metadata/content, setting | `catalog.read`                                        | Catalog navigation and direct routes are unavailable without it.                          |
+| Create/rename/move/delete Category                                                    | `catalog.read` + `catalog.manage`                     | Read-only tree; mutation controls are absent, with no misleading disabled primary action. |
+| Create/edit/transition Product or create/edit/reactivate Variant                      | `catalog.read` + `catalog.manage`                     | Product screens remain read-only and explain that editing access is unavailable.          |
+| Set exact Inventory                                                                   | `catalog.read` + `inventory.update`                   | Quantities remain visible; edit controls are absent.                                      |
+| Upload/reorder/replace/remove Images                                                  | `catalog.read` + `product.media.manage`               | Gallery and protected Images remain visible; mutation controls are absent.                |
+| Change global display/input unit                                                      | `catalog.read` + `settings.price.display.unit.update` | Current unit remains visible; update control is absent.                                   |
 
 Permission snapshots affect usability only. Every direct request remains subject to current Backend checks.
 
@@ -292,28 +292,30 @@ No package is installed by this specification. S3-T02 implementation approval mu
 
 ### Runtime dependencies for `@e-commerce/admin`
 
-| Package | Exact version | Purpose and compatibility |
-| --- | ---: | --- |
-| `antd` | `6.6.2` | Accepted Admin design system. Its declared peers accept React/React DOM 18+, including installed 19.2.8. |
-| `@ant-design/nextjs-registry` | `1.3.0` | App Router first-screen CSS-in-JS extraction/registry to avoid style flicker; peers accept Next 14+, Ant Design 5+, and installed React/Next versions. |
-| `@ant-design/cssinjs` | `2.1.2` | Explicitly satisfies the registry peer instead of relying on Yarn Classic hoisting; peers accept installed React 19. |
-| `react-hook-form` | `7.87.0` | Approved non-trivial form state/validation boundary; declared peer explicitly accepts React 19. |
+| Package                       | Exact version | Purpose and compatibility                                                                                                                              |
+| ----------------------------- | ------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `antd`                        |       `6.6.2` | Accepted Admin design system. Its declared peers accept React/React DOM 18+, including installed 19.2.8.                                               |
+| `@ant-design/nextjs-registry` |       `1.3.0` | App Router first-screen CSS-in-JS extraction/registry to avoid style flicker; peers accept Next 14+, Ant Design 5+, and installed React/Next versions. |
+| `@ant-design/cssinjs`         |       `2.1.2` | Explicitly satisfies the registry peer instead of relying on Yarn Classic hoisting; peers accept installed React 19.                                   |
+| `react-hook-form`             |      `7.87.0` | Approved non-trivial form state/validation boundary; declared peer explicitly accepts React 19.                                                        |
+| `@tanstack/react-query`       |     `5.102.8` | Approved Client Component server-state cache, request-state, invalidation, and bounded safe-read retry boundary.                                       |
 
 Ant Design is wrapped by `AntdRegistry` at the App Router layout boundary and a narrow Client `ConfigProvider` with `direction="rtl"` and Persian locale. Pages remain Server Components unless existing browser-held authentication or feature interaction requires a Client boundary. React Hook Form `Controller` adapts controlled Ant Design inputs; successful authoritative responses reset form baselines.
 
 ### Development dependencies for `@e-commerce/admin`
 
-| Package | Exact version | Purpose and compatibility |
-| --- | ---: | --- |
-| `@testing-library/dom` | `10.4.1` | Explicit peer for React Testing Library and semantic DOM queries. |
-| `@testing-library/react` | `16.3.3` | React 19-compatible user-observable component rendering. |
-| `@testing-library/user-event` | `14.6.7` | Realistic keyboard, pointer, upload, and focus interactions. |
-| `jsdom` | `28.1.0` | DOM runtime compatible with the repository floor Node 20.19; latest 30.0.1 is deliberately rejected because it requires Node 22.22.2/24.15 or newer. |
-| `@types/jsdom` | `28.0.3` | TypeScript declarations aligned to the selected JSDOM generation. |
-| `@playwright/test` | `1.62.1` | Current Node 20+-compatible Chromium test runner for the one critical production-build journey. |
-| `@axe-core/playwright` | `4.13.0` | Focused automated accessibility checks within critical browser pages; it uses Playwright’s provided `playwright-core`. |
+| Package                          | Exact version | Purpose and compatibility                                                                                                                            |
+| -------------------------------- | ------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@testing-library/dom`           |      `10.4.1` | Explicit peer for React Testing Library and semantic DOM queries.                                                                                    |
+| `@testing-library/react`         |      `16.3.3` | React 19-compatible user-observable component rendering.                                                                                             |
+| `@testing-library/user-event`    |      `14.6.7` | Realistic keyboard, pointer, upload, and focus interactions.                                                                                         |
+| `jsdom`                          |      `28.1.0` | DOM runtime compatible with the repository floor Node 20.19; latest 30.0.1 is deliberately rejected because it requires Node 22.22.2/24.15 or newer. |
+| `@types/jsdom`                   |      `28.0.3` | TypeScript declarations aligned to the selected JSDOM generation.                                                                                    |
+| `@tanstack/react-query-devtools` |     `5.102.8` | Development-only inspection of Admin queries and mutations; excluded outside development mode.                                                       |
+| `@playwright/test`               |      `1.62.1` | Current Node 20+-compatible Chromium test runner for the one critical production-build journey.                                                      |
+| `@axe-core/playwright`           |      `4.13.0` | Focused automated accessibility checks within critical browser pages; it uses Playwright’s provided `playwright-core`.                               |
 
-The existing Node test runner remains the component/integration runner; Jest, Vitest, Cypress, Storybook, MSW, Zod, TanStack Query, Zustand, drag-and-drop packages, icon packages, date libraries, and a second form/design system are not required. Axios remains the HTTP client.
+The existing Node test runner remains the component/integration runner; Jest, Vitest, Cypress, Storybook, MSW, Zod, Zustand, drag-and-drop packages, icon packages, date libraries, and a second form/design system are not required. TanStack Query manages client server state while Axios remains the HTTP/security transport client.
 
 ### Tooling and CI impact
 

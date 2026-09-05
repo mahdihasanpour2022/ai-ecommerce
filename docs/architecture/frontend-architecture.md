@@ -12,9 +12,10 @@ Per the installed Next.js 16 guide, layouts and pages are Server Components by d
 - Feature-level UI separates presentation from validation, orchestration, and business rules.
 - A reusable same-origin BFF/HTTP/auth layer centralizes Backend routing, credential cookies, CSRF headers, timeout, error-code handling, refresh coordination, and observability hooks. JavaScript does not read either authentication token or construct a Bearer header. The session-bound CSRF token is the only frontend-readable credential; server responses store it in a host-only `SameSite=Strict` cookie, and it is never persisted in Web Storage.
 - Components must not scatter arbitrary API calls or duplicate server business rules.
+- TanStack Query is the accepted client server-state and cache boundary. Client feature calls use typed feature hooks over thin `hooks/rq_hooks` fetcher/sender/deleter adapters, then the existing Axios and same-origin BFF layers. Query keys include every request variable; cache freshness, bounded read retry, mutation non-retry, targeted invalidation, and identity-change cleanup are explicit. Proxy/bootstrap, Route Handlers, Server Component prefetch, and low-level authentication transport remain non-hook infrastructure. See [ADR 0014](adr/0014-adopt-tanstack-query-client-server-state.md).
 - Introduce global state only for genuinely cross-route client state. Prefer server data, URL state, local state, and focused context first.
 - Do not use `useMemo` or `useCallback` without a measured or behaviorally necessary reason. Avoid `any` unless documented and strongly justified.
-- React Hook Form is installed in Admin for the approved catalog forms and composes with Ant Design through small typed controlled-field adapters. TanStack Query and Zustand remain optional and uninstalled; installed packages do not dictate architecture. Dependency retention is governed by [general standards](../standards/general.md).
+- React Hook Form is installed in Admin for the approved catalog forms and composes with Ant Design through small typed controlled-field adapters. Admin also uses exact TanStack Query `5.102.8` with matching development-only Devtools; Zustand remains optional and uninstalled. Dependency retention is governed by [general standards](../standards/general.md).
 
 ## Forms and asynchronous experiences
 

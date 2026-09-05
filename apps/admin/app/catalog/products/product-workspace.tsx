@@ -9,6 +9,7 @@ import { createSubmissionGate } from '../../auth/submission-gate';
 import { ControlledTextField } from '../../forms/controlled-text-field';
 import type { CatalogApi, CreateVariantInput } from '../catalog-api';
 import { catalogApi } from '../catalog-api';
+import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
 import type {
   CategoryDto,
   PriceDisplayUnit,
@@ -676,7 +677,7 @@ export function ProductWorkspaceView({
   productId,
   section,
   canManage,
-  client = catalogApi,
+  client: baseClient = catalogApi,
   onPermissionDenied = ignorePermissionDenied,
 }: Readonly<{
   productId: string;
@@ -685,6 +686,7 @@ export function ProductWorkspaceView({
   client?: WorkspaceClient;
   onPermissionDenied?: () => void;
 }>) {
+  const client = useCatalogRQClient(baseClient as CatalogApi);
   const requestVersion = useRef(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error' | 'forbidden' | 'not-found'>(

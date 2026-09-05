@@ -9,6 +9,7 @@ import { createSubmissionGate } from '../../auth/submission-gate';
 import { ControlledTextField } from '../../forms/controlled-text-field';
 import type { CatalogApi, CreateProductInput } from '../catalog-api';
 import { catalogApi } from '../catalog-api';
+import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
 import type { CategoryDto, PriceDisplayUnit } from '../catalog-contracts';
 import { useCatalogCapabilities } from '../catalog-shell';
 import { CatalogState } from '../catalog-state';
@@ -97,7 +98,7 @@ function TextAreaField({
 
 export function ProductCreateView({
   canManage,
-  client = catalogApi,
+  client: baseClient = catalogApi,
   onCreated,
   onCancel,
   onPermissionDenied = () => undefined,
@@ -108,6 +109,7 @@ export function ProductCreateView({
   onCancel(): void;
   onPermissionDenied?: () => void;
 }>) {
+  const client = useCatalogRQClient(baseClient as CatalogApi);
   const summaryRef = useRef<HTMLParagraphElement>(null);
   const [submissionGate] = useState(() =>
     createSubmissionGate<readonly [ProductFormValues], void>(),
