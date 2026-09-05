@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -29,8 +28,9 @@ const EXPECTED_SYSTEM_PERMISSION_CODES = [
 function createInput(sequence: number): SuperAdminInput {
   return {
     email: `provisioning-${sequence}@example.invalid`,
+    username: `provisioning_${sequence}`,
     displayName: `Provisioning Admin ${sequence}`,
-    password: randomBytes(32).toString('base64url'),
+    password: '654321',
   };
 }
 
@@ -98,6 +98,7 @@ void describe(
       });
 
       assert.equal(admin.displayName, input.displayName);
+      assert.equal(admin.username, input.username);
       const [, algorithm, version, parameters] = admin.passwordHash.split('$');
       assert.equal(algorithm, 'argon2id');
       assert.equal(version, 'v=19');

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -113,11 +113,12 @@ void describe(
 
     async function createSession(roleCode = 'SUPER_ADMIN'): Promise<SessionHeaders> {
       const role = await prisma.role.findUniqueOrThrow({ where: { code: roleCode } });
-      const password = randomBytes(32).toString('base64url');
+      const password = '654321';
       const email = `image-${randomUUID()}@example.invalid`;
       await prisma.adminUser.create({
         data: {
           email,
+          username: `u_${randomUUID().replaceAll('-', '').slice(0, 18)}`,
           displayName: 'Image Contract Admin',
           passwordHash: await argon2.hash(password, {
             type: argon2.argon2id,
@@ -133,7 +134,7 @@ void describe(
         .post('/api/v1/auth/login')
         .set('Origin', allowedOrigin)
         .set('Sec-Fetch-Site', 'same-origin')
-        .send({ email, password })
+        .send({ identifier: email, password })
         .expect(200);
       return {
         accessCookie: cookiePair(responseCookies(login), ACCESS_COOKIE_NAME),

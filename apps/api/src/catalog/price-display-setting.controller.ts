@@ -45,7 +45,7 @@ export class AdminPriceDisplaySettingController {
   @ApiHeader({
     name: 'X-CSRF-Token',
     required: true,
-    description: 'Current session-bound CSRF credential held only in browser memory.',
+    description: 'Current session-bound CSRF credential read from the Strict CSRF cookie.',
     schema: { type: 'string' },
   })
   @ApiOperation({

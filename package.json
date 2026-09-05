@@ -1,5 +1,5 @@
 {
-  "name": "automotive-commerce",
+  "name": "e-commerce",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -7,10 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "yarn workspace @automotive-commerce/storefront dev",
+    "dev": "yarn workspace @e-commerce/storefront dev",
     "build": "turbo run build",
     "build:all": "turbo run build",
-    "start": "yarn workspace @automotive-commerce/storefront start",
+    "start": "yarn workspace @e-commerce/storefront start",
     "lint": "turbo run lint",
     "lint:all": "turbo run lint",
     "typecheck": "turbo run typecheck",
@@ -23,8 +23,8 @@
     "db:health": "node scripts/local-postgres.mjs health",
     "db:verify": "node scripts/local-postgres.mjs verify",
     "db:stop": "node scripts/local-postgres.mjs stop",
-    "db:reset:dev": "node scripts/local-postgres.mjs reset automotive_dev",
-    "db:reset:test": "node scripts/local-postgres.mjs reset automotive_test"
+    "db:reset:dev": "node scripts/local-postgres.mjs reset e_commerce_dev",
+    "db:reset:test": "node scripts/local-postgres.mjs reset e_commerce_test"
   },
   "devDependencies": {
     "prettier": "3.9.6",

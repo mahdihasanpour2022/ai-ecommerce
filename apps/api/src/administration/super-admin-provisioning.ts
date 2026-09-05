@@ -1,14 +1,19 @@
 import * as argon2 from 'argon2';
 
 import type { PrismaClient } from '../generated/prisma/client.js';
+import {
+  containsControlCharacter,
+  isValidAdminEmail,
+  isValidAdminPassword,
+  isValidAdminUsername,
+  normalizeAdminEmail,
+  normalizeAdminUsername,
+} from './admin-credential-policy.js';
 
 export const SUPER_ADMIN_ROLE_CODE = 'SUPER_ADMIN';
 export const ADMIN_ACCESS_PERMISSION_CODE = 'admin.access';
 
 const BOOTSTRAP_ADVISORY_LOCK_KEY = 7_361_340_400_000_001n;
-const MINIMUM_PASSWORD_CHARACTERS = 15;
-const MAXIMUM_PASSWORD_CHARACTERS = 128;
-
 export const ARGON2_OPTIONS = Object.freeze({
   type: argon2.argon2id,
   version: 0x13,
@@ -33,12 +38,14 @@ export class ProvisioningError extends Error {
 
 export interface SuperAdminInput {
   email: string;
+  username: string;
   displayName: string;
   password: string;
 }
 
 export interface SuperAdminEnvironmentInput {
   ADMIN_BOOTSTRAP_EMAIL?: string | undefined;
+  ADMIN_BOOTSTRAP_USERNAME?: string | undefined;
   ADMIN_BOOTSTRAP_DISPLAY_NAME?: string | undefined;
   ADMIN_BOOTSTRAP_PASSWORD?: string | undefined;
   ADMIN_BOOTSTRAP_PASSWORD_CONFIRM?: string | undefined;
@@ -48,39 +55,29 @@ function characterLength(value: string): number {
   return Array.from(value).length;
 }
 
-function containsControlCharacter(value: string): boolean {
-  return Array.from(value).some((character) => {
-    const codePoint = character.codePointAt(0);
-    return codePoint !== undefined && (codePoint < 32 || (codePoint >= 127 && codePoint <= 159));
-  });
-}
-
 function invalidInput(field: string): never {
   throw new ProvisioningError('INVALID_INPUT', `Invalid provisioning input: ${field}.`);
 }
 
 export function parseSuperAdminInput(environment: SuperAdminEnvironmentInput): SuperAdminInput {
   const emailValue = environment.ADMIN_BOOTSTRAP_EMAIL;
+  const usernameValue = environment.ADMIN_BOOTSTRAP_USERNAME;
   const displayNameValue = environment.ADMIN_BOOTSTRAP_DISPLAY_NAME;
   const password = environment.ADMIN_BOOTSTRAP_PASSWORD;
   const passwordConfirmation = environment.ADMIN_BOOTSTRAP_PASSWORD_CONFIRM;
 
   if (emailValue === undefined) invalidInput('email');
+  if (usernameValue === undefined) invalidInput('username');
   if (displayNameValue === undefined) invalidInput('display name');
   if (password === undefined) invalidInput('password');
   if (passwordConfirmation === undefined) invalidInput('password confirmation');
 
-  const email = emailValue.trim().toLowerCase();
+  const email = normalizeAdminEmail(emailValue);
+  const username = normalizeAdminUsername(usernameValue);
   const displayName = displayNameValue.trim();
 
-  if (
-    email.length === 0 ||
-    email.length > 254 ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email) ||
-    containsControlCharacter(email)
-  ) {
-    invalidInput('email');
-  }
+  if (!isValidAdminEmail(email)) invalidInput('email');
+  if (!isValidAdminUsername(username)) invalidInput('username');
 
   if (
     displayName.length === 0 ||
@@ -90,17 +87,11 @@ export function parseSuperAdminInput(environment: SuperAdminEnvironmentInput): S
     invalidInput('display name');
   }
 
-  const passwordLength = characterLength(password);
-  if (
-    passwordLength < MINIMUM_PASSWORD_CHARACTERS ||
-    passwordLength > MAXIMUM_PASSWORD_CHARACTERS
-  ) {
-    invalidInput('password length');
-  }
+  if (!isValidAdminPassword(password)) invalidInput('password');
 
   if (password !== passwordConfirmation) invalidInput('password confirmation');
 
-  return { email, displayName, password };
+  return { email, username, displayName, password };
 }
 
 export async function hashAdminPassword(password: string): Promise<string> {
@@ -147,6 +138,7 @@ export async function provisionFirstSuperAdmin(
       await transaction.adminUser.create({
         data: {
           email: input.email,
+          username: input.username,
           displayName: input.displayName,
           passwordHash,
           roles: { create: { roleId: role.id } },

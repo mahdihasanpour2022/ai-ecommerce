@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { AppLoading } from '../components/app-loading';
 
 export type CatalogStateKind = 'loading' | 'empty' | 'error' | 'forbidden' | 'not-found';
 
@@ -30,12 +31,13 @@ export function CatalogState({
     if (blocking) heading.current?.focus();
   }, [blocking]);
 
+  if (busy) return <AppLoading message={title} />;
+
   return (
     <section
       className={`catalog-state catalog-state-${kind}`}
-      aria-busy={busy}
-      aria-live={busy || kind === 'empty' ? 'polite' : 'assertive'}
-      role={busy || kind === 'empty' ? 'status' : 'alert'}
+      aria-live={kind === 'empty' ? 'polite' : 'assertive'}
+      role={kind === 'empty' ? 'status' : 'alert'}
     >
       <h1 ref={heading} tabIndex={blocking ? -1 : undefined}>
         {title}

@@ -1,14 +1,14 @@
 # Clothing Commerce
 
-Yarn Workspaces/Turborepo monorepo for a Persian RTL clothing-commerce platform. The engineering foundation and complete initial Admin authentication slice are implemented, including identity persistence/provisioning, Backend-enforced RBAC, login/bootstrap, refresh rotation/recovery, current-session logout, and the protected Admin frontend. Clothing catalog, purchasing, deployment, and production infrastructure remain planned work. Existing `@automotive-commerce/*` workspace names and authentication identifiers are legacy technical identifiers; changing them is not part of the product-direction update and requires separately approved runtime work.
+Yarn Workspaces/Turborepo monorepo for a Persian RTL clothing-commerce platform. The engineering foundation and complete initial Admin authentication slice are implemented, including identity persistence/provisioning, Backend-enforced RBAC, login/bootstrap, refresh rotation/recovery, current-session logout, and the protected Admin frontend. Clothing catalog, purchasing, deployment, and production infrastructure remain planned work. Workspaces and runtime identifiers use the approved `e-commerce` naming, with SQL-safe PostgreSQL identifiers using `e_commerce`.
 
 ## Repository applications
 
 | Application | Workspace | Local URL | Current reality |
 | --- | --- | --- | --- |
-| Storefront | `@automotive-commerce/storefront` | `http://localhost:3000` | Preserved Next.js starter and future customer experience |
-| Admin | `@automotive-commerce/admin` | `http://localhost:3001` | Persian RTL login, protected shell, reactive refresh recovery, and current-session logout; no catalog/business UI |
-| API | `@automotive-commerce/api` | `http://localhost:3002` | NestJS API with Admin persistence/provisioning plus login, refresh, CSRF, current-Admin, and logout endpoints |
+| Storefront | `@e-commerce/storefront` | `http://localhost:3000` | Preserved Next.js starter and future customer experience |
+| Admin | `@e-commerce/admin` | `http://localhost:3001` | Persian RTL login, same-origin BFF, pre-render authentication gate, protected catalog UI, reactive refresh recovery, and current-session logout |
+| API | `@e-commerce/api` | `http://localhost:3002` | NestJS API with Admin persistence/provisioning plus login, bootstrap, refresh, CSRF, current-Admin, logout, and catalog endpoints |
 
 `packages/` is intentionally empty until a demonstrated cross-application need justifies a shared package.
 
@@ -36,10 +36,10 @@ Run each required application in its own terminal:
 yarn dev
 
 # Admin
-yarn workspace @automotive-commerce/admin dev
+yarn workspace @e-commerce/admin dev
 
 # API
-yarn workspace @automotive-commerce/api dev
+yarn workspace @e-commerce/api dev
 ```
 
 The API defaults to development mode and port `3002`. In development and test, Swagger UI is available at `http://localhost:3002/api/docs` and the generated OpenAPI JSON at `http://localhost:3002/api/docs-json`. `/api/v1` is reserved for future REST contracts; it currently contains no business route. Production registers neither documentation route.
@@ -62,7 +62,7 @@ GitHub Actions runs the same quality foundation for pull requests and pushes to 
 
 ## Local PostgreSQL and Prisma
 
-Docker Compose provides optional local PostgreSQL 18.6 with isolated `automotive_dev` and `automotive_test` databases:
+Docker Compose provides optional local PostgreSQL 18.6 with isolated `e_commerce_dev` and `e_commerce_test` databases:
 
 ```bash
 yarn db:config
@@ -77,8 +77,8 @@ Read [Local PostgreSQL Development](docs/development/local-postgresql.md) before
 Prisma owns the implemented Admin identity/session persistence schema and reviewed migration. Prisma CLI commands require `DATABASE_URL` in the invoking process; validation and generation do not require a live database:
 
 ```bash
-yarn workspace @automotive-commerce/api prisma:validate
-yarn workspace @automotive-commerce/api prisma:generate
+yarn workspace @e-commerce/api prisma:validate
+yarn workspace @e-commerce/api prisma:generate
 ```
 
 Schema changes and migrations require separately approved work and the SQL review process in the [Prisma workflow](docs/development/prisma.md). The one-shot trusted first-Super-Admin command is documented separately in [First Super Admin Provisioning](docs/development/admin-provisioning.md); the backend browser contract is documented in [Admin Login](docs/development/admin-login.md).

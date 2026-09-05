@@ -10,20 +10,14 @@ import { LogoutButton } from './components/logout-button';
 
 export function ProtectedHome() {
   const router = useRouter();
-  const { state, logout, retryBootstrap } = useAuth();
+  const { state, logout } = useAuth();
 
   useEffect(() => {
     if (state.phase === 'unauthenticated') router.replace(loginDestination('/'));
   }, [router, state.phase]);
 
   if (state.phase === 'bootstrapping' || state.phase === 'unauthenticated') {
-    return (
-      <StatusPanel
-        busy
-        title="در حال بررسی دسترسی"
-        message="محتوای مدیریتی پس از تأیید نشست نمایش داده می‌شود."
-      />
-    );
+    return null;
   }
 
   if (state.phase === 'error') {
@@ -31,7 +25,6 @@ export function ProtectedHome() {
       <StatusPanel
         title={state.kind === 'forbidden' ? 'دسترسی مجاز نیست' : 'ورود به پنل ممکن نشد'}
         message={state.message}
-        {...(state.recoverable ? { onRetry: retryBootstrap } : {})}
       />
     );
   }

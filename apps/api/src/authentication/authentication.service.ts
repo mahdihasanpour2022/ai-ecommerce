@@ -14,13 +14,13 @@ export class AuthenticationService {
   ) {}
 
   async login(input: LoginInput): Promise<IssuedLoginCredentials> {
-    const identifierKey = this.crypto.identifierKey(input.email);
+    const identifierKey = this.crypto.identifierKey(input.identifier);
     const retryAfter = await this.repository.consumeAccountAttempt(identifierKey);
     if (retryAfter !== null) {
       throw new AuthenticationError(429, 'AUTH_RATE_LIMITED', RATE_LIMITED_MESSAGE, retryAfter);
     }
 
-    const admin = await this.repository.findAdmin(input.email);
+    const admin = await this.repository.findAdmin(input.identifier, input.identifierKind);
     const passwordValid = await this.crypto.verifyPassword(
       admin?.passwordHash ?? null,
       input.password,

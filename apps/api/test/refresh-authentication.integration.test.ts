@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import type { INestApplication } from '@nestjs/common';
@@ -86,10 +86,11 @@ async function startContext(
 
 async function createAdmin(context: Context): Promise<AdminCredential> {
   const role = await context.prisma.role.findUniqueOrThrow({ where: { code: 'SUPER_ADMIN' } });
-  const password = randomBytes(32).toString('base64url');
+  const password = '654321';
   const admin = await context.prisma.adminUser.create({
     data: {
       email: `refresh-${randomUUID()}@example.invalid`,
+      username: `u_${randomUUID().replaceAll('-', '').slice(0, 18)}`,
       displayName: 'Refresh Integration Admin',
       passwordHash: await argon2.hash(password, {
         type: argon2.argon2id,
@@ -109,7 +110,7 @@ async function login(context: Context, admin: AdminCredential): Promise<Response
     .post('/api/v1/auth/login')
     .set('Origin', allowedOrigin)
     .set('Sec-Fetch-Site', 'same-origin')
-    .send({ email: admin.email, password: admin.password })
+    .send({ identifier: admin.email, password: admin.password })
     .expect(200);
 }
 

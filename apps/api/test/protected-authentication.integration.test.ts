@@ -14,6 +14,7 @@ import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/application';
 import {
   ACCESS_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
   REFRESH_COOKIE_NAME,
 } from '../src/authentication/authentication.constants';
 import { AuthenticationCrypto } from '../src/authentication/authentication.crypto';
@@ -81,10 +82,11 @@ async function startContext(
 
 async function createAdmin(context: Context): Promise<AdminCredential> {
   const role = await context.prisma.role.findUniqueOrThrow({ where: { code: 'SUPER_ADMIN' } });
-  const password = randomBytes(32).toString('base64url');
+  const password = '654321';
   const admin = await context.prisma.adminUser.create({
     data: {
       email: `protected-${randomUUID()}@example.invalid`,
+      username: `u_${randomUUID().replaceAll('-', '').slice(0, 18)}`,
       displayName: 'Protected Integration Admin',
       passwordHash: await argon2.hash(password, {
         type: argon2.argon2id,
@@ -104,7 +106,7 @@ async function login(context: Context, admin: AdminCredential) {
     .post('/api/v1/auth/login')
     .set('Origin', allowedOrigin)
     .set('Sec-Fetch-Site', 'same-origin')
-    .send({ email: admin.email, password: admin.password })
+    .send({ identifier: admin.email, password: admin.password })
     .expect(200);
 }
 
@@ -216,7 +218,10 @@ void describe(
         .expect('Cache-Control', 'no-store');
       const loginBody = loginResponse.body as unknown as { csrfToken: string };
       assert.deepEqual(csrf.body, { csrfToken: loginBody.csrfToken });
-      assert.equal(csrf.headers['set-cookie'], undefined);
+      assert.match(
+        cookiePair(responseCookies(csrf.headers), CSRF_COOKIE_NAME),
+        new RegExp(`^${CSRF_COOKIE_NAME}=`),
+      );
     });
 
     void test('enforces current disabled, permission, and revoked-session state before JWT expiry', async () => {
@@ -430,6 +435,53 @@ void describe(
       assert.deepEqual(recovered.body, { csrfToken: loginBody.csrfToken });
     });
 
+    void test('bootstraps before render and refreshes a missing Access credential', async () => {
+      const context = contexts[0];
+      assert.ok(context);
+      const admin = await createAdmin(context);
+      const loginResponse = await login(context, admin);
+      const cookies = responseCookies(loginResponse.headers);
+      const access = cookiePair(cookies, ACCESS_COOKIE_NAME);
+      const refresh = cookiePair(cookies, REFRESH_COOKIE_NAME);
+
+      const current = await request(server(context.app))
+        .post('/api/v1/auth/bootstrap')
+        .set('Origin', allowedOrigin)
+        .set('Sec-Fetch-Site', 'same-origin')
+        .set('Cookie', `${access}; ${refresh}`)
+        .expect(200)
+        .expect('Cache-Control', 'no-store');
+      assert.equal((current.body as { admin: { id: string } }).admin.id, admin.id);
+      assert.match(
+        cookiePair(responseCookies(current.headers), CSRF_COOKIE_NAME),
+        new RegExp(`^${CSRF_COOKIE_NAME}=`),
+      );
+
+      const recovered = await request(server(context.app))
+        .post('/api/v1/auth/bootstrap')
+        .set('Origin', allowedOrigin)
+        .set('Sec-Fetch-Site', 'same-origin')
+        .set('Cookie', refresh)
+        .expect(200);
+      const recoveredCookies = responseCookies(recovered.headers);
+      assert.ok(recoveredCookies.some((cookie) => cookie.startsWith(`${ACCESS_COOKIE_NAME}=`)));
+      assert.ok(recoveredCookies.some((cookie) => cookie.startsWith(`${REFRESH_COOKIE_NAME}=`)));
+      assert.ok(recoveredCookies.some((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`)));
+
+      await request(server(context.app))
+        .post('/api/v1/auth/bootstrap')
+        .set('Origin', allowedOrigin)
+        .set('Sec-Fetch-Site', 'same-origin')
+        .set('Cookie', access)
+        .expect(401);
+      await request(server(context.app))
+        .post('/api/v1/auth/bootstrap')
+        .set('Origin', allowedOrigin)
+        .set('Sec-Fetch-Site', 'cross-site')
+        .set('Cookie', `${access}; ${refresh}`)
+        .expect(403);
+    });
+
     void test('documents both cookie-authenticated endpoints without credential examples', async () => {
       const context = contexts[0];
       assert.ok(context);
@@ -438,7 +490,10 @@ void describe(
         components: { securitySchemes: Record<string, unknown> };
         paths: Record<
           string,
-          { get?: { responses?: Record<string, unknown>; security?: unknown } }
+          {
+            get?: { responses?: Record<string, unknown>; security?: unknown };
+            post?: { responses?: Record<string, unknown>; security?: unknown };
+          }
         >;
       };
       assert.deepEqual(document.components.securitySchemes, {
@@ -457,6 +512,16 @@ void describe(
         assert.ok(operation.security);
         assert.doesNotMatch(JSON.stringify(operation), /admin_(?:access|refresh)_token=/u);
       }
+      const bootstrap = document.paths['/api/v1/auth/bootstrap']?.post;
+      assert.ok(bootstrap);
+      assert.deepEqual(Object.keys(bootstrap.responses ?? {}).sort(), [
+        '200',
+        '401',
+        '403',
+        '429',
+        '500',
+      ]);
+      assert.deepEqual(bootstrap.security, [{ adminRefresh: [] }]);
     });
   },
 );

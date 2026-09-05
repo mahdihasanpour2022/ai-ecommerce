@@ -69,7 +69,7 @@ void test('configures the validated base URL, cookies, JSON, and 20-second timeo
   assert.equal(call.headers.has('Authorization'), false);
 });
 
-void test('attaches current memory-only CSRF only to unsafe required requests', async () => {
+void test('attaches the current CSRF-cookie value only to unsafe required requests', async () => {
   const calls: InternalAxiosRequestConfig[] = [];
   const credentials = createCsrfCredentialStore();
   credentials.set('session-csrf');
@@ -201,9 +201,11 @@ void test('publishes global failures once and leaves caller-handled auth failure
   assert.equal(published[0]?.kind, 'network');
 });
 
-void test('validates public API base URLs', () => {
-  assert.equal(getApiBaseUrl(undefined), 'http://localhost:3002/api/v1');
-  assert.equal(getApiBaseUrl('https://api.example.com/api/v1/'), 'https://api.example.com/api/v1');
+void test('defaults to the same-origin BFF and validates explicit API locations', () => {
+  assert.equal(getApiBaseUrl(undefined), '/api/v1');
+  assert.equal(getApiBaseUrl('/api/v1/'), '/api/v1');
+  assert.throws(() => getApiBaseUrl('https://api.example.com/api/v1/'));
+  assert.throws(() => getApiBaseUrl('//attacker.example/api/v1'));
   assert.throws(() => getApiBaseUrl('https://user:pass@example.com/api/v1'));
   assert.throws(() => getApiBaseUrl('javascript:alert(1)'));
 });

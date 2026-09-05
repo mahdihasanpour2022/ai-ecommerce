@@ -38,8 +38,9 @@ void describe('authentication orchestration failure boundaries', () => {
 
     await assert.rejects(
       service.login({
-        email: `signing-${randomUUID()}@example.invalid`,
-        password: randomBytes(32).toString('base64url'),
+        identifier: `signing-${randomUUID()}@example.invalid`,
+        identifierKind: 'email',
+        password: '654321',
       }),
       /signing failed/u,
     );
@@ -63,8 +64,9 @@ void describe('authentication orchestration failure boundaries', () => {
 
     await assert.rejects(
       service.login({
-        email: `unknown-${randomUUID()}@example.invalid`,
-        password: randomBytes(32).toString('base64url'),
+        identifier: `unknown-${randomUUID()}@example.invalid`,
+        identifierKind: 'email',
+        password: '654321',
       }),
       (error: unknown) =>
         typeof error === 'object' &&

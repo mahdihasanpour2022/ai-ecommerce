@@ -107,7 +107,10 @@ export class ProtectedAuthenticationService {
     return this.toCurrentAuthentication(session, now);
   }
 
-  async bootstrapCsrf(request: IncomingMessage, now = new Date()): Promise<string> {
+  async bootstrapCsrf(
+    request: IncomingMessage,
+    now = new Date(),
+  ): Promise<{ readonly csrfToken: string; readonly authentication: CurrentAuthentication }> {
     const cookie = readCookie(request, REFRESH_COOKIE_NAME);
     if (cookie.kind === 'missing') {
       throw new AuthenticationError(
@@ -129,6 +132,27 @@ export class ProtectedAuthenticationService {
       throw new AuthenticationError(401, 'REFRESH_TOKEN_EXPIRED', REFRESH_TOKEN_EXPIRED_MESSAGE);
     }
     const authentication = this.toCurrentAuthentication(token.session, now);
+    const csrfToken = this.crypto.recoverCsrfToken(
+      authentication.sessionId,
+      authentication.csrfTokenHash,
+    );
+    if (csrfToken === null) throw new Error('Session CSRF key is unavailable.');
+    return { csrfToken, authentication };
+  }
+
+  async authenticateSession(sessionId: string, now = new Date()): Promise<CurrentAuthentication> {
+    const session = await this.repository.findCurrentSession(sessionId);
+    if (session === null) {
+      throw new AuthenticationError(
+        401,
+        'AUTHENTICATION_REQUIRED',
+        AUTHENTICATION_REQUIRED_MESSAGE,
+      );
+    }
+    return this.toCurrentAuthentication(session, now);
+  }
+
+  recoverCsrfToken(authentication: CurrentAuthentication): string {
     const csrfToken = this.crypto.recoverCsrfToken(
       authentication.sessionId,
       authentication.csrfTokenHash,
@@ -169,6 +193,7 @@ export class ProtectedAuthenticationService {
     }
     return {
       sessionId: session.id,
+      sessionExpiresAt: session.expiresAt,
       csrfTokenHash: Uint8Array.from(session.csrfTokenHash),
       admin: {
         id: session.adminUser.id,

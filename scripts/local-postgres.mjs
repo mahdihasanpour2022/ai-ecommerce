@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 const repositoryRoot = fileURLToPath(new URL('..', import.meta.url));
 const composeArguments = ['compose', '--file', 'compose.yaml'];
 const serviceName = 'postgres';
-const databaseUser = 'automotive';
-const databases = new Set(['automotive_dev', 'automotive_test']);
+const databaseUser = 'e_commerce';
+const databases = new Set(['e_commerce_dev', 'e_commerce_test']);
 
 function fail(message) {
   throw new Error(message);
@@ -62,7 +62,7 @@ function verifyDatabase(databaseName) {
 
 function resetDatabase(databaseName) {
   if (!databases.has(databaseName)) {
-    fail('Reset target rejected: only automotive_dev or automotive_test is allowed.');
+    fail('Reset target rejected: only e_commerce_dev or e_commerce_test is allowed.');
   }
 
   runCompose([
@@ -128,19 +128,19 @@ function main() {
         '--username',
         databaseUser,
         '--dbname',
-        'automotive_dev',
+        'e_commerce_dev',
       ]);
       break;
     case 'verify':
-      verifyDatabase('automotive_dev');
-      verifyDatabase('automotive_test');
+      verifyDatabase('e_commerce_dev');
+      verifyDatabase('e_commerce_test');
       break;
     case 'stop':
       runCompose(['stop', serviceName]);
       break;
     case 'reset':
       if (databaseName === undefined) {
-        fail('Reset target is required and must be automotive_dev or automotive_test.');
+        fail('Reset target is required and must be e_commerce_dev or e_commerce_test.');
       }
       resetDatabase(databaseName);
       break;

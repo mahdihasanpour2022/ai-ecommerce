@@ -12,6 +12,7 @@ import {
   REFRESH_TOKEN_REUSED_MESSAGE,
   INSUFFICIENT_PERMISSION_MESSAGE,
 } from './authentication.constants.js';
+import type { CurrentAuthentication } from './authentication-context.js';
 import { AuthenticationCrypto } from './authentication.crypto.js';
 import { AuthenticationError } from './authentication.errors.js';
 import { AuthenticationRepository } from './authentication.repository.js';
@@ -25,6 +26,7 @@ export interface RefreshResult {
   readonly accessExpiresAt: Date;
   readonly refreshToken: string;
   readonly sessionExpiresAt: Date;
+  readonly authentication: CurrentAuthentication;
 }
 
 @Injectable()
@@ -40,6 +42,18 @@ export class RefreshAuthenticationService {
   ) {}
 
   async refresh(request: IncomingMessage, now = new Date()): Promise<RefreshResult> {
+    return this.execute(request, now, true);
+  }
+
+  async refreshForBootstrap(request: IncomingMessage, now = new Date()): Promise<RefreshResult> {
+    return this.execute(request, now, false);
+  }
+
+  private async execute(
+    request: IncomingMessage,
+    now: Date,
+    requireCsrf: boolean,
+  ): Promise<RefreshResult> {
     try {
       this.security.assertRequestBoundary(request);
     } catch {
@@ -63,7 +77,7 @@ export class RefreshAuthenticationService {
       throw new AuthenticationError(401, 'REFRESH_TOKEN_EXPIRED', REFRESH_TOKEN_EXPIRED_MESSAGE);
     }
     const authentication = this.currentAuthentication.validateCurrentSession(token.session, now);
-    this.csrf.assertUnsafeRequest(request, authentication.csrfTokenHash);
+    if (requireCsrf) this.csrf.assertUnsafeRequest(request, authentication.csrfTokenHash);
     this.security.consumeRefreshIpAttempt(request, now.getTime());
 
     const candidate = await this.crypto.issueRefreshCredentials(
@@ -86,6 +100,7 @@ export class RefreshAuthenticationService {
           accessExpiresAt: candidate.accessExpiresAt,
           refreshToken: candidate.refreshToken,
           sessionExpiresAt: token.session.expiresAt,
+          authentication,
         };
       case 'recovered': {
         let refreshToken: string;
@@ -112,6 +127,7 @@ export class RefreshAuthenticationService {
           accessExpiresAt: candidate.accessExpiresAt,
           refreshToken,
           sessionExpiresAt: token.session.expiresAt,
+          authentication,
         };
       }
       case 'reused':

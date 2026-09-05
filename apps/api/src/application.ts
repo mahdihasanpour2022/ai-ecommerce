@@ -32,8 +32,8 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
   }
 
   const openApiConfig = new DocumentBuilder()
-    .setTitle('Automotive Commerce API')
-    .setDescription('HTTP API contracts implemented by the Automotive Commerce backend.')
+    .setTitle('E-Commerce API')
+    .setDescription('HTTP API contracts implemented by the E-Commerce backend.')
     .setVersion('1.0')
     .addCookieAuth(ACCESS_COOKIE_NAME, { type: 'apiKey' }, 'adminAccess')
     .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'adminRefresh')

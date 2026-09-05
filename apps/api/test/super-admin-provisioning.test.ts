@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import { describe, test } from 'node:test';
 
 import * as argon2 from 'argon2';
@@ -13,12 +12,13 @@ import {
 } from '../src/administration/super-admin-provisioning.js';
 
 function createPassword(): string {
-  return randomBytes(32).toString('base64url');
+  return '654321';
 }
 
 function validEnvironmentInput(password = createPassword()) {
   return {
     ADMIN_BOOTSTRAP_EMAIL: '  First.Admin@Example.Invalid  ',
+    ADMIN_BOOTSTRAP_USERNAME: '  First_Admin  ',
     ADMIN_BOOTSTRAP_DISPLAY_NAME: '  First Admin  ',
     ADMIN_BOOTSTRAP_PASSWORD: password,
     ADMIN_BOOTSTRAP_PASSWORD_CONFIRM: password,
@@ -31,6 +31,7 @@ void describe('first Super Admin provisioning input and hashing', () => {
     const result = parseSuperAdminInput(environment);
 
     assert.equal(result.email, 'first.admin@example.invalid');
+    assert.equal(result.username, 'first_admin');
     assert.equal(result.displayName, 'First Admin');
     assert.equal(result.password, environment.ADMIN_BOOTSTRAP_PASSWORD);
   });
@@ -38,10 +39,16 @@ void describe('first Super Admin provisioning input and hashing', () => {
   const invalidInputs = [
     ['missing email', { ADMIN_BOOTSTRAP_EMAIL: undefined }],
     ['malformed email', { ADMIN_BOOTSTRAP_EMAIL: 'not-an-email' }],
+    ['missing username', { ADMIN_BOOTSTRAP_USERNAME: undefined }],
+    ['short username', { ADMIN_BOOTSTRAP_USERNAME: 'ab' }],
+    ['long username', { ADMIN_BOOTSTRAP_USERNAME: 'a'.repeat(21) }],
+    ['invalid username character', { ADMIN_BOOTSTRAP_USERNAME: 'admin-user' }],
     ['empty display name', { ADMIN_BOOTSTRAP_DISPLAY_NAME: '   ' }],
-    ['short password', { ADMIN_BOOTSTRAP_PASSWORD: 'x'.repeat(14) }],
-    ['long password', { ADMIN_BOOTSTRAP_PASSWORD: 'x'.repeat(129) }],
-    ['mismatched confirmation', { ADMIN_BOOTSTRAP_PASSWORD_CONFIRM: createPassword() }],
+    ['short password', { ADMIN_BOOTSTRAP_PASSWORD: '12345' }],
+    ['long password', { ADMIN_BOOTSTRAP_PASSWORD: '1234567' }],
+    ['non-ASCII digit password', { ADMIN_BOOTSTRAP_PASSWORD: '۱۲۳۴۵۶' }],
+    ['non-numeric password', { ADMIN_BOOTSTRAP_PASSWORD: '12a456' }],
+    ['mismatched confirmation', { ADMIN_BOOTSTRAP_PASSWORD_CONFIRM: '456789' }],
   ] as const;
 
   for (const [label, override] of invalidInputs) {

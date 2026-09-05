@@ -19,12 +19,12 @@ export function validEnvironmentSource(
     NODE_ENV: 'test',
     DATABASE_URL:
       process.env.TEST_DATABASE_URL ??
-      'postgresql://automotive:automotive_local_only@localhost:5432/automotive_test?schema=public',
+      'postgresql://e_commerce:e_commerce_local_only@localhost:5432/e_commerce_test?schema=public',
     AUTH_JWT_PRIVATE_KEY: privateKey,
     AUTH_JWT_PUBLIC_KEYS: JSON.stringify({ 'test-key': publicKey }),
     AUTH_JWT_ACTIVE_KID: 'test-key',
     CORS_ALLOWED_ORIGINS: 'http://localhost:3001',
-    PRODUCT_IMAGE_STORAGE_ROOT: join(tmpdir(), 'automotive-commerce-test-images'),
+    PRODUCT_IMAGE_STORAGE_ROOT: join(tmpdir(), 'e-commerce-test-images'),
     AUTH_LOGIN_THROTTLE_HMAC_KEY: Buffer.alloc(32, 7).toString('base64'),
     AUTH_CSRF_ACTIVE_KID: 'test-csrf-key',
     AUTH_CSRF_HMAC_KEYS: JSON.stringify({

@@ -1,6 +1,6 @@
 # 0009: Separate Admin and Storefront Applications
 
-**Status:** Accepted
+**Status:** Accepted; browser-topology consequence superseded for Admin by [ADR 0013](0013-adopt-admin-bff-authentication.md)
 
 ## Context
 

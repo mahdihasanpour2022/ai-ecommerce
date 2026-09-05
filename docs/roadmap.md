@@ -9,7 +9,7 @@
 - Roadmap planning does not reopen Accepted architecture. Changes require an explicit owner decision and the appropriate architecture record.
 - Future scope may move as product requirements are clarified, but the MVP boundary must not expand or contract silently.
 - A planned or future Sprint is not authorization to implement it. Only the active approved task may be implemented.
-- The initial browser topology remains direct browser-to-API; BFF is Deferred. PostgreSQL remains primary persistence; Redis requires a concrete future need.
+- Admin uses the approved same-origin BFF and pre-render Proxy gate. Storefront remains public and must reuse the same independent pattern when Customer authentication is approved. PostgreSQL remains primary persistence; Redis requires a concrete future need.
 
 ## Sprint 0 — Engineering Foundation
 

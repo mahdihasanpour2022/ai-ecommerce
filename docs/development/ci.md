@@ -33,15 +33,15 @@ From the repository root, use the same gates before reviewing a CI change:
 
 ```text
 yarn install --frozen-lockfile
-yarn workspace @automotive-commerce/api prisma:validate
-yarn workspace @automotive-commerce/api prisma:generate
+yarn workspace @e-commerce/api prisma:validate
+yarn workspace @e-commerce/api prisma:generate
 yarn format:check
 yarn typecheck
 yarn lint
 yarn build
 yarn test
-yarn workspace @automotive-commerce/admin playwright install chromium
-yarn workspace @automotive-commerce/admin test:e2e
+yarn workspace @e-commerce/admin playwright install chromium
+yarn workspace @e-commerce/admin test:e2e
 ```
 
 Set `DATABASE_URL` only in the invoking process for the two Prisma commands. A safe validation-only example is `postgresql://ci:ci@127.0.0.1:5432/ci?schema=public`; it is not a deployment credential and does not need a running server.

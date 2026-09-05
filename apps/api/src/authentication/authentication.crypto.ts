@@ -58,10 +58,10 @@ export class AuthenticationCrypto {
     this.dummyHash = argon2.hash(randomBytes(32), this.argonOptions());
   }
 
-  identifierKey(email: string): Uint8Array<ArrayBuffer> {
+  identifierKey(identifier: string): Uint8Array<ArrayBuffer> {
     return Uint8Array.from(
       createHmac('sha256', this.environment.authentication.loginThrottleHmacKey)
-        .update(email, 'utf8')
+        .update(identifier, 'utf8')
         .digest(),
     );
   }
@@ -251,7 +251,7 @@ export class AuthenticationCrypto {
 
   private recoveryAad(sessionId: string, tokenId: string, expiresAt: Date): Buffer {
     return Buffer.from(
-      `automotive-commerce:refresh-recovery:v1:${sessionId}:${tokenId}:${expiresAt.getTime()}`,
+      `e-commerce:refresh-recovery:v1:${sessionId}:${tokenId}:${expiresAt.getTime()}`,
       'utf8',
     );
   }

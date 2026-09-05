@@ -1,19 +1,19 @@
 'use client';
 
-import { createContext, useContext, useEffect, useReducer, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createAuthApi } from './auth-api';
 import { applyCredentialPolicy, mapBootstrapFailure, mapLoginFailure } from './auth-errors';
 import { createSubmissionGate } from './submission-gate';
 import { authReducer } from './auth-types';
-import type { AuthState } from './auth-types';
+import type { AuthState, CurrentAuthentication } from './auth-types';
 import { performLogout } from './logout-flow';
 import { csrfCredentialStore } from '../http/csrf-credential';
 import { httpFailureChannel } from '../http/http-failure-channel';
 
 interface AuthContextValue {
   readonly state: AuthState;
-  login(email: string, password: string): Promise<void>;
+  login(identifier: string, password: string): Promise<void>;
   logout(): Promise<void>;
   retryBootstrap(): void;
 }
@@ -30,9 +30,16 @@ function dispatchBootstrapFailure(
   dispatch(action);
 }
 
-export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [state, dispatch] = useReducer(authReducer, { phase: 'bootstrapping' });
-  const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
+export function AuthProvider({
+  children,
+  initialCurrent,
+}: Readonly<{ children: ReactNode; initialCurrent: CurrentAuthentication | null }>) {
+  const [state, dispatch] = useReducer(
+    authReducer,
+    initialCurrent === null
+      ? { phase: 'unauthenticated', message: null, submitting: false }
+      : authReducer({ phase: 'bootstrapping' }, { type: 'authenticated', current: initialCurrent }),
+  );
   const loginGate = useRef(createSubmissionGate<readonly [string, string], void>());
   const logoutGate = useRef(createSubmissionGate<readonly [], void>());
 
@@ -44,52 +51,24 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     [],
   );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    dispatch({ type: 'bootstrap-started' });
-
-    async function bootstrap() {
-      try {
-        const csrfToken = await api.bootstrapCsrf(controller.signal);
-        csrfCredentialStore.set(csrfToken);
-        const current = await api.current(controller.signal);
-        dispatch({ type: 'authenticated', current });
-      } catch (error) {
-        if (!controller.signal.aborted) dispatchBootstrapFailure(error, dispatch);
-      }
-    }
-
-    void bootstrap();
-    return () => controller.abort();
-  }, [bootstrapAttempt]);
-
-  async function performLogin(email: string, password: string): Promise<void> {
+  async function performLogin(identifier: string, password: string): Promise<void> {
     dispatch({ type: 'login-started' });
     csrfCredentialStore.clear();
-    let csrfToken: string;
     try {
-      csrfToken = await api.login(email, password);
-      csrfCredentialStore.set(csrfToken);
+      const current = await api.login(identifier, password);
+      dispatch({ type: 'authenticated', current });
     } catch (error) {
       csrfCredentialStore.clear();
       dispatch({ type: 'login-failed', message: mapLoginFailure(error) });
-      throw error;
-    }
-
-    try {
-      const current = await api.current();
-      dispatch({ type: 'authenticated', current });
-    } catch (error) {
-      dispatchBootstrapFailure(error, dispatch);
       throw error;
     }
   }
 
   const value: AuthContextValue = {
     state,
-    login: (email, password) => loginGate.current.run(performLogin, email, password),
+    login: (identifier, password) => loginGate.current.run(performLogin, identifier, password),
     logout: () => logoutGate.current.run(() => performLogout(api, csrfCredentialStore, dispatch)),
-    retryBootstrap: () => setBootstrapAttempt((attempt) => attempt + 1),
+    retryBootstrap: () => window.location.reload(),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

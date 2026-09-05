@@ -6,6 +6,7 @@ import { AuthenticationController } from './authentication.controller.js';
 import { AuthenticationCrypto } from './authentication.crypto.js';
 import { AuthenticationRepository } from './authentication.repository.js';
 import { AuthenticationService } from './authentication.service.js';
+import { BootstrapAuthenticationService } from './bootstrap-authentication.service.js';
 import { CsrfService } from './csrf.service.js';
 import { LoginSecurity } from './login-security.js';
 import { LogoutAuthenticationService } from './logout-authentication.service.js';
@@ -20,6 +21,7 @@ import { RefreshAuthenticationService } from './refresh-authentication.service.j
     AuthenticationCrypto,
     AuthenticationRepository,
     AuthenticationService,
+    BootstrapAuthenticationService,
     CsrfService,
     LoginSecurity,
     LogoutAuthenticationService,

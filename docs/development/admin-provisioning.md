@@ -16,8 +16,8 @@ From the repository root, verify the intended PostgreSQL target, apply the revie
 
 ```text
 yarn db:verify
-yarn workspace @automotive-commerce/api prisma:generate
-yarn workspace @automotive-commerce/api build
+yarn workspace @e-commerce/api prisma:generate
+yarn workspace @e-commerce/api build
 ```
 
 Production database targeting, migration deployment, and secret injection require their separately approved operational controls. The local `db:verify` command proves only the repository's disposable development/test identities.
@@ -26,18 +26,19 @@ Production database targeting, migration deployment, and secret injection requir
 
 The command reads these values only from its invoking process:
 
-| Variable | Rules |
-| --- | --- |
-| `DATABASE_URL` | Required PostgreSQL URL for the explicitly verified target database. |
-| `ADMIN_BOOTSTRAP_EMAIL` | Required email; trimmed and stored as lowercase canonical form; maximum 254 characters. |
-| `ADMIN_BOOTSTRAP_DISPLAY_NAME` | Required trimmed non-control display name; maximum 120 characters. |
-| `ADMIN_BOOTSTRAP_PASSWORD` | Required 15–128-character password. Unicode and whitespace are allowed; no composition rule or silent truncation is applied. |
-| `ADMIN_BOOTSTRAP_PASSWORD_CONFIRM` | Required exact confirmation of the password. |
+| Variable                           | Rules                                                                                               |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                     | Required PostgreSQL URL for the explicitly verified target database.                                |
+| `ADMIN_BOOTSTRAP_EMAIL`            | Required email; trimmed and stored as lowercase canonical form; maximum 254 characters.             |
+| `ADMIN_BOOTSTRAP_USERNAME`         | Required username; trimmed/lowercased and must match `^[a-z0-9_]{3,20}$`.                           |
+| `ADMIN_BOOTSTRAP_DISPLAY_NAME`     | Required trimmed non-control display name; maximum 120 characters.                                  |
+| `ADMIN_BOOTSTRAP_PASSWORD`         | Required exactly six ASCII digits (`^[0-9]{6}$`). No silent normalization or truncation is applied. |
+| `ADMIN_BOOTSTRAP_PASSWORD_CONFIRM` | Required exact confirmation of the password.                                                        |
 
 After an approved mechanism has injected those process values, run:
 
 ```text
-yarn workspace @automotive-commerce/api admin:create-super-admin
+yarn workspace @e-commerce/api admin:create-super-admin
 ```
 
 Success prints only `First Super Admin provisioned successfully.` and exits `0`. Invalid/missing input, an existing Admin, invalid migration reference state, or a database failure prints a fixed non-secret failure message and exits nonzero.

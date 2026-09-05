@@ -23,7 +23,11 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { ApiEnvironment } from '../config/environment.js';
 import { API_ENVIRONMENT } from '../config/tokens.js';
 import { AccessAuthenticationGuard } from './access-authentication.guard.js';
-import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './authentication.constants.js';
+import {
+  ACCESS_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+} from './authentication.constants.js';
 import {
   CurrentAuthenticationContext,
   type CurrentAuthentication,
@@ -31,11 +35,13 @@ import {
 import { AuthenticationError } from './authentication.errors.js';
 import { safeInternalHttpException, toAuthenticationHttpException } from './authentication-http.js';
 import { AuthenticationService } from './authentication.service.js';
+import { BootstrapAuthenticationService } from './bootstrap-authentication.service.js';
 import { LoginSecurity } from './login-security.js';
 import { LogoutAuthenticationService } from './logout-authentication.service.js';
 import { ApiErrorDto, LoginRequestDto, LoginResponseDto, parseLoginRequest } from './login.dto.js';
 import {
   CsrfResponseDto,
+  AuthenticationBootstrapResponseDto,
   CurrentAuthenticationResponseDto,
 } from './protected-authentication.dto.js';
 import { ProtectedAuthenticationService } from './protected-authentication.service.js';
@@ -53,6 +59,7 @@ interface ErrorEnvelope {
 export class AuthenticationController {
   constructor(
     private readonly authentication: AuthenticationService,
+    private readonly bootstrapAuthentication: BootstrapAuthenticationService,
     private readonly protectedAuthentication: ProtectedAuthenticationService,
     private readonly refreshAuthentication: RefreshAuthenticationService,
     private readonly logoutAuthentication: LogoutAuthenticationService,
@@ -66,7 +73,7 @@ export class AuthenticationController {
   @ApiHeader({
     name: 'X-CSRF-Token',
     required: true,
-    description: 'Current session-bound CSRF credential held only in browser memory.',
+    description: 'Current session-bound CSRF credential read from the Strict CSRF cookie.',
     schema: { type: 'string' },
   })
   @ApiOperation({ summary: 'Revoke and clear the current browser session' })
@@ -97,9 +104,71 @@ export class AuthenticationController {
       response.setHeader('Set-Cookie', [
         this.serializeExpiredCookie(ACCESS_COOKIE_NAME),
         this.serializeExpiredCookie(REFRESH_COOKIE_NAME),
+        this.serializeExpiredCsrfCookie(),
       ]);
     } catch (error) {
       if (error instanceof AuthenticationError) throw toAuthenticationHttpException(error);
+      throw safeInternalHttpException();
+    }
+  }
+
+  @Post('bootstrap')
+  @HttpCode(200)
+  @ApiCookieAuth('adminRefresh')
+  @ApiOperation({ summary: 'Validate or recover the current Admin browser session' })
+  @ApiResponse({
+    status: 200,
+    type: AuthenticationBootstrapResponseDto,
+    description:
+      'Returns current identity/authorization and CSRF state; refreshes credentials when required.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Readable CSRF cookie and, when refreshed, replacement HttpOnly credentials.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Authentication/session failure.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Origin or permission failure.' })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Refresh throttle response.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async bootstrap(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<AuthenticationBootstrapResponseDto> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const result = await this.bootstrapAuthentication.bootstrap(request);
+      const cookies = [
+        this.serializeCsrfCookie(result.csrfToken, result.authentication.sessionExpiresAt),
+      ];
+      if (result.credentials !== null) {
+        cookies.unshift(
+          this.serializeCookie(
+            ACCESS_COOKIE_NAME,
+            result.credentials.accessToken,
+            result.credentials.accessExpiresAt,
+          ),
+          this.serializeCookie(
+            REFRESH_COOKIE_NAME,
+            result.credentials.refreshToken,
+            result.credentials.sessionExpiresAt,
+          ),
+        );
+      }
+      response.setHeader('Set-Cookie', cookies);
+      return this.authenticationResponse(result.authentication, result.csrfToken);
+    } catch (error) {
+      if (error instanceof AuthenticationError) {
+        if (error.retryAfterSeconds !== undefined) {
+          response.setHeader('Retry-After', String(error.retryAfterSeconds));
+        }
+        throw toAuthenticationHttpException(error);
+      }
       throw safeInternalHttpException();
     }
   }
@@ -110,7 +179,7 @@ export class AuthenticationController {
   @ApiHeader({
     name: 'X-CSRF-Token',
     required: true,
-    description: 'Current session-bound CSRF credential held only in browser memory.',
+    description: 'Current session-bound CSRF credential read from the Strict CSRF cookie.',
     schema: { type: 'string' },
   })
   @ApiOperation({ summary: 'Rotate or narrowly recover the current Refresh credential' })
@@ -195,7 +264,12 @@ export class AuthenticationController {
   ): Promise<CsrfResponseDto> {
     response.setHeader('Cache-Control', 'no-store');
     try {
-      return { csrfToken: await this.protectedAuthentication.bootstrapCsrf(request) };
+      const result = await this.protectedAuthentication.bootstrapCsrf(request);
+      response.setHeader(
+        'Set-Cookie',
+        this.serializeCsrfCookie(result.csrfToken, result.authentication.sessionExpiresAt),
+      );
+      return { csrfToken: result.csrfToken };
     } catch (error) {
       if (error instanceof AuthenticationError) throw toAuthenticationHttpException(error);
       throw safeInternalHttpException();
@@ -298,8 +372,10 @@ export class AuthenticationController {
           credentials.refreshToken,
           credentials.sessionExpiresAt,
         ),
+        this.serializeCsrfCookie(credentials.csrfToken, credentials.sessionExpiresAt),
       ]);
-      return { csrfToken: credentials.csrfToken };
+      const current = await this.protectedAuthentication.authenticateSession(credentials.sessionId);
+      return this.authenticationResponse(current, credentials.csrfToken);
     } catch (error) {
       if (error instanceof AuthenticationError) {
         if (error.retryAfterSeconds !== undefined) {
@@ -328,6 +404,20 @@ export class AuthenticationController {
     };
   }
 
+  private authenticationResponse(
+    authentication: CurrentAuthentication,
+    csrfToken: string,
+  ): AuthenticationBootstrapResponseDto {
+    return {
+      csrfToken,
+      admin: { ...authentication.admin },
+      authorization: {
+        roles: [...authentication.roles],
+        permissions: [...authentication.permissions],
+      },
+    };
+  }
+
   private serializeCookie(name: string, value: string, expiresAt: Date): string {
     const secure = this.environment.nodeEnv === 'production';
     const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
@@ -351,6 +441,31 @@ export class AuthenticationController {
       'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
       'HttpOnly',
       'SameSite=Lax',
+      ...(secure ? ['Secure'] : []),
+    ].join('; ');
+  }
+
+  private serializeCsrfCookie(value: string, expiresAt: Date): string {
+    const secure = this.environment.nodeEnv === 'production';
+    const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
+    return [
+      `${CSRF_COOKIE_NAME}=${value}`,
+      'Path=/',
+      `Max-Age=${maxAge}`,
+      `Expires=${expiresAt.toUTCString()}`,
+      'SameSite=Strict',
+      ...(secure ? ['Secure'] : []),
+    ].join('; ');
+  }
+
+  private serializeExpiredCsrfCookie(): string {
+    const secure = this.environment.nodeEnv === 'production';
+    return [
+      `${CSRF_COOKIE_NAME}=`,
+      'Path=/',
+      'Max-Age=0',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'SameSite=Strict',
       ...(secure ? ['Secure'] : []),
     ].join('; ');
   }

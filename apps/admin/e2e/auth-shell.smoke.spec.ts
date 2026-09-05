@@ -2,36 +2,21 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 test('renders the production authentication shell in accessible Persian RTL', async ({ page }) => {
-  await page.route('**/api/v1/auth/csrf', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ csrfToken: 'synthetic-browser-csrf' }),
-    });
-  });
-  await page.route('**/api/v1/auth/me', async (route) => {
-    await route.fulfill({
-      status: 401,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        statusCode: 401,
-        code: 'AUTHENTICATION_REQUIRED',
-        message: 'نشست معتبر نیست.',
-        details: [],
-      }),
-    });
-  });
+  await page.context().addCookies([
+    { name: 'admin_refresh_token', value: 'synthetic-refresh', domain: '127.0.0.1', path: '/' },
+    { name: 'e2e_auth', value: 'unauthenticated', domain: '127.0.0.1', path: '/' },
+  ]);
 
   await page.goto('/catalog/products');
 
   await expect(page).toHaveURL('/login?returnTo=%2Fcatalog%2Fproducts');
   await expect(page.locator('html')).toHaveAttribute('lang', 'fa-IR');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-  await expect(page.getByRole('heading', { level: 1, name: 'ورود مدیر' })).toBeVisible();
-  const email = page.getByRole('textbox', { name: 'ایمیل' });
+  await expect(page.getByRole('heading', { level: 1, name: 'ورود به پنل مدیریت' })).toBeVisible();
+  const identifier = page.getByRole('textbox', { name: 'ایمیل یا نام کاربری' });
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.keyboard.press('Tab');
-  await expect(email).toBeFocused();
+  await expect(identifier).toBeFocused();
 
   const accessibility = await new AxeBuilder({ page }).analyze();
   const seriousViolations = accessibility.violations.filter(
@@ -46,27 +31,17 @@ test('protects the responsive Product routes with exact permission presentation'
   let permissions = ['admin.access', 'catalog.read', 'inventory.update'];
   const categoryId = '11111111-1111-4111-8111-111111111111';
   const productId = '22222222-2222-4222-8222-222222222222';
-  await page.route('**/api/v1/auth/csrf', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ csrfToken: 'synthetic-catalog-csrf' }),
-    });
-  });
-  await page.route('**/api/v1/auth/me', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        admin: {
-          id: '55555555-5555-4555-8555-555555555555',
-          email: 'catalog@example.com',
-          displayName: 'مدیر کاتالوگ',
-        },
-        authorization: { roles: ['CATALOG_READER'], permissions },
-      }),
-    });
-  });
+  await page.context().addCookies([
+    { name: 'admin_refresh_token', value: 'synthetic-refresh', domain: '127.0.0.1', path: '/' },
+    { name: 'admin_access_token', value: 'synthetic-access', domain: '127.0.0.1', path: '/' },
+    { name: 'e2e_auth', value: 'catalog', domain: '127.0.0.1', path: '/' },
+    {
+      name: 'e2e_permissions',
+      value: permissions.join('|'),
+      domain: '127.0.0.1',
+      path: '/',
+    },
+  ]);
   await page.route('**/api/v1/admin/catalog/categories', async (route) => {
     await route.fulfill({
       status: 200,
@@ -155,6 +130,14 @@ test('protects the responsive Product routes with exact permission presentation'
   await expect(page.getByRole('button', { name: 'ذخیره تنوع' })).toHaveCount(0);
 
   permissions = ['admin.access'];
+  await page.context().addCookies([
+    {
+      name: 'e2e_permissions',
+      value: permissions.join('|'),
+      domain: '127.0.0.1',
+      path: '/',
+    },
+  ]);
   await page.reload();
   await expect(
     page.getByRole('heading', { level: 1, name: 'دسترسی به کاتالوگ مجاز نیست' }),

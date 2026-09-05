@@ -1,6 +1,6 @@
 # 0010: Authentication Strategy
 
-**Status:** Accepted
+**Status:** Superseded in part by [ADR 0013](0013-adopt-admin-bff-authentication.md)
 
 ## Context
 

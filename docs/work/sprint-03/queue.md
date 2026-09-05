@@ -2,7 +2,7 @@
 
 Sprint 3 is Active. Its approved goal, scope, Owner Decisions, exclusions, dependencies, and exit criteria are canonical in the [Sprint 3 plan](../../sprints/sprint-03.md).
 
-S3-T07 is the sole Current task and is awaiting implementation approval. S3-T06 completed Product core and retained-Variant maintenance over the existing Backend contracts.
+S3-T07 is the sole Current task and awaits implementation approval. S3-T07C is complete. The Storefront remains public now, with the owner requiring its future Customer authentication to reuse the final independent BFF/Proxy/bootstrap pattern.
 
 ## S3-T01 — Specify Admin Catalog Behavior and UX
 
@@ -88,6 +88,42 @@ Implement per-Variant absolute Inventory updates using optimistic versions and e
 Dependency:
 S3-T06 Done.
 
+## S3-T07A — Change Admin Login Identifier and Six-Digit Password Policy
+
+Status: Done
+
+Classification: Owner-Directed Required Now
+
+Objective:
+Add unique canonical Admin usernames and email-or-username login, require exactly six ASCII digits across frontend and authoritative Backend password boundaries, safely migrate existing identity data, and provide a trusted secret-safe path to assign the existing Admin username and replacement password without weakening enumeration resistance, Argon2id storage, throttling, or session security.
+
+Dependency:
+Completed Sprint 1 authentication foundation, owner-approved canonical 3–20 lowercase-ASCII username policy, supplied initial existing-Admin username, reviewed schema/migration proposal, and explicit task implementation approval.
+
+## S3-T07B — Rename Project and Clothing-Commerce Identifiers
+
+Status: Done
+
+Classification: Owner-Directed Required Now
+
+Objective:
+Replace the legacy project/workspace/runtime identifiers with `e-commerce` and SQL-safe `e_commerce` names, update the outdated Admin product metadata to clothing, and preserve the existing local Admin data through a recoverable PostgreSQL Volume migration.
+
+Dependency:
+S3-T07A Done, explicit owner authorization, and a healthy preserved local PostgreSQL source Volume.
+
+## S3-T07C — Move Authentication Bootstrap to Server-Gated BFF/Proxy
+
+Status: Done
+
+Classification: Owner-Directed Required Now
+
+Objective:
+Replace the Admin's post-render browser bootstrap with a same-origin Next.js BFF and pre-render `proxy.ts` gate, preserve authoritative Backend session/permission validation and refresh rotation, store the session-bound CSRF credential in a readable `SameSite=Strict` cookie, and eliminate the in-page authentication-check loading state. Determine separately whether the still-public Storefront remains unauthenticated or receives a newly designed Customer authentication system; Admin credentials must never protect the Storefront.
+
+Dependency:
+S3-T07B Done, explicit owner authorization, and resolution of the Storefront authentication-scope Open Decision.
+
 ## S3-T08 — Implement Product Image Management
 
 Status: Queued
@@ -126,4 +162,4 @@ S3-T01 through S3-T09 Done.
 
 ## Approval State
 
-Sprint Plan Approved. S3-T01 through S3-T06 are Done. S3-T07 is Current and awaiting implementation approval. S3-T08 through S3-T10 are Queued. No S3-T07 implementation is currently authorized.
+Sprint Plan Approved. S3-T01 through S3-T06 and S3-T07A through S3-T07C are Done. S3-T07 is Current and awaiting implementation approval; S3-T08 through S3-T10 are Queued. No S3-T07 implementation is currently authorized.

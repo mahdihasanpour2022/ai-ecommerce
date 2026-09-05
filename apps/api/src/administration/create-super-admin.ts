@@ -53,6 +53,7 @@ function requireDatabaseUrl(environment: NodeJS.ProcessEnv): string {
 function consumeEnvironmentInput(environment: NodeJS.ProcessEnv): SuperAdminEnvironmentInput {
   const input: SuperAdminEnvironmentInput = {
     ADMIN_BOOTSTRAP_EMAIL: environment.ADMIN_BOOTSTRAP_EMAIL,
+    ADMIN_BOOTSTRAP_USERNAME: environment.ADMIN_BOOTSTRAP_USERNAME,
     ADMIN_BOOTSTRAP_DISPLAY_NAME: environment.ADMIN_BOOTSTRAP_DISPLAY_NAME,
     ADMIN_BOOTSTRAP_PASSWORD: environment.ADMIN_BOOTSTRAP_PASSWORD,
     ADMIN_BOOTSTRAP_PASSWORD_CONFIRM: environment.ADMIN_BOOTSTRAP_PASSWORD_CONFIRM,

@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Clothing Commerce: Agent Guide
 
-This repository is a production-oriented clothing-commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; Sprint 1 implemented Admin authentication, while clothing catalog and purchase behavior follow the active roadmap. Existing `@automotive-commerce/*` and authentication/database names are legacy technical identifiers until a separately approved compatibility-safe rename.
+This repository is a production-oriented clothing-commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; Sprint 1 implemented Admin authentication, while clothing catalog and purchase behavior follow the active roadmap. Workspaces and runtime identifiers use the approved `e-commerce` naming, with SQL-safe PostgreSQL identifiers using `e_commerce`.
 
 Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, feature specifications, and sprint plans live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
 
@@ -94,10 +94,59 @@ For Admin Playwright E2E runs, the Playwright CDN returns HTTP 403 in this locat
 ```powershell
 cd "E:\------------- my ai proj\e-commerce"
 $env:PLAYWRIGHT_USE_SYSTEM_CHROME='1'
-yarn workspace @automotive-commerce/admin test:e2e
+yarn workspace @e-commerce/admin test:e2e
 ```
 
 The owner confirmed this command passed repeatedly on 2026-09-04 with `Running 2 tests using 1 worker` and `2 passed` (latest approximately 6.5 seconds). Treat that Admin browser gate as passed for unchanged code; rerun it only when subsequent code changes invalidate the evidence.
+
+### Live frontend review workflow
+
+For every frontend/UI implementation task, make the relevant application available for live visual review from the start of implementation. This is the default workflow for Admin, authentication/login, and Storefront UI work.
+
+- At task start, check whether the required development server is already running and usable. Reuse a usable server and do not restart it unnecessarily.
+- If it is not running and can be started reliably in the execution environment, start it and keep it running during implementation so hot reload remains available.
+- If startup requires the owner's Windows host or another manual host action, immediately provide the exact PowerShell command, exact working directory, one short purpose statement, and the exact result needed back, following the host-assisted workflow.
+- Tell the owner the exact local URL and route to keep open for live review before substantial UI implementation. Do not defer visual availability until task completion.
+- Preserve visual reference images supplied by the owner as working context for the relevant UI/routes and use them as the visual direction unless they conflict with authoritative project requirements. Do not discard or replace those references without explaining the conflict.
+
+### Frontend theme and styling direction
+
+- Both the Admin panel and Storefront must support a user-selectable light and dark appearance. New UI work must remain usable, legible, and accessible in both themes; do not treat the operating-system color preference as the only available control.
+- Preserve a consistent theme across shared layouts and route transitions, avoid a visible incorrect-theme flash on initial render, and keep theme controls keyboard accessible with an explicit accessible name and visible current state.
+- Use Tailwind utility classes as the default styling approach for new frontend/UI work. Reuse established Tailwind tokens and patterns instead of adding route-specific plain CSS when utilities express the design clearly.
+- Use plain CSS classes only when Tailwind is technically unsuitable or materially less maintainable, such as third-party component internals, complex global selectors, keyframes, or behavior that requires a narrowly scoped stylesheet. Briefly document non-obvious exceptions in code.
+- Prefer theme tokens/CSS variables consumed through Tailwind over duplicated hard-coded light/dark colors. Existing plain CSS may be changed incrementally when touched; do not perform unrelated broad styling migrations.
+- If the affected application does not already have an approved Tailwind setup, the dependency and configuration boundaries still apply: present the exact addition and obtain explicit approval before installing or changing dependencies. Until approved, do not misrepresent Tailwind as available or silently add it.
+
+### Frontend forms and validation direction
+
+- Use React Hook Form with Zod schemas and the official Zod resolver as the standard form architecture for current and future frontend forms. Keep schemas feature-local unless genuine cross-route reuse justifies a shared boundary.
+- Backend validation and authorization remain authoritative. Client schemas provide accessible early feedback and payload typing but must not duplicate or weaken stable Backend invariants, safe error handling, or normalized-response reconciliation.
+- Every field must retain a persistent visible label, linked accessible errors, predictable invalid-field focus, disabled/busy single-flight submission, and safe preservation or reset behavior. Schema adoption never replaces interaction, permission, conflict, or failure-path tests.
+- Migrate existing forms in bounded, tested slices. Do not perform an unreviewed repository-wide rewrite or mix unrelated form migrations into feature tasks; nevertheless, all existing frontend forms remain migration targets until they use the approved React Hook Form/Zod pattern.
+- Add Zod and resolver dependencies only to an application that has forms and only after the exact versions are explicitly approved under the dependency boundary. Do not add form dependencies speculatively to applications without a current form workflow.
+
+### Admin visual references and approval workflow
+
+The following repository-owned images are the primary visual references for all current and future Admin UI work:
+
+- [`docs/assets/admin-ui-references/panel-e-commece.webp`](docs/assets/admin-ui-references/panel-e-commece.webp)
+- [`docs/assets/admin-ui-references/panel-e-commece1.webp`](docs/assets/admin-ui-references/panel-e-commece1.webp)
+
+Use them as design direction, never as a pixel-for-pixel reproduction. They establish a modern, clean, premium SaaS/e-commerce back-office language: light neutral backgrounds, elevated white surfaces, a polished RTL sidebar, clear hierarchy, generous but efficient spacing, consistent rounded cards/panels/forms/tables/modals/drawers, subtle borders and shadows, modern typography/icons, restrained accents, compact readable data layouts, responsive desktop/tablet/mobile composition, and excellent Persian RTL behavior. Apply the approved language consistently to Dashboard, Products, Categories, Orders, Settings, Auth, and future Admin pages.
+
+Preserve Ant Design 6, accessibility requirements, current architecture, permission behavior, Backend contracts, and authoritative functional specifications. Do not add a UI dependency or change functionality merely to imitate a reference. These images currently direct Admin visuals only; do not apply them to Storefront unless the owner explicitly requests it.
+
+Before substantial Admin visual implementation:
+
+1. Inspect existing Admin routes and identify which pages are already visually implemented.
+2. Apply the live frontend review workflow and give the owner exact implemented routes to inspect.
+3. Pause broad visual redesign until the owner reviews the existing UI and provides feedback against these references.
+4. After feedback, refine one representative Admin page first and make it available through hot reload.
+5. At meaningful visual milestones, give the exact route to open or refresh and briefly state what changed.
+6. Do not propagate the design broadly until the owner visually approves that representative page. Once approved, treat its implementation as the Admin design pattern for later pages.
+
+Passing functional tests and Acceptance Criteria does not constitute visual approval. Preserve explicit owner visual review before broad propagation.
 
 ## Required workflow
 

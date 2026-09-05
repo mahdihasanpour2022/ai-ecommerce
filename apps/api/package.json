@@ -1,5 +1,5 @@
 {
-  "name": "@automotive-commerce/api",
+  "name": "@e-commerce/api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -7,6 +7,7 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "admin:create-super-admin": "node dist/administration/create-super-admin.cli.js",
+    "admin:update-initial-credentials": "node dist/administration/update-initial-admin-credentials.cli.js",
     "lint": "eslint .",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "tsc --project tsconfig.test.json && node --test --test-concurrency=1 \"dist-test/test/**/*.test.js\"",

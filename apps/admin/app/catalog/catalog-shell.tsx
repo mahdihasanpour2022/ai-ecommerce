@@ -104,22 +104,14 @@ export function CatalogShellView({
 export function CatalogRouteBoundary({ children }: Readonly<{ children: ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, logout, retryBootstrap } = useAuth();
+  const { state, logout } = useAuth();
 
   useEffect(() => {
     if (state.phase === 'unauthenticated') router.replace(loginDestination(pathname));
   }, [pathname, router, state.phase]);
 
   if (state.phase === 'bootstrapping' || state.phase === 'unauthenticated') {
-    return (
-      <main className="centered-page">
-        <CatalogState
-          kind="loading"
-          title="در حال بررسی دسترسی"
-          message="محتوای کاتالوگ پس از تأیید نشست نمایش داده می‌شود."
-        />
-      </main>
-    );
+    return null;
   }
   if (state.phase === 'error') {
     return (
@@ -128,7 +120,7 @@ export function CatalogRouteBoundary({ children }: Readonly<{ children: ReactNod
           kind={state.kind === 'forbidden' ? 'forbidden' : 'error'}
           title={state.kind === 'forbidden' ? 'دسترسی مجاز نیست' : 'ورود به پنل ممکن نشد'}
           message={state.message}
-          {...(state.recoverable ? { onRetry: retryBootstrap } : { returnHref: '/' })}
+          returnHref="/"
         />
       </main>
     );

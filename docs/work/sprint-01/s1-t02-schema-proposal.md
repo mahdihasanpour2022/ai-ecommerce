@@ -186,7 +186,7 @@ Cleanup must be bounded, batched, ordered child-before-parent, safe to retry, an
 The pre-S1-T03 Prisma schema had no model, and the development database was expected to contain no application tables. S1-T03's implementation follows this approved sequence:
 
 1. Add the nine approved Prisma models with explicit mapped names, foreign keys, unique constraints, and ordinary indexes.
-2. Run the existing `prisma:migrate:create -- --name add_admin_identity_and_sessions` command against disposable `automotive_dev` only.
+2. Run the existing `prisma:migrate:create -- --name add_admin_identity_and_sessions` command against disposable `e_commerce_dev` only.
 3. Inspect generated SQL before application.
 4. Customize that SQL with named CHECK constraints and the current-token partial unique index; do not enable an experimental Prisma Preview feature.
 5. Insert the `SUPER_ADMIN` Role, `admin.access` Permission, and their grant without creating an Admin or credential.

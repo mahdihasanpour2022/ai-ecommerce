@@ -367,8 +367,8 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
   );
   if (argon2MemoryKiB < 65_536) invalid('AUTH_ARGON2_MEMORY_KIB', 'must be at least 65536');
   if (argon2TimeCost < 3) invalid('AUTH_ARGON2_TIME_COST', 'must be at least 3');
-  const jwtIssuer = source.AUTH_JWT_ISSUER ?? 'automotive-commerce-api';
-  const jwtAudience = source.AUTH_JWT_AUDIENCE ?? 'automotive-commerce-admin';
+  const jwtIssuer = source.AUTH_JWT_ISSUER ?? 'e-commerce-api';
+  const jwtAudience = source.AUTH_JWT_AUDIENCE ?? 'e-commerce-admin';
   if (jwtIssuer.length === 0) invalid('AUTH_JWT_ISSUER', 'expected a non-empty exact issuer');
   if (jwtAudience.length === 0) invalid('AUTH_JWT_AUDIENCE', 'expected a non-empty exact audience');
   const loginThrottleHmacKey = parseHmacKey(source.AUTH_LOGIN_THROTTLE_HMAC_KEY);

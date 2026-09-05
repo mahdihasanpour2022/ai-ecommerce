@@ -1,3 +1,3 @@
 \set ON_ERROR_STOP on
 
-CREATE DATABASE automotive_test OWNER automotive;
+CREATE DATABASE e_commerce_test OWNER e_commerce;

@@ -3,6 +3,7 @@ import type { IncomingMessage } from 'node:http';
 
 export interface CurrentAuthentication {
   readonly sessionId: string;
+  readonly sessionExpiresAt: Date;
   readonly csrfTokenHash: Uint8Array<ArrayBuffer>;
   readonly admin: {
     readonly id: string;

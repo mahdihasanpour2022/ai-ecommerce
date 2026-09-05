@@ -13,6 +13,7 @@ import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/application';
 import {
   ACCESS_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
   REFRESH_COOKIE_NAME,
 } from '../src/authentication/authentication.constants';
 import { AuthenticationRepository } from '../src/authentication/authentication.repository';
@@ -80,10 +81,11 @@ async function startContext(nodeEnv: RuntimeEnvironment = 'test'): Promise<Conte
 
 async function createAdmin(context: Context): Promise<AdminCredential> {
   const role = await context.prisma.role.findUniqueOrThrow({ where: { code: 'SUPER_ADMIN' } });
-  const password = randomBytes(32).toString('base64url');
+  const password = '654321';
   const admin = await context.prisma.adminUser.create({
     data: {
       email: `logout-${randomUUID()}@example.invalid`,
+      username: `u_${randomUUID().replaceAll('-', '').slice(0, 18)}`,
       displayName: 'Logout Integration Admin',
       passwordHash: await argon2.hash(password, {
         type: argon2.argon2id,
@@ -103,7 +105,7 @@ async function login(context: Context, admin: AdminCredential): Promise<Response
     .post('/api/v1/auth/login')
     .set('Origin', allowedOrigin)
     .set('Sec-Fetch-Site', 'same-origin')
-    .send({ email: admin.email, password: admin.password })
+    .send({ identifier: admin.email, password: admin.password })
     .expect(200);
 }
 
@@ -172,6 +174,7 @@ void describe(
       assert.deepEqual(cleared, [
         `${ACCESS_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax`,
         `${REFRESH_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax`,
+        `${CSRF_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict`,
       ]);
 
       const affectedSession = await context.prisma.authSession.findUniqueOrThrow({
@@ -426,7 +429,8 @@ void describe(
       const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
       const logout = await logoutRequest(production, refreshCookie, csrfToken).expect(204);
       const cookies = responseCookies(logout.headers);
-      assert.equal(cookies.length, 2);
+      assert.equal(cookies.length, 3);
+      assert.ok(cookies.some((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`)));
       assert.ok(cookies.every((cookie) => cookie.includes('; Secure')));
       assert.ok(cookies.every((cookie) => cookie.includes('; Max-Age=0;')));
     });

@@ -4,82 +4,77 @@
 
 ## Goal
 
-Implement exact per-Variant Inventory updates with optimistic-version conflict recovery and protected global rial/toman display/input-unit management over the existing Backend contracts.
+Complete the Admin workflows for exact per-Variant Inventory updates and the global rial/toman display/input setting over the existing protected Backend contracts.
 
 ## Why
 
-Authorized Admins need safe absolute stock maintenance and one explicit price interpretation setting before media and publication workflows can be completed.
+Authorized staff need to maintain sellable stock with explicit optimistic-concurrency recovery and control how prices are presented and entered without changing canonical rial persistence. These workflows are required before media and publication integration can complete Sprint 3.
 
 ## Minimum Sufficient Required Context
 
-- [Admin catalog specification](../../features/admin-catalog/specification.md), limited to permission/request rules, shared form/state/accessibility rules, Product workspace Inventory, price display/input unit, confirmation boundaries, and their testing contract.
-- [Sprint 3 plan](../../sprints/sprint-03.md), limited to the accepted Inventory semantics, Product workflow interaction, exact scope, exclusions, and validation expectations.
-- Implemented Backend Inventory and price-setting DTO/controller/error/OpenAPI contracts plus the existing Admin Product workspace/catalog client only for exact paths, normalization, optimistic versions, permissions, CSRF, stable codes, and reusable UI patterns.
-- [Frontend architecture](../../architecture/frontend-architecture.md), [frontend standards](../../standards/frontend.md), [authorization policy](../../security/authorization.md), and [testing standards](../../standards/testing.md), limited to route-local state, accessible forms/confirmation, Backend-authoritative permissions, and risk-based evidence.
+- [Sprint 3 plan](../../sprints/sprint-03.md) for approved scope, quality requirements, and exit criteria.
+- [Admin catalog behavior specification](../../features/admin-catalog/specification.md), specifically authentication/request behavior, permission matrix, shared interaction states, price display/input unit, Inventory management, confirmation boundaries, and testing contract.
+- [Catalog specification](../../features/catalog/specification.md), specifically canonical price, global display/input unit, Inventory update/concurrency, authorization, HTTP contracts, DTOs, and stable failures.
+- [Frontend architecture](../../architecture/frontend-architecture.md) for server/client ownership, same-origin BFF/authentication, route-local state, forms, accessibility, and Admin composition.
+- Existing Product workspace, catalog API/contracts/error handling, price conversion helpers, permission capabilities, shared route states, and interaction-test patterns.
 
 ## Scope
 
-- Add absolute `onHandQuantity` editing per retained Variant only for `catalog.read` plus `inventory.update`, sending the exact last-read positive version.
-- Reconcile returned quantity/version for every success, including same-value submissions; never expose delta, bulk, reservation, reason, or history semantics.
-- On stale version, preserve an explicit explanation, refetch authoritative Product detail, show the winning quantity/version, and require fresh intentional entry without retry or merge.
-- Refetch safely for missing Variant or lifecycle conflicts and preserve readable authoritative workspace state for permission, CSRF, transport, and unexpected failures.
-- Implement the protected price display-setting page for current `RIAL`/`TOMAN` read and confirmed update, clearly stating persisted `priceRial` values are not rewritten.
-- Refresh read-only prices after setting success while keeping already-open Product form units fixed until explicit navigation/reload.
-- Preserve exact Persian RTL, responsive, focus, announcement, single-flight, and runtime permission-revocation behavior.
+- Add exact absolute Inventory editing for each retained Variant in the Product workspace, visible only with `inventory.update` while preserving read-only quantities for `catalog.read` users.
+- Submit `onHandQuantity` with the exact last-read positive `version`, reconcile the normalized response, announce success, and support intentional same-value updates.
+- On `INVENTORY_VERSION_CONFLICT`, explain the conflict, refetch authoritative Product detail, show the new quantity/version, preserve the user's awareness of the attempted value, and require fresh entry/confirmation without automatic retry.
+- Handle missing Variant, Product lifecycle conflicts, permission/CSRF/authentication loss, cancellation, and transport uncertainty through existing safe state boundaries.
+- Implement `/catalog/settings/price-display-unit` read and permission-aware `RIAL`/`TOMAN` update with an explicit confirmation that persisted Variant prices are not rewritten.
+- Refresh affected displayed price state after a successful setting update while preserving the fixed unit captured by already-open Product forms.
+- Add focused model/client/component tests and update browser smoke only where this task changes its covered route behavior.
 
 ## Out of Scope
 
-- Product Images, readiness/lifecycle/publication, Storefront behavior, bulk or adjustment Inventory, reservations/history, multi-location stock, price rewriting, mode conversion, Backend/API/schema/migration changes, dependencies, and unrelated cleanup.
+- Relative increment/decrement controls, bulk Inventory editing, reservations, adjustment reasons/history, multi-location stock, automatic conflict retries, price rewriting, new currencies, decimals/rounding, Product Image work, lifecycle/publication work, Storefront UI, Backend contract/schema changes, migrations, and new dependencies.
 
 ## Expected Changes
 
-- Extend the typed Admin catalog client with existing Inventory update and setting update contracts.
-- Extend the Product workspace Inventory section and implement the price display-setting route.
-- Add route-local normalization/failure helpers, accessible confirmation/state styling, and focused client/model/component/browser coverage.
-- Update frontend architecture, project reality, and Sprint execution records after validation.
+- Admin Product workspace Inventory section and route-local state/forms.
+- Admin price display-setting route and confirmation flow.
+- Existing typed catalog API/contracts, failure mapping, price/integer normalization helpers, and focused tests.
+- Sprint/project-reality documentation only where implemented behavior changes.
 
 ## Constraints
 
-- Backend authorization, optimistic concurrency, lifecycle validity, numeric bounds, canonical `priceRial`, and setting persistence remain authoritative.
-- Inventory sends an absolute integer from 0 through 2,147,483,647 and exactly the last-read version; mutations are single-flight and never retried automatically.
-- Setting changes require confirmation with no preselected confirmation action and never rewrite catalog prices.
-- Product price forms retain the unit captured at initialization; only navigation or explicit reload adopts a new setting.
-- No dependency, Backend route/DTO, OpenAPI, Prisma, migration, or Storefront change is authorized.
+- Backend authentication, authorization, validation, optimistic version checks, and normalized responses remain authoritative.
+- Inventory is an absolute integer from 0 through 2,147,483,647; mutation is single-flight and never automatically retried.
+- Every API monetary value remains positive safe-integer `priceRial` divisible by 10; conversion uses integer arithmetic only.
+- `inventory.update` and `settings.price.display.unit.update` remain independent permissions in addition to `catalog.read`.
+- Reuse the implemented same-origin BFF, readable Strict CSRF cookie, server-seeded authentication state, React Hook Form/Zod patterns, Ant Design 6, and Persian RTL/accessibility conventions.
+- No dependency, Backend API, Prisma schema, or migration change.
 
 ## Acceptance Criteria
 
-- Readers see exact Inventory and the current price unit without misleading mutation controls; each mutation control requires its independent exact permission.
-- Authorized Inventory updates send exact absolute quantity/version and reconcile returned quantity/version, including same-value success.
-- Version conflict reloads authoritative detail, explains the winning update, and requires fresh entry without silent merge/retry; missing/lifecycle/permission/CSRF/transport outcomes remain safe.
-- Authorized setting update requires a labelled confirmation, states that persisted prices are unchanged, reconciles the returned unit, and refreshes affected read-only prices.
-- Exact integer-only rial/toman conversion, safe-integer overflow/divisibility rules, supported localized digits/grouping, fixed open-form unit, focus, announcements, responsive behavior, and single-flight controls match the specification.
-- No out-of-scope Inventory semantics, Image, lifecycle/publication, Backend/API/schema/migration, Storefront, dependency, or unrelated behavior is introduced.
-- Focused tests plus complete Admin suite, typecheck, lint, production build, applicable Chromium smoke, formatting, relevant root gates, local links, `git diff --check`, scope/generated-artifact, dependency-integrity, and clean-index checks pass.
+- Readers see exact Inventory and the current display unit, while mutation controls are absent without the exact independent permission.
+- An authorized Inventory update sends the current version, accepts zero/bounds and intentional same-value submission, reconciles quantity/version, and announces success accessibly.
+- A stale Inventory write never overwrites newer state: authoritative data is refetched and a fresh intentional submission is required.
+- The setting page accurately presents `RIAL`/`TOMAN`; an authorized confirmed update changes interpretation only and clearly states that persisted prices are untouched.
+- Existing forms retain their captured unit; newly opened/refreshed forms and read-only prices adopt the updated unit.
+- Pending, error, retry, permission loss, CSRF/authentication, conflict, not-found, and transport states remain safe, keyboard/focus accessible, Persian RTL, and responsive.
 
 ## Testing Impact
 
-Automated tests required.
-
-- Add client tests for exact Inventory PATCH and setting PATCH paths/bodies, CSRF/refresh policy, normalized responses, and malformed/safe failures.
-- Add transformation tests for absolute quantity/version bounds and exact RIAL/TOMAN input/display conversion including localized digits, divisibility, grouping, and overflow.
-- Add component/integration tests for reader/permission combinations, same-value Inventory success, stale conflict refetch/re-entry, missing/lifecycle/runtime-revocation handling, setting confirmation/reconciliation, fixed open-form units, focus/announcements, and single-flight behavior.
-- Preserve complete Admin authentication, shell, Category, Product list/create/maintenance, UI-foundation, production-build Chromium, and relevant Backend regression coverage.
-
-## Swagger / OpenAPI Impact
-
-None. Existing Inventory and price-setting contracts are consumed without Backend route, DTO, status, security declaration, or generated OpenAPI changes.
+- Add unit coverage for Inventory bounds/version payloads, normalized response reconciliation, stale recovery, and exact rial/toman behavior.
+- Add component/client coverage for reader versus updater permissions, single-flight submissions, same-value update, conflict refetch/re-entry, setting confirmation, success refresh, failure preservation, focus, and announcements.
+- Run the complete Admin regression suite, affected production browser smoke, typecheck, lint, formatting, production builds, and scope/diff checks.
+- Backend HTTP contracts do not change; reuse existing Backend test evidence unless implementation exposes a contract mismatch.
 
 ## Validation
 
-- Preflight and inspect only the implemented Inventory/setting DTO/controller/error/OpenAPI contracts and existing Admin Product workspace/client/form patterns before implementation.
-- Run focused Inventory/setting transformation/client/component tests, then the complete Admin suite and applicable Chromium smoke.
-- Run Admin typecheck, lint, production build, repository formatting, and relevant root gates.
-- Validate local Markdown links, `git diff --check`, dependency integrity, generated artifacts, prohibited Image/lifecycle/publication/Backend/schema/migration/Storefront scope, and read-only Git index.
+- Focused Inventory, price-setting, catalog-client, and component tests pass.
+- Complete Admin tests, typecheck, lint, and production build pass.
+- Admin Playwright production-build smoke passes with installed system Chrome if changed browser behavior invalidates prior evidence.
+- Repository formatting, `git diff --check`, dependency integrity, generated-artifact, prohibited-scope, and documentation checks pass.
 
 ## Documentation Impact
 
-Update frontend architecture and project implementation reality for Inventory and price display-setting management. Do not claim Image, lifecycle/publication, or Storefront workflows are implemented.
+Update project reality, frontend architecture, and Sprint records to describe only the Inventory and price-setting workflows actually completed. No API/OpenAPI, database, security-contract, or environment-document change is expected.
 
 ## Approval State
 
-Awaiting Implementation Approval. No dependency, Backend/API, database, or migration change is proposed.
+Awaiting Implementation Approval.

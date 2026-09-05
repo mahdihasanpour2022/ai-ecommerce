@@ -56,12 +56,14 @@ $$;
 INSERT INTO admin_users (
     id,
     email,
+    username,
     display_name,
     password_hash,
     updated_at
 ) VALUES (
     '10000000-0000-4000-8000-000000000001',
     'schema-test@example.invalid',
+    'schema_test_admin',
     'Schema Test Admin',
     '$argon2id$test-fixture-not-a-credential',
     CURRENT_TIMESTAMP
@@ -82,12 +84,14 @@ BEGIN
         INSERT INTO admin_users (
             id,
             email,
+            username,
             display_name,
             password_hash,
             updated_at
         ) VALUES (
             '10000000-0000-4000-8000-000000000002',
             'schema-test@example.invalid',
+            'different_username',
             'Duplicate Admin',
             '$argon2id$test-fixture-not-a-credential',
             CURRENT_TIMESTAMP
@@ -105,12 +109,39 @@ BEGIN
         INSERT INTO admin_users (
             id,
             email,
+            username,
+            display_name,
+            password_hash,
+            updated_at
+        ) VALUES (
+            '10000000-0000-4000-8000-000000000005',
+            'duplicate-username@example.invalid',
+            'schema_test_admin',
+            'Duplicate Username Admin',
+            '$argon2id$test-fixture-not-a-credential',
+            CURRENT_TIMESTAMP
+        );
+    EXCEPTION WHEN unique_violation THEN
+        rejected := TRUE;
+    END;
+
+    IF NOT rejected THEN
+        RAISE EXCEPTION 'Duplicate Admin username was accepted';
+    END IF;
+
+    rejected := FALSE;
+    BEGIN
+        INSERT INTO admin_users (
+            id,
+            email,
+            username,
             display_name,
             password_hash,
             updated_at
         ) VALUES (
             '10000000-0000-4000-8000-000000000003',
             'Not-Canonical@example.invalid',
+            'another_username',
             'Invalid Admin',
             '$argon2id$test-fixture-not-a-credential',
             CURRENT_TIMESTAMP
@@ -121,6 +152,31 @@ BEGIN
 
     IF NOT rejected THEN
         RAISE EXCEPTION 'Non-canonical Admin email was accepted';
+    END IF;
+
+    rejected := FALSE;
+    BEGIN
+        INSERT INTO admin_users (
+            id,
+            email,
+            username,
+            display_name,
+            password_hash,
+            updated_at
+        ) VALUES (
+            '10000000-0000-4000-8000-000000000004',
+            'username-test@example.invalid',
+            'Invalid-Username',
+            'Invalid Username Admin',
+            '$argon2id$test-fixture-not-a-credential',
+            CURRENT_TIMESTAMP
+        );
+    EXCEPTION WHEN check_violation THEN
+        rejected := TRUE;
+    END;
+
+    IF NOT rejected THEN
+        RAISE EXCEPTION 'Non-canonical Admin username was accepted';
     END IF;
 
     rejected := FALSE;

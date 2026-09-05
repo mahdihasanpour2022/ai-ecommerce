@@ -399,7 +399,7 @@ S2-T03 should implement one additive migration, tentatively named `add_clothing_
 
 ## Database test design for S2-T03
 
-Use an isolated `automotive_test` database, apply migrations from empty state, and run a rollback-only SQL invariant suite plus two-connection integration tests.
+Use an isolated `e_commerce_test` database, apply migrations from empty state, and run a rollback-only SQL invariant suite plus two-connection integration tests.
 
 ### Structure/reference tests
 
@@ -425,7 +425,7 @@ Use an isolated `automotive_test` database, apply migrations from empty state, a
 - Race two Image mutations with one `imageVersion`; prove exactly one aggregate mutation commits and ready ordering remains contiguous.
 - Force database failure after external promotion in a media test harness and verify compensation; force post-commit deletion failure and verify cleanup state remains retryable without exposing its key publicly. Runtime media failure-path ownership remains S2-T08.
 
-The SQL suite rolls back its fixtures. Concurrency and media integration tests own explicit cleanup and never target `automotive_dev`.
+The SQL suite rolls back its fixtures. Concurrency and media integration tests own explicit cleanup and never target `e_commerce_dev`.
 
 ## Minimum Sufficient Scope review
 
@@ -436,7 +436,7 @@ The SQL suite rolls back its fixtures. Concurrency and media integration tests o
 
 ## Validation record
 
-- On 2026-09-03, `yarn db:status`, `yarn db:health`, and `yarn db:verify` passed: the repository PostgreSQL 18.6 container was healthy and `automotive_dev`/`automotive_test` were reachable and isolated. These checks did not mutate either database.
+- On 2026-09-03, `yarn db:status`, `yarn db:health`, and `yarn db:verify` passed: the repository PostgreSQL 18.6 container was healthy and `e_commerce_dev`/`e_commerce_test` were reachable and isolated. These checks did not mutate either database.
 - Prisma 7.10.0 `migrate status` reported the one existing migration applied and both database schemas up to date. The status commands were read-only.
 - The proposal was reconciled with the installed Prisma/Prisma Client 7.10.0 schema/configuration, the applied Sprint 1 migration source and rollback-only constraint suite, and the repository's Prisma/PostgreSQL workflow.
 - Current Prisma documentation confirms custom PostgreSQL trigger SQL belongs in a reviewed create-only migration and PostgreSQL migrations are not transaction-wrapped by default. PostgreSQL 18 documentation confirms `NULLS NOT DISTINCT`, deferrable constraint triggers, recursive CTEs, and transaction-level advisory locks used by this proposal.

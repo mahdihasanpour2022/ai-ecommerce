@@ -16,8 +16,8 @@ Storefront exists at `apps/storefront`, the independent Admin foundation exists 
 flowchart LR
   Customer -->|HTTPS| Storefront[Storefront\nexample.com]
   Staff -->|HTTPS| Admin[Admin Panel\nadmin.example.com]
-  Storefront -->|Direct browser HTTPS REST /api/v1| API[Backend API\napi.example.com]
-  Admin -->|Direct browser HTTPS REST /api/v1| API
+  Storefront -->|Public HTTPS REST /api/v1| API[Backend API\napi.example.com]
+  Admin -->|Same-origin BFF + server bootstrap| API
   API --> PostgreSQL[(PostgreSQL)]
 ```
 
@@ -31,7 +31,7 @@ The API begins as a domain-oriented **Modular Monolith**. Modules own cohesive b
 
 ## Communication boundaries
 
-Browsers initially communicate directly with the API over versioned HTTPS REST contracts. Admin uses credentialed Axios requests from `admin.example.com` to `api.example.com`; Storefront follows the same direct-API principle where browser requests are required. Explicit credentialed CORS is therefore part of the boundary. A Backend for Frontend (BFF) is **Deferred**, not permanently rejected, and may be reconsidered only for a concrete requirement. Clients never connect directly to the database and never serve as the authorization authority. Internal module calls remain in-process initially. External services must be isolated behind purpose-specific integration boundaries with timeouts and failure handling.
+Admin browsers communicate with same-origin Next.js BFF Route Handlers; `proxy.ts` performs pre-render Backend bootstrap and the BFF forwards versioned HTTPS REST contracts to NestJS. Storefront remains public and follows direct public API contracts until Customer authentication is approved; that future authentication must reuse an independent BFF/Proxy/bootstrap pattern. Explicit exact-origin controls remain part of the server boundary. Clients never connect directly to the database and never serve as the authorization authority. Internal module calls remain in-process initially. External services must be isolated behind purpose-specific integration boundaries with timeouts and failure handling.
 
 Expected production domains are placeholders. Local development uses `http://localhost:3000` for Storefront, `http://localhost:3001` for Admin, and `http://localhost:3002` for API; these browser origins define the future development CORS contract without implementing CORS in the environment task. Authentication defines the accepted cookie and credentialed-CORS baseline, while backend architecture defines minimum observability. Cookie names/development behavior, TLS and deployment topology, CDN/media hosting, providers, and advanced observability tooling remain Open. See the canonical [environment strategy](../environment.md) for value ownership and exposure rules.
 

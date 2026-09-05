@@ -6,22 +6,23 @@ This document owns how Admin authentication is architecturally intended to work.
 
 ## Topology and credentials
 
-The initial topology is direct browser-to-API communication:
+The current Admin topology uses a same-origin Next.js BFF and pre-render Proxy gate:
 
 ```text
 Admin Browser (admin.example.com)
-  -> Axios, withCredentials: true
+  -> same-origin /api/v1/** Route Handlers and proxy.ts
   -> NestJS API (api.example.com)
 ```
 
-A BFF is **Deferred**. It may be reconsidered for a concrete future requirement, but it is not part of Sprint 0 or Sprint 1.
+The Storefront remains public. Its future Customer authentication must reuse this pattern with independent Customer credentials/contracts and must never receive Admin cookies.
 
-The API issues two separate host-only cookies. The `Domain` attribute is not set:
+The API issues three separate host-only cookies. The `Domain` attribute is not set:
 
-| Cookie | Credential | Accepted default TTL | HttpOnly | Secure | SameSite | Path |
-| --- | --- | --- | --- | --- | --- | --- |
-| Access cookie | Short-lived access JWT | `ACCESS_TOKEN_TTL=15m` | Yes | Yes in production | `Lax` | `/` |
-| Refresh cookie | Longer-lived opaque random refresh token | `REFRESH_TOKEN_TTL=7d` | Yes | Yes in production | `Lax` | `/` |
+| Cookie         | Credential                               | Accepted default TTL   | HttpOnly | Secure            | SameSite | Path |
+| -------------- | ---------------------------------------- | ---------------------- | -------- | ----------------- | -------- | ---- |
+| Access cookie  | Short-lived access JWT                   | `ACCESS_TOKEN_TTL=15m` | Yes      | Yes in production | `Lax`    | `/`  |
+| Refresh cookie | Longer-lived opaque random refresh token | `REFRESH_TOKEN_TTL=7d` | Yes      | Yes in production | `Lax`    | `/`  |
+| CSRF cookie    | Session-bound synchronizer token          | Session absolute expiry | No       | Yes in production | `Strict` | `/`  |
 
 Runtime lifetimes come from validated environment configuration; 15 minutes and 7 days are the accepted defaults, not values to hard-code throughout the application. Local development configuration may differ where HTTPS is unavailable, but production protections must not be weakened silently. Cookie names and exact development behavior belong to environment-aware implementation planning.
 
@@ -29,7 +30,7 @@ Access JWTs use asymmetric `EdDSA` with Ed25519 keys. The protected header conta
 
 Exactly one configured private key signs new tokens. Verification accepts its public key and explicitly configured retiring public keys until every token they signed has exceeded its short lifetime; unknown/invalid `kid`, algorithm, issuer, audience, type, signature, or required claim fails closed. Private and recovery keys are server secrets supplied by an approved secret mechanism, never source-controlled or exposed through public JWKS/headers in this single-issuer boundary.
 
-Frontend JavaScript reads neither authentication cookie. Axios does not construct `Authorization: Bearer ...` in the accepted architecture. With credentialed CORS and browser cookie rules satisfied, the browser attaches eligible cookies automatically. `withCredentials: true` enables eligible cookie transmission; it does not create an Authorization header.
+Frontend JavaScript reads neither authentication cookie and never constructs `Authorization: Bearer ...`. The browser sends host-only credentials only to the same-origin Admin BFF, which forwards them server-to-server. JavaScript reads only the CSRF cookie for the unsafe-request header.
 
 The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. Login creates the initial token and hash; the implemented refresh boundary rotates that history and stores replacement plaintext only inside the approved short-lived authenticated recovery envelope. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and are represented by the S1-T03 Prisma schema and reviewed migration. Plaintext is never persisted outside that bounded envelope.
 
@@ -37,7 +38,9 @@ The raw cryptographically secure opaque refresh token normally exists only in it
 
 Cookie authentication requires a synchronizer CSRF token bound to each `AuthSession`. The Backend derives a cryptographically pseudorandom 256-bit base64url token as HMAC-SHA-256 of the session UUID using an independent rotating CSRF keyring, stores only its SHA-256 hash on the session, and compares submitted values timing-safely. Login uses the active key; bootstrap tests every configured active/retiring key against the stored hash without persisting a key ID or raw token. Retiring keys remain configured for at least the maximum absolute session lifetime. The token remains stable only for that session and is neither an authentication token nor a parent-domain/double-submit cookie.
 
-Successful login returns the CSRF token in a JSON response. On reload, the Admin obtains the same token from a no-store `GET /auth/csrf` bootstrap endpoint after the Backend validates the Refresh cookie and active session without rotating it. The frontend holds the token in memory only—never local/session storage, a URL, or a cookie—and sends it in `X-CSRF-Token` on `POST`, `PUT`, `PATCH`, and `DELETE`, including refresh and logout. Missing/mismatched credentials fail with `403 CSRF_VALIDATION_FAILED` and are security-event candidates. `GET`, `HEAD`, and `OPTIONS` never change application state.
+Successful login and `POST /auth/bootstrap` issue the CSRF token through a readable host-only `SameSite=Strict` cookie. The frontend copies it into `X-CSRF-Token` on `POST`, `PUT`, `PATCH`, and `DELETE`, including refresh and logout; it is never placed in Web Storage, a URL, or logs. Missing/mismatched credentials fail with `403 CSRF_VALIDATION_FAILED`. `GET`, `HEAD`, and `OPTIONS` never change application state. Cookie presence is not evidence of authentication.
+
+On protected reload/navigation, Next.js `proxy.ts` calls `POST /auth/bootstrap` server-to-server before rendering. The Backend requires the Refresh credential even when Access is valid, checks current session/Admin/permission state, restores the CSRF cookie, and atomically rotates/reissues Access and Refresh when Access is missing or unusable. The validated safe identity/authorization snapshot seeds the server render, so the browser does not call `/auth/csrf` then `/auth/me` after the page appears.
 
 The implemented bootstrap also validates that the Refresh token is current/unrevoked/unexpired, the session and Admin are active, effective `admin.access` still exists, and a configured CSRF key reproduces the persisted hash. A missing retiring key or database/configuration failure returns no credential and fails closed. This refinement preserves the approved hash-only schema and requires no migration.
 
@@ -47,7 +50,7 @@ CORS uses an environment-configured exact origin allowlist, conceptually includi
 
 ## Refresh trigger and single flight
 
-Refresh is reactive, not periodic. Login does not start a timer, and no `setInterval(refresh)` behavior is allowed. Refresh occurs only after an eligible response with HTTP `401` and code `ACCESS_TOKEN_EXPIRED`, or when a separately approved future feature deliberately invokes it.
+Refresh is reactive, not periodic. Login does not start a timer, and no `setInterval(refresh)` behavior is allowed. Refresh occurs after an eligible response with HTTP `401` and code `ACCESS_TOKEN_EXPIRED`, or inside the approved pre-render Bootstrap when Access is missing or unusable and Refresh remains valid.
 
 Within one frontend execution context, exactly one refresh operation may be active. Concurrent requests failing with `ACCESS_TOKEN_EXPIRED` wait on that operation. After success, each eligible original request retries at most once using the newly issued cookies. A retry marker and endpoint exclusions prevent recursion; login and refresh requests never trigger the response interceptor's refresh flow.
 
@@ -82,7 +85,7 @@ The Backend verifies relevant Admin and session status on protected operations. 
 
 ## Network failures and timeout
 
-Axios uses a default timeout of 20 seconds; justified endpoints such as future uploads may override it. A connection failure, timeout, or offline error does not prove the session invalid and must not automatically log out or clear cookies/authentication state. Show an appropriate Persian connectivity message, for example: `ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.`
+The Admin BFF/Axios boundary uses a default timeout of 20 seconds where applicable; justified endpoints such as future uploads may override it. A connection failure, timeout, or offline error does not prove the session invalid and must not automatically log out or clear cookies/authentication state. Show an appropriate Persian connectivity message, for example: `ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.`
 
 A failed network request may never have reached the Backend, or the Backend may have completed it and its response was lost. Refresh rotation and retry design must tolerate this ambiguity. A refresh request that fails only because of a connection failure, timeout, or equivalent transport failure with no valid Backend authentication response receives exactly one controlled automatic retry within the same single-flight operation; waiting requests do not create their own retries. If that retry also has a transport failure, automatic retries stop; authentication remains temporarily unresolved/recoverable, credentials/state are not automatically cleared, logout is not inferred, and a Persian connectivity message is shown. Unlimited retries are forbidden.
 
@@ -96,9 +99,10 @@ Definitive Backend responses such as `REFRESH_TOKEN_INVALID`, `REFRESH_TOKEN_EXP
 - Passwords use Argon2id with 64 MiB memory (`m=65536 KiB`), three iterations, parallelism one, 32-byte output, library-generated unique salts, and Argon2 version 19. Successful verification rehashes when accepted parameters change. Deployment benchmarking may increase cost; reducing below OWASP's Argon2id minimum requires explicit security approval. No pepper is used initially because its independent secret lifecycle/recovery cost is not currently justified.
 - Login uses equivalent password-verification work, including a maintained dummy Argon2id hash for nonexistent identities. Unknown identity, wrong password, disabled/inactive identity, and missing `admin.access` eligibility all return the same `401 INVALID_CREDENTIALS`, generic Persian message, response shape, and materially equivalent path. `ACCOUNT_DISABLED` is reserved for a previously authenticated session whose Admin becomes disabled.
 - Configurable login protection allows five failed attempts per account in 15 minutes, then applies an escalating delay from 30 seconds up to 15 minutes; successful authentication resets that account counter. A coarse per-IP limit allows 20 login attempts per 15 minutes. Refresh allows 10 attempts per active session and 30 per IP per minute. Exceeding a limit returns generic `429 AUTH_RATE_LIMITED` with `Retry-After`, creates no session/credential, and never permanently locks the account.
-- Login account/identifier throttling uses a durable PostgreSQL bucket keyed by HMAC-SHA-256 of the canonical email with a dedicated server secret. Existing and nonexistent identities therefore receive the same bucket/limit behavior without persisting submitted emails or exposing a throttle-based enumeration oracle. Per-session refresh throttling is a durable one-to-one session bucket. IP throttling may be per-process only for the current single-instance foundation; an approved shared/edge limiter is required before horizontal deployment. Proxy-derived client addresses are trusted only from explicitly configured proxies. CAPTCHA and Redis remain Deferred.
+- Login accepts one canonical identifier: a normalized email address or a trimmed/lowercased username matching `^[a-z0-9_]{3,20}$`. Email and username lookup preserve the same generic invalid-credential behavior. Account/identifier throttling uses a durable PostgreSQL bucket keyed by HMAC-SHA-256 of that canonical submitted identifier with a dedicated server secret, so existing and nonexistent values receive the same bucket/limit behavior without persisting the submitted value or exposing a throttle-based enumeration oracle. Per-session refresh throttling is a durable one-to-one session bucket. IP throttling may be per-process only for the current single-instance foundation; an approved shared/edge limiter is required before horizontal deployment. Proxy-derived client addresses are trusted only from explicitly configured proxies. CAPTCHA and Redis remain Deferred.
 - Tokens, cookies, passwords, CSRF credentials, submitted login identifiers, credential-bearing headers, and recovery plaintext are never logged. Structured events use correlation IDs and minimum safe identifiers for login success/failure/throttle, session creation/revocation, CSRF rejection, grace recovery, suspicious reuse, and disabled-session rejection; retention remains an operational decision.
-- The first Super Admin is provisioned through the implemented trusted-environment `yarn workspace @automotive-commerce/api admin:create-super-admin` command documented in [First Super Admin Provisioning](../development/admin-provisioning.md). It accepts no arguments, consumes one-shot protected process configuration, hashes the password, is explicit/auditable, exposes no public bootstrap endpoint or default/committed credentials, stores no plaintext password, and fails safely if an initial Admin already exists.
+- Every Admin password is exactly six ASCII digits at current creation, trusted-update, and login-validation boundaries. This owner-selected usability policy has substantially less entropy than the previous policy; Argon2id hashing, generic failures, account/IP throttling, and secret-free handling remain mandatory mitigations and do not make the password intrinsically strong.
+- The first Super Admin is provisioned through `yarn workspace @e-commerce/api admin:create-super-admin`; it requires a canonical username and exact six-digit password. The migration-owned one-shot `admin:update-initial-credentials` command assigns the existing initial Admin's chosen username/hash and revokes its prior sessions atomically. Both trusted commands accept no arguments, consume protected process configuration, expose no HTTP endpoint/default credential, store no plaintext, and emit only fixed safe output. See [provisioning](../development/admin-provisioning.md) and [initial credential update](../development/admin-credential-update.md).
 
 Safe post-login return destinations are application-relative allowlisted paths. Reject absolute URLs, protocol-relative values, backslashes, control characters, and unrecognized routes; fall back to the protected Admin home. Client input never selects an external redirect.
 
@@ -106,7 +110,7 @@ Safe post-login return destinations are application-relative allowlisted paths. 
 
 - The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified that persistence boundary; later tasks own runtime authentication behavior.
 - Production secret-provider integration, long-term security-event retention, distributed throttling, and operational key-rotation runbooks remain release/deployment work; their absence does not permit source-controlled secrets or horizontal deployment with per-process-only limiting.
-- BFF adoption remains Deferred until a concrete security, aggregation, deployment, or multi-client requirement justifies revisiting ADR 0010.
+- Admin BFF adoption is accepted in ADR 0013. Storefront Customer authentication remains deferred but must reuse the same independent pattern when approved.
 
 These decisions follow [JWT Best Current Practices (RFC 8725)](https://www.rfc-editor.org/rfc/rfc8725), [EdDSA for JOSE (RFC 8037)](https://www.rfc-editor.org/rfc/rfc8037), and OWASP guidance for [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html), and [password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
 

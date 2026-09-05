@@ -6,14 +6,11 @@ interface StatusPanelProps {
 }
 
 export function StatusPanel({ title, message, busy = false, onRetry }: StatusPanelProps) {
+  if (busy) return <AppLoading fullscreen message={title} />;
+
   return (
     <main className="centered-page">
-      <section
-        className="status-card"
-        aria-busy={busy}
-        aria-live={busy ? 'polite' : 'assertive'}
-        role={busy ? 'status' : 'alert'}
-      >
+      <section className="status-card" aria-live="assertive" role="alert">
         <h1>{title}</h1>
         <p>{message}</p>
         {onRetry ? (
@@ -25,3 +22,4 @@ export function StatusPanel({ title, message, busy = false, onRetry }: StatusPan
     </main>
   );
 }
+import { AppLoading } from './app-loading';

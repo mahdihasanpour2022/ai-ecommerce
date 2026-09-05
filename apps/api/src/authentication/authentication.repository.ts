@@ -132,9 +132,12 @@ export class AuthenticationRepository {
     });
   }
 
-  async findAdmin(email: string): Promise<LoginAdminRecord | null> {
+  async findAdmin(
+    identifier: string,
+    identifierKind: 'email' | 'username',
+  ): Promise<LoginAdminRecord | null> {
     const admin = await this.prisma.adminUser.findUnique({
-      where: { email },
+      where: identifierKind === 'email' ? { email: identifier } : { username: identifier },
       select: {
         id: true,
         passwordHash: true,

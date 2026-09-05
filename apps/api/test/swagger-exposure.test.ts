@@ -61,7 +61,7 @@ void describe('Swagger exposure', () => {
         .expect('Content-Type', /json/);
 
       const body = response.body as OpenApiDocumentBody;
-      assert.equal(body.info.title, 'Automotive Commerce API');
+      assert.equal(body.info.title, 'E-Commerce API');
       assert.ok('/api/v1/auth/login' in body.paths);
       await request(getHttpServer(app)).get(`/${API_PREFIX}`).expect(404);
     });

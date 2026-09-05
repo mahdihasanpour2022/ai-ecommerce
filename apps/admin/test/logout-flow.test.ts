@@ -13,7 +13,7 @@ function setup() {
   return { credentials, actions, dispatch: (action: AuthAction) => actions.push(action) };
 }
 
-void test('clears memory credentials and authentication state after logout success', async () => {
+void test('clears readable CSRF state and authentication state after logout success', async () => {
   const context = setup();
   await performLogout({ logout: async () => undefined }, context.credentials, context.dispatch);
 

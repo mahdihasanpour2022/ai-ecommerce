@@ -13,7 +13,7 @@ import type { HttpFailurePublisher } from './http-failure-channel';
 import { createRefreshCoordinator, requestSessionRefresh } from './refresh-coordinator';
 
 export const DEFAULT_HTTP_TIMEOUT_MS = 20_000;
-const DEFAULT_API_BASE_URL = 'http://localhost:3002/api/v1';
+const DEFAULT_API_BASE_URL = '/api/v1';
 const SAFE_METHODS = new Set(['get', 'head', 'options']);
 
 export interface AuthRequestPolicy {
@@ -56,21 +56,16 @@ class RequestPolicyError extends Error {
   }
 }
 
-export function getApiBaseUrl(value = process.env.NEXT_PUBLIC_API_BASE_URL): string {
+export function getApiBaseUrl(value?: string): string {
   const candidate = value?.trim() || DEFAULT_API_BASE_URL;
-  const url = new URL(candidate);
   if (
-    (url.protocol !== 'http:' && url.protocol !== 'https:') ||
-    url.username !== '' ||
-    url.password !== '' ||
-    url.search !== '' ||
-    url.hash !== ''
+    !candidate.startsWith('/') ||
+    !/^\/[A-Za-z0-9/_-]*$/u.test(candidate) ||
+    candidate.startsWith('//')
   ) {
-    throw new Error(
-      'NEXT_PUBLIC_API_BASE_URL must be an HTTP(S) URL without credentials, query, or hash.',
-    );
+    throw new Error('The Admin API base must be a safe application-relative BFF path.');
   }
-  return url.toString().replace(/\/$/, '');
+  return candidate.replace(/\/$/u, '');
 }
 
 function isSafeMethod(method: string | undefined): boolean {

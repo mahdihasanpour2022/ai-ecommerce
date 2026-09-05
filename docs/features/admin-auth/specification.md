@@ -31,7 +31,7 @@ Administrative capabilities need a secure identity boundary that recovers silent
 
 ## Non-Goals
 
-Customer authentication, password recovery, MFA, SSO/social login, `logout-all`, full staff provisioning/role-management UI, BFF, final enterprise session management, or Redis without a concrete approved requirement.
+Customer authentication, password recovery, MFA, SSO/social login, `logout-all`, full staff provisioning/role-management UI, final enterprise session management, or Redis without a concrete approved requirement. Storefront remains public; its future Customer authentication must reuse the approved independent BFF/Proxy pattern.
 
 ## Actors
 
@@ -42,7 +42,7 @@ Customer authentication, password recovery, MFA, SSO/social login, `logout-all`,
 
 ## Functional Requirements
 
-1. Successful login establishes the accepted Access, Refresh, and in-memory CSRF credentials and lets the client load `/auth/me`.
+1. Successful login with a normalized email or canonical 3–20-character lowercase-ASCII username plus an exact six-ASCII-digit password establishes Access, Refresh, and CSRF cookies and returns the safe current Admin/authorization snapshot.
 2. Unknown identity, invalid password, disabled/inactive identity, and missing Admin eligibility fail identically as `INVALID_CREDENTIALS` without creating a session or exposing which condition applied.
 3. Disabled/inactive or ineligible identities cannot establish or continue Admin access; a previously authenticated session whose Admin is later disabled receives `ACCOUNT_DISABLED`.
 4. A protected page without a recoverable session proceeds to login using an allowlisted return destination and without flashing protected content.
@@ -60,7 +60,8 @@ Authentication cookies, opaque refresh hashing, CSRF, CORS, rotation, the config
 Under `/api/v1`:
 
 - `POST /auth/login`: validate credentials, status, and eligibility; establish accepted session cookies/CSRF credential.
-- `GET /auth/csrf`: validate the Refresh cookie and active session without rotation; return the existing session-bound CSRF token in a no-store JSON response for frontend-memory bootstrap.
+- `POST /auth/bootstrap`: before protected rendering, validate Access plus current Refresh/session/Admin/permission state or atomically refresh missing/unusable Access, return the safe current snapshot, and restore the readable CSRF cookie.
+- `GET /auth/csrf`: retain the compatibility recovery read, validate Refresh/session without rotation, and restore the existing session-bound CSRF cookie with a no-store response; normal Admin page entry uses `POST /auth/bootstrap` instead.
 - `POST /auth/refresh`: validate the refresh cookie/session/CSRF as approved, rotate atomically, and issue replacement credentials.
 - `POST /auth/logout`: revoke the current session refresh capability and expire its authentication cookies; repeated logout behavior must be safely defined.
 - `GET /auth/me`: return `{ admin: { id, email, displayName }, authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret. Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission.
@@ -71,7 +72,7 @@ Each endpoint's implementation task has Swagger/OpenAPI impact. Its generated co
 
 ## Frontend Behavior
 
-Axios sends eligible cookies with `withCredentials: true`; JavaScript does not read either authentication token or construct a Bearer header. The default timeout is 20 seconds and may be overridden for a justified endpoint. The session-bound CSRF token is held only in memory, obtained from login JSON or `GET /auth/csrf` during bootstrap, and sent in `X-CSRF-Token` on every unsafe request. It is never stored in Web Storage or a cookie.
+The browser sends eligible cookies to the same-origin Admin BFF; JavaScript does not read either authentication token or construct a Bearer header. The default timeout is 20 seconds and may be overridden for a justified endpoint. Server responses store the session-bound CSRF token in a readable host-only `SameSite=Strict` cookie; the frontend sends it in `X-CSRF-Token` on every unsafe request and never stores it in Web Storage. `proxy.ts` resolves protected entry before rendering and seeds the safe current snapshot without browser `/auth/csrf` plus `/auth/me` bootstrap calls.
 
 Return destinations are allowlisted application-relative paths only. Absolute/protocol-relative URLs, backslashes, control characters, and unknown routes fall back to the protected Admin home.
 
@@ -85,35 +86,35 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 
 ## Failure Scenarios
 
-| Scenario | Required outcome |
-| --- | --- |
-| Successful login | Establish one browser/device session and enter protected Admin after safe bootstrap. |
-| Any failed login | Unknown identity, wrong password, inactive/disabled identity, and ineligible identity return the same `401 INVALID_CREDENTIALS`, Persian message `اطلاعات ورود نادرست است.`, response shape, and materially equivalent password-verification path; no session is created. |
-| Admin disabled after authentication | Protected/current-session behavior returns `ACCOUNT_DISABLED`; no refresh; clear state and require login. |
-| Authentication throttled | Return generic `429 AUTH_RATE_LIMITED` with `Retry-After`; create no session/credential and do not reveal the limiting bucket. |
-| CSRF bootstrap | With a valid Refresh cookie and active session, return the existing token without rotation and with no-store handling; otherwise fail without exposing credential details. |
-| Missing/invalid CSRF | Reject unsafe authenticated requests with `403 CSRF_VALIDATION_FAILED`; issue no credentials and record a safe security event where appropriate. |
-| Expired access token | Silent single-flight refresh and one retry. |
-| Invalid access token | No refresh; cleanup and require login. |
-| Successful refresh | Rotate credentials atomically, release waiters, and retry once. |
-| Concurrent expired responses | One active refresh per execution context; all waiters settle without a storm. |
-| Expired/revoked refresh credential | Definitive failure, clear current auth state, and require login. |
-| Reuse within approved grace behavior | With the same active session and valid CSRF token, decrypt and return the exact latest current credential from the bounded recovery envelope without another rotation. |
-| Suspicious reuse outside grace behavior | Return `REFRESH_TOKEN_REUSED`, issue no credentials, record a security event, revoke only the affected current session/token family, stop refreshing, and require login; other Admin sessions remain valid. |
-| Current-session logout | Revoke that session and clear its cookies/state; other devices remain active. |
-| AdminUser disabled | Reject protected calls from all of that Admin's sessions with `ACCOUNT_DISABLED`; do not refresh. |
-| Protected page unauthenticated | Proceed to login without protected-content flash. |
-| `403` | No refresh; display appropriate Persian error behavior. |
-| Network failure during refresh | Retry exactly once for transport failure without a valid Backend auth response. If it also fails, stop, keep auth temporarily unresolved/recoverable, do not clear credentials or infer logout, and show a Persian connectivity message. |
-| Lost refresh response | Do not assume whether the Backend rotated; tolerate the ambiguity through the approved recovery/grace design. |
+| Scenario                                | Required outcome                                                                                                                                                                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Successful login                        | Establish one browser/device session and enter protected Admin after safe bootstrap.                                                                                                                                                                                                       |
+| Any failed login                        | Unknown identity, wrong password, inactive/disabled identity, and ineligible identity return the same `401 INVALID_CREDENTIALS`, Persian message `اطلاعات ورود نادرست است.`, response shape, and materially equivalent password-verification path; no session is created.                  |
+| Admin disabled after authentication     | Protected/current-session behavior returns `ACCOUNT_DISABLED`; no refresh; clear state and require login.                                                                                                                                                                                  |
+| Authentication throttled                | Return generic `429 AUTH_RATE_LIMITED` with `Retry-After`; create no session/credential and do not reveal the limiting bucket.                                                                                                                                                             |
+| CSRF bootstrap                          | With a valid Refresh cookie and active session, return the existing token without rotation and with no-store handling; otherwise fail without exposing credential details.                                                                                                                 |
+| Missing/invalid CSRF                    | Reject unsafe authenticated requests with `403 CSRF_VALIDATION_FAILED`; issue no credentials and record a safe security event where appropriate.                                                                                                                                           |
+| Expired access token                    | Silent single-flight refresh and one retry.                                                                                                                                                                                                                                                |
+| Invalid or missing access token         | Pre-render Bootstrap may recover it from a valid current Refresh credential; otherwise cleanup and require login.                                                                                                                                                                         |
+| Successful refresh                      | Rotate credentials atomically, release waiters, and retry once.                                                                                                                                                                                                                            |
+| Concurrent expired responses            | One active refresh per execution context; all waiters settle without a storm.                                                                                                                                                                                                              |
+| Expired/revoked refresh credential      | Definitive failure, clear current auth state, and require login.                                                                                                                                                                                                                           |
+| Reuse within approved grace behavior    | With the same active session and valid CSRF token, decrypt and return the exact latest current credential from the bounded recovery envelope without another rotation.                                                                                                                     |
+| Suspicious reuse outside grace behavior | Return `REFRESH_TOKEN_REUSED`, issue no credentials, record a security event, revoke only the affected current session/token family, stop refreshing, and require login; other Admin sessions remain valid.                                                                                |
+| Current-session logout                  | Revoke that session and clear its cookies/state; other devices remain active.                                                                                                                                                                                                              |
+| AdminUser disabled                      | Reject protected calls from all of that Admin's sessions with `ACCOUNT_DISABLED`; do not refresh.                                                                                                                                                                                          |
+| Protected page unauthenticated          | Proceed to login without protected-content flash.                                                                                                                                                                                                                                          |
+| `403`                                   | No refresh; display appropriate Persian error behavior.                                                                                                                                                                                                                                    |
+| Network failure during refresh          | Retry exactly once for transport failure without a valid Backend auth response. If it also fails, stop, keep auth temporarily unresolved/recoverable, do not clear credentials or infer logout, and keep the login entry on its accessible loading state without exposing a failure panel. |
+| Lost refresh response                   | Do not assume whether the Backend rotated; tolerate the ambiguity through the approved recovery/grace design.                                                                                                                                                                              |
 
 ## Acceptance Criteria
 
-- Only `401 ACCESS_TOKEN_EXPIRED` starts refresh; all other documented `401` codes and every `403` do not.
+- Reactive client recovery remains limited to `401 ACCESS_TOKEN_EXPIRED`; pre-render Bootstrap may independently recover missing/unusable Access from a valid Refresh credential. Every `403` remains non-refreshable.
 - `N` concurrent eligible failures create one refresh operation per frontend execution context and at most one retry per original request; every queue branch settles.
 - No periodic refresh timer exists.
 - Both auth tokens remain inaccessible to JavaScript and are never logged; no Bearer header is constructed by the frontend.
-- The CSRF token remains frontend-memory-only, is session-bound, bootstraps safely across reload/expired-access cases, and every unsafe authenticated request enforces it plus exact-origin credentialed CORS.
+- The CSRF token remains session-bound in a readable host-only `SameSite=Strict` cookie, is never an authentication signal, restores safely across reload/expired-access cases, and every unsafe authenticated request enforces it plus exact-origin controls.
 - Login and other unauthenticated authentication requests enforce the accepted exact-Origin/Fetch-Metadata boundary without pretending a pre-session CSRF token exists.
 - Disabled Admin access is rejected before access-JWT expiry.
 - Normal logout revokes only the current session; its refresh credential cannot obtain another access token.

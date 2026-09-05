@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CsrfResponseDto {
-  @ApiProperty({ description: 'Stable session-bound CSRF token held only in browser memory.' })
+  @ApiProperty({ description: 'Stable session-bound CSRF token also issued as a readable cookie.' })
   csrfToken!: string;
 }
 
@@ -30,4 +30,9 @@ export class CurrentAuthenticationResponseDto {
 
   @ApiProperty({ type: CurrentAuthorizationDto })
   authorization!: CurrentAuthorizationDto;
+}
+
+export class AuthenticationBootstrapResponseDto extends CurrentAuthenticationResponseDto {
+  @ApiProperty({ description: 'Session-bound CSRF token also issued as a readable cookie.' })
+  csrfToken!: string;
 }

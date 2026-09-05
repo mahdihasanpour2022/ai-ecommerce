@@ -93,7 +93,7 @@ As the related behavior is implemented, Admin Authentication coverage includes a
 - concurrent eligible expiry producing one refresh operation and correctly retrying/settling waiters;
 - refresh failure, atomic rotation, exact-latest-token encrypted grace recovery for concurrent/lost responses, expired recovery material, and reuse outside accepted grace behavior;
 - current-session logout and disabled-Admin sessions becoming unusable;
-- login/`GET /auth/csrf` memory-only bootstrap, CSRF rejection, exact-Origin credentialed CORS, Fetch Metadata defense-in-depth, and unsafe-method enforcement;
+- login/pre-render Backend bootstrap, readable Strict CSRF-cookie restoration, CSRF rejection, exact-Origin controls, Fetch Metadata defense-in-depth, and unsafe-method enforcement;
 - network and timeout behavior where deterministic testing is practical.
 
 Tests must preserve the distinctions defined by the authentication specification: refreshable expiry, non-refreshable authentication failure, authorization failure, definitive Backend rejection, and ambiguous transport failure.

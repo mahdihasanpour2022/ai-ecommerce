@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import type { INestApplication } from '@nestjs/common';
@@ -13,6 +13,7 @@ import { AppModule } from '../src/app.module';
 import { configureApplication } from '../src/application';
 import {
   ACCESS_COOKIE_NAME,
+  CSRF_COOKIE_NAME,
   REFRESH_COOKIE_NAME,
 } from '../src/authentication/authentication.constants';
 import { AuthenticationCrypto } from '../src/authentication/authentication.crypto';
@@ -74,9 +75,10 @@ async function createContext(
 async function createAdmin(
   context: TestContext,
   options: { disabled?: boolean; eligible?: boolean; weakHash?: boolean } = {},
-): Promise<{ email: string; password: string; id: string }> {
+): Promise<{ email: string; username: string; password: string; id: string }> {
   const email = `login-${randomUUID()}@example.invalid`;
-  const password = randomBytes(32).toString('base64url');
+  const username = `u_${randomUUID().replaceAll('-', '').slice(0, 18)}`;
+  const password = '654321';
   const passwordHash = await argon2.hash(password, {
     type: argon2.argon2id,
     memoryCost: 65_536,
@@ -88,6 +90,7 @@ async function createAdmin(
   const admin = await context.prisma.adminUser.create({
     data: {
       email,
+      username,
       displayName: 'Login Integration Admin',
       passwordHash,
       disabledAt: null,
@@ -100,15 +103,20 @@ async function createAdmin(
       data: { disabledAt: new Date() },
     });
   }
-  return { email, password, id: admin.id };
+  return { email, username, password, id: admin.id };
 }
 
-function login(app: INestApplication, email: string, password: string, origin = allowedOrigin) {
+function login(
+  app: INestApplication,
+  identifier: string,
+  password: string,
+  origin = allowedOrigin,
+) {
   return request(server(app))
     .post('/api/v1/auth/login')
     .set('Origin', origin)
     .set('Sec-Fetch-Site', 'same-origin')
-    .send({ email, password });
+    .send({ identifier, password });
 }
 
 void describe(
@@ -144,19 +152,28 @@ void describe(
         .expect(200)
         .expect('Cache-Control', 'no-store');
       const body = response.body as Record<string, unknown>;
-      assert.deepEqual(Object.keys(body), ['csrfToken']);
+      assert.deepEqual(Object.keys(body).sort(), ['admin', 'authorization', 'csrfToken']);
       assert.equal(typeof body.csrfToken, 'string');
       assert.match(body.csrfToken as string, /^[A-Za-z0-9_-]{43}$/u);
+      assert.deepEqual(body.admin, {
+        id: admin.id,
+        email: admin.email,
+        displayName: 'Login Integration Admin',
+      });
 
       const cookies = responseCookies(response.headers);
-      assert.equal(cookies.length, 2);
-      for (const cookie of cookies) {
+      assert.equal(cookies.length, 3);
+      for (const cookie of cookies.filter((value) => !value.startsWith(`${CSRF_COOKIE_NAME}=`))) {
         assert.match(cookie, /; Path=\/;/u);
         assert.match(cookie, /; HttpOnly;/u);
         assert.match(cookie, /; SameSite=Lax/u);
         assert.doesNotMatch(cookie, /; Domain=/iu);
         assert.doesNotMatch(cookie, /; Secure/iu);
       }
+      const csrfCookie = cookies.find((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`));
+      assert.ok(csrfCookie);
+      assert.match(csrfCookie, /; SameSite=Strict/u);
+      assert.doesNotMatch(csrfCookie, /HttpOnly/iu);
 
       const accessToken = rawCookie(cookies, ACCESS_COOKIE_NAME);
       const refreshToken = rawCookie(cookies, REFRESH_COOKIE_NAME);
@@ -203,6 +220,14 @@ void describe(
       assert.equal(await context.prisma.adminLoginThrottle.count(), 0);
     });
 
+    void test('accepts the same eligible Admin by canonical username', async () => {
+      const context = contexts[0];
+      assert.ok(context);
+      const admin = await createAdmin(context);
+
+      await login(context.app, `  ${admin.username.toUpperCase()}  `, admin.password).expect(200);
+    });
+
     void test('makes unknown, wrong-password, disabled, and ineligible outcomes identical', async () => {
       const context = contexts[0];
       assert.ok(context);
@@ -210,10 +235,10 @@ void describe(
       const disabled = await createAdmin(context, { disabled: true });
       const ineligible = await createAdmin(context, { eligible: false });
       const attempts = [
-        [`unknown-${randomUUID()}@example.invalid`, randomBytes(32).toString('base64url')],
-        [wrong.email, randomBytes(32).toString('base64url')],
+        [`unknown-${randomUUID()}@example.invalid`, '654321'],
+        [wrong.username, '123654'],
         [disabled.email, disabled.password],
-        [ineligible.email, ineligible.password],
+        [ineligible.username, ineligible.password],
       ] as const;
       const responses = [];
       for (const [email, password] of attempts) {
@@ -236,15 +261,30 @@ void describe(
     void test('rejects malformed and cross-site requests before credential persistence', async () => {
       const context = contexts[0];
       assert.ok(context);
+      for (const body of [
+        { identifier: 'ab', password: '654321' },
+        { identifier: 'a'.repeat(21), password: '654321' },
+        { identifier: 'admin-user', password: '654321' },
+        { identifier: 'admin_user', password: '12345' },
+        { identifier: 'admin_user', password: '1234567' },
+        { identifier: 'admin_user', password: '12a456' },
+        { identifier: 'admin_user', password: '۱۲۳۴۵۶' },
+      ]) {
+        await request(server(context.app))
+          .post('/api/v1/auth/login')
+          .set('Origin', allowedOrigin)
+          .send(body)
+          .expect(400);
+      }
       await request(server(context.app))
         .post('/api/v1/auth/login')
         .set('Origin', allowedOrigin)
-        .send({ email: 'not-an-email', password: 'x', extra: true })
+        .send({ identifier: 'not-an-email', password: '12345', extra: true })
         .expect(400);
       await login(
         context.app,
         `unknown-${randomUUID()}@example.invalid`,
-        randomBytes(32).toString('base64url'),
+        '654321',
         'https://attacker.example',
       )
         .expect(403)
@@ -256,23 +296,23 @@ void describe(
         .set('Origin', allowedOrigin)
         .set('Sec-Fetch-Site', 'cross-site')
         .send({
-          email: `unknown-${randomUUID()}@example.invalid`,
-          password: randomBytes(32).toString('base64url'),
+          identifier: `unknown-${randomUUID()}@example.invalid`,
+          password: '654321',
         })
         .expect(403);
       await request(server(context.app))
         .post('/api/v1/auth/login')
         .set('Referer', `${allowedOrigin}/login`)
         .send({
-          email: `referer-${randomUUID()}@example.invalid`,
-          password: randomBytes(32).toString('base64url'),
+          identifier: `referer-${randomUUID()}@example.invalid`,
+          password: '654321',
         })
         .expect(401);
       await request(server(context.app))
         .post('/api/v1/auth/login')
         .send({
-          email: `no-origin-${randomUUID()}@example.invalid`,
-          password: randomBytes(32).toString('base64url'),
+          identifier: `no-origin-${randomUUID()}@example.invalid`,
+          password: '654321',
         })
         .expect(403);
       assert.equal(await context.prisma.authSession.count(), 0);
@@ -289,7 +329,7 @@ void describe(
       });
       contexts.push(accountContext);
       const email = `concurrent-${randomUUID()}@example.invalid`;
-      const password = randomBytes(32).toString('base64url');
+      const password = '654321';
       const results = await Promise.all(
         Array.from({ length: 6 }, () => login(accountContext.app, email, password)),
       );
@@ -307,16 +347,14 @@ void describe(
       });
       contexts.push(ipContext);
       for (let index = 0; index < 2; index += 1) {
-        await login(
-          ipContext.app,
-          `ip-${index}-${randomUUID()}@example.invalid`,
-          randomBytes(32).toString('base64url'),
-        ).expect(401);
+        await login(ipContext.app, `ip-${index}-${randomUUID()}@example.invalid`, '654321').expect(
+          401,
+        );
       }
       const limited = await login(
         ipContext.app,
         `ip-limit-${randomUUID()}@example.invalid`,
-        randomBytes(32).toString('base64url'),
+        '654321',
       ).expect(429);
       assert.match(limited.headers['retry-after'] as string, /^\d+$/u);
     });
@@ -377,11 +415,11 @@ void describe(
       const documentation = await createContext('test');
       contexts.push(documentation);
       const openApi = await request(server(documentation.app)).get('/api/docs-json').expect(200);
-      const operation = (
-        openApi.body as {
-          paths: Record<string, { post?: { responses?: Record<string, unknown> } }>;
-        }
-      ).paths['/api/v1/auth/login']?.post;
+      const document = openApi.body as {
+        paths: Record<string, { post?: { responses?: Record<string, unknown> } }>;
+        components?: { schemas?: Record<string, unknown> };
+      };
+      const operation = document.paths['/api/v1/auth/login']?.post;
       assert.ok(operation);
       assert.deepEqual(Object.keys(operation.responses ?? {}).sort(), [
         '200',
@@ -393,6 +431,10 @@ void describe(
       ]);
       assert.match(JSON.stringify(operation), /Retry-After/u);
       assert.match(JSON.stringify(operation), /Set-Cookie/u);
+      const requestSchema = document.components?.schemas?.LoginRequestDto;
+      assert.match(JSON.stringify(requestSchema), /identifier/u);
+      assert.match(JSON.stringify(requestSchema), /\^\[0-9\]\{6\}\$/u);
+      assert.doesNotMatch(JSON.stringify(requestSchema), /"email"/u);
       assert.doesNotMatch(JSON.stringify(operation), /admin_access_token=/u);
     });
   },

@@ -43,7 +43,7 @@ The shell navigation contains Home, Categories, Products, and Price Display Unit
 
 ## Authentication, authorization, and request behavior
 
-The existing Auth Provider, memory-only CSRF store, credentialed Axios client, single-flight expired-Access recovery, and one-time request replay are reused.
+The existing server-seeded Auth Provider, readable Strict CSRF cookie, same-origin BFF Axios client, single-flight expired-Access recovery, and one-time request replay are reused.
 
 - Safe reads omit CSRF; every unsafe catalog request requires the current in-memory CSRF credential.
 - Catalog requests are refresh-eligible only for `401 ACCESS_TOKEN_EXPIRED`. Mutations are never replayed more than the existing single bounded recovery attempt.
@@ -290,7 +290,7 @@ The journey also asserts one permission-denied presentation and one stale Invent
 
 No package is installed by this specification. S3-T02 implementation approval must explicitly authorize the following exact pins.
 
-### Runtime dependencies for `@automotive-commerce/admin`
+### Runtime dependencies for `@e-commerce/admin`
 
 | Package | Exact version | Purpose and compatibility |
 | --- | ---: | --- |
@@ -301,7 +301,7 @@ No package is installed by this specification. S3-T02 implementation approval mu
 
 Ant Design is wrapped by `AntdRegistry` at the App Router layout boundary and a narrow Client `ConfigProvider` with `direction="rtl"` and Persian locale. Pages remain Server Components unless existing browser-held authentication or feature interaction requires a Client boundary. React Hook Form `Controller` adapts controlled Ant Design inputs; successful authoritative responses reset form baselines.
 
-### Development dependencies for `@automotive-commerce/admin`
+### Development dependencies for `@e-commerce/admin`
 
 | Package | Exact version | Purpose and compatibility |
 | --- | ---: | --- |

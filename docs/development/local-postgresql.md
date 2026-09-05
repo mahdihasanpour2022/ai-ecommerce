@@ -8,11 +8,11 @@ The repository uses Docker Compose for reproducible local PostgreSQL. Native hos
 | --- | --- |
 | PostgreSQL image | `postgres:18.6-alpine3.24` |
 | Host endpoint | `localhost:5432` (bound to `127.0.0.1` only) |
-| Local role | `automotive` |
-| Local-only password | `automotive_local_only` |
-| Development database | `automotive_dev` |
-| Test database | `automotive_test` |
-| Persistent volume | `automotive-commerce_postgres-data` |
+| Local role | `e_commerce` |
+| Local-only password | `e_commerce_local_only` |
+| Development database | `e_commerce_dev` |
+| Test database | `e_commerce_test` |
+| Persistent volume | `e-commerce_postgres-data` |
 
 PostgreSQL 18.6 is the current stable 18.x release selected for new local development. The exact official-image and Alpine base tags are pinned so developer machines use the same database build. PostgreSQL 19 prereleases are prohibited by the dependency-version policy. For PostgreSQL 18, the official image persists its version-specific data beneath `/var/lib/postgresql`, so the named volume targets that path.
 
@@ -37,7 +37,7 @@ yarn db:stop
 
 - `db:config` validates `compose.yaml` without starting a container.
 - `db:start` creates or starts only the PostgreSQL service and waits up to 60 seconds for its health check.
-- `db:health` runs `pg_isready` inside the container against `automotive_dev`.
+- `db:health` runs `pg_isready` inside the container against `e_commerce_dev`.
 - `db:verify` connects to both databases and verifies their exact `current_database()` identities.
 - `db:stop` stops PostgreSQL but preserves its named volume and data. A later `db:start` reuses them.
 
@@ -52,7 +52,7 @@ yarn db:reset:dev
 yarn db:reset:test
 ```
 
-The underlying script rejects missing, arbitrary, and production-like targets before invoking Docker. It accepts only `automotive_dev` or `automotive_test`, connects through the repository's named Compose service, terminates target connections with `dropdb --force`, recreates the same database under the local role, and verifies its identity. There is intentionally no generic volume-destruction command.
+The underlying script rejects missing, arbitrary, and production-like targets before invoking Docker. It accepts only `e_commerce_dev` or `e_commerce_test`, connects through the repository's named Compose service, terminates target connections with `dropdb --force`, recreates the same database under the local role, and verifies its identity. There is intentionally no generic volume-destruction command.
 
 Do not run a reset while another process is using the target database. The reset removes every schema and row in that one database; future Prisma migrations must be reapplied afterward.
 
@@ -61,11 +61,11 @@ Do not run a reset while another process is using the target database. The reset
 The safe reference URLs live in `apps/api/.env.example`:
 
 ```text
-DATABASE_URL=postgresql://automotive:automotive_local_only@localhost:5432/automotive_dev?schema=public
-TEST_DATABASE_URL=postgresql://automotive:automotive_local_only@localhost:5432/automotive_test?schema=public
+DATABASE_URL=postgresql://e_commerce:e_commerce_local_only@localhost:5432/e_commerce_dev?schema=public
+TEST_DATABASE_URL=postgresql://e_commerce:e_commerce_local_only@localhost:5432/e_commerce_test?schema=public
 ```
 
-Prisma CLI commands now consume `DATABASE_URL` through the API-owned configuration, while the API runtime still does not connect to PostgreSQL. The model-free [Prisma workflow](prisma.md) owns generation and migration review. Tests must use `automotive_test`, never `automotive_dev`.
+Prisma CLI commands now consume `DATABASE_URL` through the API-owned configuration, while the API runtime still does not connect to PostgreSQL. The model-free [Prisma workflow](prisma.md) owns generation and migration review. Tests must use `e_commerce_test`, never `e_commerce_dev`.
 
 ## Troubleshooting
 

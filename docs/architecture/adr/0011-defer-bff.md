@@ -1,6 +1,6 @@
 # 0011: Defer a Backend for Frontend
 
-**Status:** Deferred
+**Status:** Superseded for Admin by [ADR 0013](0013-adopt-admin-bff-authentication.md); still deferred for Storefront
 
 ## Context
 

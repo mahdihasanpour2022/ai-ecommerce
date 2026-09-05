@@ -19,6 +19,10 @@ const catalogMigration = readFileSync(
   ),
   'utf8',
 );
+const usernameMigration = readFileSync(
+  resolve(apiRoot, 'prisma/migrations/20260905120000_add_admin_username/migration.sql'),
+  'utf8',
+);
 
 const approvedModels = [
   'AdminUser',
@@ -99,6 +103,18 @@ void describe('Prisma schema and reviewed migrations', () => {
     assert.match(adminMigration, /FOREIGN KEY \("replaced_by_token_id", "session_id"\)/);
     assert.match(adminMigration, /octet_length\("recovery_nonce"\) = 12/);
     assert.match(adminMigration, /octet_length\("recovery_auth_tag"\) = 16/);
+  });
+
+  void test('adds a required canonical unique Admin username with safe legacy backfill', () => {
+    assert.match(schema, /username\s+String\s+@unique\(map: "admin_users_username_key"\)/u);
+    assert.match(usernameMigration, /^BEGIN;/u);
+    assert.match(usernameMigration, /ADD COLUMN "username" VARCHAR\(20\)/u);
+    assert.match(usernameMigration, /'legacy_' \|\| left\(replace\("id"::text/u);
+    assert.match(usernameMigration, /ALTER COLUMN "username" SET NOT NULL/u);
+    assert.match(usernameMigration, /\^\[a-z0-9_\]\{3,20\}\$/u);
+    assert.match(usernameMigration, /"admin_users_username_key"/u);
+    assert.match(usernameMigration, /COMMIT;\s*$/u);
+    assert.doesNotMatch(usernameMigration, /\b(?:DROP|TRUNCATE)\b/iu);
   });
 
   void test('inserts only the approved Sprint 1 RBAC reference grant', () => {

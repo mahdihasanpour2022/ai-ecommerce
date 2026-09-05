@@ -68,13 +68,13 @@ Context7 and the installed Turbo schema were consulted for current configuration
 
 **Completed:** 2026-08-27
 
-**Result:** Relocated the preserved Next.js 16.3.2 starter into the private `@automotive-commerce/storefront` Yarn Workspace. The root is now the `automotive-commerce` orchestration package, and its development/start commands delegate to Storefront while build/lint run through Turbo.
+**Result:** Relocated the preserved Next.js 16.3.2 starter into the private `@e-commerce/storefront` Yarn Workspace. The root is now the `e-commerce` orchestration package, and its development/start commands delegate to Storefront while build/lint run through Turbo.
 
 ### Validation
 
 Context7 and all task-required installed Next.js 16.3.2 guides were read before implementation. All 13 original source, asset, and configuration blobs matched their Storefront destinations exactly before root removal and again against Git after relocation. Yarn discovered only the Storefront workspace; integrity passed. Filtered Storefront lint/build and repository-wide `yarn lint`/`yarn build` passed, producing the unchanged `/` and `/_not-found` routes. Runtime/development dependency names and ranges were preserved exactly, Turbo remained the sole root dependency, `yarn.lock` was unchanged, and nested generated output was verified ignored. No automated test was required because observable starter behavior did not change.
 
-**Important Decisions:** The workspace is named `@automotive-commerce/storefront`. No regeneration, dependency pruning/upgrades, shared package, `outputFileTracingRoot`, or `transpilePackages` configuration was needed. Root-anchored generated-output ignores were generalized for nested workspaces.
+**Important Decisions:** The workspace is named `@e-commerce/storefront`. No regeneration, dependency pruning/upgrades, shared package, `outputFileTracingRoot`, or `transpilePackages` configuration was needed. Root-anchored generated-output ignores were generalized for nested workspaces.
 
 **Files / Areas Changed:** Relocated the root `app/`, `public/`, ESLint, Next.js, PostCSS, and TypeScript files under `apps/storefront`; added its manifest; updated root `.gitignore`, `package.json`, `turbo.json`, application/system reality documentation, and Sprint 0 execution records. The lockfile did not change.
 
@@ -84,7 +84,7 @@ Context7 and all task-required installed Next.js 16.3.2 guides were read before 
 
 **Completed:** 2026-08-28
 
-**Result:** Created the private `@automotive-commerce/admin` Next.js 16.3.2 workspace with strict TypeScript, application-local ESLint/configuration, and a minimal semantic Persian RTL Server Component foundation. No authentication, API integration, Client Component, business UI, or UI framework was introduced.
+**Result:** Created the private `@e-commerce/admin` Next.js 16.3.2 workspace with strict TypeScript, application-local ESLint/configuration, and a minimal semantic Persian RTL Server Component foundation. No authentication, API integration, Client Component, business UI, or UI framework was introduced.
 
 ### Validation
 
@@ -100,11 +100,11 @@ Context7 and both task-required installed Next.js 16.3.2 guides were read before
 
 **Completed:** 2026-08-28
 
-**Result:** Created the private `@automotive-commerce/api` NestJS 12 Workspace as an empty strict-TypeScript Modular Monolith foundation. Future REST contracts use the `/api/v1` prefix. Generated Swagger UI and JSON are available at `/api/docs` and `/api/docs-json` in development/test, while production registers neither documentation route. No controller, business module, database, authentication, CORS, or speculative infrastructure was introduced.
+**Result:** Created the private `@e-commerce/api` NestJS 12 Workspace as an empty strict-TypeScript Modular Monolith foundation. Future REST contracts use the `/api/v1` prefix. Generated Swagger UI and JSON are available at `/api/docs` and `/api/docs-json` in development/test, while production registers neither documentation route. No controller, business module, database, authentication, CORS, or speculative infrastructure was introduced.
 
 ### Validation
 
-Current official NestJS guidance was reviewed through Context7 before implementation, and exact package compatibility/engine metadata was reviewed before installation. `yarn workspace @automotive-commerce/api typecheck`, `lint`, `build`, and `test` passed. The focused HTTP suite passed all 3 cases, proving development/test Swagger availability, production unavailability, and an empty generated OpenAPI `paths` object with no invented endpoint. Repository-wide typecheck, lint, build, and Turbo test gates passed across all applicable Workspaces. After the owner reported that the legacy `moduleResolution: node` alias was flagged by a TypeScript 6-aware editor, the API was aligned with the installed NestJS 12 CommonJS template's `NodeNext` module/resolution settings and exact TypeScript `6.0.3`. Direct `tsc --project ... --noEmit` checks then passed for Admin, Storefront, and all API source/build/test configurations, followed by uncached repository-wide typecheck, lint, build, and test passes. Yarn discovered Admin, API, and Storefront without mismatches, and `yarn check --integrity` passed. Generated API outputs are ignored, and the reviewed lockfile delta contains the approved Backend/test/lint toolchain plus consolidated selectors for compatible existing resolutions.
+Current official NestJS guidance was reviewed through Context7 before implementation, and exact package compatibility/engine metadata was reviewed before installation. `yarn workspace @e-commerce/api typecheck`, `lint`, `build`, and `test` passed. The focused HTTP suite passed all 3 cases, proving development/test Swagger availability, production unavailability, and an empty generated OpenAPI `paths` object with no invented endpoint. Repository-wide typecheck, lint, build, and Turbo test gates passed across all applicable Workspaces. After the owner reported that the legacy `moduleResolution: node` alias was flagged by a TypeScript 6-aware editor, the API was aligned with the installed NestJS 12 CommonJS template's `NodeNext` module/resolution settings and exact TypeScript `6.0.3`. Direct `tsc --project ... --noEmit` checks then passed for Admin, Storefront, and all API source/build/test configurations, followed by uncached repository-wide typecheck, lint, build, and test passes. Yarn discovered Admin, API, and Storefront without mismatches, and `yarn check --integrity` passed. Generated API outputs are ignored, and the reviewed lockfile delta contains the approved Backend/test/lint toolchain plus consolidated selectors for compatible existing resolutions.
 
 **Important Decisions:** NestJS runtime packages are pinned to `12.0.1`, Swagger to `12.0.0`, and the CLI to `12.0.0`. The API pins TypeScript `6.0.3`, matching the NestJS 12 toolchain and remaining within TypeScript-ESLint `8.68.0`'s supported `<6.1.0` range. `module` and `moduleResolution` both use `NodeNext`; the deprecated `node`/`node10` resolution alias is not suppressed. Focused integration coverage uses Nest testing, Supertest, and Node's built-in test runner without adding a second general-purpose test framework. Swagger is enabled only for `development` and `test`; production protection remains a separate future decision.
 
@@ -148,7 +148,7 @@ Current Next.js and Turborepo environment guidance was reviewed through Context7
 
 **Completed:** 2026-08-28
 
-**Result:** Selected Docker Compose as the reproducible local PostgreSQL boundary and added an exact `postgres:18.6-alpine3.24` service bound only to `127.0.0.1:5432`. The configuration persists PostgreSQL 18 data in a named volume, creates isolated `automotive_dev` and `automotive_test` databases, exposes lifecycle/health/isolation commands, and provides guarded resets that accept only those two exact targets. Safe local connection references reserve the future Prisma contract without making the API consume them or creating application schema.
+**Result:** Selected Docker Compose as the reproducible local PostgreSQL boundary and added an exact `postgres:18.6-alpine3.24` service bound only to `127.0.0.1:5432`. The configuration persists PostgreSQL 18 data in a named volume, creates isolated `e_commerce_dev` and `e_commerce_test` databases, exposes lifecycle/health/isolation commands, and provides guarded resets that accept only those two exact targets. Safe local connection references reserve the future Prisma contract without making the API consume them or creating application schema.
 
 ### Validation
 
@@ -156,7 +156,7 @@ Current PostgreSQL 18, Docker Compose, official Postgres image, and Prisma suppo
 
 Docker-dependent validation was unavailable on this host: neither Docker/Desktop, native PostgreSQL tooling/service, nor usable WSL was installed. Therefore `yarn db:config`, image pull, container start/readiness, health, development/test connection isolation, live reset, persistence across stop/restart, and stop were not executed and are not claimed as passing. `yarn db:config` was executed only far enough to verify its actionable missing-Docker failure.
 
-**Important Decisions:** Docker Compose is the repository contract because native PostgreSQL lifecycle and authentication vary by host. The current stable PostgreSQL `18.6` official Alpine 3.24 image is pinned exactly; PostgreSQL 19 beta is a prohibited prerelease. PostgreSQL 18 data mounts at `/var/lib/postgresql` per the official image contract. Local credentials are fixed, loopback-only, public non-production values that must never be reused in deployment. Normal stop preserves data, no broad volume-deletion helper exists, and reset commands can drop only `automotive_dev` or `automotive_test` through the named Compose service.
+**Important Decisions:** Docker Compose is the repository contract because native PostgreSQL lifecycle and authentication vary by host. The current stable PostgreSQL `18.6` official Alpine 3.24 image is pinned exactly; PostgreSQL 19 beta is a prohibited prerelease. PostgreSQL 18 data mounts at `/var/lib/postgresql` per the official image contract. Local credentials are fixed, loopback-only, public non-production values that must never be reused in deployment. Normal stop preserves data, no broad volume-deletion helper exists, and reset commands can drop only `e_commerce_dev` or `e_commerce_test` through the named Compose service.
 
 **Files / Areas Changed:** Added root `compose.yaml`, PostgreSQL test-database initialization SQL, the guarded local lifecycle wrapper, root database/formatting scripts, safe API connection references, canonical local PostgreSQL documentation, and project/database/environment/Sprint execution records. No dependency, `yarn.lock`, Prisma, application schema, API database integration, HTTP contract, production infrastructure, or business behavior was added.
 

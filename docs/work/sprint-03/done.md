@@ -107,3 +107,57 @@ Product model/failure/client/component coverage and the complete Admin suite pas
 **Documentation Impact:** Recorded implemented Product and retained-Variant maintenance while retaining Inventory mutation, media, setting mutation, lifecycle/publication, and Storefront workflows as later work.
 
 **Follow-ups:** S3-T07 is Current and awaiting implementation approval for exact Inventory and price display-setting management.
+
+## S3-T07A — Change Admin Login Identifier and Six-Digit Password Policy
+
+**Completed:** 2026-09-05
+
+**Result:** Added canonical unique Admin usernames, email-or-username login, and the owner-approved exact six-ASCII-digit password policy across the Admin form and authoritative Backend login/provisioning/update boundaries. Safely migrated the existing identity, provided a secret-safe one-shot credential rotation path, and completed the owner-requested local credential update without exposing plaintext credentials. Recoverable authentication bootstrap failures now retain only the shared loading UI; definitive authorization failures remain visible.
+
+### Validation
+
+PostgreSQL preflight, reviewed development/test migration deployment and status, rollback-only identity-constraint SQL, Prisma format/validate/generate, API and Admin typecheck/lint/build, repository formatting, `git diff --check`, complete Admin suite (95 tests), and complete PostgreSQL-backed API suite (162 tests) passed. The trusted credential updater reported success. The owner ran the updated production-build Admin Playwright smoke with system Chrome; both tests passed in 10.2 seconds.
+
+**Important Decisions:** Usernames are canonical lowercase ASCII matching `^[a-z0-9_]{3,20}$`; passwords are exactly six ASCII digits as explicitly directed by the owner. Email and username share generic failures, throttling, and equivalent unknown-identity verification. Passwords remain Argon2id hashes, credential rotation is one-shot and transactional, and all existing sessions are revoked.
+
+**Files / Areas Changed:** Admin login schema/form/bootstrap presentation and tests; API authentication DTO/service/repository/crypto and tests; Admin credential policy, provisioning, trusted credential updater; Prisma Admin identity schema/additive migration/constraint tests; authentication/database/environment/development documentation.
+
+**Documentation Impact:** Updated canonical authentication, persistence, environment, operational, API/OpenAPI, project-reality, and Sprint records without recording a usable credential.
+
+**Follow-ups:** S3-T07 has resumed as Current and awaits implementation approval for exact Inventory and price display-setting management.
+
+## S3-T07B — Rename Project and Clothing-Commerce Identifiers
+
+**Completed:** 2026-09-05
+
+**Result:** Renamed project, Workspace, Compose, PostgreSQL, runtime security, API metadata, commands, and product-language identifiers to the approved e-commerce/clothing names. Migrated the local PostgreSQL data through a recoverable cloned Volume while preserving the existing Admin identity, added the owner-requested shared Admin loader, and isolated Admin Playwright from stale development servers.
+
+### Validation
+
+Workspace discovery, zero-retired-identifier search, PostgreSQL identity/data verification, database lifecycle verification, formatting, typecheck, lint, production builds, complete Admin tests (96 tests), complete PostgreSQL-backed API tests (162 tests), `git diff --check`, and scope review passed. The owner ran the production-build Admin Playwright smoke with system Chrome after the isolated-port fix; both tests passed.
+
+**Important Decisions:** SQL identifiers use `e_commerce`; package scopes use `@e-commerce/*`; prior authentication cookies are intentionally invalid after runtime namespace changes. The original PostgreSQL Volume remains retained as a rollback backup. The shared loader accepts a contextual message and defaults to `لطفا منتظر بمانید...`.
+
+**Files / Areas Changed:** Workspace/package metadata, Compose/PostgreSQL lifecycle, API runtime/authentication identity and Swagger metadata, Admin metadata/loading presentation and tests, CI/development/security documentation, Playwright server isolation, and Sprint execution records.
+
+**Documentation Impact:** Updated project, environment, database, authentication, development, CI, and historical execution references to the approved identity.
+
+**Follow-ups:** S3-T07C is Current for the owner-directed server-gated authentication redesign; S3-T07 remains paused.
+
+## S3-T07C — Move Authentication Bootstrap to Server-Gated BFF/Proxy
+
+**Completed:** 2026-09-05
+
+**Result:** Replaced the Admin's post-render `/auth/csrf` plus `/auth/me` bootstrap with a same-origin Next.js BFF and pre-render Proxy gate backed by a new Backend bootstrap contract. Access and Refresh remain HttpOnly; the session-bound CSRF credential is issued in a readable host-only `SameSite=Strict` cookie. Protected reload/navigation validates current session, Admin state, revocation, and effective authorization before rendering, recovers Access from a valid Refresh credential when required, and clears all credentials only on definitive authentication loss. The Storefront remains public, with its future Customer authentication required to reuse this independent pattern and never share Admin credentials.
+
+### Validation
+
+Admin formatting, typecheck, lint, all 102 unit/component tests, production build, and Playwright discovery passed. API typecheck, lint, build, focused bootstrap unit coverage, the PostgreSQL-backed authentication regression run, and corrected logout integration coverage passed. Storefront production build, OpenAPI coverage, runtime Proxy/BFF redirect and cookie-forwarding checks, `git diff --check`, and canonical-document stale-contract review passed. The owner confirmed completion of the two-test production-build Admin Playwright run with system Chrome.
+
+**Important Decisions:** Cookie presence never proves authentication. Proxy orchestrates Backend bootstrap before render; Backend remains authoritative for session, revocation, account, and permission state. Bootstrap may recover without a pre-existing CSRF value only behind exact origin/Fetch-Metadata enforcement. Transport uncertainty retains credentials and returns a retryable server failure rather than inferring logout.
+
+**Files / Areas Changed:** Backend authentication bootstrap/service/controller/cookie/OpenAPI boundaries; Admin BFF Route Handler, Proxy, server-seeded authentication state, same-origin HTTP/CSRF/login/logout flows, isolated production E2E server; focused tests and authentication/architecture/security/development documentation.
+
+**Documentation Impact:** Added ADR 0013, superseded the Admin portions of the direct-browser/BFF-deferred decisions, documented the three-cookie/bootstrap topology, and recorded the independent future Storefront Customer-authentication requirement.
+
+**Follow-ups:** S3-T07 is Current and awaiting implementation approval for exact Inventory and price display-setting management.
