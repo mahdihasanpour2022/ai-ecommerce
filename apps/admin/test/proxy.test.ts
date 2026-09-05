@@ -53,6 +53,8 @@ void test('injects only validated Backend identity and forwards rotated cookies'
     authorization: current.authorization,
   });
   assert.equal(response.headers.getSetCookie().length, 1);
+  assert.equal(response.headers.get('content-type'), null);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 
 void test('clears definitive failures but preserves cookies on Backend uncertainty', async () => {

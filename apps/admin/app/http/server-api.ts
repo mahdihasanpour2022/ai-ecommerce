@@ -50,12 +50,16 @@ export function backendSetCookies(headers: Headers): readonly string[] {
   return extended.getSetCookie?.() ?? [];
 }
 
+export function appendBackendSetCookies(target: Headers, source: Headers): void {
+  for (const cookie of backendSetCookies(source)) target.append('set-cookie', cookie);
+}
+
 export function appendBackendResponseHeaders(target: Headers, source: Headers): void {
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = source.get(name);
     if (value !== null) target.set(name, value);
   }
-  for (const cookie of backendSetCookies(source)) target.append('set-cookie', cookie);
+  appendBackendSetCookies(target, source);
   target.set('cache-control', 'no-store');
 }
 

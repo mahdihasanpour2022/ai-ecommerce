@@ -108,6 +108,8 @@ Product model/failure/client/component coverage and the complete Admin suite pas
 
 **Follow-ups:** S3-T07 is Current and awaiting implementation approval for exact Inventory and price display-setting management.
 
+**Post-completion correction (2026-09-05):** Stopped forwarding the Backend Bootstrap `Content-Type` onto Next.js document responses. Proxy now forwards only authentication `Set-Cookie` values and `Cache-Control: no-store`, preventing valid HTML from being exposed as source text. The regression assertion, all 102 Admin tests, typecheck, lint, and production build passed.
+
 ## S3-T07A — Change Admin Login Identifier and Six-Digit Password Policy
 
 **Completed:** 2026-09-05

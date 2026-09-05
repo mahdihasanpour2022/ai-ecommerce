@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import {
-  appendBackendResponseHeaders,
+  appendBackendSetCookies,
   backendHeaders,
   expireAuthenticationCookies,
   getBackendApiUrl,
@@ -89,7 +89,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (isLogin) {
     const destination = safeReturnDestination(request.nextUrl.searchParams.get('returnTo'));
     const response = NextResponse.redirect(new URL(destination, request.url));
-    appendBackendResponseHeaders(response.headers, upstream.headers);
+    appendBackendSetCookies(response.headers, upstream.headers);
+    response.headers.set('cache-control', 'no-store');
     return response;
   }
 
@@ -97,7 +98,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   requestHeaders.delete(AUTH_STATE_HEADER);
   requestHeaders.set(AUTH_STATE_HEADER, encodeAuthenticationHeader(current));
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  appendBackendResponseHeaders(response.headers, upstream.headers);
+  appendBackendSetCookies(response.headers, upstream.headers);
+  response.headers.set('cache-control', 'no-store');
   return response;
 }
 
