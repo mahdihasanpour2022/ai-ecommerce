@@ -39,3 +39,43 @@
 @utility grid-rows-workspace {
   grid-template-rows: auto minmax(0, 1fr);
 }
+
+@utility bg-login-page {
+  background:
+    radial-gradient(circle at 12% 12%, rgb(111 76 255 / 10%), transparent 24rem),
+    var(--admin-background);
+}
+
+@utility grid-cols-login-shell {
+  grid-template-columns: minmax(20rem, 0.82fr) minmax(25rem, 1.18fr);
+}
+
+@utility min-h-login-shell {
+  min-height: min(42rem, calc(100vh - 4rem));
+}
+
+@utility max-w-login-shell {
+  max-width: 68rem;
+}
+
+@utility shadow-login-shell {
+  box-shadow: 0 2rem 5rem rgb(35 45 72 / 13%);
+}
+
+@utility bg-login-mark {
+  background: linear-gradient(145deg, var(--color-brand), var(--color-brand-soft));
+}
+
+@utility shadow-login-mark {
+  box-shadow: 0 0.45rem 1.1rem rgb(55 83 210 / 25%);
+}
+
+@utility bg-login-showcase {
+  background: linear-gradient(145deg, #ed980e 0%, #f2b249 48%, #e9b663 100%);
+}
+
+@utility shadow-login-glow {
+  box-shadow:
+    0 0 0 5rem rgb(255 255 255 / 4%),
+    0 0 0 10rem rgb(255 255 255 / 3%);
+}

@@ -38,15 +38,15 @@ export function LoginScreen({ returnTo }: Readonly<{ returnTo: string | null }>)
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-admin-background p-0 sm:p-8">
+    <main className="grid min-h-screen items-start bg-surface p-0 md:place-items-center md:bg-login-page md:p-6 lg:p-8">
       <section
-        className="grid min-h-screen w-full max-w-6xl grid-cols-1 overflow-hidden bg-surface shadow-panel md:min-h-168 md:grid-cols-2 md:rounded-3xl md:border md:border-border"
+        className="grid min-h-screen w-full grid-cols-1 border-0 bg-surface shadow-none md:min-h-login-shell md:max-w-login-shell md:grid-cols-login-shell md:overflow-hidden md:rounded-3xl md:border md:border-border md:shadow-login-shell"
         aria-labelledby="login-title"
       >
-        <div className="flex min-w-0 flex-col p-6 sm:p-10 lg:p-12">
+        <div className="flex min-h-screen min-w-0 flex-col p-6 sm:p-10 md:min-h-0 lg:p-12">
           <div className="flex items-center gap-3 text-sm font-extrabold text-foreground">
             <span
-              className="grid size-8 place-items-center rounded-xl bg-brand text-white shadow-brand-mark"
+              className="grid size-8 place-items-center rounded-xl bg-login-mark text-white shadow-login-mark"
               aria-hidden="true"
             >
               ن
@@ -54,7 +54,10 @@ export function LoginScreen({ returnTo }: Readonly<{ returnTo: string | null }>)
             <span>پنل مدیریت فروشگاه</span>
           </div>
           <div className="my-auto w-full max-w-sm py-8">
-            <h1 className="m-0 text-2xl font-bold leading-snug tracking-tight" id="login-title">
+            <h1
+              className="m-0 text-2xl font-bold leading-snug tracking-tight lg:text-3xl"
+              id="login-title"
+            >
               ورود به پنل مدیریت
             </h1>
             <p className="mb-0 mt-2 text-sm leading-8 text-muted">
@@ -68,17 +71,18 @@ export function LoginScreen({ returnTo }: Readonly<{ returnTo: string | null }>)
           </div>
         </div>
         <aside
-          className="relative hidden min-w-0 flex-col justify-center overflow-hidden bg-brand p-12 text-brand-ink md:flex lg:p-16"
+          className="relative hidden min-w-0 flex-col justify-center overflow-hidden bg-login-showcase p-8 text-white isolate md:flex lg:p-16"
           aria-hidden="true"
         >
+          <div className="absolute -top-32 -right-44 -z-10 size-128 rounded-full border border-white/15 shadow-login-glow" />
           <div className="max-w-lg">
-            <span className="inline-flex rounded-full border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-bold">
+            <span className="inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold">
               مدیریت یکپارچه
             </span>
             <h2 className="mb-0 mt-3 text-3xl font-black leading-relaxed lg:text-4xl">
-              فروشگاهتان را با دیدی روشن مدیریت کنید
+              فروشگاهتان را مدیریت کنید
             </h2>
-            <p className="mb-0 mt-3 max-w-md text-sm leading-8 text-brand-ink/80">
+            <p className="mb-0 mt-3 max-w-md text-sm leading-8 text-white/80">
               محصولات، موجودی و عملکرد فروش در یک فضای ساده و حرفه‌ای.
             </p>
           </div>
