@@ -7,6 +7,7 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AdminUiProvider } from '../app/admin-ui-provider';
 import { ControlledTextField } from '../app/forms/controlled-text-field';
+import { UiButton } from '../app/components/shared/ui-button';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -67,6 +68,20 @@ void test('provides Persian RTL Ant Design components through the client provide
 
   const button = view.getByRole('button', { name: 'عملیات' });
   assert.match(button.className, /ant-btn-rtl/u);
+  cleanup();
+});
+
+void test('shared buttons forward native attributes and compose caller classes', () => {
+  const view = render(
+    <UiButton variant="secondary" className="feature-action" name="archive" disabled>
+      بایگانی
+    </UiButton>,
+  );
+  const button = view.getByRole('button', { name: 'بایگانی' });
+  assert.equal(button.getAttribute('name'), 'archive');
+  assert.equal((button as HTMLButtonElement).disabled, true);
+  assert.match(button.className, /feature-action/u);
+  assert.match(button.className, /border-border/u);
   cleanup();
 });
 

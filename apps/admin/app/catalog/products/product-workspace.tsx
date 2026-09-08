@@ -7,6 +7,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../auth/auth-provider';
 import { createSubmissionGate } from '../../auth/submission-gate';
 import { ControlledTextField } from '../../forms/controlled-text-field';
+import { classNames } from '../../components/shared/class-names';
+import { UiButton } from '../../components/shared/ui-button';
 import type { CatalogApi, CreateVariantInput } from '../catalog-api';
 import { catalogApi } from '../catalog-api';
 import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
@@ -57,6 +59,15 @@ const STATUS_LABELS: Readonly<Record<ProductStatus, string>> = {
   ARCHIVED: 'بایگانی‌شده',
 };
 
+function workspaceTabClass(active: boolean): string {
+  return classNames(
+    'rounded-t-xl px-4 py-3 font-bold no-underline transition-colors',
+    active
+      ? 'bg-brand text-brand-ink'
+      : 'text-accent-foreground hover:bg-brand-soft/15 hover:text-accent-foreground',
+  );
+}
+
 function useDirtyGuard(dirty: boolean) {
   useEffect(() => {
     const preventUnload = (event: BeforeUnloadEvent) => {
@@ -74,7 +85,12 @@ function Summary({
   reference,
 }: Readonly<{ message: string | null; reference: React.RefObject<HTMLParagraphElement | null> }>) {
   return message ? (
-    <p ref={reference} className="form-error" role="alert" tabIndex={-1}>
+    <p
+      ref={reference}
+      className="m-0 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 leading-7 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+      role="alert"
+      tabIndex={-1}
+    >
       {message}
     </p>
   ) : null;
@@ -93,8 +109,10 @@ function DescriptionField({
       name="description"
       rules={{ validate: (value) => descriptionError(value) ?? true }}
       render={({ field, fieldState }) => (
-        <div className="controlled-field">
-          <label htmlFor="workspace-product-description">توضیحات (اختیاری)</label>
+        <div className="grid gap-2">
+          <label className="font-bold" htmlFor="workspace-product-description">
+            توضیحات (اختیاری)
+          </label>
           <Input.TextArea
             id="workspace-product-description"
             value={field.value}
@@ -108,7 +126,7 @@ function DescriptionField({
             {...(fieldState.invalid ? { status: 'error' as const } : {})}
           />
           {fieldState.error ? (
-            <p className="field-error" role="alert">
+            <p className="m-0 text-xs leading-7 text-danger" role="alert">
               {fieldState.error.message}
             </p>
           ) : null}
@@ -189,18 +207,20 @@ function ProductOverviewForm({
 
   if (!editable) {
     return (
-      <dl className="workspace-facts">
+      <dl className="m-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div>
-          <dt>نام</dt>
-          <dd>{product.name}</dd>
+          <dt className="text-sm text-muted">نام</dt>
+          <dd className="mt-1 break-words">{product.name}</dd>
         </div>
         <div>
-          <dt>دسته‌بندی</dt>
-          <dd>{product.category.name}</dd>
+          <dt className="text-sm text-muted">دسته‌بندی</dt>
+          <dd className="mt-1 break-words">{product.category.name}</dd>
         </div>
         <div>
-          <dt>توضیحات</dt>
-          <dd>{product.description ?? 'بدون توضیحات'}</dd>
+          <dt className="text-sm text-muted">توضیحات</dt>
+          <dd className="mt-1 whitespace-pre-wrap break-words">
+            {product.description ?? 'بدون توضیحات'}
+          </dd>
         </div>
       </dl>
     );
@@ -211,7 +231,7 @@ function ProductOverviewForm({
   // eslint-disable-next-line react-hooks/refs
   const submit = handleSubmit((values) => gate.run(save, values));
   return (
-    <form className="workspace-form" noValidate onSubmit={(event) => void submit(event)}>
+    <form className="grid max-w-4xl gap-4" noValidate onSubmit={(event) => void submit(event)}>
       <Summary message={summary} reference={summaryRef} />
       <ControlledTextField
         control={control}
@@ -226,9 +246,12 @@ function ProductOverviewForm({
         name="categoryId"
         rules={{ required: 'انتخاب دسته‌بندی الزامی است.' }}
         render={({ field, fieldState }) => (
-          <div className="controlled-field">
-            <label htmlFor="workspace-product-category">دسته‌بندی (الزامی)</label>
+          <div className="grid gap-2">
+            <label className="font-bold" htmlFor="workspace-product-category">
+              دسته‌بندی (الزامی)
+            </label>
             <Select
+              className="min-h-10 w-full"
               id="workspace-product-category"
               value={field.value}
               onChange={field.onChange}
@@ -244,21 +267,16 @@ function ProductOverviewForm({
               getPopupContainer={(trigger) => trigger.parentElement ?? trigger}
             />
             {fieldState.error ? (
-              <p className="field-error" role="alert">
+              <p className="m-0 text-xs leading-7 text-danger" role="alert">
                 {fieldState.error.message}
               </p>
             ) : null}
           </div>
         )}
       />
-      <button
-        className="primary-button"
-        type="submit"
-        disabled={isSubmitting}
-        aria-busy={isSubmitting}
-      >
+      <UiButton type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
         {isSubmitting ? 'در حال ذخیره…' : 'ذخیره مشخصات محصول'}
-      </button>
+      </UiButton>
     </form>
   );
 }
@@ -390,31 +408,36 @@ function VariantEditor({
   // eslint-disable-next-line react-hooks/refs
   const submit = handleSubmit((values) => gate.run(run, () => save(values)));
   return (
-    <article className="workspace-variant" aria-labelledby={`variant-${variant.id}`}>
-      <div className="variant-heading">
-        <h3 id={`variant-${variant.id}`}>
+    <article
+      className="rounded-xl border border-border bg-surface p-4"
+      aria-labelledby={`variant-${variant.id}`}
+    >
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
+        <h3 className="m-0 font-bold" id={`variant-${variant.id}`}>
           <bdi>{variant.sku}</bdi>
         </h3>
         <span>{variant.isActive ? 'فعال' : 'غیرفعال'}</span>
       </div>
-      <p>موجودی دقیق: {variant.inventory.onHandQuantity.toLocaleString('fa-IR')}</p>
+      <p className="leading-8 text-muted">
+        موجودی دقیق: {variant.inventory.onHandQuantity.toLocaleString('fa-IR')}
+      </p>
       {!editable ? (
-        <dl className="workspace-facts">
+        <dl className="m-0 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <dt>اندازه</dt>
-            <dd>{variant.size ?? '—'}</dd>
+            <dt className="text-sm text-muted">اندازه</dt>
+            <dd className="mt-1 break-words">{variant.size ?? '—'}</dd>
           </div>
           <div>
-            <dt>رنگ</dt>
-            <dd>{variant.color ?? '—'}</dd>
+            <dt className="text-sm text-muted">رنگ</dt>
+            <dd className="mt-1 break-words">{variant.color ?? '—'}</dd>
           </div>
           <div>
-            <dt>قیمت</dt>
-            <dd>{formatPrice(variant.priceRial, unit)}</dd>
+            <dt className="text-sm text-muted">قیمت</dt>
+            <dd className="mt-1 break-words">{formatPrice(variant.priceRial, unit)}</dd>
           </div>
         </dl>
       ) : (
-        <form className="workspace-form" noValidate onSubmit={(event) => void submit(event)}>
+        <form className="grid max-w-4xl gap-4" noValidate onSubmit={(event) => void submit(event)}>
           <Summary message={summary} reference={summaryRef} />
           <ControlledTextField
             control={control}
@@ -424,7 +447,7 @@ function VariantEditor({
             disabled={busy}
             rules={{ validate: (value) => skuError(value) ?? true }}
           />
-          <div className="variant-options">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <ControlledTextField
               control={control}
               name="size"
@@ -452,65 +475,64 @@ function VariantEditor({
               validate: (value) => priceInputToRial(value, unit) !== null || 'قیمت معتبر نیست.',
             }}
           />
-          <div className="variant-maintenance-actions">
-            <button className="primary-button" type="submit" disabled={busy} aria-busy={busy}>
+          <div className="flex flex-wrap gap-3">
+            <UiButton type="submit" disabled={busy} aria-busy={busy}>
               ذخیره تنوع
-            </button>
+            </UiButton>
             {variant.isActive ? (
-              <button
-                className="secondary-button"
-                type="button"
+              <UiButton
+                variant="secondary"
                 disabled={busy}
                 onClick={() => setConfirmDeactivate(true)}
               >
                 غیرفعال‌کردن
-              </button>
+              </UiButton>
             ) : (
-              <button
-                className="secondary-button"
-                type="button"
+              <UiButton
+                variant="secondary"
                 disabled={busy}
                 onClick={() => void gate.run(run, () => setActive(true))}
               >
                 فعال‌کردن دوباره
-              </button>
+              </UiButton>
             )}
           </div>
         </form>
       )}
       {confirmDeactivate ? (
-        <div className="category-dialog-backdrop">
+        <div className="fixed inset-0 z-20 grid place-items-center bg-slate-950/60 p-4">
           <div
             ref={deactivateDialogRef}
-            className="category-dialog"
+            className="max-h-dvh w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-5 shadow-2xl sm:p-8"
             role="dialog"
             aria-modal="true"
             aria-labelledby={`deactivate-${variant.id}`}
             aria-busy={busy}
             onKeyDown={handleDeactivateDialogKeyDown}
           >
-            <h2 id={`deactivate-${variant.id}`}>غیرفعال‌کردن {variant.sku}</h2>
-            <p>
+            <h2 className="m-0 text-lg font-bold" id={`deactivate-${variant.id}`}>
+              غیرفعال‌کردن {variant.sku}
+            </h2>
+            <p className="leading-8 text-muted">
               تنوع «{variant.sku}» حفظ می‌شود اما دیگر فعال نخواهد بود. آخرین تنوع فعال را نمی‌توان
               غیرفعال کرد.
             </p>
-            <div className="category-dialog-actions">
-              <button
+            <div className="mt-4 flex flex-wrap gap-2">
+              <UiButton
                 ref={cancelDeactivateRef}
-                type="button"
+                variant="secondary"
                 disabled={busy}
                 onClick={() => setConfirmDeactivate(false)}
               >
                 انصراف
-              </button>
-              <button
-                type="button"
-                className="danger-button"
+              </UiButton>
+              <UiButton
+                variant="danger"
                 disabled={busy}
                 onClick={() => void gate.run(run, () => setActive(false))}
               >
                 {busy ? 'در حال غیرفعال‌کردن…' : 'غیرفعال‌کردن تنوع'}
-              </button>
+              </UiButton>
             </div>
           </div>
         </div>
@@ -592,22 +614,17 @@ function AddVariantForm({
     }
   }
 
-  if (!open)
-    return (
-      <button className="primary-button" type="button" onClick={() => setOpen(true)}>
-        افزودن تنوع
-      </button>
-    );
+  if (!open) return <UiButton onClick={() => setOpen(true)}>افزودن تنوع</UiButton>;
   // The submission gate is stable route-local state; this callback does not read a React ref.
   // eslint-disable-next-line react-hooks/refs
   const submit = handleSubmit((values) => gate.run(create, values));
   return (
     <form
-      className="workspace-form add-variant-form"
+      className="grid max-w-4xl gap-4 rounded-xl border border-border bg-surface p-4"
       noValidate
       onSubmit={(event) => void submit(event)}
     >
-      <h3>تنوع جدید</h3>
+      <h3 className="m-0 font-bold">تنوع جدید</h3>
       <Summary message={summary} reference={summaryRef} />
       <ControlledTextField
         control={control}
@@ -617,7 +634,7 @@ function AddVariantForm({
         disabled={isSubmitting}
         rules={{ validate: (value) => skuError(value) ?? true }}
       />
-      <div className="variant-options">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <ControlledTextField
           control={control}
           name="size"
@@ -645,11 +662,12 @@ function AddVariantForm({
           validate: (value) => priceInputToRial(value, unit) !== null || 'قیمت معتبر نیست.',
         }}
       />
-      <p className="field-hint">موجودی اولیه این تنوع صفر است و در بخش موجودی تغییر می‌کند.</p>
-      <div className="variant-maintenance-actions">
-        <button
-          className="secondary-button"
-          type="button"
+      <p className="m-0 text-sm text-muted">
+        موجودی اولیه این تنوع صفر است و در بخش موجودی تغییر می‌کند.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <UiButton
+          variant="secondary"
           disabled={isSubmitting}
           onClick={() => {
             if (!isDirty || window.confirm('تغییرات تنوع جدید کنار گذاشته شود؟')) {
@@ -659,15 +677,10 @@ function AddVariantForm({
           }}
         >
           انصراف
-        </button>
-        <button
-          className="primary-button"
-          type="submit"
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
-        >
+        </UiButton>
+        <UiButton type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
           {isSubmitting ? 'در حال افزودن…' : 'ثبت تنوع'}
-        </button>
+        </UiButton>
       </div>
     </form>
   );
@@ -798,49 +811,60 @@ export function ProductWorkspaceView({
   };
 
   return (
-    <section className="product-workspace" aria-labelledby="workspace-heading">
-      <div className="workspace-heading">
+    <section className="grid gap-4" aria-labelledby="workspace-heading">
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
         <div>
-          <h1 id="workspace-heading" ref={heading} tabIndex={-1}>
+          <h1
+            className="m-0 text-2xl font-bold leading-snug"
+            id="workspace-heading"
+            ref={heading}
+            tabIndex={-1}
+          >
             {product.name}
           </h1>
-          <p>
+          <p className="mb-0 mt-2 text-muted">
             وضعیت: {STATUS_LABELS[product.status]} · واحد قیمت:{' '}
             {unit === 'TOMAN' ? 'تومان' : 'ریال'}
           </p>
         </div>
       </div>
       {!canManage ? (
-        <p className="permission-note" role="note">
+        <p className="m-0 rounded-xl bg-surface-subtle p-4 leading-8 text-muted" role="note">
           این محصول برای حساب شما فقط خواندنی است.
         </p>
       ) : null}
       {product.status === 'ARCHIVED' ? (
-        <p className="permission-note" role="note">
+        <p className="m-0 rounded-xl bg-surface-subtle p-4 leading-8 text-muted" role="note">
           محصول بایگانی‌شده تا بازگشت به پیش‌نویس فقط خواندنی است.
         </p>
       ) : null}
-      <p aria-live="polite">{announcement}</p>
-      <nav className="workspace-tabs" aria-label="بخش‌های محصول">
+      <p className="m-0 min-h-6" aria-live="polite">
+        {announcement}
+      </p>
+      <nav className="flex flex-wrap gap-2 border-b border-border" aria-label="بخش‌های محصول">
         <Link
+          className={workspaceTabClass(section === 'overview')}
           href={`/catalog/products/${product.id}?section=overview`}
           aria-current={section === 'overview' ? 'page' : undefined}
         >
           مشخصات
         </Link>
         <Link
+          className={workspaceTabClass(section === 'variants')}
           href={`/catalog/products/${product.id}?section=variants`}
           aria-current={section === 'variants' ? 'page' : undefined}
         >
           تنوع‌ها
         </Link>
         <Link
+          className={workspaceTabClass(section === 'inventory')}
           href={`/catalog/products/${product.id}?section=inventory`}
           aria-current={section === 'inventory' ? 'page' : undefined}
         >
           موجودی
         </Link>
         <Link
+          className={workspaceTabClass(section === 'images')}
           href={`/catalog/products/${product.id}?section=images`}
           aria-current={section === 'images' ? 'page' : undefined}
         >
@@ -859,10 +883,12 @@ export function ProductWorkspaceView({
           onPermissionDenied={onPermissionDenied}
         />
       ) : section === 'variants' ? (
-        <div className="workspace-variants">
-          <div className="variant-section-heading">
-            <h2>تنوع‌های نگه‌داری‌شده</h2>
-            <p>حالت محصول: {mode === 'default' ? 'بدون گزینه' : 'دارای اندازه یا رنگ'}</p>
+        <div className="grid gap-4">
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
+            <h2 className="m-0 text-lg font-bold">تنوع‌های نگه‌داری‌شده</h2>
+            <p className="m-0 text-muted">
+              حالت محصول: {mode === 'default' ? 'بدون گزینه' : 'دارای اندازه یا رنگ'}
+            </p>
           </div>
           {product.variants.map((variant) => (
             <VariantEditor

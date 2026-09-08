@@ -12,7 +12,7 @@ void test('renders accessible email-or-username and six-digit password semantics
     />,
   );
 
-  assert.match(html, /<label for="identifier">ایمیل یا نام کاربری<\/label>/);
+  assert.match(html, /<label[^>]*for="identifier"[^>]*>ایمیل یا نام کاربری<\/label>/);
   assert.match(html, /id="identifier"/);
   assert.match(html, /dir="ltr"/);
   assert.match(html, /autoComplete="username"/);

@@ -1,5 +1,5 @@
-import { AppLoading } from './components/app-loading';
+import { UiLoading } from './components/shared/ui-loading';
 
 export default function Loading() {
-  return <AppLoading fullscreen />;
+  return <UiLoading fullscreen />;
 }

@@ -1,0 +1,10 @@
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-iran-sans), Tahoma, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+}
+
+@utility text-code-relative {
+  font-size: 0.9em;
+}

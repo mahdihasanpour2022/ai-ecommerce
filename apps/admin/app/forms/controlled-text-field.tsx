@@ -39,8 +39,10 @@ export function ControlledTextField<TValues extends FieldValues, TName extends F
       name={name}
       {...(rules ? { rules } : {})}
       render={({ field, fieldState }) => (
-        <div className="controlled-field">
-          <label htmlFor={id}>{label}</label>
+        <div className="grid gap-2">
+          <label className="font-bold" htmlFor={id}>
+            {label}
+          </label>
           <Input
             id={id}
             name={field.name}
@@ -55,7 +57,7 @@ export function ControlledTextField<TValues extends FieldValues, TName extends F
             {...(autoComplete ? { autoComplete } : {})}
           />
           {fieldState.error ? (
-            <p id={errorId} className="field-error" role="alert">
+            <p id={errorId} className="m-0 text-xs leading-7 text-danger" role="alert">
               {fieldState.error.message}
             </p>
           ) : null}

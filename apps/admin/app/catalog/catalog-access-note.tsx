@@ -14,7 +14,7 @@ export function CatalogAccessNote({
 }>) {
   const capabilities = useCatalogCapabilities();
   return (
-    <p className="permission-note" role="note">
+    <p className="mt-6 rounded-xl bg-surface-subtle p-4 leading-8 text-muted" role="note">
       {capabilities[capability] ? allowedMessage : readOnlyMessage}
     </p>
   );

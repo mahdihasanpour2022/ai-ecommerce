@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import localFont from 'next/font/local';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { AdminUiProvider } from './admin-ui-provider';
+import { ADMIN_THEME_COOKIE, parseAdminTheme } from './admin-theme';
 import { AuthProvider } from './auth/auth-provider';
 import { DocumentShell } from './document-shell';
 import 'antd/dist/reset.css';
@@ -38,12 +39,13 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const requestHeaders = await headers();
+  const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
   const initialCurrent = decodeAuthenticationHeader(requestHeaders.get(AUTH_STATE_HEADER));
+  const initialTheme = parseAdminTheme(cookieStore.get(ADMIN_THEME_COOKIE)?.value);
   return (
-    <DocumentShell bodyClassName={iranSans.variable}>
+    <DocumentShell bodyClassName={iranSans.variable} theme={initialTheme}>
       <AntdRegistry>
-        <AdminUiProvider>
+        <AdminUiProvider initialTheme={initialTheme}>
           <AuthProvider initialCurrent={initialCurrent}>{children}</AuthProvider>
         </AdminUiProvider>
       </AntdRegistry>

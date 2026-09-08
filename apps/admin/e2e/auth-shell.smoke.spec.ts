@@ -112,7 +112,7 @@ test('protects the responsive Product routes with exact permission presentation'
   await expect(page.getByRole('heading', { level: 1, name: 'محصولات' })).toBeVisible();
   await expect(page.getByText('محصولات برای حساب شما فقط خواندنی هستند.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'ایجاد محصول پیش‌نویس' })).toHaveCount(0);
-  const toggle = page.getByRole('button', { name: 'فهرست بخش‌ها' });
+  const toggle = page.getByRole('button', { name: 'فهرست بخش‌ها', exact: true });
   await expect(toggle).toBeVisible();
   await toggle.press('Enter');
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');

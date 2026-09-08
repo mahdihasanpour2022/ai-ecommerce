@@ -149,7 +149,7 @@ void test('renders the ordered nested tree read-only and supports keyboard discl
   assert.deepEqual(
     view
       .getAllByRole('treeitem')
-      .map((item) => item.querySelector('.category-node-name')?.textContent),
+      .map((item) => item.querySelector('[data-category-name]')?.textContent),
     ['پوشاک', 'زنانه', 'اکسسوری'],
   );
   assert.equal(view.queryByRole('button', { name: 'افزودن دسته‌بندی' }), null);
@@ -219,7 +219,7 @@ void test('preserves edit input and focuses the field on a stable name conflict'
   const view = renderManagement(true, api);
   const user = userEvent.setup({ document: globalThis.document });
   await view.findByRole('tree');
-  const rootNode = view.getByText('پوشاک').closest('.category-node');
+  const rootNode = view.getByText('پوشاک').closest('[data-category-id]');
   assert.ok(rootNode);
   await user.click(within(rootNode as HTMLElement).getByRole('button', { name: 'ویرایش' }));
   const dialog = view.getByRole('dialog', { name: 'ویرایش پوشاک' });
@@ -248,7 +248,7 @@ void test('keeps edit input while explicitly refreshing after a hierarchy confli
   const view = renderManagement(true, api);
   const user = userEvent.setup({ document: globalThis.document });
   await view.findByRole('tree');
-  const node = view.getByText('اکسسوری').closest('.category-node');
+  const node = view.getByText('اکسسوری').closest('[data-category-id]');
   assert.ok(node);
   await user.click(within(node as HTMLElement).getByRole('button', { name: 'ویرایش' }));
   const dialog = view.getByRole('dialog', { name: 'ویرایش اکسسوری' });
@@ -278,7 +278,7 @@ void test('labels leaf deletion, retains the node on conflict, and returns focus
   const view = renderManagement(true, api);
   const user = userEvent.setup({ document: globalThis.document });
   await view.findByRole('tree');
-  const childNode = view.getByText('زنانه').closest('.category-node');
+  const childNode = view.getByText('زنانه').closest('[data-category-id]');
   assert.ok(childNode);
   const deleteButton = within(childNode as HTMLElement).getByRole('button', { name: 'حذف' });
   await user.click(deleteButton);
@@ -308,7 +308,7 @@ void test('reconciles successful deletion and focuses the nearest surviving node
   const view = renderManagement(true, api);
   const user = userEvent.setup({ document: globalThis.document });
   await view.findByRole('tree');
-  const childNode = view.getByText('زنانه').closest('.category-node');
+  const childNode = view.getByText('زنانه').closest('[data-category-id]');
   assert.ok(childNode);
   await user.click(within(childNode as HTMLElement).getByRole('button', { name: 'حذف' }));
   await user.click(
@@ -329,7 +329,7 @@ void test('closes mutation UI and returns focus when manage permission is revoke
   const view = renderManagement(true, api);
   const user = userEvent.setup({ document: globalThis.document });
   await view.findByRole('tree');
-  const node = view.getByText('اکسسوری').closest('.category-node');
+  const node = view.getByText('اکسسوری').closest('[data-category-id]');
   assert.ok(node);
   const edit = within(node as HTMLElement).getByRole('button', { name: 'ویرایش' });
   await user.click(edit);

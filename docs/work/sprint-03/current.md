@@ -21,6 +21,8 @@ Authorized staff need to maintain sellable stock with explicit optimistic-concur
 
 ## Scope
 
+- Preserve the owner-approved representative Admin visual slice on `/catalog/products` and the shared Catalog shell: one light-gray canvas visibly separating three independent rounded white surfaces for the Sidebar, Header, and main Content; exact strong/light accents `#ed980e` and `#f2b249`; mobile-first Tailwind sizing and responsive phone/tablet/desktop/wide-desktop table/card presentation without page overflow; independent Admin Tailwind 4 utilities; local shared UI primitives; and user-selectable first-render-safe light/dark appearance. Broader propagation still requires owner visual approval.
+
 - Add exact absolute Inventory editing for each retained Variant in the Product workspace, visible only with `inventory.update` while preserving read-only quantities for `catalog.read` users.
 - Submit `onHandQuantity` with the exact last-read positive `version`, reconcile the normalized response, announce success, and support intentional same-value updates.
 - On `INVENTORY_VERSION_CONFLICT`, explain the conflict, refetch authoritative Product detail, show the new quantity/version, preserve the user's awareness of the attempted value, and require fresh entry/confirmation without automatic retry.
@@ -35,6 +37,8 @@ Authorized staff need to maintain sellable stock with explicit optimistic-concur
 - Relative increment/decrement controls, bulk Inventory editing, reservations, adjustment reasons/history, multi-location stock, automatic conflict retries, price rewriting, new currencies, decimals/rounding, Product Image work, lifecycle/publication work, Storefront UI, Backend contract/schema changes, migrations, and dependencies beyond the approved TanStack Query runtime/development packages.
 
 ## Expected Changes
+
+- Representative Catalog shell/Product-list visual foundation, Admin theme provider, exact approved Tailwind setup, and application-local `components/shared` primitives.
 
 - Admin Product workspace Inventory section and route-local state/forms.
 - Admin price display-setting route and confirmation flow.
@@ -84,4 +88,8 @@ Update project reality, frontend architecture, and Sprint records to describe on
 
 Awaiting Implementation Approval for the remaining Inventory and price-setting workflow. The owner separately approved and completed installation of TanStack Query `5.102.8` and approved migration of all currently implemented Admin client endpoint calls.
 
+The owner separately approved the representative Catalog visual slice and exact Admin development dependencies `tailwindcss@4.3.3` and `@tailwindcss/postcss@4.3.3` on 2026-09-05. That visual slice is implemented and awaiting live owner review before any broad propagation; it does not authorize the remaining Inventory or price-setting workflow.
+
 The approved TanStack foundation/current-call migration is complete: Admin typecheck, lint, production build, formatting, 107 automated tests, and the owner-run system-Chrome Playwright smoke (`2 passed`) passed on 2026-09-05.
+
+After the representative responsive Catalog redesign and the exact accessible mobile-navigation locator correction, the owner reran the system-Chrome Playwright smoke on 2026-09-06: both tests passed (`2 passed`, 11.1 seconds). This is the current browser evidence for unchanged Catalog shell/Product-list code.

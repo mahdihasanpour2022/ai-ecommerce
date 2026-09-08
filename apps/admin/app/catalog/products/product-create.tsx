@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../auth/auth-provider';
 import { createSubmissionGate } from '../../auth/submission-gate';
 import { ControlledTextField } from '../../forms/controlled-text-field';
+import { UiButton } from '../../components/shared/ui-button';
 import type { CatalogApi, CreateProductInput } from '../catalog-api';
 import { catalogApi } from '../catalog-api';
 import { useCatalogRQClient } from '../../../hooks/catalog/useCatalogRQClient';
@@ -69,8 +70,10 @@ function TextAreaField({
       name="description"
       rules={{ validate: (value) => descriptionError(value) ?? true }}
       render={({ field, fieldState }) => (
-        <div className="controlled-field">
-          <label htmlFor="product-description">توضیحات (اختیاری)</label>
+        <div className="grid gap-2">
+          <label className="font-bold" htmlFor="product-description">
+            توضیحات (اختیاری)
+          </label>
           <Input.TextArea
             id="product-description"
             value={field.value}
@@ -84,9 +87,13 @@ function TextAreaField({
             {...(fieldState.error ? { 'aria-describedby': 'product-description-error' } : {})}
             {...(fieldState.invalid ? { status: 'error' as const } : {})}
           />
-          <p className="field-hint">متن ساده، حداکثر ۵۰۰۰ نویسه</p>
+          <p className="m-0 text-sm text-muted">متن ساده، حداکثر ۵۰۰۰ نویسه</p>
           {fieldState.error ? (
-            <p id="product-description-error" className="field-error" role="alert">
+            <p
+              id="product-description-error"
+              className="m-0 text-xs leading-7 text-danger"
+              role="alert"
+            >
               {fieldState.error.message}
             </p>
           ) : null}
@@ -356,15 +363,22 @@ export function ProductCreateView({
   };
 
   return (
-    <section className="product-create" aria-labelledby="product-create-heading">
-      <h1 id="product-create-heading">ایجاد محصول پیش‌نویس</h1>
-      <p>
+    <section className="grid gap-4" aria-labelledby="product-create-heading">
+      <h1 className="m-0 text-2xl font-bold leading-snug" id="product-create-heading">
+        ایجاد محصول پیش‌نویس
+      </h1>
+      <p className="m-0 leading-8 text-muted">
         وضعیت محصول هنگام ایجاد «پیش‌نویس» است. واحد این فرم تا زمان خروج{' '}
         <strong>{unit === 'TOMAN' ? 'تومان' : 'ریال'}</strong> باقی می‌ماند.
       </p>
-      <form className="product-create-form" noValidate onSubmit={(event) => void submit(event)}>
+      <form className="grid max-w-4xl gap-4" noValidate onSubmit={(event) => void submit(event)}>
         {summary ? (
-          <p ref={summaryRef} className="form-error" role="alert" tabIndex={-1}>
+          <p
+            ref={summaryRef}
+            className="m-0 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 leading-7 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+            role="alert"
+            tabIndex={-1}
+          >
             {summary}
           </p>
         ) : null}
@@ -382,9 +396,12 @@ export function ProductCreateView({
           name="categoryId"
           rules={{ required: 'انتخاب دسته‌بندی الزامی است.' }}
           render={({ field, fieldState }) => (
-            <div className="controlled-field">
-              <label htmlFor="product-category">دسته‌بندی (الزامی)</label>
+            <div className="grid gap-2">
+              <label className="font-bold" htmlFor="product-category">
+                دسته‌بندی (الزامی)
+              </label>
               <Select
+                className="min-h-10 w-full"
                 id="product-category"
                 value={field.value || undefined}
                 placeholder="یک دسته‌بندی انتخاب کنید"
@@ -401,20 +418,21 @@ export function ProductCreateView({
                 getPopupContainer={(trigger) => trigger.parentElement ?? trigger}
               />
               {fieldState.error ? (
-                <p className="field-error" role="alert">
+                <p className="m-0 text-xs leading-7 text-danger" role="alert">
                   {fieldState.error.message}
                 </p>
               ) : null}
             </div>
           )}
         />
-        <fieldset className="variant-mode" disabled={isSubmitting}>
-          <legend>حالت تنوع (الزامی)</legend>
+        <fieldset className="rounded-xl border border-border p-4" disabled={isSubmitting}>
+          <legend className="px-2 font-bold">حالت تنوع (الزامی)</legend>
           <Controller
             control={control}
             name="mode"
             render={({ field }) => (
               <Radio.Group
+                className="grid gap-3"
                 name={field.name}
                 value={field.value}
                 onChange={(event) => {
@@ -427,13 +445,19 @@ export function ProductCreateView({
               </Radio.Group>
             )}
           />
-          <p className="field-hint">این حالت پس از ایجاد در Sprint 3 قابل تبدیل نیست.</p>
+          <p className="m-0 mt-3 text-sm text-muted">
+            این حالت پس از ایجاد در Sprint 3 قابل تبدیل نیست.
+          </p>
         </fieldset>
 
-        <div className="variant-list">
+        <div className="grid gap-4">
           {fields.map((field, index) => (
-            <fieldset className="variant-card" key={field.id} disabled={isSubmitting}>
-              <legend>تنوع {index + 1}</legend>
+            <fieldset
+              className="grid gap-4 rounded-xl border border-border bg-surface-subtle p-4"
+              key={field.id}
+              disabled={isSubmitting}
+            >
+              <legend className="px-2 font-bold">تنوع {index + 1}</legend>
               <ControlledTextField
                 control={control}
                 name={`variants.${index}.sku`}
@@ -442,7 +466,7 @@ export function ProductCreateView({
                 rules={{ validate: (value) => skuError(value) ?? true }}
               />
               {mode === 'named' ? (
-                <div className="variant-options">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <ControlledTextField
                     control={control}
                     name={`variants.${index}.size`}
@@ -459,7 +483,7 @@ export function ProductCreateView({
                   />
                 </div>
               ) : null}
-              <div className="variant-options">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <ControlledTextField
                   control={control}
                   name={`variants.${index}.price`}
@@ -486,40 +510,29 @@ export function ProductCreateView({
                 />
               </div>
               {mode === 'named' && fields.length > 1 ? (
-                <button className="secondary-button" type="button" onClick={() => remove(index)}>
+                <UiButton variant="secondary" onClick={() => remove(index)}>
                   حذف این تنوع
-                </button>
+                </UiButton>
               ) : null}
             </fieldset>
           ))}
         </div>
         {mode === 'named' ? (
-          <button
-            className="secondary-button"
-            type="button"
+          <UiButton
+            variant="secondary"
             disabled={isSubmitting}
             onClick={() => append(EMPTY_VARIANT, { focusName: `variants.${fields.length}.sku` })}
           >
             افزودن تنوع
-          </button>
+          </UiButton>
         ) : null}
-        <div className="product-form-actions">
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={isSubmitting}
-            onClick={discard}
-          >
+        <div className="flex flex-wrap gap-3">
+          <UiButton variant="secondary" disabled={isSubmitting} onClick={discard}>
             انصراف
-          </button>
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-          >
+          </UiButton>
+          <UiButton type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
             {isSubmitting ? 'در حال ایجاد…' : 'ایجاد محصول پیش‌نویس'}
-          </button>
+          </UiButton>
         </div>
       </form>
     </section>

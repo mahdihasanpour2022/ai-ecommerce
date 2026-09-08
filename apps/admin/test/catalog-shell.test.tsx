@@ -22,6 +22,7 @@ const ALL_CAPABILITIES = {
 } as const;
 
 void test('renders named active navigation and a keyboard-operable narrow-screen disclosure', async () => {
+  let themeToggles = 0;
   const view = render(
     <CatalogShellView
       pathname="/catalog/products/22222222-2222-4222-8222-222222222222"
@@ -31,6 +32,10 @@ void test('renders named active navigation and a keyboard-operable narrow-screen
       logoutSubmitting={false}
       logoutMessage={null}
       onLogout={() => undefined}
+      theme="light"
+      onToggleTheme={() => {
+        themeToggles += 1;
+      }}
     >
       <h1>فضای محصول</h1>
     </CatalogShellView>,
@@ -43,7 +48,7 @@ void test('renders named active navigation and a keyboard-operable narrow-screen
   );
   assert.equal(
     view.getByText('admin@example.com').closest('bdi')?.getAttribute('class'),
-    'ltr-value',
+    'isolate direction-ltr',
   );
 
   const toggle = view.getByRole('button', { name: 'فهرست بخش‌ها' });
@@ -54,6 +59,10 @@ void test('renders named active navigation and a keyboard-operable narrow-screen
   await user.keyboard('{Enter}');
   assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   assert.equal(navigation.getAttribute('data-open'), 'true');
+  const themeToggle = view.getByRole('button', { name: 'فعال‌کردن حالت تیره' });
+  assert.equal(themeToggle.getAttribute('aria-pressed'), 'false');
+  await user.click(themeToggle);
+  assert.equal(themeToggles, 1);
   cleanup();
 });
 

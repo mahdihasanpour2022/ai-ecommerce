@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { AppLoading } from '../components/app-loading';
+import { classNames } from '../components/shared/class-names';
+import { UiButton } from '../components/shared/ui-button';
+import { UiLoading } from '../components/shared/ui-loading';
 
 export type CatalogStateKind = 'loading' | 'empty' | 'error' | 'forbidden' | 'not-found';
 
@@ -31,23 +33,30 @@ export function CatalogState({
     if (blocking) heading.current?.focus();
   }, [blocking]);
 
-  if (busy) return <AppLoading message={title} />;
+  if (busy) return <UiLoading message={title} />;
 
   return (
     <section
-      className={`catalog-state catalog-state-${kind}`}
+      className={classNames(
+        'rounded-2xl border border-border bg-surface p-5 sm:p-8',
+        blocking && 'border-s-4 border-s-danger',
+      )}
       aria-live={kind === 'empty' ? 'polite' : 'assertive'}
       role={kind === 'empty' ? 'status' : 'alert'}
     >
-      <h1 ref={heading} tabIndex={blocking ? -1 : undefined}>
+      <h1
+        className="m-0 text-2xl font-bold leading-snug"
+        ref={heading}
+        tabIndex={blocking ? -1 : undefined}
+      >
         {title}
       </h1>
-      <p>{message}</p>
-      <div className="catalog-state-actions">
+      <p className="mb-0 leading-8 text-muted">{message}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         {onRetry ? (
-          <button className="secondary-button" type="button" onClick={onRetry}>
+          <UiButton variant="secondary" onClick={onRetry}>
             تلاش دوباره
-          </button>
+          </UiButton>
         ) : null}
         {returnHref ? <Link href={returnHref}>{returnLabel}</Link> : null}
       </div>

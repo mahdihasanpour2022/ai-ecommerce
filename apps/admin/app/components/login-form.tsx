@@ -2,8 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { loginSchema } from '../login/login-schema';
 import type { LoginValues } from '../login/login-schema';
+import { loginSchema } from '../login/login-schema';
+import { UiButton } from './shared/ui-button';
 
 interface LoginFormProps {
   readonly submitting: boolean;
@@ -21,6 +22,7 @@ export function LoginForm(props: LoginFormProps) {
     resolver: zodResolver(loginSchema),
     defaultValues: { identifier: '', password: '' },
     shouldFocusError: true,
+    mode: 'onChange',
   });
   const submit = handleSubmit(async (values) => {
     resetField('password');
@@ -28,10 +30,13 @@ export function LoginForm(props: LoginFormProps) {
   });
 
   return (
-    <form className="login-form" noValidate onSubmit={(event) => void submit(event)}>
-      <div className="field">
-        <label htmlFor="identifier">ایمیل یا نام کاربری</label>
+    <form className="mt-6 grid gap-4" noValidate onSubmit={(event) => void submit(event)}>
+      <div className="grid gap-2">
+        <label className="text-sm font-bold" htmlFor="identifier">
+          ایمیل یا نام کاربری
+        </label>
         <input
+          className="min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-slate-900 focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           id="identifier"
           type="text"
           autoComplete="username"
@@ -47,17 +52,17 @@ export function LoginForm(props: LoginFormProps) {
           {...register('identifier')}
         />
         {errors.identifier ? (
-          <p id="identifier-error" className="field-error" role="alert">
+          <p id="identifier-error" className="m-0 text-xs leading-7 text-danger" role="alert">
             {errors.identifier.message}
           </p>
         ) : null}
-        <p id="identifier-help" className="field-hint">
-          نام کاربری باید ۳ تا ۲۰ کاراکتر و فقط شامل حروف انگلیسی، عدد یا _ باشد.
-        </p>
       </div>
-      <div className="field">
-        <label htmlFor="password">گذرواژه</label>
+      <div className="grid gap-2">
+        <label className="text-sm font-bold" htmlFor="password">
+          رمز
+        </label>
         <input
+          className="min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-slate-900 focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           id="password"
           type="password"
           inputMode="numeric"
@@ -73,27 +78,29 @@ export function LoginForm(props: LoginFormProps) {
           {...register('password')}
         />
         {errors.password ? (
-          <p id="password-error" className="field-error" role="alert">
+          <p id="password-error" className="m-0 text-xs leading-7 text-danger" role="alert">
             {errors.password.message}
           </p>
         ) : null}
-        <p id="password-help" className="field-hint">
-          رمز عبور باید دقیقاً ۶ رقم انگلیسی باشد.
-        </p>
       </div>
       {props.error ? (
-        <p id="login-error" className="form-error" role="alert" tabIndex={-1}>
+        <p
+          id="login-error"
+          className="m-0 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 leading-7 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+          role="alert"
+          tabIndex={-1}
+        >
           {props.error}
         </p>
       ) : null}
-      <button
-        className="primary-button"
+      <UiButton
+        className="w-full"
         type="submit"
         disabled={props.submitting}
         aria-busy={props.submitting}
       >
         {props.submitting ? 'در حال ورود…' : 'ورود به پنل مدیریت'}
-      </button>
+      </UiButton>
     </form>
   );
 }

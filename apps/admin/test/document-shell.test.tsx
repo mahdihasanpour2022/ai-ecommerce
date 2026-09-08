@@ -5,11 +5,11 @@ import { DocumentShell } from '../app/document-shell';
 
 void test('renders the Admin document in Persian RTL', () => {
   const html = renderToStaticMarkup(
-    <DocumentShell>
+    <DocumentShell theme="dark">
       <main>پنل مدیریت</main>
     </DocumentShell>,
   );
 
-  assert.match(html, /^<html lang="fa-IR" dir="rtl">/);
+  assert.match(html, /^<html lang="fa-IR" dir="rtl" data-theme="dark" style="color-scheme:dark">/);
   assert.match(html, /<main>پنل مدیریت<\/main>/);
 });

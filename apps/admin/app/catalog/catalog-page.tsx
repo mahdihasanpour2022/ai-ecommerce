@@ -11,12 +11,22 @@ export function CatalogPage({
   children,
 }: Readonly<{ breadcrumbs: readonly BreadcrumbItem[]; children: ReactNode }>) {
   return (
-    <div className="catalog-page">
-      <nav className="catalog-breadcrumbs" aria-label="مسیر صفحه">
-        <ol>
+    <div className="grid gap-4">
+      <nav aria-label="مسیر صفحه">
+        <ol className="m-0 flex list-none flex-wrap items-center gap-2 p-0 text-xs text-muted">
           {breadcrumbs.map((item) => (
-            <li key={`${item.href ?? 'current'}-${item.label}`}>
-              {item.href ? <Link href={item.href}>{item.label}</Link> : <span>{item.label}</span>}
+            <li className="flex items-center gap-2" key={`${item.href ?? 'current'}-${item.label}`}>
+              {item.href ? (
+                <Link
+                  className="text-muted no-underline hover:text-accent-foreground"
+                  href={item.href}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span className="font-bold text-foreground">{item.label}</span>
+              )}
+              {item.href ? <span aria-hidden="true">/</span> : null}
             </li>
           ))}
         </ol>

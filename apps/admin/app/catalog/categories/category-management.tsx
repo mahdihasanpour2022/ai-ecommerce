@@ -1,6 +1,8 @@
 'use client';
 
 import { Select } from 'antd';
+import { classNames } from '../../components/shared/class-names';
+import { UiButton } from '../../components/shared/ui-button';
 import { Controller, useForm } from 'react-hook-form';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode, RefObject } from 'react';
@@ -109,17 +111,19 @@ function DialogFrame({
   }
 
   return (
-    <div className="category-dialog-backdrop">
+    <div className="fixed inset-0 z-20 grid place-items-center bg-slate-950/60 p-4">
       <div
         ref={dialog}
-        className="category-dialog"
+        className="max-h-dvh w-full max-w-lg overflow-y-auto rounded-2xl bg-surface p-5 shadow-2xl sm:p-8"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         aria-busy={busy}
         onKeyDown={handleKeyDown}
       >
-        <h2 id={titleId}>{title}</h2>
+        <h2 className="m-0 text-lg font-bold leading-snug" id={titleId}>
+          {title}
+        </h2>
         {children}
       </div>
     </div>
@@ -140,9 +144,12 @@ function ParentField({
       control={control}
       name="parentId"
       render={({ field, fieldState }) => (
-        <div className="controlled-field">
-          <label htmlFor="category-parent">دسته‌بندی والد</label>
+        <div className="grid gap-2">
+          <label className="font-bold" htmlFor="category-parent">
+            دسته‌بندی والد
+          </label>
           <Select
+            className="min-h-10 w-full"
             id="category-parent"
             value={field.value ?? '__root__'}
             onChange={(value: string) => field.onChange(value === '__root__' ? null : value)}
@@ -160,11 +167,11 @@ function ParentField({
                   : `${'— '.repeat(Math.max(0, option.level - 1))}${option.label}`,
             }))}
           />
-          <p className="field-hint">
+          <p className="m-0 text-sm text-muted">
             انتخاب‌های نامعتبرِ قابل مشاهده حذف شده‌اند؛ اعتبار نهایی ساختار با سرور است.
           </p>
           {fieldState.error ? (
-            <p className="field-error" role="alert">
+            <p className="m-0 text-xs leading-7 text-danger" role="alert">
               {fieldState.error.message}
             </p>
           ) : null}
@@ -286,27 +293,31 @@ function CategoryEditorDialog({
       onClose={close}
       initialFocus={heading}
     >
-      <form className="category-form" noValidate onSubmit={(event) => void submit(event)}>
-        <p className="field-hint">
+      <form className="mt-4 grid gap-4" noValidate onSubmit={(event) => void submit(event)}>
+        <p className="m-0 text-sm leading-7 text-muted">
           نام پس از یکسان‌سازی فاصله‌ها ذخیره می‌شود. همهٔ فیلدهای الزامی مشخص شده‌اند.
         </p>
         {summary ? (
-          <p className="form-error" role="alert" tabIndex={-1} ref={heading}>
+          <p
+            className="m-0 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 leading-7 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+            role="alert"
+            tabIndex={-1}
+            ref={heading}
+          >
             {summary}
           </p>
         ) : (
-          <span ref={heading} tabIndex={-1} className="focus-anchor" />
+          <span ref={heading} tabIndex={-1} className="absolute" />
         )}
         {canRefreshTree ? (
-          <button
-            className="secondary-button"
-            type="button"
+          <UiButton
+            variant="secondary"
             disabled={isSubmitting || refreshingTree}
             aria-busy={refreshingTree}
             onClick={onRefreshTree}
           >
             {refreshingTree ? 'در حال تازه‌سازی…' : 'تازه‌سازی ساختار'}
-          </button>
+          </UiButton>
         ) : null}
         <ControlledTextField
           control={control}
@@ -321,23 +332,13 @@ function CategoryEditorDialog({
           options={categoryOptions(tree, category?.id)}
           disabled={isSubmitting}
         />
-        <div className="category-dialog-actions">
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={isSubmitting}
-            onClick={close}
-          >
+        <div className="mt-4 flex flex-wrap justify-start gap-2">
+          <UiButton variant="secondary" disabled={isSubmitting} onClick={close}>
             انصراف
-          </button>
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={isSubmitting}
-            aria-busy={isSubmitting}
-          >
+          </UiButton>
+          <UiButton type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
             {isSubmitting ? 'در حال ذخیره…' : 'ذخیره'}
-          </button>
+          </UiButton>
         </div>
       </form>
     </DialogFrame>
@@ -406,40 +407,32 @@ function DeleteCategoryDialog({
         آیا از حذف «{state.category.name}» مطمئن هستید؟ وجود زیرمجموعه یا هر محصولی مانع حذف می‌شود.
       </p>
       {error ? (
-        <p ref={errorSummary} className="form-error" role="alert" tabIndex={-1}>
+        <p
+          ref={errorSummary}
+          className="m-0 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 leading-7 text-red-900 dark:bg-red-950/30 dark:text-red-200"
+          role="alert"
+          tabIndex={-1}
+        >
           {error}
         </p>
       ) : null}
       {canRefreshTree ? (
-        <button
-          className="secondary-button"
-          type="button"
+        <UiButton
+          variant="secondary"
           disabled={busy || refreshingTree}
           aria-busy={refreshingTree}
           onClick={onRefreshTree}
         >
           {refreshingTree ? 'در حال تازه‌سازی…' : 'تازه‌سازی ساختار'}
-        </button>
+        </UiButton>
       ) : null}
-      <div className="category-dialog-actions">
-        <button
-          ref={cancelButton}
-          className="secondary-button"
-          type="button"
-          disabled={busy}
-          onClick={close}
-        >
+      <div className="mt-4 flex flex-wrap justify-start gap-2">
+        <UiButton ref={cancelButton} variant="secondary" disabled={busy} onClick={close}>
           انصراف
-        </button>
-        <button
-          className="danger-button"
-          type="button"
-          disabled={busy}
-          aria-busy={busy}
-          onClick={() => void remove()}
-        >
+        </UiButton>
+        <UiButton variant="danger" disabled={busy} aria-busy={busy} onClick={() => void remove()}>
           {busy ? 'در حال حذف…' : 'حذف دسته‌بندی'}
-        </button>
+        </UiButton>
       </div>
     </DialogFrame>
   );
@@ -462,8 +455,11 @@ function CategoryTree({
   onEdit(category: CategoryDto, opener: HTMLElement): void;
   onDelete(category: CategoryDto, opener: HTMLElement): void;
 }>) {
-  const renderNodes = (nodes: readonly CategoryDto[]) => (
-    <ul className="category-tree" role="group">
+  const renderNodes = (nodes: readonly CategoryDto[], nested = false) => (
+    <ul
+      className={classNames('m-0 list-none p-0', nested && 'ms-5 border-s border-border ps-2')}
+      role="group"
+    >
       {nodes.map((category) => {
         const hasChildren = category.children.length > 0;
         const isExpanded = expanded.has(category.id);
@@ -475,10 +471,14 @@ function CategoryTree({
             aria-selected="false"
             aria-expanded={hasChildren ? isExpanded : undefined}
           >
-            <div className="category-node" data-category-id={category.id} tabIndex={-1}>
+            <div
+              className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl px-2 py-3 hover:bg-surface-subtle"
+              data-category-id={category.id}
+              tabIndex={-1}
+            >
               {hasChildren ? (
                 <button
-                  className="category-disclosure"
+                  className="size-8 shrink-0 cursor-pointer rounded-lg border border-border bg-surface font-extrabold text-brand"
                   type="button"
                   aria-expanded={isExpanded}
                   aria-controls={childrenId}
@@ -488,42 +488,47 @@ function CategoryTree({
                   {isExpanded ? '−' : '+'}
                 </button>
               ) : (
-                <span className="category-leaf-marker" aria-hidden="true">
+                <span className="w-8 shrink-0 text-center" aria-hidden="true">
                   •
                 </span>
               )}
-              <span className="category-node-name">{category.name}</span>
-              <span className="category-level">سطح {category.level.toLocaleString('fa-IR')}</span>
+              <span className="min-w-28 flex-1 font-bold break-words" data-category-name>
+                {category.name}
+              </span>
+              <span className="whitespace-nowrap text-sm text-muted">
+                سطح {category.level.toLocaleString('fa-IR')}
+              </span>
               {canManage ? (
-                <span className="category-node-actions">
-                  <button
-                    className="category-action"
-                    type="button"
+                <span className="flex w-full flex-wrap gap-2 sm:w-auto">
+                  <UiButton
+                    size="small"
+                    variant="secondary"
                     onClick={(event) => onCreate(category, event.currentTarget)}
                   >
                     افزودن زیرمجموعه
-                  </button>
-                  <button
-                    className="category-action"
-                    type="button"
+                  </UiButton>
+                  <UiButton
+                    size="small"
+                    variant="secondary"
                     onClick={(event) => onEdit(category, event.currentTarget)}
                   >
                     ویرایش
-                  </button>
+                  </UiButton>
                   {!hasChildren ? (
-                    <button
-                      className="category-action category-delete-action"
-                      type="button"
+                    <UiButton
+                      size="small"
+                      variant="ghost"
+                      className="text-danger"
                       onClick={(event) => onDelete(category, event.currentTarget)}
                     >
                       حذف
-                    </button>
+                    </UiButton>
                   ) : null}
                 </span>
               ) : null}
             </div>
             {hasChildren && isExpanded ? (
-              <div id={childrenId}>{renderNodes(category.children)}</div>
+              <div id={childrenId}>{renderNodes(category.children, true)}</div>
             ) : null}
           </li>
         );
@@ -532,7 +537,11 @@ function CategoryTree({
   );
 
   return (
-    <div className="category-tree-panel" role="tree" aria-label="درخت دسته‌بندی‌ها">
+    <div
+      className="overflow-hidden rounded-2xl border border-border bg-surface p-2"
+      role="tree"
+      aria-label="درخت دسته‌بندی‌ها"
+    >
       {renderNodes(tree)}
     </div>
   );
@@ -690,49 +699,61 @@ export function CategoryManagementView({
   };
 
   return (
-    <section className="category-management" aria-labelledby="categories-heading">
-      <div className="category-page-heading">
+    <section
+      className="rounded-2xl border border-border bg-surface p-5 sm:p-8"
+      aria-labelledby="categories-heading"
+    >
+      <div className="flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <h1 id="categories-heading" ref={heading} tabIndex={-1}>
+          <h1
+            className="m-0 text-2xl font-bold leading-snug"
+            id="categories-heading"
+            ref={heading}
+            tabIndex={-1}
+          >
             دسته‌بندی‌ها
           </h1>
-          <p>ساختار دسته‌بندی‌ها در ترتیب ثبت‌شده در سرور نمایش داده می‌شود.</p>
+          <p className="mb-0 leading-8 text-muted">
+            ساختار دسته‌بندی‌ها در ترتیب ثبت‌شده در سرور نمایش داده می‌شود.
+          </p>
         </div>
         {canManage ? (
-          <button
-            className="primary-button"
-            type="button"
+          <UiButton
+            className="w-full sm:w-auto"
             onClick={(event) => createRoot(event.currentTarget)}
           >
             افزودن دسته‌بندی
-          </button>
+          </UiButton>
         ) : null}
       </div>
       {!canManage ? (
-        <p className="permission-note" role="note">
+        <p className="mt-6 rounded-xl bg-surface-subtle p-4 leading-8 text-muted" role="note">
           این ساختار برای حساب شما فقط خواندنی است.
         </p>
       ) : null}
-      <p className="category-announcement" aria-live="polite">
+      <p className="my-3 min-h-6 text-green-700 dark:text-green-300" aria-live="polite">
         {announcement}
       </p>
       {refreshState.busy ? (
-        <p className="category-refresh-status" role="status">
+        <p className="mb-3 mt-0 text-muted" role="status">
           در حال دریافت ساختار تازه…
         </p>
       ) : null}
       {refreshState.message ? (
-        <div className="category-refresh-error" role="alert">
-          <p>{refreshState.message}</p>
-          <button className="secondary-button" type="button" onClick={() => refreshTree()}>
+        <div
+          className="mb-3 rounded-lg border-s-4 border-danger bg-red-50 px-4 py-3 dark:bg-red-950/30"
+          role="alert"
+        >
+          <p className="mt-0 leading-7 text-danger">{refreshState.message}</p>
+          <UiButton variant="secondary" onClick={() => refreshTree()}>
             تلاش دوباره برای تازه‌سازی
-          </button>
+          </UiButton>
         </div>
       ) : null}
       {tree.length === 0 ? (
-        <div className="category-empty" role="status">
-          <h2>هنوز دسته‌بندی‌ای ثبت نشده است</h2>
-          <p>
+        <div className="rounded-2xl border border-border bg-surface p-5" role="status">
+          <h2 className="m-0 text-lg font-bold">هنوز دسته‌بندی‌ای ثبت نشده است</h2>
+          <p className="leading-8 text-muted">
             {canManage
               ? 'برای آغاز ساختار کاتالوگ، یک دسته‌بندی ریشه اضافه کنید.'
               : 'پس از ثبت دسته‌بندی، ساختار در این صفحه نمایش داده می‌شود.'}
