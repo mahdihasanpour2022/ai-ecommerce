@@ -59,7 +59,10 @@ void test('logs out exactly once after explicit confirmation', async () => {
 
   await user.click(screen.getByRole('button', { name: 'خروج از حساب' }));
   const dialog = await screen.findByRole('dialog', { name: 'خروج از حساب کاربری' });
-  await user.click(within(dialog).getByRole('button', { name: 'بله، خارج شوم' }));
+  const confirmButton = within(dialog).getByRole('button', { name: 'بله، خارج میشوم' });
+  assert.match(confirmButton.className, /text-white!/);
+  assert.match(confirmButton.className, /hover:text-white!/);
+  await user.click(confirmButton);
 
   await waitFor(() => assert.equal(screen.queryByRole('dialog'), null));
   assert.equal(logoutCount, 1);

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { Modal } from 'antd';
+import { useState } from 'react';
 import { UiButton } from './shared/ui-button';
 
 interface LogoutButtonProps {
@@ -45,9 +45,13 @@ export function LogoutButton({ submitting, message, onLogout }: LogoutButtonProp
       <Modal
         open={confirmationOpen}
         title="خروج از حساب کاربری"
-        okText="بله، خارج شوم"
+        okText="بله، خارج میشوم"
         cancelText="انصراف"
-        okButtonProps={{ danger: true, disabled: submitting }}
+        okButtonProps={{
+          danger: true,
+          disabled: submitting,
+          className: 'text-white! hover:text-white!',
+        }}
         cancelButtonProps={{ autoFocus: true, disabled: submitting }}
         closable={!submitting}
         keyboard={!submitting}
