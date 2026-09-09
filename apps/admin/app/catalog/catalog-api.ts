@@ -18,6 +18,13 @@ import type {
 } from './catalog-contracts';
 import { AdminHttpError, httpClient } from '../http/http-client';
 import { httpFailureChannel } from '../http/http-failure-channel';
+import {
+  successCollection,
+  successOperationSingle,
+  successOperationWithoutPayload,
+  successSingle,
+} from '../http/api-response';
+import type { ApiOperationResult } from '../http/api-response';
 
 export interface ProductListQuery {
   readonly page?: number;
@@ -70,15 +77,27 @@ export interface UpdateVariantInput {
 
 export interface CatalogApi {
   categories(signal?: AbortSignal): Promise<readonly CategoryDto[]>;
-  createCategory(input: CreateCategoryInput): Promise<CategoryDto>;
-  updateCategory(categoryId: string, input: UpdateCategoryInput): Promise<CategoryDto>;
-  deleteCategory(categoryId: string): Promise<void>;
+  createCategory(input: CreateCategoryInput): Promise<ApiOperationResult<CategoryDto>>;
+  updateCategory(
+    categoryId: string,
+    input: UpdateCategoryInput,
+  ): Promise<ApiOperationResult<CategoryDto>>;
+  deleteCategory(categoryId: string): Promise<ApiOperationResult<null>>;
   products(query?: ProductListQuery, signal?: AbortSignal): Promise<ProductListDto>;
-  createProduct(input: CreateProductInput): Promise<ProductDetailDto>;
+  createProduct(input: CreateProductInput): Promise<ApiOperationResult<ProductDetailDto>>;
   product(productId: string, signal?: AbortSignal): Promise<ProductDetailDto>;
-  updateProduct(productId: string, input: UpdateProductInput): Promise<ProductDetailDto>;
-  createVariant(productId: string, input: CreateVariantInput): Promise<ProductVariantDto>;
-  updateVariant(variantId: string, input: UpdateVariantInput): Promise<ProductVariantDto>;
+  updateProduct(
+    productId: string,
+    input: UpdateProductInput,
+  ): Promise<ApiOperationResult<ProductDetailDto>>;
+  createVariant(
+    productId: string,
+    input: CreateVariantInput,
+  ): Promise<ApiOperationResult<ProductVariantDto>>;
+  updateVariant(
+    variantId: string,
+    input: UpdateVariantInput,
+  ): Promise<ApiOperationResult<ProductVariantDto>>;
   priceDisplaySetting(signal?: AbortSignal): Promise<PriceDisplaySettingDto>;
 }
 
@@ -88,6 +107,28 @@ const PRODUCT_STATUSES = new Set<ProductStatus>(['DRAFT', 'ACTIVE', 'ARCHIVED'])
 
 function invalidRequest(): never {
   throw new AdminHttpError('configuration', null, 'INVALID_CATALOG_REQUEST');
+}
+
+function invalidResponse(): never {
+  throw new AdminHttpError('http', 502, 'INVALID_RESPONSE');
+}
+
+function singlePayload(response: { readonly data: unknown; readonly status: number }): unknown {
+  return successSingle(response.data, response.status) ?? invalidResponse();
+}
+
+function collectionPayload(response: {
+  readonly data: unknown;
+  readonly status: number;
+}): unknown[] {
+  return successCollection(response.data, response.status) ?? invalidResponse();
+}
+
+function singleOperation(response: {
+  readonly data: unknown;
+  readonly status: number;
+}): ApiOperationResult<unknown> {
+  return successOperationSingle(response.data, response.status) ?? invalidResponse();
 }
 
 function validateProductQuery(query: ProductListQuery): ProductListQuery {
@@ -236,7 +277,7 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           '/admin/catalog/categories',
           signalConfig(signal),
         );
-        return parseCategoryTree(response.data);
+        return parseCategoryTree(collectionPayload(response));
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -248,7 +289,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateCategoryInput(input),
           mutationConfig(),
         );
-        return parseCategory(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseCategory(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -261,7 +303,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateCategoryInput(input, true),
           mutationConfig(),
         );
-        return parseCategory(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseCategory(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -270,9 +313,7 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
       try {
         const id = validateProductId(categoryId);
         const response = await client.delete(`/admin/catalog/categories/${id}`, mutationConfig());
-        if (response.status !== 204) {
-          throw new AdminHttpError('http', 502, 'INVALID_RESPONSE');
-        }
+        return successOperationWithoutPayload(response.data, response.status) ?? invalidResponse();
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -289,7 +330,7 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
             ...(validated.status === undefined ? {} : { status: validated.status }),
           },
         });
-        return parseProductList(response.data);
+        return parseProductList(singlePayload(response));
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -301,7 +342,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateCreateProductInput(input),
           mutationConfig(),
         );
-        return parseProductDetail(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseProductDetail(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -313,7 +355,7 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           `/admin/catalog/products/${id}`,
           signalConfig(signal),
         );
-        return parseProductDetail(response.data);
+        return parseProductDetail(singlePayload(response));
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -326,7 +368,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateUpdateProductInput(input),
           mutationConfig(),
         );
-        return parseProductDetail(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseProductDetail(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -339,7 +382,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateVariantInput(input),
           mutationConfig(),
         );
-        return parseProductVariant(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseProductVariant(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -352,7 +396,8 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           validateVariantInput(input, true),
           mutationConfig(),
         );
-        return parseProductVariant(response.data);
+        const operation = singleOperation(response);
+        return { ...operation, data: parseProductVariant(operation.data) };
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }
@@ -363,7 +408,7 @@ export function createCatalogApi(client: AxiosInstance = httpClient): CatalogApi
           '/admin/catalog/settings/price-display-unit',
           signalConfig(signal),
         );
-        return parsePriceDisplaySetting(response.data);
+        return parsePriceDisplaySetting(singlePayload(response));
       } catch (error) {
         return publishDefinitiveAuthFailure(error);
       }

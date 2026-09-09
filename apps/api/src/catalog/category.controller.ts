@@ -31,6 +31,7 @@ import {
 } from './category.dto.js';
 import { CategoryError, toCategoryHttpException } from './category.errors.js';
 import { CategoryService } from './category.service.js';
+import { ApiSuccess } from '../http/api-response.js';
 
 const CSRF_HEADER = {
   name: 'X-CSRF-Token',
@@ -47,6 +48,11 @@ export class CategoryController {
   constructor(private readonly categories: CategoryService) {}
 
   @Get()
+  @ApiSuccess({
+    code: 'CATEGORIES_FETCHED',
+    message: 'دسته‌بندی‌ها با موفقیت دریافت شدند.',
+    kind: 'collection',
+  })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return the complete bounded Category tree' })
   @ApiResponse({ status: 200, type: CategoryResponseDto, isArray: true })
@@ -58,6 +64,11 @@ export class CategoryController {
   }
 
   @Post()
+  @ApiSuccess({
+    code: 'CATEGORY_CREATED',
+    message: 'دسته‌بندی با موفقیت ایجاد شد.',
+    kind: 'single',
+  })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Create a normalized Category' })
@@ -74,6 +85,11 @@ export class CategoryController {
   }
 
   @Patch(':categoryId')
+  @ApiSuccess({
+    code: 'CATEGORY_UPDATED',
+    message: 'دسته‌بندی با موفقیت ویرایش شد.',
+    kind: 'single',
+  })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Rename or atomically move a Category subtree' })
@@ -96,12 +112,13 @@ export class CategoryController {
   }
 
   @Delete(':categoryId')
-  @HttpCode(204)
+  @HttpCode(200)
+  @ApiSuccess({ code: 'CATEGORY_DELETED', message: 'دسته‌بندی با موفقیت حذف شد.', kind: 'none' })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Delete an eligible empty leaf Category' })
   @ApiParam({ name: 'categoryId', format: 'uuid' })
-  @ApiResponse({ status: 204, description: 'Category deleted; no body.' })
+  @ApiResponse({ status: 200, description: 'Category deleted successfully.' })
   @ApiResponse({ status: 400, type: ApiErrorDto })
   @ApiResponse({ status: 401, type: ApiErrorDto })
   @ApiResponse({ status: 403, type: ApiErrorDto })

@@ -21,6 +21,7 @@ import {
   toPriceDisplaySettingHttpException,
 } from './price-display-setting.errors.js';
 import { PriceDisplaySettingService } from './price-display-setting.service.js';
+import { ApiSuccess } from '../http/api-response.js';
 
 @ApiTags('Admin Catalog Settings')
 @ApiCookieAuth('adminAccess')
@@ -30,6 +31,11 @@ export class AdminPriceDisplaySettingController {
   constructor(private readonly settings: PriceDisplaySettingService) {}
 
   @Get()
+  @ApiSuccess({
+    code: 'PRICE_DISPLAY_UNIT_FETCHED',
+    message: 'واحد نمایش قیمت با موفقیت دریافت شد.',
+    kind: 'single',
+  })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return the global catalog price display/input unit' })
   @ApiResponse({ status: 200, type: PriceDisplaySettingResponseDto })
@@ -41,6 +47,11 @@ export class AdminPriceDisplaySettingController {
   }
 
   @Put()
+  @ApiSuccess({
+    code: 'PRICE_DISPLAY_UNIT_UPDATED',
+    message: 'واحد نمایش قیمت با موفقیت به‌روزرسانی شد.',
+    kind: 'single',
+  })
   @CatalogPermission('settings.price.display.unit.update')
   @ApiHeader({
     name: 'X-CSRF-Token',
@@ -85,6 +96,11 @@ export class PublicPriceDisplaySettingController {
   constructor(private readonly settings: PriceDisplaySettingService) {}
 
   @Get()
+  @ApiSuccess({
+    code: 'PRICE_DISPLAY_UNIT_FETCHED',
+    message: 'واحد نمایش قیمت با موفقیت دریافت شد.',
+    kind: 'single',
+  })
   @ApiOperation({ summary: 'Return the public catalog price display unit' })
   @ApiResponse({ status: 200, type: PriceDisplaySettingResponseDto })
   @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })

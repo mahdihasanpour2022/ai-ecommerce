@@ -31,6 +31,7 @@ import {
 } from './product.dto.js';
 import { ProductError, toProductHttpException } from './product.errors.js';
 import { ProductService } from './product.service.js';
+import { ApiSuccess } from '../http/api-response.js';
 
 const CSRF_HEADER = {
   name: 'X-CSRF-Token',
@@ -47,6 +48,12 @@ export class ProductController {
   constructor(private readonly products: ProductService) {}
 
   @Get('products')
+  @ApiSuccess({
+    code: 'PRODUCTS_FETCHED',
+    message: 'محصولات با موفقیت دریافت شدند.',
+    kind: 'single',
+    countProperty: 'totalItems',
+  })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return deterministic page-bounded protected Product summaries' })
   @ApiQuery({ name: 'page', required: false, type: Number, minimum: 1, example: 1 })
@@ -71,6 +78,7 @@ export class ProductController {
   }
 
   @Get('products/:productId')
+  @ApiSuccess({ code: 'PRODUCT_FETCHED', message: 'محصول با موفقیت دریافت شد.', kind: 'single' })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return protected Product detail with Variants and exact Inventory' })
   @ApiParam({ name: 'productId', format: 'uuid' })
@@ -85,6 +93,7 @@ export class ProductController {
   }
 
   @Post('products')
+  @ApiSuccess({ code: 'PRODUCT_CREATED', message: 'محصول با موفقیت ایجاد شد.', kind: 'single' })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Atomically create a Draft Product, initial Variants, and Inventory' })
@@ -101,6 +110,7 @@ export class ProductController {
   }
 
   @Patch('products/:productId')
+  @ApiSuccess({ code: 'PRODUCT_UPDATED', message: 'محصول با موفقیت ویرایش شد.', kind: 'single' })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Update Product fields or perform an accepted lifecycle transition' })
@@ -126,6 +136,11 @@ export class ProductController {
   }
 
   @Post('products/:productId/variants')
+  @ApiSuccess({
+    code: 'PRODUCT_VARIANT_CREATED',
+    message: 'تنوع محصول با موفقیت ایجاد شد.',
+    kind: 'single',
+  })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Create a retained Product Variant and its Inventory atomically' })
@@ -151,6 +166,11 @@ export class ProductController {
   }
 
   @Patch('variants/:variantId')
+  @ApiSuccess({
+    code: 'PRODUCT_VARIANT_UPDATED',
+    message: 'تنوع محصول با موفقیت ویرایش شد.',
+    kind: 'single',
+  })
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Update or reactivate a retained Product Variant' })

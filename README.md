@@ -86,7 +86,6 @@ Schema changes and migrations require separately approved work and the SQL revie
 ## Project context
 
 - [Project overview](docs/00-project-overview.md)
-- [Roadmap](docs/roadmap.md)
 - [System architecture](docs/architecture/system-architecture.md)
 - [Engineering standards](docs/standards/general.md)
 - [Testing and Definition of Done](docs/standards/testing.md)
@@ -94,4 +93,4 @@ Schema changes and migrations require separately approved work and the SQL revie
 - [Application boundaries](apps/README.md)
 - [Shared-package boundary](packages/README.md)
 
-Documentation distinguishes current repository reality from planned behavior. A roadmap or feature specification is not implementation authorization.
+Documentation distinguishes current repository reality from planned behavior. A feature specification is not implementation authorization; frontend work is planned and approved one route at a time from owner-supplied UI direction.

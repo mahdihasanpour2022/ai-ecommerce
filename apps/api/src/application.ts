@@ -1,8 +1,12 @@
 import type { INestApplication } from '@nestjs/common';
+import { HttpAdapterHost, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import type { ApiEnvironment, RuntimeEnvironment } from './config/environment';
 import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './authentication/authentication.constants';
+import { ApiExceptionFilter } from './http/api-exception.filter';
+import { ApiResponseInterceptor } from './http/api-response.interceptor';
+import { applyApiResponseContract } from './http/openapi-response';
 
 export const API_PREFIX = 'api/v1';
 export const SWAGGER_PATH = 'api/docs';
@@ -14,6 +18,8 @@ export function isSwaggerEnabled(environment: RuntimeEnvironment): boolean {
 
 export function configureApplication(app: INestApplication, environment: ApiEnvironment): void {
   app.setGlobalPrefix(API_PREFIX);
+  app.useGlobalFilters(new ApiExceptionFilter(app.get(HttpAdapterHost)));
+  app.useGlobalInterceptors(new ApiResponseInterceptor(app.get(Reflector)));
 
   app.enableCors({
     credentials: true,
@@ -38,7 +44,8 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
     .addCookieAuth(ACCESS_COOKIE_NAME, { type: 'apiKey' }, 'adminAccess')
     .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'adminRefresh')
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, openApiConfig);
+  const documentFactory = () =>
+    applyApiResponseContract(SwaggerModule.createDocument(app, openApiConfig));
 
   SwaggerModule.setup(SWAGGER_PATH, app, documentFactory, {
     jsonDocumentUrl: `/${OPENAPI_JSON_PATH}`,

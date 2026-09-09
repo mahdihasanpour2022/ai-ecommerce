@@ -41,7 +41,21 @@ void test('injects only validated Backend identity and forwards rotated cookies'
   globalThis.fetch = () => {
     const headers = new Headers({ 'content-type': 'application/json' });
     headers.append('set-cookie', 'admin_csrf_token=csrf-value; Path=/; SameSite=Strict');
-    return Promise.resolve(Response.json(current, { headers }));
+    return Promise.resolve(
+      Response.json(
+        {
+          statusCode: 200,
+          hasError: false,
+          message: 'نشست کاربری با موفقیت بررسی شد.',
+          code: 'AUTHENTICATION_BOOTSTRAPPED',
+          count: 0,
+          result: null,
+          singleResult: current,
+          details: null,
+        },
+        { headers },
+      ),
+    );
   };
   const response = await proxy(
     request('/catalog/products', 'admin_refresh_token=refresh-value; admin_access_token=access'),

@@ -58,7 +58,9 @@ Access and Refresh remain host-only HttpOnly cookies. The BFF forwards cookies s
 
 ## Response typing
 
-The reusable hooks remain generic over this project's actual DTOs and `AdminHttpError`; they do not impose a foreign `BaseApiResponse` envelope. Every feature supplies its expected response type and retains runtime parsing at the trust boundary. If the Backend later adopts a canonical success envelope, that contract must be approved and documented independently before hook types change.
+The reusable hooks remain generic over feature DTOs and `AdminHttpError`. The Backend now owns the canonical `ApiResponse<Result, SingleResult, Details>` envelope for every JSON application response. Feature API boundaries validate that envelope before validating and returning their expected domain payload; thin Query adapters do not duplicate envelope parsing or feature semantics.
+
+This decision supersedes the earlier rejection of a global success envelope. The owner approved the replacement on 2026-09-08. The existing Axios security boundary, `/api/v1/**` BFF, single-flight Refresh, Query cache ownership, and runtime trust-boundary validation remain unchanged. Successful image-content routes remain raw binary so browsers can stream and cache them directly; their failures still use `ApiResponse`.
 
 ## Storefront continuity
 

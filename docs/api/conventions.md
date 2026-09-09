@@ -23,7 +23,7 @@ Feature specifications own required observable behavior; this document owns gene
 
 ## Status codes
 
-Use `200` for successful reads/updates, `201` for creation (with `Location` where useful), `204` for a successful response with no body, `400` for malformed requests, `401` for authentication failures identified by stable codes, `403` for authenticated but forbidden access, `404` for unavailable resources, `409` for state/uniqueness conflicts, `422` for semantically invalid input if adopted consistently, `429` for rate limits, and `5xx` for server failures. Resource-existence disclosure may require security-specific behavior.
+Use `200` for successful reads, updates, and commands with no domain payload, `201` for creation (with `Location` where useful), `400` for malformed requests, `401` for authentication failures identified by stable codes, `403` for authenticated but forbidden access, `404` for unavailable resources, `409` for state/uniqueness conflicts, `422` for semantically invalid input if adopted consistently, `429` for rate limits, and `5xx` for server failures. JSON application operations without a domain payload still return the canonical envelope and therefore use `200`, not `204`. Resource-existence disclosure may require security-specific behavior.
 
 ## Collections
 
@@ -33,18 +33,39 @@ List endpoints use bounded pagination with a documented default/maximum. The ini
 
 Use explicit request and response DTOs. Dates use ISO 8601 with timezone semantics; money must use a reviewed precision/currency representation, never implicit binary floats.
 
-The initial error envelope is top-level and consistent:
+Every JSON application response uses the canonical generic contract:
+
+```ts
+interface ApiResponse<Result = null, SingleResult = null, Details = null> {
+  statusCode: number;
+  hasError: boolean;
+  message: string;
+  code: string;
+  count: number;
+  result: Result;
+  singleResult: SingleResult;
+  details: Details;
+}
+```
+
+Collections use `result`, single payloads use `singleResult`, and no-payload successes/errors keep both fields `null`. Paginated single payloads may use `count` for the total matching records; other single/no-payload responses use zero, while direct collections use their exact array length. `statusCode` equals the actual HTTP status; `message` is a non-empty safe Persian display text; `code` is a stable English machine identifier. All eight top-level fields are always present. Successful raw image-content routes are the deliberate exception because their body is the streamed image bytes rather than JSON; failures from those routes still use `ApiResponse`.
+
+The error envelope is top-level and consistent:
 
 ```json
 {
   "statusCode": 403,
+  "hasError": true,
   "code": "INSUFFICIENT_PERMISSION",
   "message": "شما دسترسی لازم برای انجام این عملیات را ندارید.",
-  "details": []
+  "count": 0,
+  "result": null,
+  "singleResult": null,
+  "details": null
 }
 ```
 
-`code` is a stable machine-readable English identifier such as `INVALID_CREDENTIALS`, `ACCESS_TOKEN_EXPIRED`, `INVALID_ACCESS_TOKEN`, `ACCOUNT_DISABLED`, `AUTHENTICATION_REQUIRED`, `REFRESH_TOKEN_INVALID`, `REFRESH_TOKEN_EXPIRED`, `REFRESH_TOKEN_REUSED`, `CSRF_VALIDATION_FAILED`, `AUTH_RATE_LIMITED`, or `INSUFFICIENT_PERMISSION`. A message intended for frontend display is Persian. Silent recovery such as `ACCESS_TOKEN_EXPIRED` needs no user-visible message. `REFRESH_TOKEN_REUSED` may carry a safe Persian re-authentication message but never technical security details. For silent internal authentication events, `message` may be empty, `null`, or omitted once the final serialization convention is chosen. `details` is optional. Responses never expose stack traces, SQL, tokens, cookies, or sensitive internals. OpenAPI documents approved endpoints and examples.
+`code` is a stable machine-readable English identifier such as `INVALID_CREDENTIALS`, `ACCESS_TOKEN_EXPIRED`, `INVALID_ACCESS_TOKEN`, `ACCOUNT_DISABLED`, `AUTHENTICATION_REQUIRED`, `REFRESH_TOKEN_INVALID`, `REFRESH_TOKEN_EXPIRED`, `REFRESH_TOKEN_REUSED`, `CSRF_VALIDATION_FAILED`, `AUTH_RATE_LIMITED`, or `INSUFFICIENT_PERMISSION`. The non-empty `message` is Persian and safe for frontend display; silent recovery such as `ACCESS_TOKEN_EXPIRED` may ignore it at the client boundary. `REFRESH_TOKEN_REUSED` carries only a safe re-authentication message and never technical security details. `details` is always present and is `null` unless an approved error contract supplies safe structured detail. Responses never expose stack traces, SQL, tokens, cookies, or sensitive internals. OpenAPI documents approved endpoints and examples.
 
 Every failed login condition—including unknown identity, wrong password, disabled/inactive identity, and missing Admin eligibility—uses the same `401 INVALID_CREDENTIALS` status/code/message/shape and materially equivalent verification path. `ACCOUNT_DISABLED` applies when a previously authenticated Admin becomes disabled. Authentication throttling returns generic `429 AUTH_RATE_LIMITED` with `Retry-After`; CSRF rejection returns `403 CSRF_VALIDATION_FAILED`. Neither reveals account/session existence, limiting bucket, credential material, or security internals.
 

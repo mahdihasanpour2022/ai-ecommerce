@@ -79,6 +79,10 @@ const productList: ProductListDto = {
   totalPages: 1,
 };
 
+function operation<Data>(data: Data, message = 'عملیات با موفقیت انجام شد.') {
+  return { data, message, code: 'OPERATION_SUCCESS' } as const;
+}
+
 function ui(children: React.ReactNode) {
   return render(<AdminUiProvider>{children}</AdminUiProvider>);
 }
@@ -204,7 +208,7 @@ void test('creates a normalized default-mode Draft once and routes to its worksp
     createProduct: async (input) => {
       submitted.push(input);
       await pending;
-      return product;
+      return operation(product, 'محصول ایجاد شد.');
     },
   };
   const screen = ui(

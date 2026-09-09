@@ -62,7 +62,10 @@ function server(app: INestApplication): App {
 }
 
 function body<T>(response: Response): T {
-  return response.body as T;
+  const value = response.body as unknown;
+  if (typeof value !== 'object' || value === null || !('hasError' in value)) return value as T;
+  const envelope = value as { hasError: boolean; result: T | null; singleResult: T | null };
+  return (envelope.hasError ? envelope : (envelope.singleResult ?? envelope.result)) as T;
 }
 
 function responseCookies(response: Response): string[] {
@@ -333,7 +336,7 @@ void describe(
       await mutation(
         'delete',
         `/api/v1/admin/catalog/product-images/${replaced.images[0]?.id ?? ''}?imageVersion=5`,
-      ).expect(204);
+      ).expect(200);
       const stored = await prisma.product.findUniqueOrThrow({
         where: { id: productId },
         select: { imageVersion: true, images: { orderBy: { position: 'asc' } } },

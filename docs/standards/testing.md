@@ -10,7 +10,7 @@ Do not create artificial tests for every changed line or for documentation/confi
 
 ## Testing impact in tasks
 
-Every implementation `current.md` declares **Testing Impact** using exactly one of:
+Every approved route/task plan declares **Testing Impact** using exactly one of:
 
 - `Automated tests required`
 - `Existing tests must be updated`
@@ -34,7 +34,7 @@ Acceptance Criteria tie tests to observable outcomes and failure paths, not vagu
 - **Frontend component/integration:** user-observable interaction, forms, async states, permission-aware behavior, and API boundaries.
 - **Critical user-flow e2e:** a small set of high-value cross-application journeys, including authentication and catalog publication when implemented.
 
-Use the smallest level and focused command that prove behavior without excessive mocking or brittle internal assertions. During iteration, do not run the whole monorepo when a focused suite is sufficient. Before Done, run the broader tests and validation required by the task and Sprint context.
+Use the smallest level and focused command that prove behavior without excessive mocking or brittle internal assertions. During iteration, do not run the whole monorepo when a focused suite is sufficient. Before completion, run the broader tests and validation required by the approved scope.
 
 ## Risk-based validation scope
 
@@ -47,9 +47,9 @@ Run repository-wide validation only when at least one of these conditions applie
 - the task changes shared configuration, shared packages, contracts, orchestration, or other cross-Workspace behavior;
 - the task or owner explicitly requires repository-wide validation;
 - the change may reasonably affect multiple applications or packages; or
-- an applicable Sprint, CI, release, or other quality gate requires it.
+- an applicable CI, release, or other quality gate requires it.
 
-Select tests, typecheck, lint, formatting, build, Swagger/OpenAPI, Prisma, database, configuration, and smoke checks according to the task's actual changes and risk. A gate is not required merely because the repository exposes a command, but it remains mandatory whenever the affected scope, Acceptance Criteria, task Validation section, or governing Sprint/CI/release gate requires it.
+Select tests, typecheck, lint, formatting, build, Swagger/OpenAPI, Prisma, database, configuration, and smoke checks according to the task's actual changes and risk. A gate is not required merely because the repository exposes a command, but it remains mandatory whenever the affected scope, Acceptance Criteria, plan Validation section, or governing CI/release gate requires it.
 
 Validation breadth must increase with risk. Security-critical, authentication, authorization, payment, persistence, destructive-operation, concurrency, and other high-impact changes require sufficient positive, negative, failure-path, integration, and regression validation even when that extends beyond the directly edited files. Never weaken correctness, regression coverage, security verification, or an Acceptance Criterion to reduce execution time, tokens, or cost.
 
@@ -118,7 +118,7 @@ Before moving a task from Current to Done:
 
 1. Verify every Acceptance Criterion and confirm implementation is complete.
 2. Confirm required tests were added or updated according to **Testing Impact**.
-3. Run the relevant focused and task/Sprint completion suites.
+3. Run the relevant focused and approved-scope completion suites.
 4. Confirm every required test passes.
 5. For any task affecting TypeScript code, run the relevant workspace or root typecheck. Run `yarn format:check` for changes within its supported scope. Also run applicable lint, build, configuration, integration, or smoke validation.
 6. For HTTP API changes, verify Swagger/OpenAPI matches the implemented and tested contract and contains no stale affected documentation.
@@ -128,7 +128,7 @@ If a required test, typecheck, or other validation fails, do not mark Done, appe
 
 ## Completion records
 
-Each completed-task record in `done.md` includes a concise `### Validation` section listing only checks actually executed and their result, such as unit tests, integration tests, typecheck, lint, build, configuration validation, or smoke checks. When typecheck applies, record the actual command or scope and its pass/fail result. Never claim an unexecuted test passed. When no new automated test was required, record the validation-only checks that justified completion.
+Completion reports list only checks actually executed and their result, such as unit tests, integration tests, typecheck, lint, build, configuration validation, or smoke checks. When typecheck applies, report the actual command or scope and its pass/fail result. Never claim an unexecuted test passed. When no new automated test was required, report the validation-only checks that justified completion.
 
 ## Definition of done
 

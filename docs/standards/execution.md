@@ -14,7 +14,7 @@ For difficult work, improve workflow and context efficiency before lowering reas
 
 ## Technical Lead and Owner Decision Boundary
 
-For technical planning and implementation, the implementing agent acts as the project's Technical Lead within the accepted roadmap, specifications, ADRs, architecture, and owner decisions. The owner primarily contributes Frontend expertise and must not be required to supply low-level Backend, database, Prisma, PostgreSQL, security implementation, infrastructure, concurrency, or similar engineering design decisions when those decisions can be resolved correctly from accepted requirements and sound engineering judgment.
+For technical planning and implementation, the implementing agent acts as the project's Technical Lead within the accepted route plan, specifications, ADRs, architecture, and owner decisions. The owner primarily contributes Frontend expertise and must not be required to supply low-level Backend, database, Prisma, PostgreSQL, security implementation, infrastructure, concurrency, or similar engineering design decisions when those decisions can be resolved correctly from accepted requirements and sound engineering judgment.
 
 ### Engineering decisions
 
@@ -22,7 +22,7 @@ For a primarily technical question, the Technical Lead:
 
 1. analyzes the problem and relevant accepted constraints;
 2. chooses the simplest correct and maintainable solution;
-3. applies Minimum Sufficient Sprint Scope and considers known downstream roadmap dependencies where relevant;
+3. applies the minimum sufficient scope for the owner-selected route and considers only demonstrated dependencies;
 4. avoids speculative abstraction, hypothetical future-proofing, and over-engineering;
 5. documents important reasoning at the appropriate canonical level; and
 6. proceeds without adding an owner-approval checkpoint for ordinary implementation details.
@@ -48,7 +48,7 @@ When an Owner Decision appears during already-approved implementation, stop only
 
 ### Boundary safeguards
 
-Technical Lead authority never authorizes changing Accepted architecture, expanding or reducing MVP scope, silently resolving Product/Owner decisions, pulling Future or Deferred work forward without current-scope justification, over-engineering for hypothetical needs, or bypassing explicit Sprint, task, schema/migration, dependency, Git, destructive-action, or other approval boundaries.
+Technical Lead authority never authorizes changing Accepted architecture, expanding or reducing MVP scope, silently resolving Product/Owner decisions, pulling Future or Deferred work forward without current-scope justification, over-engineering for hypothetical needs, or bypassing explicit route/task, schema/migration, dependency, Git, destructive-action, or other approval boundaries.
 
 The operating rule is:
 
@@ -68,10 +68,10 @@ A preflight establishes availability and target safety; it does not authorize he
 If a required prerequisite is unavailable:
 
 1. Stop before substantial implementation or expensive context loading.
-2. Keep the task Current and mark its execution state Current/Blocked.
+2. Preserve the approved route scope and completed evidence.
 3. Record only the failed prerequisite check and work that was already safely completed.
 4. Report the exact missing prerequisite and minimum owner/environment action.
-5. Do not prepare another task or continue work that cannot meet the approved validation/Definition of Done.
+5. Do not continue work that cannot meet the approved validation/Definition of Done.
 
 When a prerequisite is useful but not required, continue with the smallest valid scope and accurately record which checks were not needed or not run.
 
@@ -94,7 +94,7 @@ Task preparation must route to the smallest authoritative sources that safely co
 Do not add context merely because it is generally related. Avoid:
 
 - scanning the full `docs/` tree;
-- loading unrelated completed-Sprint history;
+- loading unrelated historical planning records;
 - rereading broad architecture/standards documents whose applicable decisions are already captured by a narrower canonical source;
 - including frontend, API, database, security, or operational context when the task has no impact in that area.
 
@@ -104,6 +104,6 @@ Before implementation, briefly compare listed Required Context with Scope, Accep
 
 Inspect only relevant code and reusable patterns after preflight succeeds. During iteration, use the narrowest file, Workspace, test, schema, or configuration check that provides confidence. Reuse a still-valid successful result when no source, dependency, generated artifact, environment input, or configuration affecting it has changed.
 
-Broaden validation when required by cross-Workspace/shared changes, security-critical behavior, persistence/schema/migrations, Sprint/CI/release gates, or explicit Acceptance Criteria. The detailed risk-based validation and completion policy is canonical in [Testing Standards](testing.md#risk-based-validation-scope).
+Broaden validation when required by cross-Workspace/shared changes, security-critical behavior, persistence/schema/migrations, CI/release gates, or explicit Acceptance Criteria. The detailed risk-based validation and completion policy is canonical in [Testing Standards](testing.md#risk-based-validation-scope).
 
 Completion/blocker records list only checks actually executed and their real results. Never describe a skipped, unavailable, or inferred gate as passing.

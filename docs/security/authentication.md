@@ -32,7 +32,7 @@ Exactly one configured private key signs new tokens. Verification accepts its pu
 
 Frontend JavaScript reads neither authentication cookie and never constructs `Authorization: Bearer ...`. The browser sends host-only credentials only to the same-origin Admin BFF, which forwards them server-to-server. JavaScript reads only the CSRF cookie for the unsafe-request header.
 
-The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. Login creates the initial token and hash; the implemented refresh boundary rotates that history and stores replacement plaintext only inside the approved short-lived authenticated recovery envelope. Exact owner-approved columns and constraints are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md) and are represented by the S1-T03 Prisma schema and reviewed migration. Plaintext is never persisted outside that bounded envelope.
+The raw cryptographically secure opaque refresh token normally exists only in its HttpOnly cookie. Backend persistence stores its SHA-256 hash, which is sufficient for a uniformly random 256-bit credential. Login creates the initial token and hash; the implemented refresh boundary rotates that history and stores replacement plaintext only inside the approved short-lived authenticated recovery envelope. Exact columns and constraints are canonical in the Prisma schema and reviewed authentication migration. Plaintext is never persisted outside that bounded envelope.
 
 ## CSRF and CORS
 
@@ -63,7 +63,7 @@ Other authentication failures do not refresh:
 
 ## Rotation, sessions, and logout
 
-Admin authentication has three separate accepted concepts: `AdminUser`, `AuthSession`, and rotating `RefreshToken` history/family. Each browser/device login creates an independent `AuthSession`; rotation changes its RefreshToken while the logical session continues. Tabs in one browser profile share its cookie store, while Chrome, Firefox, another profile, and a phone are separate sessions and each requires login. The accepted conceptual boundary lives in [database architecture](../architecture/database.md), and its owner-approved Prisma/migration design lives in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md).
+Admin authentication has three separate accepted concepts: `AdminUser`, `AuthSession`, and rotating `RefreshToken` history/family. Each browser/device login creates an independent `AuthSession`; rotation changes its RefreshToken while the logical session continues. Tabs in one browser profile share its cookie store, while Chrome, Firefox, another profile, and a phone are separate sessions and each requires login. The accepted conceptual boundary lives in [database architecture](../architecture/database.md), with its implementation in the Prisma schema and reviewed migrations.
 
 Refresh rotation is required: using `R1` produces `R2`, and `R1` becomes superseded. Legitimate races can arise from tabs, retries, or a lost response. A configuration-driven `REFRESH_REUSE_GRACE_SECONDS=10` is the accepted default. Within the approved grace logic, a recently rotated credential associated with the same legitimate session may be handled narrowly as concurrency/recovery rather than immediate theft. This does not make the old token normally valid for ten seconds.
 
@@ -108,7 +108,7 @@ Safe post-login return destinations are application-relative allowlisted paths. 
 
 ## Accepted persistence boundary and deferred decisions
 
-- The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the [S1-T02 schema proposal](../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified that persistence boundary; later tasks own runtime authentication behavior.
+- The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the Prisma schema, reviewed migrations, and focused PostgreSQL tests.
 - Production secret-provider integration, long-term security-event retention, distributed throttling, and operational key-rotation runbooks remain release/deployment work; their absence does not permit source-controlled secrets or horizontal deployment with per-process-only limiting.
 - Admin BFF adoption is accepted in ADR 0013. Storefront Customer authentication remains deferred but must reuse the same independent pattern when approved.
 

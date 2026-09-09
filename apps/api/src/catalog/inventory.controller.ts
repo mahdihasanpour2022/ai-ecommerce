@@ -21,6 +21,7 @@ import { InventoryError, toInventoryHttpException } from './inventory.errors.js'
 import { InventoryService } from './inventory.service.js';
 import { parseCatalogUuid } from './product.dto.js';
 import { ProductError } from './product.errors.js';
+import { ApiSuccess } from '../http/api-response.js';
 
 @ApiTags('Admin Catalog Inventory')
 @ApiCookieAuth('adminAccess')
@@ -30,6 +31,11 @@ export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}
 
   @Put('variants/:variantId/inventory')
+  @ApiSuccess({
+    code: 'INVENTORY_UPDATED',
+    message: 'موجودی با موفقیت به‌روزرسانی شد.',
+    kind: 'single',
+  })
   @CatalogPermission('inventory.update')
   @ApiHeader({
     name: 'X-CSRF-Token',

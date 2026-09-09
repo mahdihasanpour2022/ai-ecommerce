@@ -14,6 +14,45 @@ const IMAGE_ID = '44444444-4444-4444-8444-444444444444';
 const CREATED_AT = '2026-09-04T08:00:00.000Z';
 const UPDATED_AT = '2026-09-04T09:00:00.000Z';
 
+function singleResponse(singleResult: unknown, statusCode = 200) {
+  return {
+    statusCode,
+    hasError: false,
+    message: 'عملیات با موفقیت انجام شد.',
+    code: 'OPERATION_SUCCESS',
+    count: 0,
+    result: null,
+    singleResult,
+    details: null,
+  };
+}
+
+function collectionResponse(result: unknown[], statusCode = 200) {
+  return {
+    statusCode,
+    hasError: false,
+    message: 'اطلاعات با موفقیت دریافت شد.',
+    code: 'ITEMS_FETCHED',
+    count: result.length,
+    result,
+    singleResult: null,
+    details: null,
+  };
+}
+
+function noPayloadResponse() {
+  return {
+    statusCode: 200,
+    hasError: false,
+    message: 'عملیات با موفقیت انجام شد.',
+    code: 'OPERATION_SUCCESS',
+    count: 0,
+    result: null,
+    singleResult: null,
+    details: null,
+  };
+}
+
 const category = {
   id: CATEGORY_ID,
   name: 'پوشاک',
@@ -85,7 +124,16 @@ void test('uses the centralized safe-read policy and preserves exact catalog DTO
           : config.url === `/admin/catalog/products/${PRODUCT_ID}`
             ? detail
             : { unit: 'TOMAN' };
-    return { data, status: 200, statusText: 'OK', headers: {}, config };
+    return {
+      data:
+        config.url === '/admin/catalog/categories'
+          ? collectionResponse(data as unknown[])
+          : singleResponse(data),
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
   };
   const api = createCatalogApi(
     createHttpClient({ adapter, baseURL: 'https://api.example.com/api/v1' }),
@@ -160,7 +208,16 @@ void test('publishes definitive authentication loss but keeps forbidden catalog 
       config.url === '/admin/catalog/categories' ? 'ACCOUNT_DISABLED' : 'INSUFFICIENT_PERMISSION';
     const status = code === 'ACCOUNT_DISABLED' ? 401 : 403;
     throw new axios.AxiosError('HTTP failure', 'ERR_BAD_RESPONSE', config, undefined, {
-      data: { code },
+      data: {
+        statusCode: status,
+        hasError: true,
+        message: 'دسترسی مجاز نیست.',
+        code,
+        count: 0,
+        result: null,
+        singleResult: null,
+        details: null,
+      },
       status,
       statusText: 'Error',
       headers: {},
@@ -189,12 +246,13 @@ void test('uses exact CSRF-protected Category mutation contracts and parses norm
   };
   const adapter: AxiosAdapter = async (config) => {
     calls.push(config);
-    const status = config.method === 'delete' ? 204 : config.method === 'post' ? 201 : 200;
+    const status = config.method === 'post' ? 201 : 200;
+    const payload =
+      config.method === 'delete'
+        ? null
+        : { ...category, name: config.method === 'post' ? 'پوشاک زنانه' : 'لباس زنانه' };
     return {
-      data:
-        config.method === 'delete'
-          ? undefined
-          : { ...category, name: config.method === 'post' ? 'پوشاک زنانه' : 'لباس زنانه' },
+      data: config.method === 'delete' ? noPayloadResponse() : singleResponse(payload, status),
       status,
       statusText: 'OK',
       headers: {},
@@ -216,8 +274,8 @@ void test('uses exact CSRF-protected Category mutation contracts and parses norm
   });
   await api.deleteCategory(CATEGORY_ID);
 
-  assert.equal(created.name, 'پوشاک زنانه');
-  assert.equal(updated.name, 'لباس زنانه');
+  assert.equal(created.data.name, 'پوشاک زنانه');
+  assert.equal(updated.data.name, 'لباس زنانه');
   assert.deepEqual(
     calls.map(({ method, url }) => ({ method, url })),
     [
@@ -283,7 +341,13 @@ void test('uses the exact CSRF-protected atomic Draft Product creation contract'
   let call: InternalAxiosRequestConfig | undefined;
   const adapter: AxiosAdapter = async (config) => {
     call = config;
-    return { data: detail, status: 201, statusText: 'Created', headers: {}, config };
+    return {
+      data: singleResponse(detail, 201),
+      status: 201,
+      statusText: 'Created',
+      headers: {},
+      config,
+    };
   };
   const api = createCatalogApi(
     createHttpClient({
@@ -308,7 +372,7 @@ void test('uses the exact CSRF-protected atomic Draft Product creation contract'
     ],
   });
 
-  assert.equal(created.id, PRODUCT_ID);
+  assert.equal(created.data.id, PRODUCT_ID);
   assert.equal(call?.method, 'post');
   assert.equal(call?.url, '/admin/catalog/products');
   assert.equal(call?.headers.get('X-CSRF-Token'), 'csrf-product');
@@ -339,7 +403,10 @@ void test('uses exact Product and retained-Variant maintenance contracts', async
   const adapter: AxiosAdapter = async (config) => {
     calls.push(config);
     return {
-      data: config.url?.includes('/variants') ? detail.variants[0] : detail,
+      data: singleResponse(
+        config.url?.includes('/variants') ? detail.variants[0] : detail,
+        config.method === 'post' ? 201 : 200,
+      ),
       status: config.method === 'post' ? 201 : 200,
       statusText: 'OK',
       headers: {},

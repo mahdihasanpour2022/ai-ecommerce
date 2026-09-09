@@ -17,6 +17,7 @@ import type {
   ProductDetailDto,
   ProductVariantDto,
 } from '../../app/catalog/catalog-contracts';
+import type { ApiOperationResult } from '../../app/http/api-response';
 import { useRQDeleter } from '../rq_hooks/useRQDeleter';
 import { useRQFetchQuery } from '../rq_hooks/useRQFetcher';
 import { useRQSender } from '../rq_hooks/useRQSender';
@@ -39,51 +40,55 @@ function reconcileVariant(
 export function useCatalogRQClient(baseClient: CatalogApi = catalogApi): CatalogApi {
   const queryClient = useQueryClient();
   const fetchQuery = useRQFetchQuery();
-  const createCategoryMutation = useRQSender<CategoryDto, CreateCategoryInput>({
+  const createCategoryMutation = useRQSender<ApiOperationResult<CategoryDto>, CreateCategoryInput>({
     mutationKey: ['catalog', 'create-category'],
     mutationFn: (input) => baseClient.createCategory(input),
     invalidateQueryKeys: [catalogQueryKeys.categories(), catalogQueryKeys.productLists()],
   });
   const updateCategoryMutation = useRQSender<
-    CategoryDto,
+    ApiOperationResult<CategoryDto>,
     { readonly categoryId: string; readonly input: UpdateCategoryInput }
   >({
     mutationKey: ['catalog', 'update-category'],
     mutationFn: ({ categoryId, input }) => baseClient.updateCategory(categoryId, input),
     invalidateQueryKeys: [catalogQueryKeys.categories(), catalogQueryKeys.productLists()],
   });
-  const deleteCategoryMutation = useRQDeleter<void, string>({
+  const deleteCategoryMutation = useRQDeleter<ApiOperationResult<null>, string>({
     mutationKey: ['catalog', 'delete-category'],
     mutationFn: (categoryId) => baseClient.deleteCategory(categoryId),
     invalidateQueryKeys: [catalogQueryKeys.categories(), catalogQueryKeys.productLists()],
   });
-  const createProductMutation = useRQSender<ProductDetailDto, CreateProductInput>({
+  const createProductMutation = useRQSender<
+    ApiOperationResult<ProductDetailDto>,
+    CreateProductInput
+  >({
     mutationKey: ['catalog', 'create-product'],
     mutationFn: (input) => baseClient.createProduct(input),
     invalidateQueryKeys: [catalogQueryKeys.productLists()],
-    onSuccess(product) {
-      queryClient.setQueryData(catalogQueryKeys.product(product.id), product);
+    onSuccess(operation) {
+      queryClient.setQueryData(catalogQueryKeys.product(operation.data.id), operation.data);
     },
   });
   const updateProductMutation = useRQSender<
-    ProductDetailDto,
+    ApiOperationResult<ProductDetailDto>,
     { readonly productId: string; readonly input: UpdateProductInput }
   >({
     mutationKey: ['catalog', 'update-product'],
     mutationFn: ({ productId, input }) => baseClient.updateProduct(productId, input),
     invalidateQueryKeys: [catalogQueryKeys.productLists()],
-    onSuccess(product) {
-      queryClient.setQueryData(catalogQueryKeys.product(product.id), product);
+    onSuccess(operation) {
+      queryClient.setQueryData(catalogQueryKeys.product(operation.data.id), operation.data);
     },
   });
   const createVariantMutation = useRQSender<
-    ProductVariantDto,
+    ApiOperationResult<ProductVariantDto>,
     { readonly productId: string; readonly input: CreateVariantInput }
   >({
     mutationKey: ['catalog', 'create-variant'],
     mutationFn: ({ productId, input }) => baseClient.createVariant(productId, input),
     invalidateQueryKeys: [catalogQueryKeys.productLists()],
-    onSuccess(variant) {
+    onSuccess(operation) {
+      const variant = operation.data;
       queryClient.setQueryData<ProductDetailDto>(
         catalogQueryKeys.product(variant.productId),
         (product) => reconcileVariant(product, variant),
@@ -91,13 +96,14 @@ export function useCatalogRQClient(baseClient: CatalogApi = catalogApi): Catalog
     },
   });
   const updateVariantMutation = useRQSender<
-    ProductVariantDto,
+    ApiOperationResult<ProductVariantDto>,
     { readonly variantId: string; readonly input: UpdateVariantInput }
   >({
     mutationKey: ['catalog', 'update-variant'],
     mutationFn: ({ variantId, input }) => baseClient.updateVariant(variantId, input),
     invalidateQueryKeys: [catalogQueryKeys.productLists()],
-    onSuccess(variant) {
+    onSuccess(operation) {
+      const variant = operation.data;
       queryClient.setQueryData<ProductDetailDto>(
         catalogQueryKeys.product(variant.productId),
         (product) => reconcileVariant(product, variant),

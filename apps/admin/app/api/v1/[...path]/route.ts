@@ -19,7 +19,16 @@ async function forward(
       request.headers.get('sec-fetch-site') === 'cross-site')
   ) {
     return Response.json(
-      { statusCode: 403, code: 'ORIGIN_NOT_ALLOWED', message: 'درخواست معتبر نیست.', details: [] },
+      {
+        statusCode: 403,
+        hasError: true,
+        code: 'ORIGIN_NOT_ALLOWED',
+        message: 'درخواست معتبر نیست.',
+        count: 0,
+        result: null,
+        singleResult: null,
+        details: null,
+      },
       { status: 403, headers: { 'Cache-Control': 'no-store' } },
     );
   }

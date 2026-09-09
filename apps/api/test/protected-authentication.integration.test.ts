@@ -191,7 +191,7 @@ void describe(
         .set('Cookie', access)
         .expect(200)
         .expect('Cache-Control', 'no-store');
-      assert.deepEqual(me.body, {
+      assert.deepEqual((me.body as { singleResult: unknown }).singleResult, {
         admin: {
           id: admin.id,
           email: admin.email,
@@ -216,8 +216,11 @@ void describe(
         .set('Cookie', refresh)
         .expect(200)
         .expect('Cache-Control', 'no-store');
-      const loginBody = loginResponse.body as unknown as { csrfToken: string };
-      assert.deepEqual(csrf.body, { csrfToken: loginBody.csrfToken });
+      const loginBody = (loginResponse.body as { singleResult: { csrfToken: string } })
+        .singleResult;
+      assert.deepEqual((csrf.body as { singleResult: unknown }).singleResult, {
+        csrfToken: loginBody.csrfToken,
+      });
       assert.match(
         cookiePair(responseCookies(csrf.headers), CSRF_COOKIE_NAME),
         new RegExp(`^${CSRF_COOKIE_NAME}=`),
@@ -431,8 +434,11 @@ void describe(
         .get('/api/v1/auth/csrf')
         .set('Cookie', refresh)
         .expect(200);
-      const loginBody = loginResponse.body as unknown as { csrfToken: string };
-      assert.deepEqual(recovered.body, { csrfToken: loginBody.csrfToken });
+      const loginBody = (loginResponse.body as { singleResult: { csrfToken: string } })
+        .singleResult;
+      assert.deepEqual((recovered.body as { singleResult: unknown }).singleResult, {
+        csrfToken: loginBody.csrfToken,
+      });
     });
 
     void test('bootstraps before render and refreshes a missing Access credential', async () => {
@@ -451,7 +457,10 @@ void describe(
         .set('Cookie', `${access}; ${refresh}`)
         .expect(200)
         .expect('Cache-Control', 'no-store');
-      assert.equal((current.body as { admin: { id: string } }).admin.id, admin.id);
+      assert.equal(
+        (current.body as { singleResult: { admin: { id: string } } }).singleResult.admin.id,
+        admin.id,
+      );
       assert.match(
         cookiePair(responseCookies(current.headers), CSRF_COOKIE_NAME),
         new RegExp(`^${CSRF_COOKIE_NAME}=`),

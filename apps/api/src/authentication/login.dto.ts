@@ -39,14 +39,26 @@ export class ApiErrorDto {
   @ApiProperty({ example: 401 })
   statusCode!: number;
 
+  @ApiProperty({ example: true })
+  hasError!: boolean;
+
   @ApiProperty({ example: 'INVALID_CREDENTIALS' })
   code!: string;
 
   @ApiProperty({ example: 'اطلاعات ورود نادرست است.' })
   message!: string;
 
-  @ApiProperty({ type: [String], example: [] })
-  details!: string[];
+  @ApiProperty({ example: 0 })
+  count!: number;
+
+  @ApiProperty({ type: 'null', example: null })
+  result!: null;
+
+  @ApiProperty({ type: 'null', example: null })
+  singleResult!: null;
+
+  @ApiProperty({ nullable: true, example: null })
+  details!: unknown;
 }
 
 export interface LoginInput {

@@ -57,7 +57,10 @@ function responseCookies(response: Response): string[] {
 }
 
 function responseBody<T>(response: Response): T {
-  return response.body as T;
+  const value = response.body as unknown;
+  if (typeof value !== 'object' || value === null || !('hasError' in value)) return value as T;
+  const envelope = value as { hasError: boolean; result: T | null; singleResult: T | null };
+  return (envelope.hasError ? envelope : (envelope.singleResult ?? envelope.result)) as T;
 }
 
 function cookiePair(cookies: readonly string[], name: string): string {
@@ -200,7 +203,7 @@ void describe(
       assert.equal(movedBody.level, 1);
 
       await mutation('delete', `/api/v1/admin/catalog/categories/${childBody.id}`, session).expect(
-        204,
+        200,
       );
       assert.equal(await prisma.category.count(), 1);
     });

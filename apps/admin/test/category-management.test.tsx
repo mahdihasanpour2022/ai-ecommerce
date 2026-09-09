@@ -49,24 +49,30 @@ const other: CategoryDto = {
 };
 const tree = [root, other] as const;
 
+function operation<Data>(data: Data, message = 'عملیات با موفقیت انجام شد.') {
+  return { data, message, code: 'OPERATION_SUCCESS' } as const;
+}
+
 function client(overrides: Partial<CatalogApi> = {}): CatalogApi {
   return {
     categories: async () => tree,
-    createCategory: async ({ name, parentId }) => ({
-      id: NEW_ID,
-      name,
-      parentId,
-      level: parentId === null ? 1 : 2,
-      children: [],
-      createdAt: time,
-      updatedAt: time,
-    }),
-    updateCategory: async (_categoryId, input) => ({
-      ...other,
-      name: input.name ?? other.name,
-      parentId: input.parentId === undefined ? other.parentId : input.parentId,
-    }),
-    deleteCategory: async () => undefined,
+    createCategory: async ({ name, parentId }) =>
+      operation({
+        id: NEW_ID,
+        name,
+        parentId,
+        level: parentId === null ? 1 : 2,
+        children: [],
+        createdAt: time,
+        updatedAt: time,
+      }),
+    updateCategory: async (_categoryId, input) =>
+      operation({
+        ...other,
+        name: input.name ?? other.name,
+        parentId: input.parentId === undefined ? other.parentId : input.parentId,
+      }),
+    deleteCategory: async () => operation(null, 'دسته‌بندی حذف شد.'),
     products: async () => ({
       items: [],
       page: 1,
@@ -168,7 +174,7 @@ void test('renders the ordered nested tree read-only and supports keyboard discl
 void test('validates and single-flights create, then refetches after the normalized response', async () => {
   let createCalls = 0;
   let readCalls = 0;
-  let resolveCreate: ((category: CategoryDto) => void) | undefined;
+  let resolveCreate: ((result: ReturnType<typeof operation<CategoryDto>>) => void) | undefined;
   const api = client({
     categories: async () => {
       readCalls += 1;
@@ -176,7 +182,7 @@ void test('validates and single-flights create, then refetches after the normali
     },
     createCategory: ({ parentId }) => {
       createCalls += 1;
-      return new Promise<CategoryDto>((resolve) => {
+      return new Promise<ReturnType<typeof operation<CategoryDto>>>((resolve) => {
         resolveCreate = resolve;
         assert.equal(parentId, null);
       });
@@ -196,15 +202,20 @@ void test('validates and single-flights create, then refetches after the normali
   await user.dblClick(within(dialog).getByRole('button', { name: 'ذخیره' }));
   await waitFor(() => assert.equal(createCalls, 1));
   assert.ok(within(dialog).getByRole('button', { name: 'در حال ذخیره…' }).hasAttribute('disabled'));
-  resolveCreate?.({
-    id: NEW_ID,
-    name: 'پوشاک مردانه',
-    parentId: null,
-    level: 1,
-    children: [],
-    createdAt: time,
-    updatedAt: time,
-  });
+  resolveCreate?.(
+    operation(
+      {
+        id: NEW_ID,
+        name: 'پوشاک مردانه',
+        parentId: null,
+        level: 1,
+        children: [],
+        createdAt: time,
+        updatedAt: time,
+      },
+      'دسته‌بندی «پوشاک مردانه» ذخیره شد.',
+    ),
+  );
   await waitFor(() => assert.equal(readCalls, 2));
   assert.ok(await view.findByText('دسته‌بندی «پوشاک مردانه» ذخیره شد.'));
   cleanup();
@@ -316,7 +327,7 @@ void test('reconciles successful deletion and focuses the nearest surviving node
       name: 'حذف دسته‌بندی',
     }),
   );
-  assert.ok(await view.findByText('دسته‌بندی «زنانه» حذف شد.'));
+  assert.ok(await view.findByText('دسته‌بندی حذف شد.'));
   await waitFor(() => assert.equal(reads, 2));
   await waitFor(() =>
     assert.equal(globalThis.document.activeElement?.getAttribute('data-category-id'), ROOT_ID),

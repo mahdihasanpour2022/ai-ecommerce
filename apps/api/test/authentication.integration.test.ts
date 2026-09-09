@@ -151,7 +151,8 @@ void describe(
       const response = await login(context.app, `  ${admin.email.toUpperCase()} `, admin.password)
         .expect(200)
         .expect('Cache-Control', 'no-store');
-      const body = response.body as Record<string, unknown>;
+      const envelope = response.body as { singleResult: Record<string, unknown> };
+      const body = envelope.singleResult;
       assert.deepEqual(Object.keys(body).sort(), ['admin', 'authorization', 'csrfToken']);
       assert.equal(typeof body.csrfToken, 'string');
       assert.match(body.csrfToken as string, /^[A-Za-z0-9_-]{43}$/u);
@@ -247,8 +248,12 @@ void describe(
       for (const response of responses) {
         assert.deepEqual(response.body, {
           statusCode: 401,
+          hasError: true,
           code: 'INVALID_CREDENTIALS',
           message: 'اطلاعات ورود نادرست است.',
+          count: 0,
+          result: null,
+          singleResult: null,
           details: [],
         });
         assert.equal(response.headers['set-cookie'], undefined);

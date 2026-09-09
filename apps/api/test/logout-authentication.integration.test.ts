@@ -158,18 +158,19 @@ void describe(
       const firstCookies = responseCookies(firstLogin.headers);
       const secondCookies = responseCookies(secondLogin.headers);
       const firstOldRefresh = cookiePair(firstCookies, REFRESH_COOKIE_NAME);
-      const firstCsrf = (firstLogin.body as { csrfToken: string }).csrfToken;
+      const firstCsrf = (firstLogin.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const secondAccess = cookiePair(secondCookies, ACCESS_COOKIE_NAME);
       const secondRefresh = cookiePair(secondCookies, REFRESH_COOKIE_NAME);
 
-      await refreshRequest(context, firstOldRefresh, firstCsrf).expect(204);
+      await refreshRequest(context, firstOldRefresh, firstCsrf).expect(200);
       const affectedToken = await context.prisma.refreshToken.findUniqueOrThrow({
         where: { tokenHash: hash(cookieValue(firstOldRefresh)) },
       });
       const logout = await logoutRequest(context, firstOldRefresh, firstCsrf)
-        .expect(204)
+        .expect(200)
         .expect('Cache-Control', 'no-store');
-      assert.equal(logout.text, '');
+      assert.equal((logout.body as { code: string }).code, 'LOGOUT_SUCCESS');
       const cleared = responseCookies(logout.headers);
       assert.deepEqual(cleared, [
         `${ACCESS_COOKIE_NAME}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax`,
@@ -208,7 +209,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const refreshCookie = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const token = await context.prisma.refreshToken.findUniqueOrThrow({
         where: { tokenHash: hash(cookieValue(refreshCookie)) },
       });
@@ -224,8 +226,8 @@ void describe(
         logoutRequest(context, refreshCookie, csrfToken),
         logoutRequest(context, refreshCookie, csrfToken),
       ]);
-      assert.equal(first.status, 204);
-      assert.equal(second.status, 204);
+      assert.equal(first.status, 200);
+      assert.equal(second.status, 200);
       assert.deepEqual(responseCookies(first.headers), responseCookies(second.headers));
       const afterConcurrent = await context.prisma.authSession.findUniqueOrThrow({
         where: { id: token.sessionId },
@@ -236,7 +238,7 @@ void describe(
       const tokenRevokedAt = afterConcurrent.refreshTokens[0]?.revokedAt?.getTime();
       assert.ok(tokenRevokedAt);
 
-      await logoutRequest(context, refreshCookie, csrfToken).expect(204);
+      await logoutRequest(context, refreshCookie, csrfToken).expect(200);
       const repeated = await context.prisma.authSession.findUniqueOrThrow({
         where: { id: token.sessionId },
         include: { refreshTokens: true },
@@ -254,7 +256,7 @@ void describe(
         return {
           access: cookiePair(cookies, ACCESS_COOKIE_NAME),
           refresh: cookiePair(cookies, REFRESH_COOKIE_NAME),
-          csrf: (response.body as { csrfToken: string }).csrfToken,
+          csrf: (response.body as { singleResult: { csrfToken: string } }).singleResult.csrfToken,
         };
       });
       await context.prisma.adminUser.update({
@@ -281,7 +283,7 @@ void describe(
       const second = sessions[1];
       assert.ok(first);
       assert.ok(second);
-      await logoutRequest(context, first.refresh, first.csrf).expect(204);
+      await logoutRequest(context, first.refresh, first.csrf).expect(200);
       const firstToken = await context.prisma.refreshToken.findUniqueOrThrow({
         where: { tokenHash: hash(cookieValue(first.refresh)) },
       });
@@ -318,7 +320,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const refreshCookie = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
 
       const missingOrigin = await request(server(context.app))
         .post('/api/v1/auth/logout')
@@ -370,7 +373,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const refreshCookie = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const originalLogout = context.repository.logoutKnownSession.bind(context.repository);
       context.repository.logoutKnownSession = () =>
         Promise.reject(new Error('database unavailable'));
@@ -407,7 +411,7 @@ void describe(
         | undefined;
       assert.ok(operation);
       assert.equal(operation.requestBody, undefined);
-      assert.deepEqual(Object.keys(operation.responses ?? {}).sort(), ['204', '401', '403', '500']);
+      assert.deepEqual(Object.keys(operation.responses ?? {}).sort(), ['200', '401', '403', '500']);
       assert.ok(
         operation.parameters?.some(
           (parameter) =>
@@ -426,8 +430,9 @@ void describe(
       const admin = await createAdmin(production);
       const loginResponse = await login(production, admin);
       const refreshCookie = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
-      const logout = await logoutRequest(production, refreshCookie, csrfToken).expect(204);
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
+      const logout = await logoutRequest(production, refreshCookie, csrfToken).expect(200);
       const cookies = responseCookies(logout.headers);
       assert.equal(cookies.length, 3);
       assert.ok(cookies.some((cookie) => cookie.startsWith(`${CSRF_COOKIE_NAME}=`)));

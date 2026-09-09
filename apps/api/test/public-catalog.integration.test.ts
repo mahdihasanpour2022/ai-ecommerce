@@ -82,7 +82,10 @@ function server(app: INestApplication): App {
 }
 
 function body<T>(response: Response): T {
-  return response.body as T;
+  const value = response.body as unknown;
+  if (typeof value !== 'object' || value === null || !('hasError' in value)) return value as T;
+  const envelope = value as { hasError: boolean; result: T | null; singleResult: T | null };
+  return (envelope.hasError ? envelope : (envelope.singleResult ?? envelope.result)) as T;
 }
 
 void describe(
@@ -216,17 +219,21 @@ void describe(
     });
 
     void test('returns an empty and then deterministic field-minimal public Category tree', async () => {
-      await request(server(app)).get('/api/v1/catalog/categories').expect(200, []);
+      const emptyResponse = await request(server(app))
+        .get('/api/v1/catalog/categories')
+        .expect(200);
+      assert.deepEqual(body<unknown[]>(emptyResponse), []);
       const rootB = await category('B Root');
       const rootA = await category('A Root');
       const child = await category('Child', rootA);
       const response = await request(server(app)).get('/api/v1/catalog/categories').expect(200);
-      assert.deepEqual(response.body, [
+      const tree = body<unknown[]>(response);
+      assert.deepEqual(tree, [
         { id: rootA, name: 'A Root', children: [{ id: child, name: 'Child', children: [] }] },
         { id: rootB, name: 'B Root', children: [] },
       ]);
-      assert.equal(JSON.stringify(response.body).includes('parentId'), false);
-      assert.equal(JSON.stringify(response.body).includes('createdAt'), false);
+      assert.equal(JSON.stringify(tree).includes('parentId'), false);
+      assert.equal(JSON.stringify(tree).includes('createdAt'), false);
     });
 
     void test('lists only Active Products with exact filter, active prices, availability, and stable pages', async () => {

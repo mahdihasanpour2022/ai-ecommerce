@@ -1,10 +1,10 @@
 # Clothing Catalog Specification
 
-**Status:** Approved for Sprint 2 implementation; persistence, protected Category/Product/Variant/Inventory, and protected/public price-display-setting contracts implemented
+**Status:** Backend persistence and protected Category/Product/Variant/Inventory plus protected/public price-display-setting contracts implemented
 
 ## Required Context
 
-- [Sprint 2 plan](../../sprints/sprint-02.md)
+- [Database architecture](../../architecture/database.md)
 - [Backend Architecture](../../architecture/backend-architecture.md)
 - [Database Architecture](../../architecture/database.md)
 - [API Conventions](../../api/conventions.md)
@@ -13,11 +13,11 @@
 - [Backend Standards](../../standards/backend.md)
 - [Testing Standards](../../standards/testing.md)
 
-This specification owns observable clothing-catalog behavior. The Sprint plan owns timing and scope; architecture/security documents own implementation boundaries; the accepted S2-T02 design owns detailed persistence decisions. Later tasks should narrow this list to the exact sections their changes require.
+This specification owns observable clothing-catalog behavior. Architecture and security documents own implementation boundaries; the Prisma schema and migrations own detailed persistence state. Each approved route plan narrows this specification to the exact behavior needed for that route.
 
 ## Purpose
 
-Sprint 2 establishes the minimum persistent Backend contract needed for Sprint 3 Admin catalog management and Sprint 4 public catalog discovery. It models a Product as the customer-facing clothing root and a Product Variant as the exact sellable SKU. It does not implement either frontend or any Cart, Checkout, Order, Payment, production-storage, or generalized catalog platform behavior.
+The implemented Backend baseline establishes the minimum persistent contract for Admin catalog management and future public catalog discovery. It models a Product as the customer-facing clothing root and a Product Variant as the exact sellable SKU. It does not by itself implement either frontend or any Cart, Checkout, Order, Payment, production-storage, or generalized catalog platform behavior.
 
 ## Domain overview
 
@@ -31,7 +31,7 @@ Category (parent -> children, maximum six levels)
 PriceDisplaySetting (one global RIAL | TOMAN value)
 ```
 
-Product/Variant UUIDs are stable catalog identities. A future Order Item may copy Variant ID, SKU, price, and descriptive facts into an immutable snapshot, but Sprint 2 creates no Order model or order-time behavior.
+Product/Variant UUIDs are stable catalog identities. A future Order Item may copy Variant ID, SKU, price, and descriptive facts into an immutable snapshot, but the current catalog contract creates no Order model or order-time behavior.
 
 ## Shared normalization and validation
 
@@ -53,7 +53,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 ### Technical choice rationale
 
 - The field bounds are deliberately generous for Persian clothing content while bounding validation, storage, logging, and response work. Changing a bound later is additive policy work, not a schema/domain redesign.
-- Page-based pagination is the simplest correct MVP contract at the known scale. Fixed timestamp-plus-UUID ordering makes it deterministic; Sprint 4 may add allowlisted sorts without breaking this baseline.
+- Page-based pagination is the simplest correct MVP contract at the known scale. Fixed timestamp-plus-UUID ordering makes it deterministic; a future approved route plan may add allowlisted sorts without breaking this baseline.
 - The 1,000-Category cap bounds the owner-approved complete-tree response. It is an application/catalog limit, not a generic hierarchy platform decision, and may be raised through later evidence-based planning.
 - Immutable Image UUID/content identity supports safe caching; replacement creates a new identity rather than serving new bytes from a stale URL.
 - Retaining inactive Variants avoids premature deletion/history rules while stable Variant UUID and canonical price make later Cart validation and Order snapshots possible.
@@ -67,7 +67,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 - `parentId = null` identifies a root. Any non-null parent must exist.
 - The root is level 1 and the maximum allowed level is 6.
 - Normalized names are case-insensitively unique among siblings. Root Categories share one sibling scope. The same name may appear under different parents.
-- Category has no Sprint 2 publication/archive workflow. Public Category retrieval returns the complete accepted tree, including empty Categories.
+- Category has no publication/archive workflow in the current contract. Public Category retrieval returns the complete accepted tree, including empty Categories.
 - Each Product references exactly one Category. Moving a Category or ancestor never changes Product membership.
 
 ### Create, rename, and move
@@ -94,7 +94,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 - `ACTIVE` is publicly retrievable. Only its active Variants are returned publicly.
 - `ARCHIVED` is retained, immutable except for transition back to Draft, and neither public nor purchasable.
 - Allowed transitions are Draft to/from Active, Draft or Active to Archived, and Archived to Draft. Other transitions return a conflict.
-- Sprint 2 has no Product hard-delete contract.
+- The current contract has no Product hard-delete operation.
 
 ### Activation and continued validity
 
@@ -125,7 +125,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 - Active Variants of one Product operate in exactly one mode: either one active default unnamed Variant or one or more active named Variants, never both.
 - Inactive retained Variants do not participate in the Product's current selectable mode, but their SKU and normalized size/color combination remain reserved. Reusing the retained row through update/reactivation is required instead of creating a duplicate identity.
 - Every Product retains at least one Variant row. An Active Product retains at least one active Variant.
-- Sprint 2 exposes no Variant hard-delete contract. Variants are deactivated and retained, preserving a stable future reference boundary without adding Variant history/audit models.
+- The current contract exposes no Variant hard-delete operation. Variants are deactivated and retained, preserving a stable future reference boundary without adding Variant history/audit models.
 
 ### Mutation behavior
 
@@ -138,10 +138,10 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 ### Canonical price
 
-- The only persisted/wire monetary value in Sprint 2 catalog contracts is `priceRial`.
+- The only persisted/wire monetary value in current catalog contracts is `priceRial`.
 - Backend protected/public Product/Variant DTOs accept or return `priceRial` regardless of the display setting.
 - `priceRial` is a required positive safe integer divisible by 10.
-- Sprint 2 does not model sale price, compare-at price, discount, tax, exchange rate, multi-currency, price history, or order totals.
+- The current catalog contract does not model sale price, compare-at price, discount, tax, exchange rate, multi-currency, price history, or order totals.
 
 ### Global display/input unit
 
@@ -158,7 +158,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 - Every Variant has exactly one Inventory record created in the same transaction, with non-negative integer `onHandQuantity` and positive integer `version` initially equal to 1.
 - Initial quantity defaults to 0; Product creation may provide a valid non-negative initial value.
-- Sprint 2 `availableQuantity` equals `onHandQuantity`; no reserved quantity is persisted.
+- Current `availableQuantity` equals `onHandQuantity`; no reserved quantity is persisted.
 - A Variant is publicly available only when Product is Active, Variant is active, and on-hand quantity is greater than zero.
 - Protected catalog reads include exact `onHandQuantity` and `version`. Public DTOs expose boolean `isAvailable` only.
 
@@ -168,7 +168,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 - The service performs one guarded atomic update that matches Variant Inventory and expected version, rejects negative/out-of-range quantity, and increments version exactly once.
 - A missing Variant/Inventory returns not found. A stale version returns `409 INVENTORY_VERSION_CONFLICT` with the current value omitted; the caller must refetch before retrying.
 - The Backend does not automatically retry a stale write and does not use last-write-wins behavior.
-- Multi-location stock, reservations, adjustment/event history, allocation, distributed locking, Redis, and Checkout decrement/release semantics are outside Sprint 2. Later purchase mutations may add guarded atomic decrement/reservation behavior without changing on-hand ownership.
+- Multi-location stock, reservations, adjustment/event history, allocation, distributed locking, Redis, and Checkout decrement/release semantics are outside the current catalog contract. Later purchase mutations may add guarded atomic decrement/reservation behavior without changing on-hand ownership.
 
 ## Product Images
 
@@ -198,7 +198,7 @@ Implementation status: the protected upload, reorder, immutable-identity replace
 - Resolved filesystem targets must remain within the configured root. Symlink/path traversal, absolute paths, caller-supplied keys, and overwriting an existing key are forbidden.
 - Upload first validates to an isolated staging key, then coordinates promotion and metadata visibility. A failed database/promotion step compensates by deleting staged/final unreferenced bytes where possible.
 - Replacement/removal first makes the old object durably identifiable as pending cleanup while atomically publishing the new ready metadata/order or removing public metadata. Object deletion is idempotent; success clears the cleanup record.
-- Failed post-commit cleanup is not exposed publicly, is logged without paths/payloads, and remains durably retryable by the next media maintenance/mutation operation. Sprint 2 adds only the narrow persistence/state needed for Product Image cleanup, not a generalized job/outbox/media platform.
+- Failed post-commit cleanup is not exposed publicly, is logged without paths/payloads, and remains durably retryable by the next media maintenance/mutation operation. The implementation adds only the narrow persistence/state needed for Product Image cleanup, not a generalized job/outbox/media platform.
 - Production upload/configuration fails closed until an approved production object-storage implementation exists. Development/test local storage must never be inferred as a production default.
 
 ### Ordering and retrieval
@@ -221,10 +221,10 @@ Implementation status: the protected upload, reorder, immutable-identity replace
 | `settings.price.display.unit.update` | Change the global rial/toman display/input unit. |
 
 - The migration registers all five Permission rows and explicitly grants each to the existing `SUPER_ADMIN` Role. There is no wildcard, Role-name bypass, or token permission claim.
-- Sprint 1 current Admin/session/permission checks remain authoritative for every protected operation. Missing authentication returns the applicable stable `401`; authenticated insufficient permission returns `403 INSUFFICIENT_PERMISSION` and never triggers refresh.
+- Current Admin/session/permission checks remain authoritative for every protected operation. Missing authentication returns the applicable stable `401`; authenticated insufficient permission returns `403 INSUFFICIENT_PERMISSION` and never triggers refresh.
 - Every protected state-changing request requires accepted Origin/Fetch-Metadata/session-CSRF enforcement. Safe reads do not change state and do not require CSRF.
 - Public contract groups below require no Admin authentication. They expose only explicitly allowed Active-catalog/display-setting fields.
-- Sprint 2 creates no Role-management behavior and makes no non-Super-Admin grant decision.
+- The current catalog contract creates no Role-management behavior and makes no non-Super-Admin grant decision.
 
 ## HTTP contract map
 
@@ -253,7 +253,7 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/settings/price-display-unit` | `catalog.read` | No | Current global unit. |
 | `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price.display.unit.update` | Yes | Replace global unit; `200`. |
 
-Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `updatedAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected in Sprint 2. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
+Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `updatedAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected by the current contract. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
 
 ### Protected mutation DTO boundaries
 
@@ -413,11 +413,11 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ### Regression and completion
 
-- Relevant Sprint 1 regression coverage proves current authentication, `401`/`403`, CSRF, permission resolution, disabled Admin behavior, and explicit `SUPER_ADMIN` grants continue to work.
-- Relevant API typecheck/lint/build, Prisma validate/generate, migration/database validation, formatting, documentation links, generated-output/scope inspection, and security checks pass according to each task and the Sprint exit gate.
+- Relevant regression coverage proves current authentication, `401`/`403`, CSRF, permission resolution, disabled Admin behavior, and explicit `SUPER_ADMIN` grants continue to work.
+- Relevant API typecheck/lint/build, Prisma validate/generate, migration/database validation, formatting, documentation links, generated-output/scope inspection, and security checks pass according to each approved route or task plan.
 
 ## Explicit deferrals
 
 This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, Product/Variant deletion, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, search, advanced filters, exact public stock, Admin/Storefront UI, image transformations, video, CDN/DAM, production object storage, multiple currencies, discounts/tax/history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, BFF, Redis, microservices, or unrelated legacy identifier renaming.
 
-Adding these requires the roadmap's later planning/approval path or a new explicit owner decision. Additive refactoring caused by genuinely new later requirements is acceptable; Sprint 2 must avoid breaking rework caused by contradicting the already accepted semantics above.
+Adding these requires a new explicit owner decision and an approved route or feature plan. Additive refactoring caused by genuinely new requirements is acceptable; new work must avoid breaking rework caused by contradicting the accepted semantics above.

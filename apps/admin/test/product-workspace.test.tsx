@@ -66,6 +66,10 @@ const product: ProductDetailDto = {
   updatedAt: time,
 };
 
+function operation<Data>(data: Data, message = 'عملیات با موفقیت انجام شد.') {
+  return { data, message, code: 'OPERATION_SUCCESS' } as const;
+}
+
 type Client = Pick<
   CatalogApi,
   | 'product'
@@ -81,24 +85,27 @@ function client(overrides: Partial<Client> = {}): Client {
     product: async () => product,
     categories: async () => [category],
     priceDisplaySetting: async () => ({ unit: 'TOMAN' }),
-    updateProduct: async (_id, input) => ({
-      ...product,
-      name: input.name ?? product.name,
-      description: input.description === undefined ? product.description : input.description,
-    }),
-    createVariant: async (_id, input) => ({
-      ...secondVariant,
-      id: '55555555-5555-4555-8555-555555555555',
-      sku: input.sku,
-      size: input.size,
-      color: input.color,
-      priceRial: input.priceRial,
-      inventory: { onHandQuantity: input.onHandQuantity, version: 1 },
-    }),
-    updateVariant: async (id, input) => ({
-      ...(id === firstVariant.id ? firstVariant : secondVariant),
-      ...input,
-    }),
+    updateProduct: async (_id, input) =>
+      operation({
+        ...product,
+        name: input.name ?? product.name,
+        description: input.description === undefined ? product.description : input.description,
+      }),
+    createVariant: async (_id, input) =>
+      operation({
+        ...secondVariant,
+        id: '55555555-5555-4555-8555-555555555555',
+        sku: input.sku,
+        size: input.size,
+        color: input.color,
+        priceRial: input.priceRial,
+        inventory: { onHandQuantity: input.onHandQuantity, version: 1 },
+      }),
+    updateVariant: async (id, input) =>
+      operation({
+        ...(id === firstVariant.id ? firstVariant : secondVariant),
+        ...input,
+      }),
     ...overrides,
   };
 }
@@ -134,7 +141,11 @@ void test('submits only normalized changed Product fields and reconciles the res
     client({
       updateProduct: async (_id, input) => {
         updates.push(input);
-        return { ...product, name: 'پیراهن رسمی', updatedAt: '2026-09-04T11:00:00.000Z' };
+        return operation({
+          ...product,
+          name: 'پیراهن رسمی',
+          updatedAt: '2026-09-04T11:00:00.000Z',
+        });
       },
     }),
   );
@@ -165,7 +176,7 @@ void test('labels deactivation, focuses cancel, and updates a retained Variant w
     client({
       updateVariant: async (_id, input) => {
         updates.push(input);
-        return { ...firstVariant, ...input, updatedAt: '2026-09-04T11:00:00.000Z' };
+        return operation({ ...firstVariant, ...input, updatedAt: '2026-09-04T11:00:00.000Z' });
       },
     }),
   );
@@ -191,12 +202,12 @@ void test('adds a named Variant with zero initial Inventory and canonical price'
     client({
       createVariant: async (_id, input) => {
         creations.push(input);
-        return {
+        return operation({
           ...secondVariant,
           id: '55555555-5555-4555-8555-555555555555',
           ...input,
           inventory: { onHandQuantity: 0, version: 1 },
-        };
+        });
       },
     }),
   );

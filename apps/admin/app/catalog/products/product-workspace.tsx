@@ -149,7 +149,7 @@ function ProductOverviewForm({
   categories: readonly CategoryDto[];
   client: WorkspaceClient;
   editable: boolean;
-  onSaved(product: ProductDetailDto): void;
+  onSaved(product: ProductDetailDto, message: string): void;
   onStale(message: string): void;
   onPermissionDenied(): void;
 }>) {
@@ -184,11 +184,11 @@ function ProductOverviewForm({
     try {
       const updated = await client.updateProduct(product.id, input);
       reset({
-        name: updated.name,
-        description: updated.description ?? '',
-        categoryId: updated.category.id,
+        name: updated.data.name,
+        description: updated.data.description ?? '',
+        categoryId: updated.data.category.id,
       });
-      onSaved(updated);
+      onSaved(updated.data, updated.message);
     } catch (error) {
       const failure = productFailurePresentation(error);
       setSummary(failure.message);
@@ -294,7 +294,7 @@ function VariantEditor({
   unit: PriceDisplayUnit;
   client: WorkspaceClient;
   editable: boolean;
-  onSaved(variant: ProductVariantDto): void;
+  onSaved(variant: ProductVariantDto, message: string): void;
   onStale(message: string): void;
   onPermissionDenied(): void;
 }>) {
@@ -382,12 +382,12 @@ function VariantEditor({
     try {
       const updated = await client.updateVariant(variant.id, input);
       reset({
-        sku: updated.sku,
-        size: updated.size ?? '',
-        color: updated.color ?? '',
-        price: priceRialToInput(updated.priceRial, unit),
+        sku: updated.data.sku,
+        size: updated.data.size ?? '',
+        color: updated.data.color ?? '',
+        price: priceRialToInput(updated.data.priceRial, unit),
       });
-      onSaved(updated);
+      onSaved(updated.data, updated.message);
     } catch (error) {
       handleFailure(error);
     }
@@ -398,7 +398,7 @@ function VariantEditor({
     try {
       const updated = await client.updateVariant(variant.id, { isActive });
       setConfirmDeactivate(false);
-      onSaved(updated);
+      onSaved(updated.data, updated.message);
     } catch (error) {
       handleFailure(error);
     }
@@ -552,7 +552,7 @@ function AddVariantForm({
   productId: string;
   unit: PriceDisplayUnit;
   client: WorkspaceClient;
-  onSaved(variant: ProductVariantDto): void;
+  onSaved(variant: ProductVariantDto, message: string): void;
   onStale(message: string): void;
   onPermissionDenied(): void;
 }>) {
@@ -596,7 +596,7 @@ function AddVariantForm({
       const created = await client.createVariant(productId, input);
       reset({ sku: '', size: '', color: '', price: '' });
       setOpen(false);
-      onSaved(created);
+      onSaved(created.data, created.message);
     } catch (error) {
       const failure = productFailurePresentation(error);
       setSummary(failure.message);
@@ -783,12 +783,12 @@ export function ProductWorkspaceView({
 
   const editable = canManage && product.status !== 'ARCHIVED';
   const mode = productVariantMode(product);
-  const saveProduct = (updated: ProductDetailDto) => {
+  const saveProduct = (updated: ProductDetailDto, message: string) => {
     setProduct(updated);
-    setAnnouncement('مشخصات محصول ذخیره شد.');
+    setAnnouncement(message);
     heading.current?.focus();
   };
-  const saveVariant = (updated: ProductVariantDto) => {
+  const saveVariant = (updated: ProductVariantDto, message: string) => {
     setProduct((current) =>
       current
         ? {
@@ -797,13 +797,13 @@ export function ProductWorkspaceView({
           }
         : current,
     );
-    setAnnouncement(`تنوع «${updated.sku}» ذخیره شد.`);
+    setAnnouncement(message);
   };
-  const addVariant = (created: ProductVariantDto) => {
+  const addVariant = (created: ProductVariantDto, message: string) => {
     setProduct((current) =>
       current ? { ...current, variants: [...current.variants, created] } : current,
     );
-    setAnnouncement(`تنوع «${created.sku}» افزوده شد.`);
+    setAnnouncement(message);
   };
   const stale = (notice: string) => {
     setAnnouncement(notice);

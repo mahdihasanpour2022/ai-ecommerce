@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { AdminHttpError } from './http-client';
+import { ApiResponseContractError, isNoPayloadSuccess } from './api-response';
 
 export interface RefreshCoordinator {
   recover(): Promise<void>;
@@ -20,7 +21,9 @@ export function requestSessionRefresh(client: AxiosInstance): Promise<void> {
       authPolicy: { csrf: 'required', failure: 'caller', refresh: 'never' },
       authRecoveryAttempted: true,
     })
-    .then(() => undefined);
+    .then((response) => {
+      if (!isNoPayloadSuccess(response.data, 200)) throw new ApiResponseContractError();
+    });
 }
 
 export function createRefreshCoordinator(refresh: () => Promise<void>): RefreshCoordinator {

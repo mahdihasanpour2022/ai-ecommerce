@@ -86,9 +86,13 @@ export function safeGatewayFailure(): Response {
   return Response.json(
     {
       statusCode: 502,
+      hasError: true,
       code: 'AUTH_BACKEND_UNAVAILABLE',
       message: 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.',
-      details: [],
+      count: 0,
+      result: null,
+      singleResult: null,
+      details: null,
     },
     { status: 502, headers: { 'Cache-Control': 'no-store' } },
   );

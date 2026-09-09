@@ -1,10 +1,10 @@
 # Admin Catalog Behavior and UX Specification
 
-**Status:** Approved for Sprint 3 implementation
+**Status:** Implemented in part; remaining UI work is planned route by route
 
 ## Required Context
 
-- [Sprint 3 plan](../../sprints/sprint-03.md) owns scope, accepted Owner Decisions, and exit criteria.
+- Owner-approved route plans own the scope and UI direction for each next page.
 - [Catalog specification](../catalog/specification.md) owns Backend invariants, HTTP contracts, permissions, DTOs, and stable failures.
 - [Admin authentication specification](../admin-auth/specification.md) owns login, current-session, refresh, logout, and protected-entry behavior.
 - [Frontend architecture](../../architecture/frontend-architecture.md) and [frontend standards](../../standards/frontend.md) own App Router, Persian RTL, accessibility, and client-state boundaries.
@@ -14,13 +14,13 @@ This document owns only the minimum user-visible Admin catalog behavior. It does
 
 ## Purpose and fixed decisions
 
-Sprint 3 extends the existing authenticated Admin shell into a usable Persian RTL catalog workspace. The five approved decisions are fixed:
+The Admin catalog contract extends the existing authenticated shell into a usable Persian RTL catalog workspace. The five approved decisions are fixed:
 
 - no new Role, grant, or Role-management UI; `SUPER_ADMIN` remains the only provisioned operator;
 - a Product list, focused Draft creation, and one sectioned Product workspace with explicit readiness and confirmed publication;
 - absolute Inventory updates with optimistic-version conflict recovery and no silent merge;
 - accessible in-workspace Image upload, preview, reorder, replace, and remove behavior without advanced media features; and
-- no persistent catalog audit history or audit-log UI in Sprint 3.
+- no persistent catalog audit history or audit-log UI in the current contract.
 
 Backend validation and authorization remain authoritative. Client checks explain and prevent obvious invalid actions but never establish permission, lifecycle validity, uniqueness, current Inventory, current Image order, or successful publication.
 
@@ -153,7 +153,7 @@ The creator explicitly chooses one mode:
 - **بدون گزینه:** exactly one Variant with both size and color absent;
 - **دارای اندازه یا رنگ:** every Variant has at least one non-empty size or color value.
 
-The selected mode is fixed after creation for Sprint 3 because the existing single-Variant mutation contracts do not provide an atomic safe mode conversion. The workspace does not offer mode switching. Named mode may add more Variants later; default mode may not add another Variant.
+The selected mode is fixed after creation because the existing single-Variant mutation contracts do not provide an atomic safe mode conversion. The workspace does not offer mode switching. Named mode may add more Variants later; default mode may not add another Variant.
 
 Each initial Variant requires SKU and price; active defaults to true and initial on-hand defaults to zero. SKU guidance states 1–64 uppercase Latin letters/digits plus hyphen/underscore and submits the normalized uppercase value. Size/color accept 1–80 normalized characters when present. Product name accepts 1–200 normalized characters and description is null or 1–5000 safe plain-text characters.
 
@@ -321,11 +321,11 @@ The existing Node test runner remains the component/integration runner; Jest, Vi
 
 - Add Admin scripts that keep component/integration tests separate from `test:e2e` and allow focused runs.
 - Configure one Chromium Playwright project with `webServer` starting the Admin production build; initial harness validation may stub API responses, while S3-T10 owns the real API/PostgreSQL/storage journey.
-- Install only Chromium (`playwright install chromium` locally; `playwright install --with-deps chromium` in Linux CI). Firefox/WebKit matrices are deferred because they multiply runtime without evidence of a Sprint 3-specific risk.
+- Install only Chromium (`playwright install chromium` locally; `playwright install --with-deps chromium` in Linux CI). Firefox/WebKit matrices are deferred because they multiply runtime without evidence of a current route-specific risk.
 - Add JSDOM setup/cleanup for the existing Node test runner rather than replacing it.
 - Extend CI timeout/cache behavior only if measured execution requires it. Browser binaries are generated environment state and remain untracked.
 - Yarn Classic lockfile changes are expected only in the separately approved dependency task. No production dependency is added at repository root.
 
 ## Explicit deferrals
 
-Non-Super-Admin Role composition and Role UI, catalog audit persistence/retention, mode conversion after Product creation, bulk catalog/Inventory/Image operations, adjustment history, drag-only ordering, crop/transform/CDN/object storage, dashboards, analytics, Storefront discovery, and all later commerce behavior remain outside Sprint 3.
+Non-Super-Admin Role composition and Role UI, catalog audit persistence/retention, mode conversion after Product creation, bulk catalog/Inventory/Image operations, adjustment history, drag-only ordering, crop/transform/CDN/object storage, dashboards, analytics, Storefront discovery, and later commerce behavior remain outside the current Admin catalog contract and require separately approved route plans.

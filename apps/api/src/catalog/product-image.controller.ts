@@ -51,6 +51,7 @@ import { ProductImageError, toProductImageHttpException } from './product-image.
 import { ProductImageService } from './product-image.service.js';
 import { parseCatalogUuid } from './product.dto.js';
 import { ProductError } from './product.errors.js';
+import { ApiSuccess, RawApiResponse } from '../http/api-response.js';
 
 const CSRF_HEADER = {
   name: 'X-CSRF-Token',
@@ -103,6 +104,11 @@ export class AdminProductImageController {
   constructor(private readonly images: ProductImageService) {}
 
   @Post('products/:productId/images')
+  @ApiSuccess({
+    code: 'PRODUCT_IMAGE_UPLOADED',
+    message: 'تصویر محصول با موفقیت افزوده شد.',
+    kind: 'single',
+  })
   @CatalogPermission('product.media.manage')
   @UseInterceptors(ProductImageMultipartErrorInterceptor)
   @ApiConsumes('multipart/form-data')
@@ -139,6 +145,11 @@ export class AdminProductImageController {
   }
 
   @Put('products/:productId/images/order')
+  @ApiSuccess({
+    code: 'PRODUCT_IMAGES_REORDERED',
+    message: 'ترتیب تصاویر با موفقیت ذخیره شد.',
+    kind: 'single',
+  })
   @CatalogPermission('product.media.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Atomically replace the complete ready Product Image order' })
@@ -161,6 +172,11 @@ export class AdminProductImageController {
   }
 
   @Post('product-images/:imageId/replacements')
+  @ApiSuccess({
+    code: 'PRODUCT_IMAGE_REPLACED',
+    message: 'تصویر محصول با موفقیت جایگزین شد.',
+    kind: 'single',
+  })
   @CatalogPermission('product.media.manage')
   @UseInterceptors(ProductImageMultipartErrorInterceptor)
   @ApiConsumes('multipart/form-data')
@@ -193,13 +209,18 @@ export class AdminProductImageController {
   }
 
   @Delete('product-images/:imageId')
-  @HttpCode(204)
+  @HttpCode(200)
+  @ApiSuccess({
+    code: 'PRODUCT_IMAGE_DELETED',
+    message: 'تصویر محصول با موفقیت حذف شد.',
+    kind: 'none',
+  })
   @CatalogPermission('product.media.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Remove an eligible ready Product Image and compact its order' })
   @ApiParam({ name: 'imageId', format: 'uuid' })
   @ApiQuery({ name: 'imageVersion', type: Number, minimum: 1, maximum: 2_147_483_647 })
-  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400, type: ApiErrorDto })
   @ApiResponse({ status: 401, type: ApiErrorDto })
   @ApiResponse({ status: 403, type: ApiErrorDto })
@@ -217,6 +238,7 @@ export class AdminProductImageController {
   }
 
   @Get('product-images/:imageId/content')
+  @RawApiResponse()
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return ready Product Image content for authorized Admins' })
   @ApiParam({ name: 'imageId', format: 'uuid' })
@@ -270,6 +292,7 @@ export class PublicProductImageController {
   constructor(private readonly images: ProductImageService) {}
 
   @Get(':imageId/content')
+  @RawApiResponse()
   @ApiOperation({ summary: 'Return immutable ready Image content for an Active Product' })
   @ApiParam({ name: 'imageId', format: 'uuid' })
   @ApiProduces('image/webp', 'image/jpeg', 'image/png')

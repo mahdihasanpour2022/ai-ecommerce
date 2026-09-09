@@ -302,7 +302,7 @@ export function ProductCreateView({
     try {
       const product = await client.createProduct(input);
       reset(values);
-      onCreated(product.id);
+      onCreated(product.data.id);
     } catch (error) {
       const failure = productFailurePresentation(error);
       setSummary(failure.message);

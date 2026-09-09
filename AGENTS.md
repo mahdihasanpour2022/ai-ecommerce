@@ -10,9 +10,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Clothing Commerce: Agent Guide
 
-This repository is a production-oriented clothing-commerce monorepo with three independent application foundations: a public Storefront, an Admin Panel, and a shared Backend API. Sprint 0 placed the preserved Next.js starter at `apps/storefront`, added the Admin/API foundations, and established root Yarn/Turborepo orchestration; Sprint 1 implemented Admin authentication, while clothing catalog and purchase behavior follow the active roadmap. Workspaces and runtime identifiers use the approved `e-commerce` naming, with SQL-safe PostgreSQL identifiers using `e_commerce`.
+This repository is a production-oriented clothing-commerce monorepo with three independent applications: a public Storefront, an Admin Panel, and a shared Backend API. The engineering foundation, Admin authentication, catalog persistence/contracts, and the implemented Admin catalog routes are established. Workspaces and runtime identifiers use the approved `e-commerce` naming, with SQL-safe PostgreSQL identifiers using `e_commerce`.
 
-Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, feature specifications, and sprint plans live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
+Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, and feature specifications live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
 
 ## Context hierarchy
 
@@ -20,12 +20,12 @@ Use focused context rather than loading all documentation:
 
 1. Always read this file.
 2. For a feature or task, use its **Required Context** as the routing source, but first assess whether that list is materially broader than execution requires. Narrow over-broad context before substantial work while retaining every authoritative source needed for correctness.
-3. Read the applicable sprint document for timing and approved scope.
+3. For frontend work, use the owner-supplied UI reference and the approved plan for the single route currently in scope.
 4. Load other documents only when inspection reveals a genuine dependency; do not read the entire `docs/` tree by default.
 
-Required Context is task-specific and Minimum Sufficient: prefer exact authoritative sections/topics and narrow canonical sources over whole documents included only for general relevance. Do not load unrelated completed-Sprint history or reread broad sources when a narrower canonical source already owns the applicable decision.
+Required Context is task-specific and Minimum Sufficient: prefer exact authoritative sections/topics and narrow canonical sources over whole documents included only for general relevance. Do not reread broad sources when a narrower canonical source already owns the applicable decision.
 
-Architecture and security documents own **how** the system is intended to work. Feature specifications own **what** observable behavior is required. Sprint documents own **when** work occurs and its scope. ADRs own **why** significant decisions were made. Prefer references to the canonical owner over duplicating detailed rules.
+Architecture and security documents own **how** the system is intended to work. Feature specifications and the owner-approved route plan own **what** observable behavior is required. ADRs own **why** significant decisions were made. Prefer references to the canonical owner over duplicating detailed rules.
 
 ## Model and reasoning routing
 
@@ -36,31 +36,21 @@ Architecture and security documents own **how** the system is intended to work. 
 - Improve workflow, preflight, context selection, and validation scope before lowering model/reasoning below the level required by task risk. Do not globally replace Sol with Terra or Medium with Light to save quota.
 - Model/reasoning choices optimize execution only. They never weaken Acceptance Criteria, Definition of Done, required tests, typecheck, lint, formatting, build validation, Swagger/OpenAPI, security validation, regression coverage, or correctness to save tokens.
 
-## Task execution and transitions
+## Route-by-route execution
 
+- This project no longer follows a roadmap, Sprint lifecycle, Sprint queue, or automatic task progression. Do not create or maintain Sprint plans or `current.md`, `done.md`, and `queue.md` execution files.
 - Apply the canonical [Technical Lead and Owner Decision Boundary](docs/standards/execution.md#technical-lead-and-owner-decision-boundary). Resolve ordinary technical planning and implementation choices using sound engineering judgment without shifting low-level Backend/database/security expertise to the owner. Surface only genuine Product/Owner decisions with a recommendation and approval request; this authority never overrides existing scope, architecture, schema/migration, dependency, Git, or implementation-approval boundaries.
-
-- Sprint execution state lives under `docs/work/<sprint>/`. Only the Active Sprint may have one Current task. Preparing a task is automatic within an Active Sprint; implementing it requires explicit owner approval. An unambiguous `Yes` to the implementation-approval question is equivalent to `Approve and implement the current task.` Normal context is this file, that task's `current.md`, and its Minimum Sufficient **Required Context**.
-- Every implementation task declares **Testing Impact**. A Backend HTTP-contract task also declares **Swagger / OpenAPI Impact** with matching acceptance and validation criteria. Detailed completion rules live in [testing standards](docs/standards/testing.md).
-- Once implementation is approved, continue until the Current task succeeds, reaches an explicit Open Decision, or is genuinely Blocked. Ask only the minimum necessary owner question for an explicit Open Decision; after the answer, persist it and resume the same already-approved task without another general approval. Ordinary implementation choices add no approval checkpoint.
-
-### Successful task completion
-
-- Verify Acceptance Criteria and applicable Definition of Done, run only validation required by the risk-based policy, mark the task `Done` in `queue.md`, and append a concise durable `done.md` record containing only: task ID/title, result, important decisions, affected areas/files at summary level, validation actually executed/result, documentation impact, and relevant follow-ups. Never copy full `current.md` content into `done.md`.
-- If another task is `Queued` in the same Active Sprint, immediately select the next queue entry, mark it `Current`, and replace `current.md` with its Goal, Why, Minimum Sufficient **Required Context**, Scope, Out of Scope, Expected Changes, Constraints, Acceptance Criteria, Testing Impact, Validation, Documentation Impact, and `Approval State: Awaiting Implementation Approval`; then **stop before implementation**. This preparation needs no owner approval.
-- After that transition, keep chat minimal: `Sx-Tyy completed. Sx-Tzz is now Current and awaiting implementation approval. Approve and implement Sx-Tzz?` At that point the previous task is already archived and the next task is already prepared; the question authorizes implementation only. Repository documentation owns durable detail; conversation owns approvals, Open Decisions, blockers, and concise status.
-
-### End of Sprint
-
-- If the completed task was final, clear `current.md` and verify the Sprint exit criteria. Mark the Sprint `Completed` and identify the next intended Sprint from the roadmap without activating it only when those criteria pass.
-- If that Sprint lacks an approved detailed plan/queue, ask `Sprint <n> is complete. Plan Sprint <n+1> from the roadmap?`; on approval, plan only that Sprint, surface required Open Decisions, and obtain plan approval. If an approved detailed plan already exists, ask `Sprint <n> is complete. Activate Sprint <n+1> and prepare its first Current task?`
-- Every new or refined Sprint plan must apply the canonical [Minimum Sufficient Sprint Scope](docs/roadmap.md#minimum-sufficient-sprint-scope): include Required Now and Required Dependency work, exclude Optional / Nice-to-Have and Future / Deferred work from normal queues, run the missing/over-planning/placement/dependency review, and surface rather than silently resolve required Open Decisions.
-- Only after the required plan/activation approval, mark the Sprint `Active`, automatically prepare its first `Current` task with `Approval State: Awaiting Implementation Approval`, and stop before implementation. If no next roadmap Sprint exists, report that roadmap planning is required. Detailed Just-In-Time policy is canonical in [the roadmap](docs/roadmap.md#just-in-time-sprint-planning).
+- Work one owner-selected page/route at a time. The owner supplies the UI direction or reference; inspect the existing route and related architecture, then agree a bounded plan before implementation.
+- Each route plan states Goal, Relevant existing architecture, Affected files/modules, Proposed implementation, API changes, Database changes, Security implications, Edge cases, Tests, Documentation impact, and explicit out-of-scope items.
+- Implement only after explicit owner approval unless the request already clearly authorizes implementation. Approval applies only to the planned route and its necessary shared/API support; it does not automatically authorize another route.
+- Every implementation declares Testing Impact. A Backend HTTP-contract change also declares Swagger / OpenAPI Impact with matching acceptance and validation criteria.
+- Once implementation is approved, continue until that route succeeds, reaches an explicit Open Decision, or is genuinely blocked. Verify the approved route plan and applicable Definition of Done, run risk-based validation, update only durable architecture/feature documentation affected by reality, and report completion.
+- After a route is completed, stop and wait for the owner to supply or select the next route and UI reference. Never prepare, activate, enqueue, or begin the next route automatically, and never plan a later Sprint or roadmap milestone.
 
 ### Failure, blockers, and context efficiency
 
-- Fix in-scope implementation or validation failures and continue. If genuinely Blocked, keep the task Current/Blocked, do not prepare another task, record the relevant execution state, and report only the exact blocker and required owner input. The compact success rule never hides failure.
-- Before substantial implementation, cheaply preflight external local infrastructure, required CLIs, environment values, and credentials that are necessary to implement or validate the task. For Prisma/schema/migration/persistence/data-integrity work, confirm the approved disposable PostgreSQL/Docker environment can run before expensive exploration or migration work. If a required dependency is unavailable, stop early and apply the existing Blocked workflow; do not install system software or perform heavyweight setup without owner approval.
+- Fix in-scope implementation or validation failures and continue. If genuinely blocked, preserve completed evidence and report only the exact blocker and required owner input.
+- Before substantial implementation, cheaply preflight external local infrastructure, required CLIs, environment values, and credentials that are necessary to implement or validate the task. For Prisma/schema/migration/persistence/data-integrity work, confirm the approved disposable PostgreSQL/Docker environment can run before expensive exploration or migration work. If a required dependency is unavailable, stop early; do not install system software or perform heavyweight setup without owner approval.
 - Minimize routine conversational output, but never reduce correctness, validation, traceability, or important owner decisions to save context.
 - Detailed preflight, context-budget, and execution-efficiency policy is canonical in [Task Execution and Context Efficiency](docs/standards/execution.md); validation breadth/reuse is canonical in [testing standards](docs/standards/testing.md).
 
@@ -78,7 +68,7 @@ Use targeted checks during implementation, then the minimum required final regre
 
 For every task, apply these token-efficiency rules without weakening scope or quality:
 
-- Start with this file, the Current task, and only the exact authoritative sections and implementation files needed. Do not print or load whole broad documents when targeted headings, line ranges, or searches are sufficient.
+- Start with this file, the owner-approved route plan, and only the exact authoritative sections and implementation files needed. Do not print or load whole broad documents when targeted headings, line ranges, or searches are sufficient.
 - Reuse established repository patterns and already-fetched documentation when still applicable. Do not repeat documentation lookups or repository searches unless the code, version, question, or evidence has changed; mandatory current-documentation rules still apply when triggered.
 - Inspect concise status, diffs, and failure excerpts. Suppress routine success detail and summarize large command output instead of reproducing or rereading it.
 - Group related edits and fix discovered type, lint, and test failures in batches. Avoid one-command-per-error iteration when one focused diagnostic identifies the set safely.

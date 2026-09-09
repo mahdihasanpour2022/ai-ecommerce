@@ -21,9 +21,9 @@
 
 For any task that creates, removes, or changes a Backend HTTP API contract:
 
-- `current.md` declares **Swagger / OpenAPI Impact** and includes contract-specific Acceptance Criteria and Validation.
+- The approved route/task plan declares **Swagger / OpenAPI Impact** and includes contract-specific Acceptance Criteria and Validation.
 - Swagger/OpenAPI is updated within the implementation task, not as later cleanup.
 - Before the task moves to Done, verify the implementation meets its Acceptance Criteria, relevant checks pass, generated documentation matches the implemented path, method, parameters, DTOs, statuses, security requirements, and API-visible errors, and no documentation made stale by the task remains.
-- Incomplete or inaccurate required Swagger/OpenAPI documentation blocks Done and prevents archival to `done.md`.
+- Incomplete or inaccurate required Swagger/OpenAPI documentation blocks completion.
 
 Tasks with no Backend HTTP API impact do not require Swagger/OpenAPI context or criteria. Detailed documentation content and exposure rules are canonical in [API conventions](../api/conventions.md).

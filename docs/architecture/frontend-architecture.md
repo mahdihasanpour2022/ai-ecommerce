@@ -10,7 +10,7 @@ Per the installed Next.js 16 guide, layouts and pages are Server Components by d
 
 - Route/layout composition owns page structure and rendering strategy.
 - Feature-level UI separates presentation from validation, orchestration, and business rules.
-- A reusable same-origin BFF/HTTP/auth layer centralizes Backend routing, credential cookies, CSRF headers, timeout, error-code handling, refresh coordination, and observability hooks. JavaScript does not read either authentication token or construct a Bearer header. The session-bound CSRF token is the only frontend-readable credential; server responses store it in a host-only `SameSite=Strict` cookie, and it is never persisted in Web Storage.
+- A reusable same-origin BFF/HTTP/auth layer centralizes Backend routing, canonical `ApiResponse` validation, credential cookies, CSRF headers, timeout, error-code handling, refresh coordination, and observability hooks. JavaScript does not read either authentication token or construct a Bearer header. The session-bound CSRF token is the only frontend-readable credential; server responses store it in a host-only `SameSite=Strict` cookie, and it is never persisted in Web Storage.
 - Components must not scatter arbitrary API calls or duplicate server business rules.
 - TanStack Query is the accepted client server-state and cache boundary. Client feature calls use typed feature hooks over thin `hooks/rq_hooks` fetcher/sender/deleter adapters, then the existing Axios and same-origin BFF layers. Query keys include every request variable; cache freshness, bounded read retry, mutation non-retry, targeted invalidation, and identity-change cleanup are explicit. Proxy/bootstrap, Route Handlers, Server Component prefetch, and low-level authentication transport remain non-hook infrastructure. See [ADR 0014](adr/0014-adopt-tanstack-query-client-server-state.md).
 - Introduce global state only for genuinely cross-route client state. Prefer server data, URL state, local state, and focused context first.
@@ -27,7 +27,7 @@ Responsive design is mobile-first across both applications. Unprefixed Tailwind 
 
 ## Forms and asynchronous experiences
 
-Use typed schemas shared between form parsing and client validation where useful, while treating backend validation as authoritative. The specific form library and any cross-package schema sharing require Sprint 0/feature approval. Prevent double submission and preserve actionable field and form errors.
+Use typed schemas shared between form parsing and client validation where useful, while treating backend validation as authoritative. Any form-library or cross-package schema change requires explicit feature approval. Prevent double submission and preserve actionable field and form errors.
 
 Every data-dependent experience defines loading, empty, error, success, and retry behavior. Errors shown to users are safe and useful; diagnostic details stay in approved telemetry. Cancellation, stale responses, and duplicate mutations are considered for relevant flows.
 
@@ -51,4 +51,4 @@ Authentication return destinations are allowlisted application-relative paths. R
 
 Trusted source-controlled SVG assets such as logos, icons, and illustrations are allowed and may use an approved build-time component import approach. Never inject arbitrary untrusted SVG markup. Uploaded product/media SVG is forbidden; upload rules live in the [security baseline](../security/baseline.md).
 
-See [frontend standards](../standards/frontend.md), [authentication](../security/authentication.md), and [Next.js ADR](adr/0004-use-nextjs-for-web-apps.md). The approved [Admin catalog behavior specification](../features/admin-catalog/specification.md) owns Sprint 3 routes, permission-aware UX, forms, conflicts, accessibility, and the bounded UI/test dependency proposal. The protected shell/read-client boundary, Category management, Product listing, atomic Draft creation, and Product/retained-Variant maintenance are implemented; Inventory mutation, media management, setting mutation, and publication remain later tasks.
+See [frontend standards](../standards/frontend.md), [authentication](../security/authentication.md), and [Next.js ADR](adr/0004-use-nextjs-for-web-apps.md). The approved [Admin catalog behavior specification](../features/admin-catalog/specification.md) owns permission-aware UX, forms, conflicts, accessibility, and established Admin catalog behavior. The protected shell/read-client boundary, Category management, Product listing, atomic Draft creation, and Product/retained-Variant maintenance are implemented; each remaining page is planned from owner-supplied UI direction before implementation.

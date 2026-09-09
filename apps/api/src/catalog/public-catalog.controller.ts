@@ -4,6 +4,7 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/
 import { safeInternalHttpException } from '../authentication/authentication-http.js';
 import { ApiErrorDto } from '../authentication/login.dto.js';
 import { ProductError, toProductHttpException } from './product.errors.js';
+import { ApiSuccess } from '../http/api-response.js';
 import {
   parsePublicProductListQuery,
   PublicCategoryDto,
@@ -19,6 +20,11 @@ export class PublicCatalogController {
   constructor(private readonly catalog: PublicCatalogService) {}
 
   @Get('categories')
+  @ApiSuccess({
+    code: 'CATEGORIES_FETCHED',
+    message: 'دسته‌بندی‌ها با موفقیت دریافت شدند.',
+    kind: 'collection',
+  })
   @ApiOperation({ summary: 'Return the complete bounded public Category tree' })
   @ApiResponse({ status: 200, type: PublicCategoryDto, isArray: true })
   @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
@@ -27,6 +33,12 @@ export class PublicCatalogController {
   }
 
   @Get('products')
+  @ApiSuccess({
+    code: 'PRODUCTS_FETCHED',
+    message: 'محصولات با موفقیت دریافت شدند.',
+    kind: 'single',
+    countProperty: 'totalItems',
+  })
   @ApiOperation({ summary: 'Return deterministic page-bounded Active Product summaries' })
   @ApiQuery({ name: 'page', required: false, type: Number, minimum: 1, example: 1 })
   @ApiQuery({
@@ -47,6 +59,7 @@ export class PublicCatalogController {
   }
 
   @Get('products/:productId')
+  @ApiSuccess({ code: 'PRODUCT_FETCHED', message: 'محصول با موفقیت دریافت شد.', kind: 'single' })
   @ApiOperation({ summary: 'Return public detail for one Active Product' })
   @ApiParam({ name: 'productId', format: 'uuid' })
   @ApiResponse({ status: 200, type: PublicProductDetailDto })

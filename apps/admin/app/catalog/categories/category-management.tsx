@@ -195,7 +195,7 @@ function CategoryEditorDialog({
   tree: readonly CategoryDto[];
   client: CategoryClient;
   onClose(): void;
-  onSaved(category: CategoryDto): void;
+  onSaved(category: CategoryDto, message: string): void;
   onPermissionDenied(): void;
   onRefreshTree(): void;
   refreshingTree: boolean;
@@ -249,7 +249,7 @@ function CategoryEditorDialog({
     setCanRefreshTree(false);
     try {
       const name = normalizeCategoryName(values.name);
-      let result: CategoryDto;
+      let result: Awaited<ReturnType<CatalogApi['createCategory']>>;
       if (state.mode === 'create') {
         const input: CreateCategoryInput = { name, parentId: values.parentId };
         result = await client.createCategory(input);
@@ -265,8 +265,8 @@ function CategoryEditorDialog({
         }
         result = await client.updateCategory(category!.id, input);
       }
-      reset({ name: result.name, parentId: result.parentId });
-      onSaved(result);
+      reset({ name: result.data.name, parentId: result.data.parentId });
+      onSaved(result.data, result.message);
     } catch (error) {
       const failure = categoryFailurePresentation(error);
       setFocusSummary(failure.field === undefined);
@@ -357,7 +357,7 @@ function DeleteCategoryDialog({
   state: DeleteState;
   client: CategoryClient;
   onClose(): void;
-  onDeleted(category: CategoryDto): void;
+  onDeleted(category: CategoryDto, message: string): void;
   onPermissionDenied(): void;
   onRefreshTree(): void;
   refreshingTree: boolean;
@@ -380,8 +380,8 @@ function DeleteCategoryDialog({
     setError(null);
     setCanRefreshTree(false);
     try {
-      await client.deleteCategory(state.category.id);
-      onDeleted(state.category);
+      const result = await client.deleteCategory(state.category.id);
+      onDeleted(state.category, result.message);
     } catch (caught) {
       const failure = categoryFailurePresentation(caught);
       setError(failure.message);
@@ -678,7 +678,7 @@ export function CategoryManagementView({
     void fetchTree(undefined, true, focusId);
   };
   const createRoot = (opener: HTMLElement) => setEditor({ mode: 'create', parentId: null, opener });
-  const handleSaved = (category: CategoryDto) => {
+  const handleSaved = (category: CategoryDto, message: string) => {
     setTree((current) =>
       editor?.mode === 'create'
         ? reconcileCreatedCategory(current, category)
@@ -688,13 +688,13 @@ export function CategoryManagementView({
       setExpanded((current) => new Set(current).add(category.parentId as string));
     }
     setEditor(null);
-    setAnnouncement(`دسته‌بندی «${category.name}» ذخیره شد.`);
+    setAnnouncement(message);
     refreshTree(category.id);
   };
-  const handleDeleted = (category: CategoryDto) => {
+  const handleDeleted = (category: CategoryDto, message: string) => {
     setTree((current) => reconcileDeletedCategory(current, category.id));
     setDeleting(null);
-    setAnnouncement(`دسته‌بندی «${category.name}» حذف شد.`);
+    setAnnouncement(message);
     refreshTree(category.parentId);
   };
 

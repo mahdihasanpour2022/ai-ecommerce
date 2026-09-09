@@ -9,6 +9,7 @@ import {
 import { AUTH_STATE_HEADER, encodeAuthenticationHeader } from './app/auth/server-auth-header';
 import { parseCurrentAuthentication } from './app/auth/session-contract';
 import { safeReturnDestination } from './app/auth/return-destination';
+import { successSingle } from './app/http/api-response';
 
 function loginUrl(request: NextRequest): URL {
   const destination = new URL('/login', request.url);
@@ -83,7 +84,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   } catch {
     return new NextResponse('پاسخ احراز هویت معتبر نیست.', { status: 502 });
   }
-  const current = parseCurrentAuthentication(body);
+  const current = parseCurrentAuthentication(successSingle(body, upstream.status));
   if (current === null) return new NextResponse('پاسخ احراز هویت معتبر نیست.', { status: 502 });
 
   if (isLogin) {

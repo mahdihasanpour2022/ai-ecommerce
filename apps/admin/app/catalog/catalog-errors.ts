@@ -53,16 +53,41 @@ export function classifyCatalogFailure(error: unknown): CatalogFailure {
     };
   }
   if (error.status === 403 || error.code === 'INSUFFICIENT_PERMISSION') {
-    return { kind: 'forbidden', code: error.code, message: MESSAGES.forbidden, retryable: false };
+    return {
+      kind: 'forbidden',
+      code: error.code,
+      message: error.responseMessage ?? MESSAGES.forbidden,
+      retryable: false,
+    };
   }
   if (error.status === 404 || error.code.endsWith('_NOT_FOUND')) {
-    return { kind: 'not-found', code: error.code, message: MESSAGES.notFound, retryable: false };
+    return {
+      kind: 'not-found',
+      code: error.code,
+      message: error.responseMessage ?? MESSAGES.notFound,
+      retryable: false,
+    };
   }
   if (error.status === 400 || error.code === 'VALIDATION_FAILED') {
-    return { kind: 'validation', code: error.code, message: MESSAGES.validation, retryable: false };
+    return {
+      kind: 'validation',
+      code: error.code,
+      message: error.responseMessage ?? MESSAGES.validation,
+      retryable: false,
+    };
   }
   if (error.status === 409 || CONFLICT_CODES.has(error.code)) {
-    return { kind: 'conflict', code: error.code, message: MESSAGES.conflict, retryable: true };
+    return {
+      kind: 'conflict',
+      code: error.code,
+      message: error.responseMessage ?? MESSAGES.conflict,
+      retryable: true,
+    };
   }
-  return { kind: 'server', code: error.code, message: MESSAGES.server, retryable: true };
+  return {
+    kind: 'server',
+    code: error.code,
+    message: error.responseMessage ?? MESSAGES.server,
+    retryable: true,
+  };
 }

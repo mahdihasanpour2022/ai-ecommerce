@@ -52,7 +52,7 @@ Next.js also assigns its own standard `NODE_ENV`; it is framework-owned rather t
 
 Set `API_BASE_URL` in the Admin server runtime when NestJS is not at the accepted local default. Browser code always calls the same-origin `/api/v1` BFF and never receives this value.
 
-## Accepted Sprint 1 configuration contract
+## Accepted authentication configuration contract
 
 The implemented authentication backend consumes and validates the access/refresh lifetimes, JWT, CORS, Argon2, login/refresh throttles, CSRF keyring, and refresh-recovery values below before application creation. `.env.example` contains only non-secret defaults and intentionally unusable secret placeholders.
 

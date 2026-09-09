@@ -152,15 +152,16 @@ void describe(
       const loginResponse = await login(context, admin);
       const loginCookies = responseCookies(loginResponse.headers);
       const oldRefresh = cookiePair(loginCookies, REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const initialSession = await context.prisma.authSession.findFirstOrThrow({
         where: { adminUserId: admin.id },
       });
 
       const rotated = await refreshRequest(context, oldRefresh, csrfToken)
-        .expect(204)
+        .expect(200)
         .expect('Cache-Control', 'no-store');
-      assert.equal(rotated.text, '');
+      assert.equal((rotated.body as { code: string }).code, 'TOKEN_REFRESHED');
       const rotatedCookies = responseCookies(rotated.headers);
       assert.equal(rotatedCookies.length, 2);
       const newRefresh = cookiePair(rotatedCookies, REFRESH_COOKIE_NAME);
@@ -195,7 +196,7 @@ void describe(
         /[A-Za-z0-9_-]{43}/u,
       );
 
-      const recovered = await refreshRequest(context, oldRefresh, csrfToken).expect(204);
+      const recovered = await refreshRequest(context, oldRefresh, csrfToken).expect(200);
       const recoveredRefresh = cookiePair(responseCookies(recovered.headers), REFRESH_COOKIE_NAME);
       assert.equal(recoveredRefresh, newRefresh);
       assert.equal(
@@ -208,14 +209,15 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const oldRefresh = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
 
       const [first, second] = await Promise.all([
         refreshRequest(context, oldRefresh, csrfToken),
         refreshRequest(context, oldRefresh, csrfToken),
       ]);
-      assert.equal(first.status, 204);
-      assert.equal(second.status, 204);
+      assert.equal(first.status, 200);
+      assert.equal(second.status, 200);
       const firstRefresh = cookiePair(responseCookies(first.headers), REFRESH_COOKIE_NAME);
       const secondRefresh = cookiePair(responseCookies(second.headers), REFRESH_COOKIE_NAME);
       assert.equal(firstRefresh, secondRefresh);
@@ -238,7 +240,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const oldRefresh = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const originalIssue = context.crypto.issueRefreshCredentials.bind(context.crypto);
       context.crypto.issueRefreshCredentials = async (adminId, sessionId, expiresAt, now) => ({
         ...(await originalIssue(adminId, sessionId, expiresAt, now)),
@@ -267,11 +270,12 @@ void describe(
       const secondLogin = await login(context, admin);
       const firstOld = cookiePair(responseCookies(firstLogin.headers), REFRESH_COOKIE_NAME);
       const secondRefresh = cookiePair(responseCookies(secondLogin.headers), REFRESH_COOKIE_NAME);
-      const firstCsrf = (firstLogin.body as { csrfToken: string }).csrfToken;
+      const firstCsrf = (firstLogin.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
 
-      const firstRotation = await refreshRequest(context, firstOld, firstCsrf).expect(204);
+      const firstRotation = await refreshRequest(context, firstOld, firstCsrf).expect(200);
       const firstCurrent = cookiePair(responseCookies(firstRotation.headers), REFRESH_COOKIE_NAME);
-      await refreshRequest(context, firstCurrent, firstCsrf).expect(204);
+      await refreshRequest(context, firstCurrent, firstCsrf).expect(200);
       const reused = await refreshRequest(context, firstOld, firstCsrf).expect(401);
       assert.equal((reused.body as { code: string }).code, 'REFRESH_TOKEN_REUSED');
       assert.equal(reused.headers['set-cookie'], undefined);
@@ -299,7 +303,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const refreshCookie = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
       const session = await context.prisma.authSession.findFirstOrThrow({
         where: { adminUserId: admin.id },
         include: { refreshTokens: true },
@@ -350,7 +355,8 @@ void describe(
       const admin = await createAdmin(context);
       const loginResponse = await login(context, admin);
       const oldRefresh = cookiePair(responseCookies(loginResponse.headers), REFRESH_COOKIE_NAME);
-      const csrfToken = (loginResponse.body as { csrfToken: string }).csrfToken;
+      const csrfToken = (loginResponse.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
 
       const missingOrigin = await request(server(context.app))
         .post('/api/v1/auth/refresh')
@@ -365,7 +371,7 @@ void describe(
         .expect(403);
       assert.equal((missingCsrf.body as { code: string }).code, 'CSRF_VALIDATION_FAILED');
 
-      await refreshRequest(context, oldRefresh, csrfToken).expect(204);
+      await refreshRequest(context, oldRefresh, csrfToken).expect(200);
       const latest = await context.prisma.refreshToken.findFirstOrThrow({
         where: { rotatedAt: null },
       });
@@ -393,9 +399,11 @@ void describe(
         responseCookies(limitedSecond.headers),
         REFRESH_COOKIE_NAME,
       );
-      const firstToken = (limitedFirst.body as { csrfToken: string }).csrfToken;
-      const secondToken = (limitedSecond.body as { csrfToken: string }).csrfToken;
-      await refreshRequest(limitedContext, firstRefresh, firstToken).expect(204);
+      const firstToken = (limitedFirst.body as { singleResult: { csrfToken: string } }).singleResult
+        .csrfToken;
+      const secondToken = (limitedSecond.body as { singleResult: { csrfToken: string } })
+        .singleResult.csrfToken;
+      await refreshRequest(limitedContext, firstRefresh, firstToken).expect(200);
       const ipLimited = await refreshRequest(
         limitedContext,
         secondSessionRefresh,
@@ -427,7 +435,7 @@ void describe(
       assert.ok(operation);
       assert.equal(operation.requestBody, undefined);
       assert.deepEqual(Object.keys(operation.responses ?? {}).sort(), [
-        '204',
+        '200',
         '401',
         '403',
         '429',

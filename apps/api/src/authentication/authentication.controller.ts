@@ -46,6 +46,7 @@ import {
 } from './protected-authentication.dto.js';
 import { ProtectedAuthenticationService } from './protected-authentication.service.js';
 import { RefreshAuthenticationService } from './refresh-authentication.service.js';
+import { ApiSuccess } from '../http/api-response.js';
 
 interface ErrorEnvelope {
   statusCode: number;
@@ -68,7 +69,8 @@ export class AuthenticationController {
   ) {}
 
   @Post('logout')
-  @HttpCode(204)
+  @HttpCode(200)
+  @ApiSuccess({ code: 'LOGOUT_SUCCESS', message: 'خروج با موفقیت انجام شد.', kind: 'none' })
   @ApiCookieAuth('adminRefresh')
   @ApiHeader({
     name: 'X-CSRF-Token',
@@ -78,8 +80,8 @@ export class AuthenticationController {
   })
   @ApiOperation({ summary: 'Revoke and clear the current browser session' })
   @ApiResponse({
-    status: 204,
-    description: 'Current known session revoked idempotently and both cookies cleared; no body.',
+    status: 200,
+    description: 'Current known session revoked idempotently and both cookies cleared.',
     headers: {
       'Set-Cookie': {
         description: 'Expired host-only Access and Refresh HttpOnly cookies.',
@@ -114,6 +116,11 @@ export class AuthenticationController {
 
   @Post('bootstrap')
   @HttpCode(200)
+  @ApiSuccess({
+    code: 'AUTHENTICATION_BOOTSTRAPPED',
+    message: 'نشست کاربری با موفقیت بررسی شد.',
+    kind: 'single',
+  })
   @ApiCookieAuth('adminRefresh')
   @ApiOperation({ summary: 'Validate or recover the current Admin browser session' })
   @ApiResponse({
@@ -174,7 +181,8 @@ export class AuthenticationController {
   }
 
   @Post('refresh')
-  @HttpCode(204)
+  @HttpCode(200)
+  @ApiSuccess({ code: 'TOKEN_REFRESHED', message: 'نشست با موفقیت تمدید شد.', kind: 'none' })
   @ApiCookieAuth('adminRefresh')
   @ApiHeader({
     name: 'X-CSRF-Token',
@@ -184,8 +192,8 @@ export class AuthenticationController {
   })
   @ApiOperation({ summary: 'Rotate or narrowly recover the current Refresh credential' })
   @ApiResponse({
-    status: 204,
-    description: 'Credentials rotated or latest in-grace credential safely reissued; no body.',
+    status: 200,
+    description: 'Credentials rotated or latest in-grace credential safely reissued.',
     headers: {
       'Set-Cookie': {
         description: 'Replacement host-only Access and Refresh HttpOnly cookies.',
@@ -242,6 +250,11 @@ export class AuthenticationController {
   }
 
   @Get('csrf')
+  @ApiSuccess({
+    code: 'CSRF_TOKEN_FETCHED',
+    message: 'توکن امنیتی با موفقیت دریافت شد.',
+    kind: 'single',
+  })
   @ApiCookieAuth('adminRefresh')
   @ApiOperation({ summary: 'Bootstrap the current session CSRF token without rotation' })
   @ApiResponse({
@@ -277,6 +290,11 @@ export class AuthenticationController {
   }
 
   @Get('me')
+  @ApiSuccess({
+    code: 'CURRENT_ADMIN_FETCHED',
+    message: 'اطلاعات کاربر با موفقیت دریافت شد.',
+    kind: 'single',
+  })
   @UseGuards(AccessAuthenticationGuard)
   @ApiCookieAuth('adminAccess')
   @ApiOperation({ summary: 'Return current Admin identity and effective authorization' })
@@ -310,6 +328,7 @@ export class AuthenticationController {
 
   @Post('login')
   @HttpCode(200)
+  @ApiSuccess({ code: 'LOGIN_SUCCESS', message: 'ورود با موفقیت انجام شد.', kind: 'single' })
   @ApiOperation({ summary: 'Establish an Admin browser session' })
   @ApiBody({ type: LoginRequestDto })
   @ApiResponse({

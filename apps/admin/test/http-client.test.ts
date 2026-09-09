@@ -28,7 +28,16 @@ function deferred<T>(): Deferred<T> {
 
 function throwHttp(config: InternalAxiosRequestConfig, status: number, code: string): never {
   throw new axios.AxiosError('HTTP failure', 'ERR_BAD_RESPONSE', config, undefined, {
-    data: { code },
+    data: {
+      statusCode: status,
+      hasError: true,
+      message: 'خطای آزمون.',
+      code,
+      count: 0,
+      result: null,
+      singleResult: null,
+      details: null,
+    },
     status,
     statusText: 'Error',
     headers: {},
@@ -48,6 +57,19 @@ function successfulAdapter(calls: InternalAxiosRequestConfig[]): AxiosAdapter {
   return async (config) => {
     calls.push(config);
     return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config };
+  };
+}
+
+function noPayloadSuccess(code = 'TOKEN_REFRESHED') {
+  return {
+    statusCode: 200,
+    hasError: false,
+    message: 'عملیات با موفقیت انجام شد.',
+    code,
+    count: 0,
+    result: null,
+    singleResult: null,
+    details: null,
   };
 }
 
@@ -135,7 +157,13 @@ void test('classifies HTTP, timeout, cancellation, network, and unexpected failu
     response: {
       status: 429,
       data: {
+        statusCode: 429,
+        hasError: true,
+        message: 'درخواست‌های زیادی ارسال شده است.',
         code: 'AUTH_RATE_LIMITED',
+        count: 0,
+        result: null,
+        singleResult: null,
         details: ['name', 'parentId', 'unsafe detail with spaces', 42],
       },
       headers: { 'retry-after': '30' },
@@ -156,6 +184,15 @@ void test('classifies HTTP, timeout, cancellation, network, and unexpected failu
       retryAfter: '30',
       details: ['name', 'parentId'],
     },
+  );
+
+  const malformed = normalizeHttpFailure({
+    isAxiosError: true,
+    response: { status: 500, data: { code: 'INTERNAL_SERVER_ERROR' }, headers: {} },
+  });
+  assert.deepEqual(
+    { kind: malformed.kind, status: malformed.status, code: malformed.code },
+    { kind: 'http', status: 502, code: 'INVALID_RESPONSE' },
   );
   assert.equal(normalizeHttpFailure({ isAxiosError: true, code: 'ETIMEDOUT' }).kind, 'timeout');
   assert.equal(normalizeHttpFailure(new axios.CanceledError()).kind, 'canceled');
@@ -256,7 +293,13 @@ void test('single-flights concurrent expiry and replays every original request o
     if (config.url === '/auth/refresh') {
       refreshCalls += 1;
       await refreshGate.promise;
-      return { data: undefined, status: 204, statusText: 'No Content', headers: {}, config };
+      return {
+        data: noPayloadSuccess(),
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
     }
     if (config.authRecoveryAttempted !== true) {
       throwHttp(config, 401, 'ACCESS_TOKEN_EXPIRED');
@@ -380,7 +423,13 @@ void test('does not retry definitive refresh rejection and keeps cancellation wa
       refreshCalls += 1;
       await refreshGate.promise;
       if (definitive) throwHttp(config, 401, 'REFRESH_TOKEN_EXPIRED');
-      return { data: undefined, status: 204, statusText: 'No Content', headers: {}, config };
+      return {
+        data: noPayloadSuccess(),
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
     }
     if (config.authRecoveryAttempted) {
       replayCalls += 1;

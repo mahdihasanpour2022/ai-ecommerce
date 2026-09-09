@@ -11,12 +11,16 @@ void test('uses the same-origin client for login and logout', async () => {
   credentials.set('session-csrf');
   const adapter: AxiosAdapter = async (config) => {
     calls.push(config);
+    const payload = {
+      csrfToken: 'csrf-value',
+      admin: { id: 'admin-1', email: 'admin@example.com', displayName: 'مدیر آزمون' },
+      authorization: { roles: ['SUPER_ADMIN'], permissions: ['admin.access'] },
+    };
     return {
-      data: {
-        csrfToken: 'csrf-value',
-        admin: { id: 'admin-1', email: 'admin@example.com', displayName: 'مدیر آزمون' },
-        authorization: { roles: ['SUPER_ADMIN'], permissions: ['admin.access'] },
-      },
+      data:
+        config.url === '/auth/logout'
+          ? apiResponse(null, 'LOGOUT_SUCCESS')
+          : apiResponse(payload, 'LOGIN_SUCCESS'),
       status: 200,
       statusText: 'OK',
       headers: {},
@@ -47,6 +51,19 @@ void test('uses the same-origin client for login and logout', async () => {
   assert.equal(calls[1]?.headers.get('X-CSRF-Token'), 'session-csrf');
   assert.equal(calls[1]?.headers.has('Authorization'), false);
 });
+
+function apiResponse(singleResult: unknown, code: string) {
+  return {
+    statusCode: 200,
+    hasError: false,
+    message: 'عملیات با موفقیت انجام شد.',
+    code,
+    count: 0,
+    result: null,
+    singleResult,
+    details: null,
+  };
+}
 
 void test('rejects malformed login success without exposing response data', async () => {
   const adapter: AxiosAdapter = async (config) => ({

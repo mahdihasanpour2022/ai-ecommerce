@@ -2,6 +2,7 @@ import { AdminHttpError, httpClient } from '../http/http-client';
 import type { AxiosInstance } from 'axios';
 import type { CurrentAuthentication } from './auth-types';
 import { parseCurrentAuthentication } from './session-contract';
+import { isNoPayloadSuccess, successSingle } from '../http/api-response';
 
 export interface AuthApi {
   login(identifier: string, password: string, signal?: AbortSignal): Promise<CurrentAuthentication>;
@@ -25,13 +26,16 @@ export function createAuthApi(client: AxiosInstance = httpClient): AuthApi {
           authPolicy: { csrf: 'omit', failure: 'caller', refresh: 'never' },
         },
       );
-      return requireCurrent(response.data);
+      return requireCurrent(successSingle(response.data, response.status));
     },
     async logout(signal) {
-      await client.post('/auth/logout', undefined, {
+      const response = await client.post<unknown>('/auth/logout', undefined, {
         ...(signal ? { signal } : {}),
         authPolicy: { csrf: 'required', failure: 'caller', refresh: 'never' },
       });
+      if (!isNoPayloadSuccess(response.data, 200)) {
+        throw new AdminHttpError('http', 502, 'INVALID_RESPONSE');
+      }
     },
   };
 }

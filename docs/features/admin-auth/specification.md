@@ -64,7 +64,7 @@ Under `/api/v1`:
 - `GET /auth/csrf`: retain the compatibility recovery read, validate Refresh/session without rotation, and restore the existing session-bound CSRF cookie with a no-store response; normal Admin page entry uses `POST /auth/bootstrap` instead.
 - `POST /auth/refresh`: validate the refresh cookie/session/CSRF as approved, rotate atomically, and issue replacement credentials.
 - `POST /auth/logout`: revoke the current session refresh capability and expire its authentication cookies; repeated logout behavior must be safely defined.
-- `GET /auth/me`: return `{ admin: { id, email, displayName }, authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret. Sprint 1 introduces only the `SUPER_ADMIN` Role and `admin.access` Permission.
+- `GET /auth/me`: return `{ admin: { id, email, displayName }, authorization: { roles, permissions } }`, with sorted/deduplicated effective strings and no token/session secret. The initial authorization baseline includes only the `SUPER_ADMIN` Role and `admin.access` Permission.
 
 Errors follow [API conventions](../../api/conventions.md): stable English `code`, Persian `message` when user-display text is appropriate, and no sensitive internals.
 
@@ -125,7 +125,7 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 - Access JWTs use the accepted Ed25519/EdDSA key ring and required header/claim validation; authorization data is not embedded.
 - Password verification uses the accepted Argon2id parameters, equivalent failure work, and rehash-on-success behavior.
 - Account/IP login and session/IP refresh throttles enforce the accepted configurable defaults, generic `429` behavior, and no permanent lockout.
-- `/auth/me` returns only safe identity plus sorted effective Role/Permission strings; Sprint 1 eligibility requires `admin.access`, and Backend state remains authoritative.
+- `/auth/me` returns only safe identity plus sorted effective Role/Permission strings; Admin eligibility requires `admin.access`, and Backend state remains authoritative.
 - Initial Super Admin provisioning uses the accepted secure administrative CLI/script architecture and fails safely if initial provisioning already occurred.
 - User-display messages are Persian and Admin UI is `fa-IR` RTL and accessible.
 - Relevant contract, security, concurrency, integration, and critical-flow tests pass.
@@ -133,4 +133,4 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 
 ## Accepted Persistence Contract
 
-The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and initial migration design are canonical in the [S1-T02 schema proposal](../../work/sprint-01/s1-t02-schema-proposal.md). S1-T03 implemented and database-verified them; S1-T04 through S1-T12 implemented and verified the trusted provisioning, Backend authentication, frontend session, refresh-recovery, logout, security, accessibility, and contract behavior defined here.
+The owner-approved fields, relations, constraints, indexes, deletion/cleanup policies, 30-day terminal security-history retention, fixed session expiry, HMAC-keyed login throttling, and migration design are implemented in the Prisma schema and reviewed migrations and verified by focused PostgreSQL tests. Trusted provisioning, Backend authentication, frontend session, refresh recovery, logout, security, accessibility, and contract behavior defined here are implemented.

@@ -11,6 +11,8 @@ import type { CsrfCredentialStore } from './csrf-credential';
 import { httpFailureChannel } from './http-failure-channel';
 import type { HttpFailurePublisher } from './http-failure-channel';
 import { createRefreshCoordinator, requestSessionRefresh } from './refresh-coordinator';
+import { ApiResponseContractError, errorResponse } from './api-response';
+import type { ApiResponse } from './api-response';
 
 export const DEFAULT_HTTP_TIMEOUT_MS = 20_000;
 const DEFAULT_API_BASE_URL = '/api/v1';
@@ -43,10 +45,17 @@ export class AdminHttpError extends Error {
     readonly code: string,
     readonly retryAfter: string | null = null,
     readonly details: readonly string[] = [],
+    readonly responseMessage: string | null = null,
   ) {
     super(`Admin HTTP request failed: ${kind}/${status ?? 'no-status'}/${code}.`);
     this.name = 'AdminHttpError';
   }
+}
+
+function responseMessage(message: string): string | null {
+  return typeof message === 'string' && message.length > 0 && message.length <= 500
+    ? message
+    : null;
 }
 
 class RequestPolicyError extends Error {
@@ -98,19 +107,12 @@ function applySecurityPolicy(
   return config;
 }
 
-function responseCode(error: AxiosError): string {
-  const data: unknown = error.response?.data;
-  if (typeof data === 'object' && data !== null && 'code' in data) {
-    const code = (data as { readonly code?: unknown }).code;
-    if (typeof code === 'string' && code.length > 0) return code;
-  }
-  return 'UNKNOWN_ERROR';
+function parsedErrorResponse(error: AxiosError): ApiResponse<null, null, unknown> | null {
+  const status = error.response?.status;
+  return status === undefined ? null : errorResponse(error.response?.data, status);
 }
 
-function responseDetails(error: AxiosError): readonly string[] {
-  const data: unknown = error.response?.data;
-  if (typeof data !== 'object' || data === null || !('details' in data)) return [];
-  const details = (data as { readonly details?: unknown }).details;
+function responseDetails(details: unknown): readonly string[] {
   if (!Array.isArray(details)) return [];
   return details
     .slice(0, 20)
@@ -123,11 +125,12 @@ function responseDetails(error: AxiosError): readonly string[] {
 function isRefreshEligible(
   error: unknown,
 ): error is AxiosError & { config: InternalAxiosRequestConfig } {
+  const response = axios.isAxiosError(error) ? parsedErrorResponse(error) : null;
   return (
     axios.isAxiosError(error) &&
     !axios.isCancel(error) &&
     error.response?.status === 401 &&
-    responseCode(error) === 'ACCESS_TOKEN_EXPIRED' &&
+    response?.code === 'ACCESS_TOKEN_EXPIRED' &&
     error.config?.authPolicy?.refresh === 'eligible' &&
     error.config.signal?.aborted !== true &&
     error.config.authRecoveryAttempted !== true
@@ -136,6 +139,9 @@ function isRefreshEligible(
 
 export function normalizeHttpFailure(error: unknown): AdminHttpError {
   if (error instanceof AdminHttpError) return error;
+  if (error instanceof ApiResponseContractError) {
+    return new AdminHttpError('http', 502, 'INVALID_RESPONSE');
+  }
   if (error instanceof RequestPolicyError) {
     return new AdminHttpError('configuration', null, error.policyCode);
   }
@@ -146,12 +152,15 @@ export function normalizeHttpFailure(error: unknown): AdminHttpError {
     return new AdminHttpError('timeout', null, 'REQUEST_TIMEOUT');
   }
   if (error.response) {
+    const response = parsedErrorResponse(error);
+    if (!response) return new AdminHttpError('http', 502, 'INVALID_RESPONSE');
     return new AdminHttpError(
       'http',
       error.response.status,
-      responseCode(error),
+      response.code,
       error.response.headers['retry-after']?.toString() ?? null,
-      responseDetails(error),
+      responseDetails(response.details),
+      responseMessage(response.message),
     );
   }
   return new AdminHttpError('network', null, 'NETWORK_ERROR');
