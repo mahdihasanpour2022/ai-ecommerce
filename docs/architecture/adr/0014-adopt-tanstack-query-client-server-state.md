@@ -17,13 +17,13 @@ The target Admin layering is:
 ```text
 Feature component
   -> feature-specific query/mutation hook
-  -> useRQFetcher / useRQSender / useRQDeleter
+  -> approved thin TanStack Query adapter (currently useRQSender)
   -> existing Axios security and failure boundary
   -> existing same-origin /api/v1/** BFF
   -> Backend API
 ```
 
-Admin owns `hooks/rq_hooks/useRQFetcher.ts`, `useRQSender.ts`, and `useRQDeleter.ts`. These are thin typed adapters over TanStack Query, not locations for feature semantics. Feature folders own hooks such as `useGetProducts` or `useUpdateInventory`, complete query keys, request/response DTOs, runtime success parsing, cache reconciliation, and user-facing domain outcomes.
+Admin currently owns `hooks/rq_hooks/useRQSender.ts` as a thin typed mutation adapter over TanStack Query for authentication. The former read/delete adapters were removed with the Admin catalog routes and should return only when an approved feature needs them. Adapters are not locations for feature semantics; feature folders own complete query keys, request/response DTOs, runtime success parsing, cache reconciliation, and user-facing domain outcomes.
 
 All Backend calls initiated by Client feature components use feature hooks over these adapters. Exceptions are infrastructure that cannot be a React hook: Next.js Proxy/bootstrap, Route Handlers/BFF forwarding, Server Component prefetching, and low-level authentication transport orchestration. Login/logout may later expose mutation hooks to components, but Backend authentication truth remains in Proxy/AuthProvider and never solely in Query cache.
 
@@ -50,8 +50,8 @@ Access and Refresh remain host-only HttpOnly cookies. The BFF forwards cookies s
 - `staleTime`, `gcTime`, focus/reconnect refetch, polling, and retry are deliberate defaults with per-query overrides. `Infinity` is reserved for data that is stable for the application lifetime or is guaranteed to be explicitly invalidated.
 - Safe GET retries are bounded and limited to appropriate transport/temporary-server failures. Do not retry cancellation, configuration errors, `4xx`, definitive authentication/authorization, validation, conflict, or not-found outcomes.
 - Mutations do not retry automatically. Duplicate submission remains prevented through pending/disabled or existing single-flight behavior.
-- `useRQFetcher` returns parsed data and standard TanStack query state. It does not own global notification deduplication through mutable module state.
-- `useRQSender` supports `POST`, `PUT`, and `PATCH`; `useRQDeleter` supports `DELETE`. Both return parsed mutation data and accept exact feature callbacks/options without weakening the centralized request policy.
+- A future read adapter returns parsed data and standard TanStack query state. It does not own global notification deduplication through mutable module state.
+- `useRQSender` returns parsed mutation data and accepts exact feature callbacks/options without weakening the centralized request policy. A future delete adapter follows the same boundary.
 - Invalidation input is `readonly QueryKey[]`, not one `QueryKey` iterated as though it were a list. Each key is passed unchanged to `queryClient.invalidateQueries({ queryKey })`, and the invalidation promises are awaited when subsequent UI behavior depends on fresh data. No arbitrary timeout delays invalidation.
 - Prefer reconciling an authoritative normalized mutation response with `setQueryData` where safe, followed by targeted invalidation when related projections may be stale. Never guess Backend-normalized state or implement broad cache clearing after every mutation.
 - Error presentation belongs to the feature or an accessible shared error boundary. Stable codes are mapped to safe Persian messages; unknown response diagnostics are not surfaced. Global auth handling remains in the existing authentication failure boundary.

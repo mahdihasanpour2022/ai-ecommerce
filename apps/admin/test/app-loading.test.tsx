@@ -5,14 +5,14 @@ import { UiLoading } from '../app/components/shared/ui-loading';
 import { StatusPanel } from '../app/components/status-panel';
 
 void test('shows a custom visible message in the shared accessible loader', () => {
-  const html = renderToStaticMarkup(<UiLoading message="در حال بارگذاری محصولات..." />);
+  const html = renderToStaticMarkup(<UiLoading message="در حال آماده‌سازی..." />);
 
   assert.match(html, /role="status"/u);
   assert.match(html, /aria-busy="true"/u);
   assert.match(html, /admin-loader\.svg/u);
   assert.match(html, /max-w-lg/u);
   assert.doesNotMatch(html, /app-loading(?:-message|-fullscreen)?/u);
-  assert.match(html, /در حال بارگذاری محصولات\.\.\./u);
+  assert.match(html, /در حال آماده‌سازی\.\.\./u);
 });
 
 void test('uses the requested default message when none is provided', () => {

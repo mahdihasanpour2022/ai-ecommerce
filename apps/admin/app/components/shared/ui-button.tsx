@@ -1,5 +1,5 @@
-import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 import { classNames } from './class-names';
 
 const VARIANT_CLASSES = {

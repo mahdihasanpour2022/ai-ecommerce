@@ -22,12 +22,9 @@ void test('redirects a protected route before render when Refresh is absent', as
     calls += 1;
     return Promise.reject(new Error('must not call'));
   };
-  const response = await proxy(request('/catalog/products'));
+  const response = await proxy(request('/'));
   assert.equal(response.status, 307);
-  assert.equal(
-    response.headers.get('location'),
-    'http://localhost:3001/login?returnTo=%2Fcatalog%2Fproducts',
-  );
+  assert.equal(response.headers.get('location'), 'http://localhost:3001/login');
   assert.equal(calls, 0);
   assert.equal(response.headers.getSetCookie().length, 3);
 });
@@ -58,7 +55,7 @@ void test('injects only validated Backend identity and forwards rotated cookies'
     );
   };
   const response = await proxy(
-    request('/catalog/products', 'admin_refresh_token=refresh-value; admin_access_token=access'),
+    request('/', 'admin_refresh_token=refresh-value; admin_access_token=access'),
   );
   assert.equal(response.status, 200);
   const encoded = response.headers.get(`x-middleware-request-${AUTH_STATE_HEADER}`);

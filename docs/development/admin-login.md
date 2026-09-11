@@ -4,7 +4,7 @@ The Backend implements `POST /api/v1/auth/login`, `POST /api/v1/auth/bootstrap`,
 
 ## Admin frontend
 
-The Admin serves an accessible Persian RTL login at `/login` and protects `/` plus `/catalog/**`. Before rendering, `proxy.ts` calls Backend Bootstrap server-to-server, forwards credential cookies, and injects only the safe validated identity/authorization snapshot into the server render. Authentication cookies remain HttpOnly; the session-bound CSRF token is a readable host-only `SameSite=Strict` cookie used only for unsafe-request headers. No credential enters Web Storage, IndexedDB, URLs, logs, or rendered markup.
+The Admin serves an accessible Persian RTL login at `/login` and protects the authenticated root at `/`. Before rendering, `proxy.ts` calls Backend Bootstrap server-to-server, forwards credential cookies, and injects only the safe validated identity/authorization snapshot into the server render. Authentication cookies remain HttpOnly; the session-bound CSRF token is a readable host-only `SameSite=Strict` cookie used only for unsafe-request headers. No credential enters Web Storage, IndexedDB, URLs, logs, or rendered markup.
 
 Login prevents duplicate submissions, clears the controlled password value immediately after submission, receives the safe current Admin snapshot in the successful response, and exposes stable Persian invalid-credential, throttle, disabled/session-invalid, forbidden, CSRF, server, and connectivity outcomes. Transport uncertainty is a recoverable state and is not reported as a definitive logout.
 
@@ -18,7 +18,7 @@ The authenticated shell exposes a native Persian logout button. It sends no body
 
 The response boundary normalizes stable HTTP envelopes while keeping timeout, cancellation, connection/network, and client-policy failures distinct. It preserves `Retry-After`, performs no implicit retry, and publishes only globally routed failures to the authentication boundary. Login/bootstrap/current-identity calls remain caller-routed so their existing page-specific state transitions stay deterministic. The CSRF store is cleared for definitive unauthenticated/disabled/forbidden outcomes but retained during recoverable network or timeout ambiguity.
 
-Return navigation allowlists protected application-relative routes. Absolute and protocol-relative URLs, backslashes, control characters, and unknown paths fall back to `/`. The browser BFF base is fixed to `/api/v1`; server-only `API_BASE_URL` selects the NestJS origin and defaults locally to `http://localhost:3002/api/v1`.
+Return navigation currently allowlists only the protected `/` destination. Absolute and protocol-relative URLs, backslashes, control characters, and unknown paths fall back to `/`. The browser BFF base is fixed to `/api/v1`; server-only `API_BASE_URL` selects the NestJS origin and defaults locally to `http://localhost:3002/api/v1`.
 
 ## Contract
 
@@ -26,10 +26,10 @@ Send JSON `{ "identifier": string, "password": string }` from an exact origin in
 
 Success returns `200` with CSRF plus safe Admin/authorization data, `Cache-Control: no-store`, and three host-only cookies:
 
-| Cookie                | Value                            | Attributes                                                                                         |
-| --------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `admin_access_token`  | Ed25519/EdDSA Access JWT         | `HttpOnly`, `SameSite=Lax`, `Path=/`, absolute access expiry, `Secure` in production, no `Domain`  |
-| `admin_refresh_token` | Random opaque 256-bit credential | `HttpOnly`, `SameSite=Lax`, `Path=/`, absolute session expiry, `Secure` in production, no `Domain` |
+| Cookie                | Value                            | Attributes                                                                                          |
+| --------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `admin_access_token`  | Ed25519/EdDSA Access JWT         | `HttpOnly`, `SameSite=Lax`, `Path=/`, absolute access expiry, `Secure` in production, no `Domain`   |
+| `admin_refresh_token` | Random opaque 256-bit credential | `HttpOnly`, `SameSite=Lax`, `Path=/`, absolute session expiry, `Secure` in production, no `Domain`  |
 | `admin_csrf_token`    | Session-bound synchronizer token | readable, `SameSite=Strict`, `Path=/`, absolute session expiry, `Secure` in production, no `Domain` |
 
 The JSON body never contains either authentication token. The CSRF token is readable from its Strict cookie; an independent CSRF keyring derives it as HMAC-SHA-256 of the session ID at login/bootstrap, while the database stores only its SHA-256 hash. The JWT contains only `sub`, `sid`, `jti`, `iat`, `exp`, exact issuer/audience, and protected header `alg=EdDSA`, `typ=at+jwt`, and the configured `kid`; it contains no Role or Permission claims.

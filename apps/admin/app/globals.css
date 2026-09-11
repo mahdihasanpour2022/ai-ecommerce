@@ -16,11 +16,6 @@
   --focus: #f0a000;
   --foreground: #152038;
   --admin-background: #eef0f3;
-  --workspace-background: #f8f9fb;
-  --surface-muted: #f4f5f7;
-  --success-soft: #ecfdf5;
-  --success-foreground: #065f46;
-  --success-border: #a7f3d0;
   --accent-foreground: #754100;
 }
 
@@ -34,11 +29,6 @@
   --muted: #a8afbc;
   --foreground: #f4f5f7;
   --admin-background: #111318;
-  --workspace-background: #171a20;
-  --surface-muted: #242830;
-  --success-soft: #123629;
-  --success-foreground: #9de8c6;
-  --success-border: #27634d;
   --accent-foreground: #f7c66f;
 }
 

@@ -99,7 +99,7 @@ export function LoginForm(props: LoginFormProps) {
         disabled={props.submitting}
         aria-busy={props.submitting}
       >
-        {props.submitting ? 'در حال ورود…' : 'ورود به پنل مدیریت'}
+        {props.submitting ? 'در حال ورود…' : 'ورود'}
       </UiButton>
     </form>
   );

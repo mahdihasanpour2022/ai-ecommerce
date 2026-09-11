@@ -20,30 +20,40 @@ const server = createServer((request, response) => {
   const state = cookies(request.headers.cookie);
   response.setHeader('Cache-Control', 'no-store');
   response.setHeader('Content-Type', 'application/json; charset=utf-8');
-  if (state.e2e_auth !== 'catalog') {
+  if (state.e2e_auth !== 'authenticated') {
     response.writeHead(401).end(
       JSON.stringify({
         statusCode: 401,
+        hasError: true,
         code: 'AUTHENTICATION_REQUIRED',
         message: 'نشست معتبر نیست.',
-        details: [],
+        count: 0,
+        result: null,
+        singleResult: null,
+        details: null,
       }),
     );
     return;
   }
-  const permissions = (state.e2e_permissions || 'admin.access|catalog.read|inventory.update')
-    .split('|')
-    .filter(Boolean);
   response.setHeader('Set-Cookie', 'admin_csrf_token=synthetic-csrf; Path=/; SameSite=Strict');
   response.writeHead(200).end(
     JSON.stringify({
-      csrfToken: 'synthetic-csrf',
-      admin: {
-        id: '55555555-5555-4555-8555-555555555555',
-        email: 'catalog@example.com',
-        displayName: 'مدیر کاتالوگ',
+      statusCode: 200,
+      hasError: false,
+      code: 'AUTHENTICATION_BOOTSTRAPPED',
+      message: 'نشست مدیریت با موفقیت بازیابی شد.',
+      count: 1,
+      result: null,
+      singleResult: {
+        csrfToken: 'synthetic-csrf',
+        admin: {
+          id: '55555555-5555-4555-8555-555555555555',
+          email: 'admin@example.com',
+          displayName: 'مدیر فروشگاه',
+        },
+        authorization: { roles: ['SUPER_ADMIN'], permissions: ['admin.access'] },
       },
-      authorization: { roles: ['CATALOG_READER'], permissions },
+      details: null,
     }),
   );
 });
