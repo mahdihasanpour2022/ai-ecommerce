@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { loginSchema } from '../app/login/login-schema';
+import { loginSchema } from '../app/(routes)/login/login-schema';
 
 void test('normalizes and accepts an email or canonical username with six ASCII digits', () => {
   assert.deepEqual(loginSchema.parse({ identifier: '  Admin@Example.COM  ', password: '654321' }), {

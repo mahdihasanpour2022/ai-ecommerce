@@ -2,10 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-import { useAuth } from '../auth/auth-provider';
-import { safeReturnDestination } from '../auth/return-destination';
-import { LoginForm } from '../components/login-form';
-import { StatusPanel } from '../components/status-panel';
+import { useAuth } from '../../auth/auth-provider';
+import { safeReturnDestination } from '../../auth/return-destination';
+import { StatusPanel } from '../../components/status-panel';
+import { LoginForm } from './login-form';
 import type { LoginValues } from './login-schema';
 
 export function LoginScreen({ returnTo }: Readonly<{ returnTo: string | null }>) {

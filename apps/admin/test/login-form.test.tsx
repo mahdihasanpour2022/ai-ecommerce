@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { LoginForm } from '../app/components/login-form';
+import { LoginForm } from '../app/(routes)/login/login-form';
 
 void test('renders accessible email-or-username and six-digit password semantics', () => {
   const html = renderToStaticMarkup(

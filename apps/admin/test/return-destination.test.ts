@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loginDestination, safeReturnDestination } from '../app/auth/return-destination';
 
-void test('accepts only the protected home destination', () => {
+void test('accepts allowlisted protected Admin destinations', () => {
   assert.equal(safeReturnDestination('/'), '/');
+  assert.equal(safeReturnDestination('/categories'), '/categories');
   assert.equal(loginDestination('/'), '/login?returnTo=%2F');
+  assert.equal(loginDestination('/categories'), '/login?returnTo=%2Fcategories');
 });
 
 void test('rejects external, protocol-relative, unknown, backslash, and control destinations', () => {

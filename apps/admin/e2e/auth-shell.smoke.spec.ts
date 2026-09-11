@@ -25,7 +25,7 @@ test('renders the production authentication shell in accessible Persian RTL', as
   expect(seriousViolations).toEqual([]);
 });
 
-test('renders the authenticated Admin home without feature routes', async ({ page }) => {
+test('renders Admin routes inside the shared authenticated shell', async ({ page }) => {
   await page.context().addCookies([
     { name: 'admin_refresh_token', value: 'synthetic-refresh', domain: '127.0.0.1', path: '/' },
     { name: 'admin_access_token', value: 'synthetic-access', domain: '127.0.0.1', path: '/' },
@@ -74,8 +74,17 @@ test('renders the authenticated Admin home without feature routes', async ({ pag
   }
 
   const homeLink = page.getByRole('link', { name: 'صفحه اصلی' });
-  await expect(homeLink).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await expect(homeLink).toHaveCSS('color', 'rgb(242, 165, 42)');
+  await expect(homeLink).toHaveCSS('background-color', 'rgb(242, 178, 73)');
+  await expect(homeLink).toHaveCSS('color', 'rgb(45, 33, 18)');
+
+  await page.getByRole('link', { name: 'مدیریت دسته‌بندی‌ها' }).click();
+  await expect(page).toHaveURL('/categories');
+  await expect(page.getByRole('main')).toContainText('here is Categories');
+  await expect(page.getByRole('link', { name: 'مدیریت دسته‌بندی‌ها' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(homeLink).not.toHaveAttribute('aria-current', 'page');
 
   const accessibility = await new AxeBuilder({ page }).analyze();
   const seriousViolations = accessibility.violations.filter(

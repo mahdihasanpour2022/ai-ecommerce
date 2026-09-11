@@ -1,4 +1,4 @@
-import { ProtectedHome } from './protected-home';
+import { ProtectedHome } from './home-content';
 
 export default function AdminHomePage() {
   return <ProtectedHome />;

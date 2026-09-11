@@ -2,9 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import type { LoginValues } from '../login/login-schema';
-import { loginSchema } from '../login/login-schema';
-import { UiButton } from './shared/ui-button';
+import { UiButton } from '../../components/shared/ui-button';
+import type { LoginValues } from './login-schema';
+import { loginSchema } from './login-schema';
 
 interface LoginFormProps {
   readonly submitting: boolean;

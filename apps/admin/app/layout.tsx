@@ -8,7 +8,7 @@ import { ADMIN_THEME_COOKIE, parseAdminTheme } from './admin-theme';
 import { AuthProvider } from './auth/auth-provider';
 import { DocumentShell } from './document-shell';
 import 'antd/dist/reset.css';
-import './globals.css';
+import '../styles/globals.css';
 import { AUTH_STATE_HEADER, decodeAuthenticationHeader } from './auth/server-auth-header';
 
 const iranSans = localFont({
