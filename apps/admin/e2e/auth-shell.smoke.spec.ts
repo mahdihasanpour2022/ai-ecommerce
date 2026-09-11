@@ -38,7 +38,44 @@ test('renders the authenticated Admin home without feature routes', async ({ pag
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByRole('button')).toBeVisible();
+  await expect(page.getByRole('complementary', { name: 'نوار کناری پنل مدیریت' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'صفحه اصلی' })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
   await expect(page.locator('a[href^="/catalog"]')).toHaveCount(0);
+
+  const shellStyles = await page.getByTestId('admin-shell').evaluate((element) => {
+    const styles = getComputedStyle(element);
+    return { gap: styles.gap, padding: styles.padding };
+  });
+  expect(shellStyles).toEqual({ gap: '20px', padding: '20px' });
+
+  for (const landmark of [
+    page.getByRole('banner'),
+    page.getByRole('complementary', { name: 'نوار کناری پنل مدیریت' }),
+    page.getByRole('main'),
+  ]) {
+    const styles = await landmark.evaluate((element) => {
+      const computed = getComputedStyle(element);
+      return {
+        backgroundColor: computed.backgroundColor,
+        borderRadius: computed.borderRadius,
+        borderWidth: computed.borderTopWidth,
+        boxShadow: computed.boxShadow,
+        padding: computed.padding,
+      };
+    });
+    expect(styles.backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(styles.borderRadius).toBe('16px');
+    expect(styles.borderWidth).toBe('0px');
+    expect(styles.boxShadow).not.toBe('none');
+    expect(styles.padding).toBe('20px');
+  }
+
+  const homeLink = page.getByRole('link', { name: 'صفحه اصلی' });
+  await expect(homeLink).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(homeLink).toHaveCSS('color', 'rgb(242, 165, 42)');
 
   const accessibility = await new AxeBuilder({ page }).analyze();
   const seriousViolations = accessibility.violations.filter(

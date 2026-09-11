@@ -49,3 +49,7 @@ input,
 select {
   font: inherit;
 }
+
+p {
+  margin-bottom: 0 !important;
+}

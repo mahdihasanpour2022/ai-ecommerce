@@ -1,13 +1,16 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from './auth/auth-provider';
 import { loginDestination } from './auth/return-destination';
 import { LogoutButton } from './components/logout-button';
+import { classNames } from './components/shared/class-names';
 import { StatusPanel } from './components/status-panel';
 
 export function ProtectedHome() {
+  const pathname = usePathname();
   const router = useRouter();
   const { state, logout } = useAuth();
 
@@ -30,12 +33,15 @@ export function ProtectedHome() {
 
   const { admin } = state.current;
   return (
-    <div className="min-h-screen bg-admin-background">
-      <header className="flex flex-col items-start gap-4 border-b border-border bg-surface px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-12">
-        <p className="m-0 font-extrabold">پنل مدیریت فروشگاه</p>
+    <div
+      className="flex min-h-screen flex-col gap-5 bg-admin-background p-5"
+      data-testid="admin-shell"
+    >
+      <header className="flex flex-col items-start gap-4 rounded-2xl bg-surface p-5 shadow-panel sm:flex-row sm:items-center sm:justify-between">
+        <p className="mb-0  font-extrabold">پنل مدیریت فروشگاه</p>
         <div className="flex w-full flex-col items-start gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-center">
-          <p className="!mb-0 text-sm text-muted">
-            {admin.displayName ?? `${(<bdi className="isolate direction-ltr">{admin.email}</bdi>)}`}
+          <p className="mb-0 text-sm text-muted">
+            {admin.displayName ?? <bdi className="isolate direction-ltr">{admin.email}</bdi>}
           </p>
           <LogoutButton
             submitting={state.logout.submitting}
@@ -44,23 +50,28 @@ export function ProtectedHome() {
           />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl p-4 sm:p-8 lg:p-12">
-        <section
-          className="rounded-2xl border border-border bg-surface p-6 sm:p-10"
-          aria-labelledby="welcome-title"
+      <div className="flex flex-1 flex-col gap-5 lg:flex-row">
+        <aside
+          className="w-full rounded-2xl bg-surface p-5 shadow-panel lg:w-64"
+          aria-label="نوار کناری پنل مدیریت"
         >
-          <p className="mb-2 mt-0 text-sm font-bold text-brand">صفحه اصلی</p>
-          <h1 className="m-0 text-2xl font-bold leading-snug" id="welcome-title">
-            خوش آمدید، {admin.displayName}
-          </h1>
-          <p className="leading-8 text-muted">
-            نشست شما تأیید شده است. قابلیت‌های مدیریتی در مراحل بعدی به این فضا افزوده می‌شوند.
-          </p>
-          <p className="mt-6 rounded-xl bg-surface-subtle p-4 leading-8 text-muted">
-            نمایش این صفحه جایگزین مجوز سمت سرور نیست؛ همه عملیات مدیریتی باید در API مجاز شوند.
-          </p>
-        </section>
-      </main>
+          <nav aria-label="ناوبری پنل مدیریت">
+            <Link
+              className={classNames(
+                'flex min-h-11 items-center rounded-xl px-3 py-2.5 font-bold no-underline transition-colors',
+                pathname === '/' ? 'text-brand' : 'text-foreground hover:text-brand',
+              )}
+              href="/"
+              aria-current={pathname === '/' ? 'page' : undefined}
+            >
+              صفحه اصلی
+            </Link>
+          </nav>
+        </aside>
+        <main className="min-w-0 flex-1 rounded-2xl bg-surface p-5 shadow-panel">
+          <section aria-labelledby="welcome-title"></section>
+        </main>
+      </div>
     </div>
   );
 }
