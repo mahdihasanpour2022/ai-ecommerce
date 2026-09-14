@@ -17,6 +17,7 @@ import type { ApiResponse } from './api-response';
 export const DEFAULT_HTTP_TIMEOUT_MS = 20_000;
 const DEFAULT_API_BASE_URL = '/api/v1';
 const SAFE_METHODS = new Set(['get', 'head', 'options']);
+const REFRESHABLE_CODES = new Set(['ACCESS_TOKEN_EXPIRED', 'AUTHENTICATION_REQUIRED']);
 
 export interface AuthRequestPolicy {
   readonly csrf: 'omit' | 'required';
@@ -38,6 +39,14 @@ declare module 'axios' {
 
 export type HttpFailureKind = 'canceled' | 'configuration' | 'http' | 'network' | 'timeout';
 
+function fallbackFailureMessage(kind: HttpFailureKind): string {
+  if (kind === 'network' || kind === 'timeout') {
+    return 'ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.';
+  }
+  if (kind === 'canceled') return 'درخواست لغو شد.';
+  return 'انجام درخواست ممکن نشد. لطفاً دوباره تلاش کنید.';
+}
+
 export class AdminHttpError extends Error {
   constructor(
     readonly kind: HttpFailureKind,
@@ -45,17 +54,11 @@ export class AdminHttpError extends Error {
     readonly code: string,
     readonly retryAfter: string | null = null,
     readonly details: readonly string[] = [],
-    readonly responseMessage: string | null = null,
+    message: string | null = null,
   ) {
-    super(`Admin HTTP request failed: ${kind}/${status ?? 'no-status'}/${code}.`);
+    super(message ?? fallbackFailureMessage(kind));
     this.name = 'AdminHttpError';
   }
-}
-
-function responseMessage(message: string): string | null {
-  return typeof message === 'string' && message.length > 0 && message.length <= 500
-    ? message
-    : null;
 }
 
 class RequestPolicyError extends Error {
@@ -130,7 +133,8 @@ function isRefreshEligible(
     axios.isAxiosError(error) &&
     !axios.isCancel(error) &&
     error.response?.status === 401 &&
-    response?.code === 'ACCESS_TOKEN_EXPIRED' &&
+    response !== null &&
+    REFRESHABLE_CODES.has(response.code) &&
     error.config?.authPolicy?.refresh === 'eligible' &&
     error.config.signal?.aborted !== true &&
     error.config.authRecoveryAttempted !== true
@@ -160,7 +164,7 @@ export function normalizeHttpFailure(error: unknown): AdminHttpError {
       response.code,
       error.response.headers['retry-after']?.toString() ?? null,
       responseDetails(response.details),
-      responseMessage(response.message),
+      response.message,
     );
   }
   return new AdminHttpError('network', null, 'NETWORK_ERROR');

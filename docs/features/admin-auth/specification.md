@@ -25,7 +25,7 @@ Administrative capabilities need a secure identity boundary that recovers silent
 
 - Authenticate eligible Admin Users independently from future Customers.
 - Protect Persian RTL Admin pages and API operations with Backend authority.
-- Recover `ACCESS_TOKEN_EXPIRED` requests through one refresh operation per execution context.
+- Recover eligible `ACCESS_TOKEN_EXPIRED` and `AUTHENTICATION_REQUIRED` requests through one refresh operation per execution context.
 - Rotate and revoke current-session refresh capability safely.
 - Provide accessible Persian user feedback for actionable failures without leaking sensitive information.
 
@@ -80,7 +80,7 @@ Authentication recovery, stable error-code routing, and user feedback are centra
 
 ## Concurrency Behavior
 
-When multiple requests return `401 ACCESS_TOKEN_EXPIRED`, exactly one refresh operation is active within that frontend execution context. Other eligible requests wait. After success, all retry once. After a definitive Backend authentication failure, every waiter fails consistently and auth state transitions accordingly. Login, refresh, non-eligible `401`, every `403`, network errors, and already retried requests cannot recursively trigger refresh.
+When multiple eligible requests return `401 ACCESS_TOKEN_EXPIRED` or `401 AUTHENTICATION_REQUIRED`, exactly one refresh operation is active within that frontend execution context. Other eligible requests wait. After success, all retry once. After a definitive Backend authentication failure, every waiter fails consistently and auth state transitions accordingly. Login, refresh, non-eligible or other-code `401`, every `403`, network errors, and already retried requests cannot recursively trigger refresh.
 
 Tabs share cookies but may have separate JavaScript execution contexts. Rotation must tolerate legitimate same-session races using the architecture's configuration-driven grace model. Separate browsers/devices are independent sessions and each requires login.
 
@@ -95,7 +95,7 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 | CSRF bootstrap                          | With a valid Refresh cookie and active session, return the existing token without rotation and with no-store handling; otherwise fail without exposing credential details.                                                                                                                 |
 | Missing/invalid CSRF                    | Reject unsafe authenticated requests with `403 CSRF_VALIDATION_FAILED`; issue no credentials and record a safe security event where appropriate.                                                                                                                                           |
 | Expired access token                    | Silent single-flight refresh and one retry.                                                                                                                                                                                                                                                |
-| Invalid or missing access token         | Pre-render Bootstrap may recover it from a valid current Refresh credential; otherwise cleanup and require login.                                                                                                                                                                         |
+| Invalid or missing access token         | A missing Access credential reported as `AUTHENTICATION_REQUIRED` on an eligible ordinary request joins reactive refresh; pre-render Bootstrap may also recover missing/unusable Access from a valid current Refresh credential. `INVALID_ACCESS_TOKEN` remains non-refreshable; definitive recovery failure cleans up and requires login.                 |
 | Successful refresh                      | Rotate credentials atomically, release waiters, and retry once.                                                                                                                                                                                                                            |
 | Concurrent expired responses            | One active refresh per execution context; all waiters settle without a storm.                                                                                                                                                                                                              |
 | Expired/revoked refresh credential      | Definitive failure, clear current auth state, and require login.                                                                                                                                                                                                                           |
@@ -110,7 +110,7 @@ Tabs share cookies but may have separate JavaScript execution contexts. Rotation
 
 ## Acceptance Criteria
 
-- Reactive client recovery remains limited to `401 ACCESS_TOKEN_EXPIRED`; pre-render Bootstrap may independently recover missing/unusable Access from a valid Refresh credential. Every `403` remains non-refreshable.
+- Reactive client recovery remains limited to eligible ordinary requests returning `401 ACCESS_TOKEN_EXPIRED` or `401 AUTHENTICATION_REQUIRED`; pre-render Bootstrap may independently recover missing/unusable Access from a valid Refresh credential. Other `401` codes and every `403` remain non-refreshable.
 - `N` concurrent eligible failures create one refresh operation per frontend execution context and at most one retry per original request; every queue branch settles.
 - No periodic refresh timer exists.
 - Both auth tokens remain inaccessible to JavaScript and are never logged; no Bearer header is constructed by the frontend.

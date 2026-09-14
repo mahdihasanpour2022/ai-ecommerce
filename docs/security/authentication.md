@@ -50,15 +50,15 @@ CORS uses an environment-configured exact origin allowlist, conceptually includi
 
 ## Refresh trigger and single flight
 
-Refresh is reactive, not periodic. Login does not start a timer, and no `setInterval(refresh)` behavior is allowed. Refresh occurs after an eligible response with HTTP `401` and code `ACCESS_TOKEN_EXPIRED`, or inside the approved pre-render Bootstrap when Access is missing or unusable and Refresh remains valid.
+Refresh is reactive, not periodic. Login does not start a timer, and no `setInterval(refresh)` behavior is allowed. Refresh occurs after an ordinary request marked refresh-eligible returns HTTP `401` with code `ACCESS_TOKEN_EXPIRED` or `AUTHENTICATION_REQUIRED`, or inside the approved pre-render Bootstrap when Access is missing or unusable and Refresh remains valid.
 
-Within one frontend execution context, exactly one refresh operation may be active. Concurrent requests failing with `ACCESS_TOKEN_EXPIRED` wait on that operation. After success, each eligible original request retries at most once using the newly issued cookies. A retry marker and endpoint exclusions prevent recursion; login and refresh requests never trigger the response interceptor's refresh flow.
+Within one frontend execution context, exactly one refresh operation may be active. Concurrent eligible requests failing with `ACCESS_TOKEN_EXPIRED` or `AUTHENTICATION_REQUIRED` wait on that operation. After success, each eligible original request retries at most once using the newly issued cookies. A retry marker and endpoint exclusions prevent recursion; login and refresh requests never trigger the response interceptor's refresh flow.
 
 Other authentication failures do not refresh:
 
 - `INVALID_ACCESS_TOKEN`: clear authentication state, perform appropriate session cleanup, and require login.
 - `ACCOUNT_DISABLED`: clear authentication state, require login, and show an appropriate Persian message when applicable.
-- `AUTHENTICATION_REQUIRED`: ensure state is cleared and proceed to login.
+- A definitive refresh failure clears authentication state and proceeds to login according to the existing provider policy.
 - Any `403`, including `INSUFFICIENT_PERMISSION`: never refresh; handle the authorization error and show a Persian message when appropriate.
 
 ## Rotation, sessions, and logout

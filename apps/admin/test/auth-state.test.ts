@@ -96,11 +96,15 @@ void test('maps definitive bootstrap and recoverable connectivity outcomes disti
 
 void test('maps stable login codes to deterministic Persian feedback', () => {
   assert.equal(
-    mapLoginFailure(new AdminHttpError('http', 401, 'INVALID_CREDENTIALS')),
+    mapLoginFailure(
+      new AdminHttpError('http', 401, 'INVALID_CREDENTIALS', null, [], INVALID_CREDENTIALS_MESSAGE),
+    ),
     INVALID_CREDENTIALS_MESSAGE,
   );
   assert.equal(
-    mapLoginFailure(new AdminHttpError('http', 429, 'AUTH_RATE_LIMITED', '30')),
+    mapLoginFailure(
+      new AdminHttpError('http', 429, 'AUTH_RATE_LIMITED', '30', [], RATE_LIMIT_MESSAGE),
+    ),
     RATE_LIMIT_MESSAGE,
   );
   assert.equal(

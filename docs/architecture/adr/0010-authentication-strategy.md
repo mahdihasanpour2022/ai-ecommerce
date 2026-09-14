@@ -12,7 +12,7 @@ Use direct credentialed browser-to-NestJS API communication. Store an access JWT
 
 Sign access JWTs with Ed25519/`EdDSA` and rotate through an explicitly configured `kid` key ring. Verification pins the algorithm, type, issuer, audience, trusted key, and required identity/session claims; authorization is never embedded as durable JWT authority.
 
-Cookie-authenticated state changes use a random session-bound synchronizer CSRF token stored hashed on the Backend, delivered in login/bootstrap JSON, held only in frontend memory, and returned in `X-CSRF-Token`. Exact-origin credentialed CORS, Origin validation, and Fetch Metadata provide complementary browser boundaries. Only `401 ACCESS_TOKEN_EXPIRED` triggers reactive single-flight refresh; other `401` codes and every `403` do not.
+Cookie-authenticated state changes use a random session-bound synchronizer CSRF token stored hashed on the Backend, delivered in login/bootstrap JSON, held only in frontend memory, and returned in `X-CSRF-Token`. Exact-origin credentialed CORS, Origin validation, and Fetch Metadata provide complementary browser boundaries. Only eligible ordinary requests returning `401 ACCESS_TOKEN_EXPIRED` or `401 AUTHENTICATION_REQUIRED` trigger reactive single-flight refresh; other `401` codes and every `403` do not.
 
 Refresh rotation includes configuration-driven `REFRESH_REUSE_GRACE_SECONDS=10`. The current raw refresh token may exist briefly only inside an AES-256-GCM recovery envelope so a valid same-session/CSRF retry can receive the exact latest credential without another rotation. Transport failures receive exactly one controlled refresh retry. Reuse outside recoverable grace behavior returns `REFRESH_TOKEN_REUSED` and revokes only the affected `AuthSession`/token family.
 

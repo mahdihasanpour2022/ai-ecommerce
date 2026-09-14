@@ -56,14 +56,17 @@ export function applyCredentialPolicy(action: AuthAction, credentials: CsrfCrede
 
 export function mapLoginFailure(error: unknown): string {
   if (!(error instanceof AdminHttpError)) return SERVER_MESSAGE;
-  if (error.kind === 'network' || error.kind === 'timeout') return CONNECTIVITY_MESSAGE;
-  if (error.code === 'INVALID_CREDENTIALS')
-    return error.responseMessage ?? INVALID_CREDENTIALS_MESSAGE;
-  if (error.code === 'AUTH_RATE_LIMITED' || error.status === 429)
-    return error.responseMessage ?? RATE_LIMIT_MESSAGE;
-  if (error.code === 'ACCOUNT_DISABLED') return error.responseMessage ?? ACCOUNT_DISABLED_MESSAGE;
-  if (error.code === 'INSUFFICIENT_PERMISSION' || error.status === 403)
-    return error.responseMessage ?? FORBIDDEN_MESSAGE;
-  if (error.status === 401) return error.responseMessage ?? INVALID_SESSION_MESSAGE;
+  if (error.kind === 'network' || error.kind === 'timeout') return error.message;
+  if (
+    error.code === 'INVALID_CREDENTIALS' ||
+    error.code === 'AUTH_RATE_LIMITED' ||
+    error.code === 'ACCOUNT_DISABLED' ||
+    error.code === 'INSUFFICIENT_PERMISSION' ||
+    error.status === 401 ||
+    error.status === 403 ||
+    error.status === 429
+  ) {
+    return error.message;
+  }
   return SERVER_MESSAGE;
 }

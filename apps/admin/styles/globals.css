@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 @theme inline {
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
@@ -80,14 +81,14 @@
 
 [data-theme='dark'] {
   color-scheme: dark;
-  background: #111318;
+  background: #2b2f38;
   color: #f4f5f7;
   --surface: #1b1e24;
   --surface-subtle: #22262e;
   --border: #343944;
   --muted: #a8afbc;
   --foreground: #f4f5f7;
-  --admin-background: #111318;
+  --admin-background: #2b2f38;
   --accent-foreground: #f7c66f;
 }
 
@@ -111,4 +112,29 @@ select {
 
 p {
   margin-bottom: 0 !important;
+}
+
+/* Ant Table paints each cell separately, so hierarchy tinting is scoped to this tree table. */
+.category-tree-table .ant-table-tbody > .category-row-level-2 > td {
+  background: color-mix(in srgb, var(--surface) 95%, var(--color-brand-soft));
+}
+
+.category-tree-table .ant-table-tbody > .category-row-level-3 > td {
+  background: color-mix(in srgb, var(--surface) 92%, var(--color-brand-soft));
+}
+
+.category-tree-table .ant-table-tbody > .category-row-level-4 > td {
+  background: color-mix(in srgb, var(--surface) 89%, var(--color-brand-soft));
+}
+
+.category-tree-table .ant-table-tbody > .category-row-level-5 > td {
+  background: color-mix(in srgb, var(--surface) 86%, var(--color-brand-soft));
+}
+
+.category-tree-table .ant-table-tbody > .category-row-level-6 > td {
+  background: color-mix(in srgb, var(--surface) 83%, var(--color-brand-soft));
+}
+
+.category-tree-table .ant-table-tbody > .ant-table-row:hover > td {
+  background: color-mix(in srgb, var(--surface) 78%, var(--color-brand-soft)) !important;
 }

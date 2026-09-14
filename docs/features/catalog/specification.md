@@ -237,7 +237,7 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/categories` | `catalog.read` | No | Complete Category tree, bounded by the catalog Category cap. |
 | `POST /api/v1/admin/catalog/categories` | `catalog.manage` | Yes | Create Category; `201` with Category DTO. |
 | `PATCH /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Rename and/or atomically move; `200` with Category DTO. |
-| `DELETE /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Delete eligible empty leaf; `204`. |
+| `DELETE /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Delete eligible empty leaf; `200` with the canonical no-payload success envelope. |
 | `GET /api/v1/admin/catalog/products` | `catalog.read` | No | Page-bounded protected Product summaries. |
 | `GET /api/v1/admin/catalog/products/{productId}` | `catalog.read` | No | Full protected Product, Variant, exact Inventory, and ready Image metadata. |
 | `POST /api/v1/admin/catalog/products` | `catalog.manage` | Yes | Atomically create Draft Product, initial Variants, and Inventory; `201`. |

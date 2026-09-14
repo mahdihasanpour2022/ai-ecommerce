@@ -50,6 +50,8 @@ interface ApiResponse<Result = null, SingleResult = null, Details = null> {
 
 Collections use `result`, single payloads use `singleResult`, and no-payload successes/errors keep both fields `null`. Paginated single payloads may use `count` for the total matching records; other single/no-payload responses use zero, while direct collections use their exact array length. `statusCode` equals the actual HTTP status; `message` is a non-empty safe Persian display text; `code` is a stable English machine identifier. All eight top-level fields are always present. Successful raw image-content routes are the deliberate exception because their body is the streamed image bytes rather than JSON; failures from those routes still use `ApiResponse`.
 
+This shape is a Backend-owned runtime invariant, not a convention each controller may implement independently. The globally registered success interceptor constructs every non-raw successful JSON response, and the globally registered exception filter constructs every failed response. Contract tests cover both builders and representative HTTP routes. Repository-owned frontend clients therefore consume successful JSON `response.data` through endpoint-specific TypeScript DTOs without duplicating runtime envelope or payload parsing. This owner decision was confirmed on 2026-09-11. Deployment skew, transport failures, and non-JSON infrastructure failures remain operational failure modes rather than valid application responses.
+
 The error envelope is top-level and consistent:
 
 ```json
@@ -71,7 +73,7 @@ Every failed login condition—including unknown identity, wrong password, disab
 
 The accepted Persian display messages for these generic boundaries are `اطلاعات ورود نادرست است.` for `INVALID_CREDENTIALS`, `تعداد تلاش‌ها بیش از حد مجاز است. لطفاً کمی بعد دوباره تلاش کنید.` for `AUTH_RATE_LIMITED`, and `درخواست معتبر نیست. لطفاً صفحه را تازه‌سازی و دوباره تلاش کنید.` for `CSRF_VALIDATION_FAILED`. Implementations may attach no more specific public detail.
 
-Only `401 ACCESS_TOKEN_EXPIRED` is eligible for silent reactive refresh. Other `401` codes require their documented cleanup/login behavior, and `403` never triggers refresh. See [authentication architecture](../security/authentication.md).
+Only `401 ACCESS_TOKEN_EXPIRED` and `401 AUTHENTICATION_REQUIRED` responses from ordinary requests marked refresh-eligible are eligible for silent reactive refresh. Other `401` codes require their documented cleanup/login behavior, and `403` never triggers refresh. See [authentication architecture](../security/authentication.md).
 
 ## Reliability and evolution
 

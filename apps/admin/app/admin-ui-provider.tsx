@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { ConfigProvider, theme as antTheme } from 'antd';
+import { App as AntdApp, ConfigProvider, theme as antTheme } from 'antd';
 import faIR from 'antd/locale/fa_IR';
 import { ADMIN_THEME_COOKIE } from './admin-theme';
 import type { AdminTheme } from './admin-theme';
@@ -55,14 +55,21 @@ export function AdminUiProvider({
           components: {
             Button: { primaryShadow: '0 8px 20px rgb(237 152 14 / 20%)' },
             Select: {
+              activeBorderColor: '#ed980e',
+              activeOutlineColor: 'rgb(237 152 14 / 18%)',
+              hoverBorderColor: '#f2b249',
               optionActiveBg: 'rgb(242 178 73 / 14%)',
+              optionHeight: 48,
               optionSelectedBg: 'rgb(242 178 73 / 22%)',
               optionSelectedColor: theme === 'dark' ? '#f7c66f' : '#704000',
+              optionSelectedFontWeight: 700,
             },
           },
         }}
       >
-        <ReactQueryProvider>{children}</ReactQueryProvider>
+        <AntdApp component={false}>
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+        </AntdApp>
       </ConfigProvider>
     </AdminThemeContext.Provider>
   );

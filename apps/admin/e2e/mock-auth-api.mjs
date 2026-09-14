@@ -13,13 +13,67 @@ function cookies(header = '') {
 }
 
 const server = createServer((request, response) => {
+  const state = cookies(request.headers.cookie);
+  response.setHeader('Cache-Control', 'no-store');
+  response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+  if (request.method === 'GET' && request.url === '/api/v1/admin/catalog/categories') {
+    if (state.e2e_auth !== 'authenticated') {
+      response.writeHead(401).end(
+        JSON.stringify({
+          statusCode: 401,
+          hasError: true,
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'نشست معتبر نیست.',
+          count: 0,
+          result: null,
+          singleResult: null,
+          details: null,
+        }),
+      );
+      return;
+    }
+    const now = '2026-09-11T10:00:00.000Z';
+    const categories = [
+      {
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        name: 'پوشاک',
+        parentId: null,
+        level: 1,
+        children: [
+          {
+            id: '223e4567-e89b-42d3-a456-426614174001',
+            name: 'مانتو',
+            parentId: '123e4567-e89b-12d3-a456-426614174000',
+            level: 2,
+            children: [],
+            createdAt: now,
+            updatedAt: now,
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+    response.writeHead(200).end(
+      JSON.stringify({
+        statusCode: 200,
+        hasError: false,
+        code: 'CATEGORIES_FETCHED',
+        message: 'دسته‌بندی‌ها با موفقیت دریافت شدند.',
+        count: categories.length,
+        result: categories,
+        singleResult: null,
+        details: null,
+      }),
+    );
+    return;
+  }
+
   if (request.method !== 'POST' || request.url !== '/api/v1/auth/bootstrap') {
     response.writeHead(404).end();
     return;
   }
-  const state = cookies(request.headers.cookie);
-  response.setHeader('Cache-Control', 'no-store');
-  response.setHeader('Content-Type', 'application/json; charset=utf-8');
   if (state.e2e_auth !== 'authenticated') {
     response.writeHead(401).end(
       JSON.stringify({

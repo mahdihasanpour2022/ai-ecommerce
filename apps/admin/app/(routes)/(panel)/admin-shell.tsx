@@ -9,6 +9,7 @@ import { loginDestination } from '../../auth/return-destination';
 import { LogoutButton } from '../../components/logout-button';
 import { classNames } from '../../components/shared/class-names';
 import { StatusPanel } from '../../components/status-panel';
+import { ThemeToggle } from '../../components/theme-toggle';
 
 const routes = [
   { name: 'صفحه اصلی', href: '/' },
@@ -50,11 +51,14 @@ export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode
           <p className="mb-0 text-sm text-muted">
             {admin.displayName ?? <bdi className="isolate direction-ltr">{admin.email}</bdi>}
           </p>
-          <LogoutButton
-            submitting={state.logout.submitting}
-            message={state.logout.message}
-            onLogout={() => void logout().catch(() => undefined)}
-          />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LogoutButton
+              submitting={state.logout.submitting}
+              message={state.logout.message}
+              onLogout={() => void logout().catch(() => undefined)}
+            />
+          </div>
         </div>
       </header>
 

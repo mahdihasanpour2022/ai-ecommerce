@@ -15,7 +15,7 @@
     "app/auth/auth-types.ts",
     "app/auth/return-destination.ts",
     "app/auth/submission-gate.ts",
-    "app/components/login-form.tsx",
+    "app/(routes)/login/login-form.tsx",
     "app/admin-ui-provider.tsx",
     "app/document-shell.tsx",
     "app/http/**/*.ts",

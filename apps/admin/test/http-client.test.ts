@@ -185,6 +185,7 @@ void test('classifies HTTP, timeout, cancellation, network, and unexpected failu
       details: ['name', 'parentId'],
     },
   );
+  assert.equal(http.message, 'درخواست‌های زیادی ارسال شده است.');
 
   const malformed = normalizeHttpFailure({
     isAxiosError: true,
@@ -194,10 +195,18 @@ void test('classifies HTTP, timeout, cancellation, network, and unexpected failu
     { kind: malformed.kind, status: malformed.status, code: malformed.code },
     { kind: 'http', status: 502, code: 'INVALID_RESPONSE' },
   );
-  assert.equal(normalizeHttpFailure({ isAxiosError: true, code: 'ETIMEDOUT' }).kind, 'timeout');
-  assert.equal(normalizeHttpFailure(new axios.CanceledError()).kind, 'canceled');
-  assert.equal(normalizeHttpFailure({ isAxiosError: true, code: 'ERR_NETWORK' }).kind, 'network');
-  assert.equal(normalizeHttpFailure(new Error('programming error')).kind, 'configuration');
+  const timeout = normalizeHttpFailure({ isAxiosError: true, code: 'ETIMEDOUT' });
+  const canceled = normalizeHttpFailure(new axios.CanceledError());
+  const network = normalizeHttpFailure({ isAxiosError: true, code: 'ERR_NETWORK' });
+  const configuration = normalizeHttpFailure(new Error('programming error'));
+  assert.deepEqual(
+    [timeout.kind, canceled.kind, network.kind, configuration.kind],
+    ['timeout', 'canceled', 'network', 'configuration'],
+  );
+  for (const failure of [malformed, timeout, canceled, network, configuration]) {
+    assert.ok(failure.message.length > 0);
+    assert.match(failure.message, /[\u0600-\u06ff]/u);
+  }
 });
 
 void test('does not retry a transport failure implicitly', async () => {
@@ -282,7 +291,7 @@ void test('shares one coordinator operation and retries only its first transport
   assert.equal(definitiveCalls, 1);
 });
 
-void test('single-flights concurrent expiry and replays every original request once', async () => {
+void test('single-flights concurrent refreshable failures and replays every request once', async () => {
   const credentials = createCsrfCredentialStore();
   credentials.set('session-csrf');
   const refreshGate = deferred<void>();
@@ -302,7 +311,8 @@ void test('single-flights concurrent expiry and replays every original request o
       };
     }
     if (config.authRecoveryAttempted !== true) {
-      throwHttp(config, 401, 'ACCESS_TOKEN_EXPIRED');
+      const code = config.url === '/one' ? 'ACCESS_TOKEN_EXPIRED' : 'AUTHENTICATION_REQUIRED';
+      throwHttp(config, 401, code);
     }
     return { data: { url: config.url }, status: 200, statusText: 'OK', headers: {}, config };
   };
@@ -339,7 +349,7 @@ void test('single-flights concurrent expiry and replays every original request o
   assert.equal(refresh?.authPolicy?.refresh, 'never');
 });
 
-void test('excludes non-expiry, forbidden, non-eligible, refresh, and replayed failures', async () => {
+void test('excludes invalid-access, forbidden, non-eligible, refresh, and replayed failures', async () => {
   const credentials = createCsrfCredentialStore();
   credentials.set('session-csrf');
   let refreshCalls = 0;

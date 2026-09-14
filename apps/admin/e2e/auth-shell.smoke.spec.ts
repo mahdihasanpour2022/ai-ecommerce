@@ -77,9 +77,50 @@ test('renders Admin routes inside the shared authenticated shell', async ({ page
   await expect(homeLink).toHaveCSS('background-color', 'rgb(242, 178, 73)');
   await expect(homeLink).toHaveCSS('color', 'rgb(45, 33, 18)');
 
+  const darkThemeToggle = page.getByRole('button', { name: 'فعال‌کردن حالت تاریک' });
+  await expect(darkThemeToggle).toHaveAttribute('aria-pressed', 'false');
+  await darkThemeToggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.getByTestId('admin-shell')).toHaveCSS('background-color', 'rgb(43, 47, 56)');
+  for (const landmark of [
+    page.getByRole('banner'),
+    page.getByRole('complementary', { name: 'نوار کناری پنل مدیریت' }),
+    page.getByRole('main'),
+  ]) {
+    await expect(landmark).toHaveCSS('background-color', 'rgb(27, 30, 36)');
+  }
+  const lightThemeToggle = page.getByRole('button', { name: 'فعال‌کردن حالت روشن' });
+  await expect(lightThemeToggle).toHaveAttribute('aria-pressed', 'true');
+  await lightThemeToggle.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
   await page.getByRole('link', { name: 'مدیریت دسته‌بندی‌ها' }).click();
   await expect(page).toHaveURL('/categories');
-  await expect(page.getByRole('main')).toContainText('here is Categories');
+  await expect(page.getByRole('heading', { level: 2, name: 'مدیریت دسته‌بندی‌ها' })).toBeVisible();
+  await expect(page.getByText('پوشاک')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'جدول دسته‌بندی‌ها' })).toBeVisible();
+  for (const heading of ['زیر‌دسته‌ها', 'شناسه', 'نام', 'زمان ایجاد', 'عملیات']) {
+    await expect(page.getByRole('columnheader', { name: heading })).toBeVisible();
+  }
+  await page.getByRole('button', { name: 'نمایش زیر‌دسته‌های پوشاک' }).click();
+  await expect(page.getByText('مانتو')).toBeVisible();
+  await page.getByRole('button', { name: 'عملیات دسته‌بندی پوشاک' }).click();
+  const categoryActions = page.getByRole('dialog', { name: 'عملیات پوشاک' });
+  await expect(categoryActions).toBeVisible();
+  await categoryActions.getByRole('button', { name: 'ویرایش' }).click();
+  const editDialog = page.getByRole('dialog', { name: 'ویرایش دسته‌بندی' });
+  await expect(editDialog).toBeVisible();
+  await expect(editDialog.getByRole('textbox', { name: 'نام دسته‌بندی' })).toHaveValue('پوشاک');
+  await editDialog.getByRole('button', { name: 'انصراف' }).click();
+  await expect(editDialog).toBeHidden();
+  for (const width of [375, 768, 1280, 1536]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole('region', { name: 'جدول دسته‌بندی‌ها' })).toBeVisible();
+    const pageHasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    );
+    expect(pageHasHorizontalOverflow).toBe(false);
+  }
   await expect(page.getByRole('link', { name: 'مدیریت دسته‌بندی‌ها' })).toHaveAttribute(
     'aria-current',
     'page',
