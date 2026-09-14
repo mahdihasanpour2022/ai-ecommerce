@@ -5,8 +5,10 @@ import { loginDestination, safeReturnDestination } from '../app/auth/return-dest
 void test('accepts allowlisted protected Admin destinations', () => {
   assert.equal(safeReturnDestination('/'), '/');
   assert.equal(safeReturnDestination('/categories'), '/categories');
+  assert.equal(safeReturnDestination('/products'), '/products');
   assert.equal(loginDestination('/'), '/login?returnTo=%2F');
   assert.equal(loginDestination('/categories'), '/login?returnTo=%2Fcategories');
+  assert.equal(loginDestination('/products'), '/login?returnTo=%2Fproducts');
 });
 
 void test('rejects external, protocol-relative, unknown, backslash, and control destinations', () => {

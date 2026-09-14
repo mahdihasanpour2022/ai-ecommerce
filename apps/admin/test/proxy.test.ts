@@ -29,18 +29,20 @@ void test('redirects a protected route before render when Refresh is absent', as
   assert.equal(response.headers.getSetCookie().length, 3);
 });
 
-void test('protects the categories route and preserves its safe return destination', async () => {
+void test('protects catalog routes and preserves their safe return destinations', async () => {
   let calls = 0;
   globalThis.fetch = () => {
     calls += 1;
     return Promise.reject(new Error('must not call'));
   };
-  const response = await proxy(request('/categories'));
-  assert.equal(response.status, 307);
-  assert.equal(
-    response.headers.get('location'),
-    'http://localhost:3001/login?returnTo=%2Fcategories',
-  );
+  for (const pathname of ['/categories', '/products'] as const) {
+    const response = await proxy(request(pathname));
+    assert.equal(response.status, 307);
+    assert.equal(
+      response.headers.get('location'),
+      `http://localhost:3001/login?returnTo=${encodeURIComponent(pathname)}`,
+    );
+  }
   assert.equal(calls, 0);
 });
 

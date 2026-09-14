@@ -14,6 +14,7 @@ import { ThemeToggle } from '../../components/theme-toggle';
 const routes = [
   { name: 'صفحه اصلی', href: '/' },
   { name: 'مدیریت دسته‌بندی‌ها', href: '/categories' },
+  { name: 'مدیریت محصولات', href: '/products' },
 ] as const;
 
 export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode }>) {

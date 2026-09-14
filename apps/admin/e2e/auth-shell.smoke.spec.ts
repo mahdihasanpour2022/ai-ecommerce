@@ -127,6 +127,15 @@ test('renders Admin routes inside the shared authenticated shell', async ({ page
   );
   await expect(homeLink).not.toHaveAttribute('aria-current', 'page');
 
+  const productsLink = page.getByRole('link', { name: 'مدیریت محصولات' });
+  await productsLink.click();
+  await expect(page).toHaveURL('/products');
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'مدیریت محصولات' }),
+  ).toBeVisible();
+  await expect(productsLink).toHaveAttribute('aria-current', 'page');
+  await expect(homeLink).not.toHaveAttribute('aria-current', 'page');
+
   const accessibility = await new AxeBuilder({ page }).analyze();
   const seriousViolations = accessibility.violations.filter(
     (violation) => violation.impact === 'serious' || violation.impact === 'critical',
