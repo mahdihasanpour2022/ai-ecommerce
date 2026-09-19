@@ -61,14 +61,18 @@ export const PRODUCT_DETAIL_SELECT = {
 const PRODUCT_SUMMARY_SELECT = {
   id: true,
   name: true,
+  description: true,
   category: { select: CATEGORY_SELECT },
   status: true,
   variants: {
     select: {
+      size: true,
+      color: true,
       priceRial: true,
       isActive: true,
       inventory: { select: { onHandQuantity: true } },
     },
+    orderBy: { id: 'asc' as const },
   },
   images: {
     where: { position: 0 },
@@ -109,7 +113,7 @@ export class ProductRepository {
       where,
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: PRODUCT_SUMMARY_SELECT,
     });
     return { categoryExists: categoryCount === 1, rows, totalItems };

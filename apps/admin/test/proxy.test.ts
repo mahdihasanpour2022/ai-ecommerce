@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { NextRequest } from 'next/server';
-import { proxy } from '../proxy';
+import { config, proxy } from '../proxy';
 import { AUTH_STATE_HEADER, decodeAuthenticationHeader } from '../app/auth/server-auth-header';
 
 const originalFetch = globalThis.fetch;
+
+void test('runs the authentication proxy for every current Admin route', () => {
+  assert.deepEqual(config.matcher, ['/', '/login', '/categories', '/products']);
+});
 
 afterEach(() => {
   globalThis.fetch = originalFetch;

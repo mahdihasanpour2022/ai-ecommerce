@@ -99,7 +99,7 @@ test('renders Admin routes inside the shared authenticated shell', async ({ page
   await expect(page.getByRole('heading', { level: 2, name: 'مدیریت دسته‌بندی‌ها' })).toBeVisible();
   await expect(page.getByText('پوشاک')).toBeVisible();
   await expect(page.getByRole('region', { name: 'جدول دسته‌بندی‌ها' })).toBeVisible();
-  for (const heading of ['زیر‌دسته‌ها', 'شناسه', 'نام', 'زمان ایجاد', 'عملیات']) {
+  for (const heading of ['ردیف', 'زیر‌دسته‌ها', 'شناسه', 'نام', 'زمان ایجاد', 'عملیات']) {
     await expect(page.getByRole('columnheader', { name: heading })).toBeVisible();
   }
   await page.getByRole('button', { name: 'نمایش زیر‌دسته‌های پوشاک' }).click();
@@ -113,6 +113,11 @@ test('renders Admin routes inside the shared authenticated shell', async ({ page
   await expect(editDialog.getByRole('textbox', { name: 'نام دسته‌بندی' })).toHaveValue('پوشاک');
   await editDialog.getByRole('button', { name: 'انصراف' }).click();
   await expect(editDialog).toBeHidden();
+  await page.locator('.ant-pagination-item-2').click();
+  await expect(page).toHaveURL('/categories?page=2');
+  await expect(page.getByText('دسته‌بندی 16')).toBeVisible();
+  await page.locator('.ant-pagination-item-1').click();
+  await expect(page).toHaveURL('/categories?page=1');
   for (const width of [375, 768, 1280, 1536]) {
     await page.setViewportSize({ width, height: 900 });
     await expect(page.getByRole('region', { name: 'جدول دسته‌بندی‌ها' })).toBeVisible();
@@ -133,6 +138,39 @@ test('renders Admin routes inside the shared authenticated shell', async ({ page
   await expect(
     page.getByRole('heading', { level: 2, name: 'مدیریت محصولات' }),
   ).toBeVisible();
+  await expect(page.getByRole('region', { name: 'جدول محصولات' })).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'ردیف' })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: /پیراهن لینن/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '۱' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'پیراهن' })).toBeVisible();
+  await page.getByRole('button', { name: 'افزودن محصول' }).click();
+  const createProductDialog = page.getByRole('dialog', { name: 'ایجاد محصول' });
+  await expect(createProductDialog).toBeVisible();
+  await expect(createProductDialog.getByRole('textbox', { name: 'نام محصول' })).toBeFocused();
+  await expect(createProductDialog.getByRole('combobox', { name: 'سایز' })).toBeEnabled();
+  await expect(createProductDialog.getByRole('combobox', { name: 'رنگ' })).toBeEnabled();
+  await expect(createProductDialog.getByRole('spinbutton', { name: 'موجودی اولیه' })).toHaveValue('');
+  await expect(createProductDialog.getByRole('textbox', { name: 'توضیحات (اختیاری)' })).toHaveAttribute(
+    'maxlength',
+    '200',
+  );
+  const priceInput = createProductDialog.getByRole('textbox', { name: 'قیمت (ریال)' });
+  await priceInput.fill('1200000');
+  await expect(priceInput).toHaveValue('1,200,000');
+  await createProductDialog.getByRole('button', { name: 'انصراف' }).click();
+  await expect(createProductDialog).toBeHidden();
+  await page.locator('.ant-pagination-item-2').click();
+  await expect(page).toHaveURL('/products?page=2');
+  await expect(page.getByText('محصول 16')).toBeVisible();
+  await expect(page.getByRole('cell', { name: '۱۶' })).toBeVisible();
+  for (const width of [375, 768, 1280, 1536]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.getByRole('region', { name: 'جدول محصولات' })).toBeVisible();
+    const pageHasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    );
+    expect(pageHasHorizontalOverflow).toBe(false);
+  }
   await expect(productsLink).toHaveAttribute('aria-current', 'page');
   await expect(homeLink).not.toHaveAttribute('aria-current', 'page');
 

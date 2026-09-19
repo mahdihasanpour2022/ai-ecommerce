@@ -26,6 +26,8 @@ export interface VariantInput {
   readonly onHandQuantity: number;
 }
 
+export type InitialVariantInput = Omit<VariantInput, 'sku'>;
+
 export interface VariantUpdateInput {
   readonly sku?: string;
   readonly size?: string | null;
@@ -40,7 +42,7 @@ export interface CreateProductInput {
   readonly name: string;
   readonly description: string | null;
   readonly categoryId: string;
-  readonly variants: readonly VariantInput[];
+  readonly variants: readonly InitialVariantInput[];
 }
 
 export interface UpdateProductInput {
@@ -50,15 +52,7 @@ export interface UpdateProductInput {
   readonly status?: ProductStatus;
 }
 
-export class InitialVariantRequestDto {
-  @ApiProperty({
-    minLength: 1,
-    maxLength: 64,
-    pattern: SKU_PATTERN.source,
-    example: 'TSHIRT-BLK-M',
-  })
-  sku!: string;
-
+class VariantValuesRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true, default: null })
   size?: string | null;
 
@@ -70,12 +64,25 @@ export class InitialVariantRequestDto {
 
   @ApiPropertyOptional({ default: true })
   isActive?: boolean;
+}
+
+export class InitialVariantRequestDto extends VariantValuesRequestDto {
+  @ApiProperty({ minimum: 1, maximum: MAX_DATABASE_INTEGER })
+  onHandQuantity!: number;
+}
+
+export class CreateVariantRequestDto extends VariantValuesRequestDto {
+  @ApiProperty({
+    minLength: 1,
+    maxLength: 64,
+    pattern: SKU_PATTERN.source,
+    example: 'TSHIRT-BLK-M',
+  })
+  sku!: string;
 
   @ApiPropertyOptional({ minimum: 0, maximum: MAX_DATABASE_INTEGER, default: 0 })
   onHandQuantity?: number;
 }
-
-export class CreateVariantRequestDto extends InitialVariantRequestDto {}
 
 export class UpdateVariantRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 64, pattern: SKU_PATTERN.source })
@@ -98,7 +105,7 @@ export class CreateProductRequestDto {
   @ApiProperty({ minLength: 1, maxLength: 200, example: 'پیراهن نخی' })
   name!: string;
 
-  @ApiPropertyOptional({ minLength: 1, maxLength: 5000, nullable: true, default: null })
+  @ApiPropertyOptional({ minLength: 1, maxLength: 200, nullable: true, default: null })
   description?: string | null;
 
   @ApiProperty({ format: 'uuid' })
@@ -112,7 +119,7 @@ export class UpdateProductRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 200 })
   name?: string;
 
-  @ApiPropertyOptional({ minLength: 1, maxLength: 5000, nullable: true })
+  @ApiPropertyOptional({ minLength: 1, maxLength: 200, nullable: true })
   description?: string | null;
 
   @ApiPropertyOptional({ format: 'uuid' })
@@ -203,6 +210,9 @@ export class ProductSummaryDto {
   @ApiProperty({ minLength: 1, maxLength: 200 })
   name!: string;
 
+  @ApiProperty({ minLength: 1, maxLength: 200, nullable: true })
+  description!: string | null;
+
   @ApiProperty({ type: () => ProductCategoryDto })
   category!: ProductCategoryDto;
 
@@ -214,6 +224,12 @@ export class ProductSummaryDto {
 
   @ApiProperty({ minimum: 0 })
   activeVariantCount!: number;
+
+  @ApiProperty({ type: String, isArray: true, example: ['M', 'L'] })
+  sizes!: string[];
+
+  @ApiProperty({ type: String, isArray: true, example: ['مشکی', 'سفید'] })
+  colors!: string[];
 
   @ApiProperty({ type: () => ProductImageMetadataDto, nullable: true })
   mainImage!: ProductImageMetadataDto | null;
@@ -241,7 +257,7 @@ export class ProductDetailDto {
   @ApiProperty({ minLength: 1, maxLength: 200 })
   name!: string;
 
-  @ApiProperty({ minLength: 1, maxLength: 5000, nullable: true })
+  @ApiProperty({ minLength: 1, maxLength: 200, nullable: true })
   description!: string | null;
 
   @ApiProperty({ type: () => ProductCategoryDto })
@@ -330,7 +346,7 @@ function normalizeDescription(value: unknown): string | null {
   const length = Array.from(description).length;
   if (
     length < 1 ||
-    length > 5000 ||
+    length > 200 ||
     containsDisallowedControl(description, true) ||
     /[<>]/u.test(description)
   ) {
@@ -379,18 +395,11 @@ function parseNullableOption(
   return { value: normalized, key: comparisonKey(normalized, field, 160) };
 }
 
-function parseVariant(record: Record<string, unknown>): VariantInput {
-  if (
-    !hasOnlyKeys(record, ['sku', 'size', 'color', 'priceRial', 'isActive', 'onHandQuantity']) ||
-    !('sku' in record) ||
-    !('priceRial' in record)
-  ) {
-    fail();
-  }
+function parseVariantValues(record: Record<string, unknown>): InitialVariantInput {
+  if (!('priceRial' in record)) fail(['priceRial']);
   const size = parseNullableOption('size' in record ? record.size : null, 'size');
   const color = parseNullableOption('color' in record ? record.color : null, 'color');
   return {
-    sku: parseSku(record.sku),
     size: size.value,
     sizeKey: size.key,
     color: color.value,
@@ -399,6 +408,28 @@ function parseVariant(record: Record<string, unknown>): VariantInput {
     isActive: 'isActive' in record ? parseBoolean(record.isActive, 'isActive') : true,
     onHandQuantity: 'onHandQuantity' in record ? parseQuantity(record.onHandQuantity) : 0,
   };
+}
+
+function parseInitialVariant(record: Record<string, unknown>): InitialVariantInput {
+  if (
+    !hasOnlyKeys(record, ['size', 'color', 'priceRial', 'isActive', 'onHandQuantity']) ||
+    !('onHandQuantity' in record)
+  ) {
+    fail(['onHandQuantity']);
+  }
+  const parsed = parseVariantValues(record);
+  if (parsed.onHandQuantity === 0) fail(['onHandQuantity']);
+  return parsed;
+}
+
+function parseVariant(record: Record<string, unknown>): VariantInput {
+  if (
+    !hasOnlyKeys(record, ['sku', 'size', 'color', 'priceRial', 'isActive', 'onHandQuantity']) ||
+    !('sku' in record)
+  ) {
+    fail();
+  }
+  return { sku: parseSku(record.sku), ...parseVariantValues(record) };
 }
 
 export function parseCreateProductRequest(body: unknown): CreateProductInput {
@@ -414,7 +445,7 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
   }
   const variants = body.variants.map((variant) => {
     if (!isRecord(variant)) fail(['variants']);
-    return parseVariant(variant);
+    return parseInitialVariant(variant);
   });
   return {
     name: normalizeSingleLine(body.name, 'name', 200),

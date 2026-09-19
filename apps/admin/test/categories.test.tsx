@@ -16,7 +16,9 @@ after(() => cleanup());
 
 void test('shows the normalized Category failure in an Ant Design toast', async () => {
   const originalAdapter = httpClient.defaults.adapter;
+  const requestParams: unknown[] = [];
   httpClient.defaults.adapter = async (config) => {
+    requestParams.push(config.params);
     throw new axios.AxiosError('Backend failure', 'ERR_BAD_RESPONSE', config, undefined, {
       data: {
         statusCode: 500,
@@ -49,6 +51,7 @@ void test('shows the normalized Category failure in an Ant Design toast', async 
       assert.equal(view.getAllByRole('alert').length, 2);
       assert.ok(view.getByRole('button', { name: 'تلاش دوباره' }));
     });
+    assert.deepEqual(requestParams[0], { page: 1, pageSize: 15 });
   } finally {
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;
     else httpClient.defaults.adapter = originalAdapter;

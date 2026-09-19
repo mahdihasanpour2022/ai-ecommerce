@@ -43,6 +43,43 @@ void test('formats valid dates in the Persian calendar and handles invalid value
   assert.equal(formatPersianDateTime('invalid'), '—');
 });
 
+void test('shows fifteen root Categories per controlled table page', () => {
+  const categories = Array.from({ length: 16 }, (_, index): Category => ({
+    id: `30000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+    name: `دسته‌بندی ${index + 1}`,
+    parentId: null,
+    level: 1,
+    children: [],
+    createdAt: '2026-09-14T08:30:00.000Z',
+    updatedAt: '2026-09-14T08:30:00.000Z',
+  }));
+  const queryClient = createAdminQueryClient();
+  const view = render(
+    <App>
+      <QueryClientProvider client={queryClient}>
+        <CategoryTable categories={categories} page={1} />
+      </QueryClientProvider>
+    </App>,
+  );
+
+  assert.ok(view.getByText('دسته‌بندی 1'));
+  assert.ok(view.getByText('دسته‌بندی 15'));
+  assert.equal(view.queryByText('دسته‌بندی 16'), null);
+
+  view.rerender(
+    <App>
+      <QueryClientProvider client={queryClient}>
+        <CategoryTable categories={categories} page={2} />
+      </QueryClientProvider>
+    </App>,
+  );
+  assert.ok(view.getByText('دسته‌بندی 16'));
+  assert.equal(view.queryByText('دسته‌بندی 1'), null);
+  assert.ok(view.getByRole('columnheader', { name: 'ردیف' }));
+  assert.ok(view.getByRole('cell', { name: '۱۶' }));
+  queryClient.clear();
+});
+
 void test('renders the Persian tree table and updates Category data after edit and delete', async () => {
   const originalAdapter = httpClient.defaults.adapter;
   const calls: Array<{
@@ -89,7 +126,7 @@ void test('renders the Persian tree table and updates Category data after edit a
     assert.ok(screen.getByRole('region', { name: 'جدول دسته‌بندی‌ها' }));
     assert.ok(document.querySelector('.ant-table-bordered'));
     assert.ok(document.querySelector('.category-tree-table .ant-table-small'));
-    for (const heading of ['زیر‌دسته‌ها', 'شناسه', 'نام', 'زمان ایجاد', 'عملیات']) {
+    for (const heading of ['ردیف', 'زیر‌دسته‌ها', 'نام', 'سطح', 'زمان ایجاد', 'عملیات']) {
       assert.ok(screen.getByRole('columnheader', { name: heading }));
     }
     assert.match(screen.getByRole('region').textContent ?? '', /۱۴۰۵/u);
@@ -117,12 +154,14 @@ void test('renders the Persian tree table and updates Category data after edit a
     await user.click(editAction);
     const editDialog = await screen.findByRole('dialog', { name: 'ویرایش دسته‌بندی' });
     const nameInput = within(editDialog).getByRole('textbox', { name: 'نام دسته‌بندی' });
+    const saveButton = within(editDialog).getByRole('button', { name: 'ذخیره تغییرات' });
+    await waitFor(() => assert.equal((nameInput as HTMLInputElement).value, 'پوشاک'));
     await user.clear(nameInput);
-    await user.click(within(editDialog).getByRole('button', { name: 'ذخیره تغییرات' }));
+    await user.click(saveButton);
     assert.ok(await within(editDialog).findByRole('alert'));
     assert.equal(calls.some(({ method }) => method === 'patch'), false);
     await user.type(nameInput, '  پوشاک جدید  ');
-    await user.click(within(editDialog).getByRole('button', { name: 'ذخیره تغییرات' }));
+    await user.click(saveButton);
     await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'ویرایش دسته‌بندی' }), null));
 
     const patchCall = calls.find(({ method }) => method === 'patch');

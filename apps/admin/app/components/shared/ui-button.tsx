@@ -7,7 +7,8 @@ const VARIANT_CLASSES = {
   secondary: 'border-border bg-surface text-gray-400! hover:border-gray-400 hover:text-gray-400!',
   ghost:
     'border-transparent bg-transparent text-muted hover:bg-brand-soft/10 hover:text-accent-foreground',
-  theme: 'text-accent-foreground shadow-sm hover:bg-brand-soft/20 border-gray-300 dark:border-gray-700',
+  theme:
+    'text-accent-foreground shadow-sm hover:bg-brand-soft/20 border-gray-300 dark:border-gray-700',
   danger: 'border-red-700 bg-red-700 text-white hover:bg-red-800',
   dangerSubtle:
     'border-red-200 bg-red-400 text-white! border-red-400 hover:border-red-300 hover:bg-white hover:text-red-400! dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70',
@@ -23,23 +24,43 @@ const SIZE_CLASSES = {
 export interface UiButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly variant?: keyof typeof VARIANT_CLASSES;
   readonly size?: keyof typeof SIZE_CLASSES;
+  readonly loading?: boolean;
 }
 
 export const UiButton = forwardRef<HTMLButtonElement, UiButtonProps>(function UiButton(
-  { className, variant = 'primary', size = 'medium', type = 'button', ...attributes },
+  {
+    children,
+    className,
+    disabled,
+    loading = false,
+    variant = 'primary',
+    size = 'medium',
+    type = 'button',
+    ...attributes
+  },
   ref,
 ) {
   return (
     <button
       ref={ref}
       type={type}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={classNames(
-        'inline-flex items-center justify-center gap-2 rounded-xl border font-bold cursor-pointer transition-colors duration-200 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60',
+        'inline-flex items-center justify-center gap-2 rounded-xl border font-bold cursor-pointer transition-colors duration-200 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:border-gray-300! disabled:bg-gray-200! disabled:text-gray-500! disabled:shadow-none dark:disabled:border-gray-600! dark:disabled:bg-gray-700! dark:disabled:text-gray-300!',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],
         className,
       )}
       {...attributes}
-    />
+    >
+      {loading ? (
+        <span
+          aria-hidden="true"
+          className="size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+        />
+      ) : null}
+      {children}
+    </button>
   );
 });

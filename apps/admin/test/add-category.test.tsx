@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddCategory from '../features/categories/components/add-category';
+import { CATEGORY_OPTIONS_PAGE_SIZE } from '../features/categories/constants/pagination';
 import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
 import { createCategorySchema } from '../features/categories/schemas/create-category-schema';
@@ -92,13 +93,17 @@ void test('validates and creates a child Category, then refreshes the Category q
   };
   document.cookie = 'admin_csrf_token=test-token; Path=/; SameSite=Strict';
   const queryClient = createAdminQueryClient();
-  queryClient.setQueryData(categoryKeys.all, initialCategories);
+  queryClient.setQueryData(
+    categoryKeys.list({ page: 1, pageSize: CATEGORY_OPTIONS_PAGE_SIZE }),
+    initialCategories,
+  );
+  let created = 0;
 
   try {
     const screen = render(
       <App message={{ duration: 0.01 }}>
         <QueryClientProvider client={queryClient}>
-          <AddCategory />
+          <AddCategory onCreated={() => { created += 1; }} />
         </QueryClientProvider>
       </App>,
     );
@@ -106,7 +111,8 @@ void test('validates and creates a child Category, then refreshes the Category q
 
     await user.click(screen.getByRole('button', { name: 'افزودن دسته‌بندی' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد دسته‌بندی' });
-    await user.click(within(dialog).getByRole('button', { name: 'ایجاد دسته‌بندی' }));
+    const submitButton = within(dialog).getByRole('button', { name: 'ایجاد دسته‌بندی' });
+    await user.click(submitButton);
     assert.ok(await within(dialog).findByRole('alert'));
     assert.equal(calls.length, 0);
 
@@ -115,13 +121,14 @@ void test('validates and creates a child Category, then refreshes the Category q
     const parentCategory = initialCategories.result[0];
     assert.ok(parentCategory);
     await user.click(await screen.findByText(parentCategory.name));
-    await user.click(within(dialog).getByRole('button', { name: 'ایجاد دسته‌بندی' }));
+    await user.click(submitButton);
 
     await waitFor(() => assert.equal(screen.queryByRole('dialog'), null));
     const post = calls.find(({ method }) => method === 'post');
     assert.ok(post);
     assert.deepEqual(JSON.parse(String(post.data)), { name: 'مانتو', parentId });
     assert.ok(calls.some(({ method }) => method === 'get'));
+    assert.equal(created, 1);
   } finally {
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;
     else httpClient.defaults.adapter = originalAdapter;

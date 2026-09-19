@@ -8,38 +8,40 @@ import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
+import { CATEGORY_OPTIONS_PAGE_SIZE } from '../constants/pagination';
 import { useCreateCategory } from '../hooks/useCreateCategory';
 import { useGetCategories } from '../hooks/useGetCategories';
 import type { CreateCategoryFormValues } from '../schemas/create-category-schema';
 import { createCategorySchema } from '../schemas/create-category-schema';
 import { categoryOptions } from '../utils/category-options';
 
-export default function AddCategory() {
+export default function AddCategory({ onCreated }: Readonly<{ onCreated?: () => void }>) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const submissionErrorRef = useRef<HTMLParagraphElement>(null);
   const { message } = App.useApp();
-  const categories = useGetCategories();
+  const categories = useGetCategories({ page: 1, pageSize: CATEGORY_OPTIONS_PAGE_SIZE });
   const createCategory = useCreateCategory();
   const {
     control,
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<CreateCategoryFormValues>({
     resolver: zodResolver(createCategorySchema),
     defaultValues: { name: '', parentId: '' },
     mode: 'onChange',
     shouldFocusError: true,
   });
+  const submitting = createCategory.isPending || isSubmitting;
 
   useEffect(() => {
     if (createCategory.error) submissionErrorRef.current?.focus();
   }, [createCategory.error]);
 
   const close = () => {
-    if (createCategory.isPending) return;
+    if (submitting) return;
     setOpen(false);
     createCategory.reset();
     reset();
@@ -50,6 +52,7 @@ export default function AddCategory() {
       const response = await createCategory.mutateAsync({ name, parentId: parentId || null });
       reset();
       setOpen(false);
+      onCreated?.();
       await message.success(response.message);
     } catch {
       return;
@@ -70,15 +73,15 @@ export default function AddCategory() {
 
   return (
     <div className="flex justify-end absolute top-0 left-0">
-      <UiButton className="text-white!" ref={triggerRef} onClick={() => setOpen(true)}>
+      <UiButton ref={triggerRef} variant='primary' onClick={() => setOpen(true)}>
         افزودن دسته‌بندی
       </UiButton>
       <UiModal.Root
         open={open}
         title="ایجاد دسته‌بندی"
-        closable={!createCategory.isPending}
-        keyboard={!createCategory.isPending}
-        mask={{ closable: !createCategory.isPending }}
+        closable={!submitting}
+        keyboard={!submitting}
+        mask={{ closable: !submitting }}
         onCancel={close}
         afterOpenChange={(isOpen) => {
           if (!isOpen) triggerRef.current?.focus();
@@ -93,7 +96,7 @@ export default function AddCategory() {
               autoFocus
               maxLength={120}
               placeholder="مثلاً پوشاک زنانه"
-              disabled={createCategory.isPending}
+              disabled={submitting}
               aria-invalid={errors.name ? 'true' : 'false'}
               aria-describedby={errors.name ? 'category-name-error' : undefined}
               {...register('name')}
@@ -114,7 +117,7 @@ export default function AddCategory() {
                   ref={field.ref}
                   value={field.value}
                   options={parentOptions}
-                  disabled={createCategory.isPending || categories.isPending}
+                  disabled={submitting || categories.isPending}
                   status={errors.parentId ? 'error' : ''}
                   aria-invalid={errors.parentId ? 'true' : 'false'}
                   aria-describedby={errors.parentId ? 'category-parent-error' : undefined}
@@ -146,15 +149,19 @@ export default function AddCategory() {
           ) : null}
 
           <UiForm.Actions>
-            <UiButton variant="secondary" disabled={createCategory.isPending} onClick={close}>
+            <UiButton variant="secondary" disabled={submitting} onClick={close}>
               انصراف
             </UiButton>
             <UiButton
               type="submit"
-              disabled={createCategory.isPending}
-              aria-busy={createCategory.isPending}
+              disabled={
+                submitting ||
+                categories.isPending ||
+                categories.isError
+              }
+              loading={submitting}
             >
-              {createCategory.isPending ? 'در حال ایجاد…' : 'ایجاد دسته‌بندی'}
+              {submitting ? 'در حال ایجاد…' : 'ایجاد دسته‌بندی'}
             </UiButton>
           </UiForm.Actions>
         </UiForm.Root>

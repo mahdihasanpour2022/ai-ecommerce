@@ -1,0 +1,2 @@
+export const CATEGORY_PAGE_SIZE = 15;
+export const CATEGORY_OPTIONS_PAGE_SIZE = 1000;

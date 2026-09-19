@@ -31,5 +31,6 @@ void test('renders a disabled busy submit state that prevents repeat interaction
   );
 
   assert.match(html, /<button[^>]*disabled=""[^>]*aria-busy="true"/);
+  assert.match(html, /animate-spin/);
   assert.match(html, /در حال ورود…/);
 });

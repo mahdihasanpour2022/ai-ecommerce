@@ -33,7 +33,7 @@ export function DeleteCategoryModal({
         <UiButton variant="secondary" disabled={pending} onClick={onCancel}>
           انصراف
         </UiButton>
-        <UiButton variant="dangerSubtle" disabled={pending} aria-busy={pending} onClick={onConfirm}>
+        <UiButton variant="dangerSubtle" loading={pending} onClick={onConfirm}>
           {pending ? 'در حال حذف…' : 'حذف دسته‌بندی'}
         </UiButton>
       </div>

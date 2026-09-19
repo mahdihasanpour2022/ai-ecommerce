@@ -36,5 +36,15 @@ void test('shared buttons forward native attributes and compose caller classes',
   assert.equal((button as HTMLButtonElement).disabled, true);
   assert.match(button.className, /feature-action/u);
   assert.match(button.className, /border-border/u);
+  assert.match(button.className, /disabled:bg-gray-200!/u);
+  cleanup();
+});
+
+void test('shared loading buttons are disabled, busy, and render a visible spinner', () => {
+  const view = render(<UiButton loading>در حال ارسال…</UiButton>);
+  const button = view.getByRole('button', { name: 'در حال ارسال…' });
+  assert.equal((button as HTMLButtonElement).disabled, true);
+  assert.equal(button.getAttribute('aria-busy'), 'true');
+  assert.ok(button.querySelector('.animate-spin'));
   cleanup();
 });

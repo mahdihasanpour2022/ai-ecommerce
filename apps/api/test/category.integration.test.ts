@@ -208,6 +208,48 @@ void describe(
       assert.equal(await prisma.category.count(), 1);
     });
 
+    void test('orders protected Category siblings by creation time and UUID', async () => {
+      const session = await createSession();
+      const categories = await Promise.all(
+        ['Older', 'Newer A', 'Newer B'].map(async (name) => {
+          const response = await mutation('post', '/api/v1/admin/catalog/categories', session)
+            .send({ name })
+            .expect(201);
+          return responseBody<CategoryBody>(response);
+        }),
+      );
+      const [oldest, ...newest] = categories;
+      assert.ok(oldest);
+      await prisma.category.update({
+        where: { id: oldest.id },
+        data: {
+          createdAt: new Date('2028-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2040-01-01T00:00:00.000Z'),
+        },
+      });
+      await prisma.category.updateMany({
+        where: { id: { in: newest.map(({ id }) => id) } },
+        data: { createdAt: new Date('2030-01-01T00:00:00.000Z') },
+      });
+
+      const response = await request(server(app))
+        .get('/api/v1/admin/catalog/categories')
+        .set('Cookie', session.accessCookie)
+        .expect(200);
+      const body = responseBody<CategoryBody[]>(response);
+      const expectedIds = [
+        ...newest
+          .map(({ id }) => id)
+          .sort()
+          .reverse(),
+        oldest.id,
+      ];
+      assert.deepEqual(
+        body.map(({ id }) => id),
+        expectedIds,
+      );
+    });
+
     void test('rejects malformed input, sibling conflicts, invalid moves, and missing parents', async () => {
       const session = await createSession();
       const root = await mutation('post', '/api/v1/admin/catalog/categories', session)

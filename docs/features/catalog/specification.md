@@ -42,7 +42,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 - Lengths count Unicode code points after normalization:
   - Category name: 1–120.
   - Product name: 1–200.
-  - Product description: 1–5,000 when present.
+  - Product description: 1–200 when present.
   - Variant size label: 1–80 when present.
   - Variant color label: 1–80 when present.
   - SKU: 1–64 ASCII characters matching `^[A-Z0-9][A-Z0-9_-]*$` after trim and uppercase normalization.
@@ -240,6 +240,9 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `DELETE /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Delete eligible empty leaf; `200` with the canonical no-payload success envelope. |
 | `GET /api/v1/admin/catalog/products` | `catalog.read` | No | Page-bounded protected Product summaries. |
 | `GET /api/v1/admin/catalog/products/{productId}` | `catalog.read` | No | Full protected Product, Variant, exact Inventory, and ready Image metadata. |
+| `GET /api/v1/admin/catalog/product-options/sizes` | `catalog.read` | No | Server-owned Product size options for Admin forms. |
+| `GET /api/v1/admin/catalog/product-options/colors` | `catalog.read` | No | Server-owned Product color names and hexadecimal swatches for Admin forms. |
+| `GET /api/v1/admin/catalog/product-options/statuses` | `catalog.read` | No | Server-owned Product lifecycle English identifiers and Persian display names. |
 | `POST /api/v1/admin/catalog/products` | `catalog.manage` | Yes | Atomically create Draft Product, initial Variants, and Inventory; `201`. |
 | `PATCH /api/v1/admin/catalog/products/{productId}` | `catalog.manage` | Yes | Update Product fields and/or perform one allowed lifecycle transition; `200`. |
 | `POST /api/v1/admin/catalog/products/{productId}/variants` | `catalog.manage` | Yes | Create Variant plus Inventory; `201`. |
@@ -253,14 +256,15 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/settings/price-display-unit` | `catalog.read` | No | Current global unit. |
 | `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price.display.unit.update` | Yes | Replace global unit; `200`. |
 
-Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `updatedAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected by the current contract. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
+Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `createdAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected by the current contract. The protected Category tree orders every sibling collection by `createdAt DESC, id DESC`, so newly created root Categories and children appear first within their respective levels. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
 
 ### Protected mutation DTO boundaries
 
 - Create Category JSON: required `name`; optional nullable `parentId`, default `null`.
 - Patch Category JSON: optional `name` and optional nullable `parentId`; at least one field must be present. Supplying `parentId: null` moves it to the root.
 - Create Product JSON: required `name`, `categoryId`, and non-empty `variants`; optional nullable `description`. Product status is server-owned `DRAFT`.
-- Initial/Create Variant JSON: required `sku` and `priceRial`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`.
+- Initial Variant inside Create Product JSON: required `priceRial` and positive `onHandQuantity` (`1..2147483647`); optional nullable `size`/`color`; optional `isActive`, default `true`. Backend generates the globally unique normalized `sku`.
+- Create Variant JSON: required `sku` and `priceRial`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`.
 - Patch Product JSON: optional `name`, nullable `description`, `categoryId`, and `status`; at least one field must be present. A lifecycle transition and completeness-restoring field updates may be submitted together for one atomic validation. Archived Product requests may contain only `status: "DRAFT"`.
 - Patch Variant JSON: optional `sku`, nullable `size`/`color`, `priceRial`, and `isActive`; at least one field must be present.
 - Put Inventory JSON: exactly `{ "onHandQuantity": <non-negative safe integer>, "version": <positive integer> }`.
@@ -274,7 +278,7 @@ Normalized values returned by successful mutations are authoritative. Validation
 ### Minimum protected DTO boundaries
 
 - Category: `id`, `name`, `parentId`, `level`, `children`; protected responses may include `createdAt`/`updatedAt`.
-- Product summary: `id`, `name`, `category`, `status`, Variant count, active Variant count, main Image metadata if present, minimum/maximum `priceRial`, exact aggregate on-hand quantity, `createdAt`, `updatedAt`.
+- Product summary: `id`, `name`, nullable plain-text `description`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, main Image metadata if present, minimum/maximum `priceRial`, exact aggregate on-hand quantity, `createdAt`, `updatedAt`.
 - Product detail: Product fields plus all retained Variants with `id`, `sku`, `size`, `color`, `priceRial`, `isActive`, Inventory `{ onHandQuantity, version }`; ordered ready Images; `imageVersion`; timestamps.
 - Mutations return the smallest complete affected DTO needed for the Admin to update state without guessing. They never return persistence-only normalized keys, cleanup state, or storage paths/keys.
 

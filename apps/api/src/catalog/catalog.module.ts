@@ -10,6 +10,8 @@ import { InventoryController } from './inventory.controller.js';
 import { InventoryRepository } from './inventory.repository.js';
 import { InventoryService } from './inventory.service.js';
 import { ProductController } from './product.controller.js';
+import { ProductOptionController } from './product-option.controller.js';
+import { ProductOptionService } from './product-option.service.js';
 import { ProductRepository } from './product.repository.js';
 import { ProductService } from './product.service.js';
 import {
@@ -36,6 +38,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
   controllers: [
     CategoryController,
     ProductController,
+    ProductOptionController,
     InventoryController,
     AdminPriceDisplaySettingController,
     PublicPriceDisplaySettingController,
@@ -51,6 +54,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
     InventoryService,
     ProductRepository,
     ProductService,
+    ProductOptionService,
     PriceDisplaySettingRepository,
     PriceDisplaySettingService,
     ProductImageMultipartErrorInterceptor,

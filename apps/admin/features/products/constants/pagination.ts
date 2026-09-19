@@ -1,0 +1,2 @@
+export const PRODUCT_PAGE_SIZE = 15;
+export const PRODUCT_OPTIONS_PAGE_SIZE = 1000;

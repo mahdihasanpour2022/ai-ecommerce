@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 
 import type {
   CreateProductInput,
@@ -47,7 +48,11 @@ export class ProductService {
   }
 
   async create(input: CreateProductInput): Promise<ProductDetailDto> {
-    assertVariantSet(input.variants);
+    const variants: VariantInput[] = input.variants.map((variant) => ({
+      ...variant,
+      sku: generateVariantSku(),
+    }));
+    assertVariantSet(variants);
     return this.runMutation('create-product', () =>
       this.repository.transaction(async (transaction) => {
         if (!(await this.repository.categoryExists(transaction, input.categoryId))) {
@@ -61,7 +66,7 @@ export class ProductService {
           },
           select: { id: true },
         });
-        for (const variant of input.variants) {
+        for (const variant of variants) {
           await this.insertVariant(transaction, product.id, variant);
         }
         return toProductDetailDto(await this.requiredAggregate(transaction, product.id));
@@ -209,6 +214,10 @@ export class ProductService {
   }
 }
 
+export function generateVariantSku(): string {
+  return `SKU-${randomUUID().replaceAll('-', '').toUpperCase()}`;
+}
+
 function assertProductMutationAllowed(
   product: ProductDetailRecord,
   input: UpdateProductInput,
@@ -346,10 +355,13 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
   return {
     id: product.id,
     name: product.name,
+    description: product.description,
     category: product.category,
     status: product.status,
     variantCount: product.variants.length,
     activeVariantCount: product.variants.filter((variant) => variant.isActive).length,
+    sizes: uniqueLabels(product.variants.map((variant) => variant.size)),
+    colors: uniqueLabels(product.variants.map((variant) => variant.color)),
     mainImage: product.images[0] === undefined ? null : toImageDto(product.images[0]),
     minimumPriceRial: safeRial(minimumPriceRial),
     maximumPriceRial: safeRial(maximumPriceRial),
@@ -362,4 +374,8 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };
+}
+
+function uniqueLabels(labels: ReadonlyArray<string | null>): string[] {
+  return [...new Set(labels.filter((label): label is string => label !== null))];
 }

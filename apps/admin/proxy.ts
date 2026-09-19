@@ -105,5 +105,5 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ['/', '/login', '/categories'],
+  matcher: ['/', '/login', '/categories', '/products'],
 };

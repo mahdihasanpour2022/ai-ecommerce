@@ -5,6 +5,7 @@ import type {
   LabelHTMLAttributes,
   OptionHTMLAttributes,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from 'react';
 import { forwardRef } from 'react';
 import { classNames } from './class-names';
@@ -43,6 +44,18 @@ const TextInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElem
         ref={ref}
         type={type}
         className={classNames(CONTROL_CLASSES, className)}
+        {...attributes}
+      />
+    );
+  },
+);
+
+const TextArea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
+  function UiFormTextArea({ className, ...attributes }, ref) {
+    return (
+      <textarea
+        ref={ref}
+        className={classNames(CONTROL_CLASSES, 'min-h-24 resize-y', className)}
         {...attributes}
       />
     );
@@ -102,6 +115,7 @@ export const UiForm = {
   Field,
   Label,
   TextInput,
+  TextArea,
   Select,
   Option,
   Error: ErrorMessage,

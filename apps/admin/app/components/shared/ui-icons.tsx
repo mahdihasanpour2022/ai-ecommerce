@@ -68,6 +68,25 @@ export function DeleteIcon({ className, ...props }: UiIconProps) {
   );
 }
 
+export function StatusIcon({ className, ...props }: UiIconProps) {
+  return (
+    <svg
+      {...iconProps(className)}
+      {...props}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+      data-icon="status"
+    >
+      <path d="M20 7h-9M14 3l-4 4 4 4M4 17h9M10 13l4 4-4 4" />
+    </svg>
+  );
+}
+
 export function SunIcon({ className, ...props }: UiIconProps) {
   return (
     <svg

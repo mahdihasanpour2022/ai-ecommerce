@@ -17,7 +17,7 @@ export function LoginForm(props: LoginFormProps) {
     register,
     handleSubmit,
     resetField,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { identifier: '', password: '' },
@@ -28,6 +28,7 @@ export function LoginForm(props: LoginFormProps) {
     resetField('password');
     await props.onSubmit(values);
   });
+  const submitting = props.submitting || isSubmitting;
 
   return (
     <form className="mt-6 grid gap-4" noValidate onSubmit={(event) => void submit(event)}>
@@ -48,7 +49,7 @@ export function LoginForm(props: LoginFormProps) {
           aria-describedby={
             errors.identifier ? 'identifier-error identifier-help' : 'identifier-help'
           }
-          disabled={props.submitting}
+          disabled={submitting}
           {...register('identifier')}
         />
         {errors.identifier ? (
@@ -74,7 +75,7 @@ export function LoginForm(props: LoginFormProps) {
           placeholder="رمز عبور ۶ رقمی"
           aria-invalid={errors.password ? 'true' : 'false'}
           aria-describedby={errors.password ? 'password-error password-help' : 'password-help'}
-          disabled={props.submitting}
+          disabled={submitting}
           {...register('password')}
         />
         {errors.password ? (
@@ -96,10 +97,10 @@ export function LoginForm(props: LoginFormProps) {
       <UiButton
         className="w-full"
         type="submit"
-        disabled={props.submitting}
-        aria-busy={props.submitting}
+        disabled={submitting}
+        loading={submitting}
       >
-        {props.submitting ? 'در حال ورود…' : 'ورود'}
+        {submitting ? 'در حال ورود…' : 'ورود'}
       </UiButton>
     </form>
   );

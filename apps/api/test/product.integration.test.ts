@@ -54,8 +54,11 @@ interface ProductBody {
 interface ProductListBody {
   readonly items: Array<{
     readonly id: string;
+    readonly description: string | null;
     readonly variantCount: number;
     readonly activeVariantCount: number;
+    readonly sizes: string[];
+    readonly colors: string[];
     readonly minimumPriceRial: number;
     readonly maximumPriceRial: number;
     readonly totalOnHandQuantity: number;
@@ -196,7 +199,6 @@ void describe(
           categoryId,
           variants: [
             {
-              sku: `SKU-${randomUUID()}`,
               size: 'M',
               color: 'Black',
               priceRial: 120_000,
@@ -256,14 +258,12 @@ void describe(
           categoryId,
           variants: [
             {
-              sku: ' shirt-black-m ',
               size: ' Ｍ ',
               color: ' مشکی ',
               priceRial: 120_000,
               onHandQuantity: 4,
             },
             {
-              sku: 'shirt-black-l',
               size: 'L',
               color: 'مشکی',
               priceRial: 140_000,
@@ -276,10 +276,10 @@ void describe(
       const product = responseBody<ProductBody>(response);
       assert.equal(product.name, 'پیراهن نخی');
       assert.equal(product.status, 'DRAFT');
-      assert.deepEqual(product.variants.map(({ sku }) => sku).sort(), [
-        'SHIRT-BLACK-L',
-        'SHIRT-BLACK-M',
-      ]);
+      assert.equal(new Set(product.variants.map(({ sku }) => sku)).size, 2);
+      for (const variant of product.variants) {
+        assert.match(variant.sku, /^SKU-[0-9A-F]{32}$/u);
+      }
       assert.equal(product.variants[0]?.inventory.version, 1);
       assert.equal(await prisma.inventory.count(), 2);
 
@@ -307,6 +307,9 @@ void describe(
       );
       assert.equal(listBody.items[0]?.variantCount, 2);
       assert.equal(listBody.items[0]?.activeVariantCount, 2);
+      assert.equal(listBody.items[0]?.description, 'توضیح محصول');
+      assert.deepEqual(new Set(listBody.items[0]?.sizes), new Set(['M', 'L']));
+      assert.deepEqual(listBody.items[0]?.colors, ['مشکی']);
       assert.equal(listBody.items[0]?.minimumPriceRial, 120_000);
       assert.equal(listBody.items[0]?.maximumPriceRial, 140_000);
       assert.equal(listBody.items[0]?.totalOnHandQuantity, 5);
@@ -320,13 +323,13 @@ void describe(
           name: 'Rollback',
           categoryId,
           variants: [
-            { sku: 'DUPLICATE', priceRial: 1000 },
-            { sku: 'duplicate', size: 'M', priceRial: 2000 },
+            { size: 'M', color: 'Black', priceRial: 1000, onHandQuantity: 1 },
+            { size: 'm', color: 'black', priceRial: 2000, onHandQuantity: 1 },
           ],
         })
         .expect(409)
         .expect((response: Response) =>
-          assert.equal(responseBody<ErrorBody>(response).code, 'SKU_CONFLICT'),
+          assert.equal(responseBody<ErrorBody>(response).code, 'VARIANT_COMBINATION_CONFLICT'),
         );
       assert.equal(await prisma.product.count(), 0);
       assert.equal(await prisma.productVariant.count(), 0);
@@ -336,7 +339,7 @@ void describe(
         .send({
           name: 'Missing Category',
           categoryId: randomUUID(),
-          variants: [{ sku: 'VALID-SKU', priceRial: 1000 }],
+          variants: [{ priceRial: 1000, onHandQuantity: 1 }],
         })
         .expect(404)
         .expect((response: Response) =>
@@ -346,7 +349,7 @@ void describe(
         .send({
           name: 'Invalid Price',
           categoryId,
-          variants: [{ sku: 'VALID-SKU', priceRial: 1001 }],
+          variants: [{ priceRial: 1001, onHandQuantity: 1 }],
           unexpected: true,
         })
         .expect(400);
@@ -365,7 +368,7 @@ void describe(
       const product = await createProduct(categoryId);
       const defaultProduct = await createProduct(categoryId, {
         name: 'Default Variant Product',
-        variants: [{ sku: 'DEFAULT-ONLY', priceRial: 1000 }],
+        variants: [{ priceRial: 1000, onHandQuantity: 1 }],
       });
       assert.equal(defaultProduct.variants[0]?.size, null);
       assert.equal(defaultProduct.variants[0]?.color, null);
@@ -421,10 +424,9 @@ void describe(
         description: null,
         variants: [
           {
-            sku: 'ZERO-STOCK-M',
             size: 'M',
             priceRial: 1000,
-            onHandQuantity: 0,
+            onHandQuantity: 1,
           },
         ],
       });
@@ -483,26 +485,35 @@ void describe(
         .expect(200);
     });
 
-    void test('uses updated-time and UUID tie-breakers for bounded Product pages', async () => {
+    void test('uses created-time and UUID tie-breakers for bounded Product pages', async () => {
       const categoryId = await createCategory();
       const products = await Promise.all([
         createProduct(categoryId),
         createProduct(categoryId),
         createProduct(categoryId),
       ]);
+      const [oldest, ...newest] = products;
+      assert.ok(oldest);
+      await prisma.product.update({
+        where: { id: oldest.id },
+        data: {
+          createdAt: new Date('2028-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2040-01-01T00:00:00.000Z'),
+        },
+      });
       await prisma.product.updateMany({
-        data: { updatedAt: new Date('2030-01-01T00:00:00.000Z') },
+        where: { id: { in: newest.map(({ id }) => id) } },
+        data: { createdAt: new Date('2030-01-01T00:00:00.000Z') },
       });
       const response = await request(server(app))
         .get('/api/v1/admin/catalog/products?page=1&pageSize=2')
         .set('Cookie', superAdmin.accessCookie)
         .expect(200);
       const body = responseBody<ProductListBody>(response);
-      const expectedIds = products
+      const expectedIds = newest
         .map(({ id }) => id)
         .sort()
-        .reverse()
-        .slice(0, 2);
+        .reverse();
       assert.deepEqual(
         body.items.map(({ id }) => id),
         expectedIds,
@@ -511,12 +522,41 @@ void describe(
       assert.equal(body.totalPages, 2);
     });
 
+    void test('returns protected server-owned Product size and color options', async () => {
+      await request(server(app)).get('/api/v1/admin/catalog/product-options/sizes').expect(401);
+
+      const sizes = await request(server(app))
+        .get('/api/v1/admin/catalog/product-options/sizes')
+        .set('Cookie', superAdmin.accessCookie)
+        .expect(200);
+      assert.deepEqual(responseBody<string[]>(sizes), [
+        'small',
+        'medium',
+        'large',
+        'x-large',
+        '2x-large',
+        '3x-large',
+      ]);
+
+      const colors = await request(server(app))
+        .get('/api/v1/admin/catalog/product-options/colors')
+        .set('Cookie', superAdmin.accessCookie)
+        .expect(200);
+      assert.deepEqual(responseBody<Array<Record<string, string>>>(colors), [
+        { 'color-name': 'blue', 'hex-code': '#2563EB' },
+        { 'color-name': 'red', 'hex-code': '#DC2626' },
+        { 'color-name': 'green', 'hex-code': '#16A34A' },
+        { 'color-name': 'white', 'hex-code': '#FFFFFF' },
+        { 'color-name': 'black', 'hex-code': '#111827' },
+      ]);
+    });
+
     void test('serializes conflicting aggregate mutations and global SKU races', async () => {
       const categoryId = await createCategory();
       const product = await createProduct(categoryId, {
         variants: [
-          { sku: 'LOCK-M', size: 'M', priceRial: 1000 },
-          { sku: 'LOCK-L', size: 'L', priceRial: 1000 },
+          { size: 'M', priceRial: 1000, onHandQuantity: 1 },
+          { size: 'L', priceRial: 1000, onHandQuantity: 1 },
         ],
       });
       await addReadyMainImage(product.id);
@@ -592,6 +632,8 @@ void describe(
       const response = await request(server(app)).get('/api/docs-json').expect(200);
       const document = responseBody<OpenApiDocument>(response);
       const expected: ReadonlyArray<readonly [string, string, readonly string[]]> = [
+        ['/api/v1/admin/catalog/product-options/sizes', 'get', ['200', '401', '403']],
+        ['/api/v1/admin/catalog/product-options/colors', 'get', ['200', '401', '403']],
         ['/api/v1/admin/catalog/products', 'get', ['200', '400', '401', '403', '404', '500']],
         [
           '/api/v1/admin/catalog/products',
@@ -647,12 +689,14 @@ void describe(
       }
       for (const schema of [
         'CreateProductRequestDto',
+        'InitialVariantRequestDto',
         'UpdateProductRequestDto',
         'CreateVariantRequestDto',
         'UpdateVariantRequestDto',
         'ProductDetailDto',
         'ProductListResponseDto',
         'ProductVariantResponseDto',
+        'ProductColorOptionDto',
       ]) {
         assert.ok(document.components.schemas[schema]);
       }
@@ -666,6 +710,22 @@ void describe(
         'description',
         'name',
         'variants',
+      ]);
+      assert.equal(
+        (createProductSchema.properties?.description as { readonly maxLength?: number }).maxLength,
+        200,
+      );
+      const initialVariantSchema = document.components.schemas.InitialVariantRequestDto as {
+        readonly required?: string[];
+        readonly properties?: Record<string, unknown>;
+      };
+      assert.deepEqual(initialVariantSchema.required?.sort(), ['onHandQuantity', 'priceRial']);
+      assert.deepEqual(Object.keys(initialVariantSchema.properties ?? {}).sort(), [
+        'color',
+        'isActive',
+        'onHandQuantity',
+        'priceRial',
+        'size',
       ]);
       const createVariantSchema = document.components.schemas.CreateVariantRequestDto as {
         readonly required?: string[];

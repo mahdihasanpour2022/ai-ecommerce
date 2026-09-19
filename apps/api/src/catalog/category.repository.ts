@@ -22,7 +22,7 @@ export class CategoryRepository {
   list(): Promise<CategoryRecord[]> {
     return this.prisma.category.findMany({
       select: CATEGORY_SELECT,
-      orderBy: [{ nameKey: 'asc' }, { id: 'asc' }],
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
   }
 
@@ -41,7 +41,7 @@ export class CategoryRepository {
   listInTransaction(transaction: CategoryTransaction): Promise<CategoryRecord[]> {
     return transaction.category.findMany({
       select: CATEGORY_SELECT,
-      orderBy: [{ nameKey: 'asc' }, { id: 'asc' }],
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
   }
 }

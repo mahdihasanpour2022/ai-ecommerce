@@ -30,7 +30,7 @@ export function EditCategoryModal({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<EditCategoryFormValues>({
     resolver: zodResolver(editCategorySchema),
     defaultValues: { name: '', parentId: '' },
@@ -47,14 +47,15 @@ export function EditCategoryModal({
     await onSubmit({ categoryId: category.id, name, parentId: parentId || null });
   });
   const options = category ? validEditParentOptions(categories, category) : [];
+  const submitting = pending || isSubmitting;
 
   return (
     <UiModal.Root
       open={category !== null}
       title="ویرایش دسته‌بندی"
-      closable={!pending}
-      keyboard={!pending}
-      mask={{ closable: !pending }}
+      closable={!submitting}
+      keyboard={!submitting}
+      mask={{ closable: !submitting }}
       onCancel={onCancel}
     >
       <UiForm.Root onSubmit={(event) => void submit(event)}>
@@ -65,7 +66,7 @@ export function EditCategoryModal({
             autoComplete="off"
             autoFocus
             maxLength={120}
-            disabled={pending}
+            disabled={submitting}
             aria-invalid={errors.name ? 'true' : 'false'}
             aria-describedby={errors.name ? 'edit-category-name-error' : undefined}
             {...register('name')}
@@ -79,7 +80,7 @@ export function EditCategoryModal({
           <UiForm.Label htmlFor="edit-category-parent">دسته‌بندی والد</UiForm.Label>
           <UiForm.Select
             id="edit-category-parent"
-            disabled={pending}
+            disabled={submitting}
             aria-invalid={errors.parentId ? 'true' : 'false'}
             aria-describedby={errors.parentId ? 'edit-category-parent-error' : undefined}
             {...register('parentId')}
@@ -99,11 +100,11 @@ export function EditCategoryModal({
         </UiForm.Field>
 
         <UiForm.Actions>
-          <UiButton variant="secondary" disabled={pending} onClick={onCancel}>
+          <UiButton variant="secondary" disabled={submitting} onClick={onCancel}>
             انصراف
           </UiButton>
-          <UiButton type="submit" disabled={pending} aria-busy={pending}>
-            {pending ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
+          <UiButton type="submit" disabled={submitting} loading={submitting}>
+            {submitting ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
           </UiButton>
         </UiForm.Actions>
       </UiForm.Root>

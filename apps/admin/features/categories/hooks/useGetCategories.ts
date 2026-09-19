@@ -2,18 +2,22 @@
 
 import { App } from 'antd';
 import { useEffect } from 'react';
+import type { GetPageParams } from '../../../app/http/page-params';
 import { useRQFetcher } from '../../../hooks/rq_hooks/useRQFetcher';
 import type { CategoriesResponse } from '../interfaces/category-contract';
 
 export const categoryKeys = {
   all: ['categories'] as const,
+  list: ({ page, pageSize }: GetPageParams) =>
+    ['categories', 'list', { page, pageSize }] as const,
 };
 
-export function useGetCategories() {
+export function useGetCategories({ page, pageSize }: GetPageParams) {
   const { message } = App.useApp();
   const response = useRQFetcher<CategoriesResponse>({
-    queryKey: categoryKeys.all,
+    queryKey: categoryKeys.list({ page, pageSize }),
     url: '/admin/catalog/categories',
+    axiosConfig: { params: { page, pageSize } },
     staleTime: 5000,
     gcTime: 5000,
   });
