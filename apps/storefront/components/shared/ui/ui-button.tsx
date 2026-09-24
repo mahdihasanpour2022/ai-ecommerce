@@ -3,7 +3,7 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react';
 
 const VARIANT_CLASSES = {
   style_1:
-    'w-full py-1 text-sm leading-4 font-normal text-foreground/70 h-full border-none whitespace-nowrap',
+    'w-full py-1 text-xs sm:text-sm leading-4 font-normal text-foreground/70 h-full border-none whitespace-nowrap',
   style_2: '',
 } as const;
 
