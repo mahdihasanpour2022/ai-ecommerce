@@ -55,7 +55,7 @@ const SearchProduct = () => {
       onSubmit={runSearch}
       autoComplete="off"
       noValidate
-      className="w-full space-y-3 pt-1 sm:max-w-md"
+      className="w-full space-y-3 sm:max-w-md"
     >
       <Controller
         name="query"
@@ -65,7 +65,7 @@ const SearchProduct = () => {
             {...field}
             id="query"
             type="text"
-            className="bg-foreground/3 border-gray-50"
+            // className="bg-foreground/3 border-gray-50"
             label="جستجوی محصولات"
             placeholder="جستجو در فروشگاه ..."
             enterKeyHint="search"

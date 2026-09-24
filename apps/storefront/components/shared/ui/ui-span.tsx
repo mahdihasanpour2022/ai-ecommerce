@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import type { ComponentPropsWithoutRef } from 'react';
 
 const VARIANT_CLASSES = {
-  style_1: 'w-full py-1 text-xs leading-5 font-normal text-foreground/70',
+  style_1: 'w-full py-1 text-xs leading-5 font-normal text-foreground/70 whitespace-nowrap',
   style_2: '',
 } as const;
 

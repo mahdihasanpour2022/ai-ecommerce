@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import type { ComponentPropsWithoutRef } from 'react';
 
 const VARIANT_CLASSES = {
-  style_1: 'text-lg font-bold leading-6',
+  style_1: 'text-lg font-bold leading-6 whitespace-nowrap',
   style_2: '',
 } as const;
 

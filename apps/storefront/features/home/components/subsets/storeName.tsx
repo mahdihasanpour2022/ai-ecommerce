@@ -1,12 +1,12 @@
 import { UiH1, UiImage, UiSpan } from '@/components/shared/ui';
-import siteLogo1 from '@/public/assets/header/site_logo_1.webp';
+import siteLogo from '@/public/assets/header/site_logo.webp';
 
 const StoreName = () => {
   return (
-    <div className="flex flex-row items-center justify-start gap-2 py-6">
+    <div className="flex flex-row items-center justify-start gap-2">
       <UiImage
         alt=""
-        src={siteLogo1}
+        src={siteLogo}
         width={300}
         height={300}
         className="size-14 shrink-0 rounded-full"
