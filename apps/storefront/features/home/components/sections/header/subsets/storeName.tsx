@@ -3,7 +3,7 @@ import siteLogo from '@/public/assets/header/site_logo.webp';
 
 const StoreName = () => {
   return (
-    <div className="flex flex-row items-center justify-start gap-2">
+    <div className="flex items-center justify-start gap-2">
       <UiImage
         alt=""
         src={siteLogo}

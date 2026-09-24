@@ -5,7 +5,7 @@ import SearchProduct from './subsets/searchProduct';
 import ShoppingCart from './subsets/shoppingCart';
 import StoreName from './subsets/storeName';
 
-const Header = () => {
+export const Header = () => {
   return (
     <header className="flex w-full flex-col items-stretch gap-4 px-6 pt-16 pb-5 sm:flex-row! sm:items-center sm:justify-between sm:px-12 sm:pt-8 lg:px-24 2xl:px-36">
       <div className="flex w-full flex-col items-center justify-start gap-6 sm:flex-row sm:gap-16">
@@ -22,5 +22,3 @@ const Header = () => {
     </header>
   );
 };
-
-export default Header;

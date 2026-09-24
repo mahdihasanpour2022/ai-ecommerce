@@ -11,7 +11,7 @@ const SIZE_CLASSES = {
   small: 'min-h-9 px-3 py-1.5 text-xs',
   medium: 'min-h-11 px-4 py-2 text-sm',
   large: 'min-h-12 px-5 py-2.5 text-sm',
-  icon: 'size-10 p-0',
+  icon: 'size-6 sm:size-10 p-0',
 } as const;
 
 export interface UiButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

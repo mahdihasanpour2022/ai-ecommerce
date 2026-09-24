@@ -14,7 +14,7 @@ const routes: Route[] = [
   { en_name: 'home', fa_name: 'صفحه اصلی', href: '/' },
   { en_name: 'products', fa_name: 'محصولات', href: '/products' },
 ];
-const NavBar = () => {
+export const NavBar = () => {
   const pathname = usePathname();
 
   return (
@@ -39,5 +39,3 @@ const NavBar = () => {
     </div>
   );
 };
-
-export default NavBar;

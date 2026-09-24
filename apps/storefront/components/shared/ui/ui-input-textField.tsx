@@ -3,7 +3,7 @@ import type { ComponentPropsWithRef } from 'react';
 
 const INPUT_VARIANT = {
   style_1:
-    'min-h-11 rounded-lg border border-foreground/20 bg-background px-3 py-2 text-base text-foreground outline-none transition-colors placeholder:text-xs placeholder:text-foreground/70 focus-visible:border-nice-red focus-visible:ring-1 focus-visible:ring-nice-red/20 aria-invalid:border-nice-red/50 aria-invalid:focus-visible:ring-nice-red/20 disabled:cursor-not-allowed disabled:bg-foreground/5 disabled:text-foreground/50',
+    'min-h-11 rounded-lg border border-foreground/20 bg-background px-3 py-2 text-sm text-foreground/70 outline-none transition-colors placeholder:text-xs placeholder:text-foreground/70 focus-visible:border-nice-red focus-visible:ring-2 focus-visible:ring-nice-red/20 aria-invalid:border-nice-red/50 aria-invalid:focus-visible:ring-nice-red/20 disabled:cursor-not-allowed disabled:bg-foreground/5 disabled:text-foreground/50',
   style_2: '',
 } as const;
 

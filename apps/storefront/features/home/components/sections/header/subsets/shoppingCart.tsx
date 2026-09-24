@@ -9,7 +9,7 @@ const ShoppingCart = () => {
         src={Cart}
         width={350}
         height={350}
-        className="h-8! w-8! sm:h-12! sm:w-12! rounded-xl"
+        className="h-8! w-8! sm:h-10! sm:w-10! rounded-xl"
       />
     </UiButton>
   );
