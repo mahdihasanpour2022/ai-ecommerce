@@ -1,4 +1,4 @@
-import { UiH1, UiImage, UiSpan } from '@/components/shared/ui-polymorphic-comp';
+import { UiH1, UiImage, UiSpan } from '@/components/shared/ui';
 import siteLogo1 from '@/public/assets/header/site_logo_1.webp';
 
 const StoreName = () => {

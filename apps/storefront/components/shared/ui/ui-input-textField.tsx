@@ -3,7 +3,7 @@ import type { ComponentPropsWithRef } from 'react';
 
 const INPUT_VARIANT = {
   style_1:
-    'min-h-11 w-fit rounded-lg border border-foreground/20 bg-background px-3 py-2 text-base text-foreground outline-none transition-colors placeholder:text-foreground/50 focus-visible:border-red-500 focus-visible:ring-0 focus-visible:ring-red-500 aria-invalid:border-red-600 aria-invalid:focus-visible:ring-red-600/30 disabled:cursor-not-allowed disabled:bg-foreground/5 disabled:text-foreground/50',
+    'min-h-11 w-fit rounded-lg border border-foreground/20 bg-background px-3 py-2 text-base text-foreground/50 outline-none transition-colors placeholder:text-xs placeholder:text-foreground/50 focus-visible:border-nice-red focus-visible:ring-0 focus-visible:ring-0 aria-invalid:border-red-600 aria-invalid:focus-visible:ring-red-600/30 disabled:cursor-not-allowed disabled:bg-foreground/5 disabled:text-foreground/50',
   style_2: '',
 } as const;
 
@@ -54,7 +54,7 @@ export const UiInputTextField = ({
       {hasLabel && (
         <label htmlFor={id} className={clsx(LABEL_VARIANT[label_variant], labelClassName)}>
           {label}
-          {required ? <span className="text-red-500 dark:text-red-400"> *</span> : null}
+          {required ? <span className="text-nice-red dark:nice-red"> *</span> : null}
         </label>
       )}
 
