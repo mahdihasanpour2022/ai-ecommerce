@@ -17,6 +17,18 @@ const restoreDom = installDomEnvironment();
 process.once('beforeExit', restoreDom);
 afterEach(() => cleanup());
 
+function validCategoryImage(): File {
+  return new File(
+    [
+      new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]),
+    ],
+    'replacement.png',
+    { type: 'image/png' },
+  );
+}
+
 const rootId = '10000000-0000-4000-8000-000000000001';
 const childId = '20000000-0000-4000-8000-000000000002';
 const child: Category = {
@@ -24,6 +36,7 @@ const child: Category = {
   name: 'مانتو',
   parentId: rootId,
   level: 2,
+  image: null,
   children: [],
   createdAt: '2026-09-14T08:30:00.000Z',
   updatedAt: '2026-09-14T08:30:00.000Z',
@@ -33,6 +46,13 @@ const root: Category = {
   name: 'پوشاک',
   parentId: null,
   level: 1,
+  image: {
+    id: '30000000-0000-4000-8000-000000000003',
+    mediaType: 'PNG',
+    byteSize: 20,
+    width: 320,
+    height: 240,
+  },
   children: [child],
   createdAt: '2026-09-14T08:30:00.000Z',
   updatedAt: '2026-09-14T08:30:00.000Z',
@@ -49,6 +69,7 @@ void test('shows fifteen root Categories per controlled table page', () => {
     name: `دسته‌بندی ${index + 1}`,
     parentId: null,
     level: 1,
+    image: null,
     children: [],
     createdAt: '2026-09-14T08:30:00.000Z',
     updatedAt: '2026-09-14T08:30:00.000Z',
@@ -94,9 +115,7 @@ void test('renders the Persian tree table and updates Category data after edit a
       data: {
         statusCode: 200,
         hasError: false,
-        message: isDelete
-          ? 'دسته‌بندی با موفقیت حذف شد.'
-          : 'دسته‌بندی با موفقیت ویرایش شد.',
+        message: isDelete ? 'دسته‌بندی با موفقیت حذف شد.' : 'دسته‌بندی با موفقیت ویرایش شد.',
         code: isDelete ? 'CATEGORY_DELETED' : 'CATEGORY_UPDATED',
         count: isDelete ? 0 : 1,
         result: null,
@@ -126,9 +145,10 @@ void test('renders the Persian tree table and updates Category data after edit a
     assert.ok(screen.getByRole('region', { name: 'جدول دسته‌بندی‌ها' }));
     assert.ok(document.querySelector('.ant-table-bordered'));
     assert.ok(document.querySelector('.category-tree-table .ant-table-small'));
-    for (const heading of ['ردیف', 'زیر‌دسته‌ها', 'نام', 'سطح', 'زمان ایجاد', 'عملیات']) {
+    for (const heading of ['ردیف', 'تصویر', 'زیر‌دسته‌ها', 'نام', 'سطح', 'زمان ایجاد', 'عملیات']) {
       assert.ok(screen.getByRole('columnheader', { name: heading }));
     }
+    assert.ok(screen.getByRole('img', { name: 'تصویر پوشاک' }));
     assert.match(screen.getByRole('region').textContent ?? '', /۱۴۰۵/u);
     await user.click(screen.getByRole('button', { name: 'نمایش زیر‌دسته‌های پوشاک' }));
     const rootName = screen.getByText('پوشاک');
@@ -159,18 +179,27 @@ void test('renders the Persian tree table and updates Category data after edit a
     await user.clear(nameInput);
     await user.click(saveButton);
     assert.ok(await within(editDialog).findByRole('alert'));
-    assert.equal(calls.some(({ method }) => method === 'patch'), false);
+    assert.equal(
+      calls.some(({ method }) => method === 'patch'),
+      false,
+    );
     await user.type(nameInput, '  پوشاک جدید  ');
+    await user.upload(
+      within(editDialog).getByLabelText('تصویر جدید (اختیاری)'),
+      validCategoryImage(),
+    );
     await user.click(saveButton);
-    await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'ویرایش دسته‌بندی' }), null));
+    await waitFor(() =>
+      assert.equal(screen.queryByRole('dialog', { name: 'ویرایش دسته‌بندی' }), null),
+    );
 
     const patchCall = calls.find(({ method }) => method === 'patch');
     assert.ok(patchCall);
     assert.equal(patchCall.url, `/admin/catalog/categories/${rootId}`);
-    assert.deepEqual(JSON.parse(String(patchCall.data)), {
-      name: 'پوشاک جدید',
-      parentId: null,
-    });
+    assert.ok(patchCall.data instanceof FormData);
+    assert.equal(patchCall.data.get('name'), 'پوشاک جدید');
+    assert.equal(patchCall.data.get('parentId'), '');
+    assert.ok(patchCall.data.get('file') instanceof File);
     assert.equal(queryClient.getQueryState(categoryKeys.all)?.isInvalidated, true);
 
     await user.click(screen.getByRole('button', { name: 'عملیات دسته‌بندی مانتو' }));
@@ -179,7 +208,9 @@ void test('renders the Persian tree table and updates Category data after edit a
     const deleteDialog = await screen.findByRole('dialog', { name: 'حذف دسته‌بندی' });
     assert.match(deleteDialog.textContent ?? '', /مانتو/u);
     await user.click(within(deleteDialog).getByRole('button', { name: 'حذف دسته‌بندی' }));
-    await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'حذف دسته‌بندی' }), null));
+    await waitFor(() =>
+      assert.equal(screen.queryByRole('dialog', { name: 'حذف دسته‌بندی' }), null),
+    );
 
     const deleteCall = calls.find(({ method }) => method === 'delete');
     assert.equal(deleteCall?.url, `/admin/catalog/categories/${childId}`);
@@ -238,7 +269,9 @@ void test('closes mutation modals and shows the safe Persian service error', asy
         name: 'ذخیره تغییرات',
       }),
     );
-    await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'ویرایش دسته‌بندی' }), null));
+    await waitFor(() =>
+      assert.equal(screen.queryByRole('dialog', { name: 'ویرایش دسته‌بندی' }), null),
+    );
     assert.ok(await screen.findByText('اجازه ویرایش این دسته‌بندی را ندارید.'));
 
     await user.click(screen.getByRole('button', { name: 'عملیات دسته‌بندی پوشاک' }));
@@ -252,7 +285,9 @@ void test('closes mutation modals and shows the safe Persian service error', asy
         name: 'حذف دسته‌بندی',
       }),
     );
-    await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'حذف دسته‌بندی' }), null));
+    await waitFor(() =>
+      assert.equal(screen.queryByRole('dialog', { name: 'حذف دسته‌بندی' }), null),
+    );
     assert.ok(await screen.findByText('دسته‌بندی دارای زیرمجموعه یا محصول است.'));
   } finally {
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;

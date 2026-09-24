@@ -11,9 +11,10 @@ import { buildCategoryTree } from '../src/catalog/category.service.js';
 import type { CategoryRecord } from '../src/catalog/category.repository.js';
 
 const now = new Date('2026-09-04T00:00:00.000Z');
+const file = { fieldname: 'file', mimetype: 'image/png', size: 12, buffer: Buffer.alloc(12) };
 
 function row(id: string, name: string, nameKey: string, parentId: string | null): CategoryRecord {
-  return { id, name, nameKey, parentId, createdAt: now, updatedAt: now };
+  return { id, name, nameKey, parentId, image: null, createdAt: now, updatedAt: now };
 }
 
 void describe('Category validation and tree projection', () => {
@@ -22,26 +23,27 @@ void describe('Category validation and tree projection', () => {
       name: 'Test CATEGORY',
       nameKey: 'test category',
     });
-    assert.deepEqual(parseCreateCategoryRequest({ name: '  پوشاک   زنانه  ' }), {
+    assert.deepEqual(parseCreateCategoryRequest({ name: '  پوشاک   زنانه  ' }, [file]), {
       name: 'پوشاک زنانه',
       nameKey: 'پوشاک زنانه',
       parentId: null,
+      file,
     });
   });
 
   void test('rejects unknown fields, empty patches, and non-canonical identifiers', () => {
     for (const input of [null, {}, { name: 'Valid', extra: true }]) {
       assert.throws(
-        () => parseCreateCategoryRequest(input),
+        () => parseCreateCategoryRequest(input, [file]),
         (error: unknown) => error instanceof CategoryError && error.code === 'VALIDATION_FAILED',
       );
     }
     assert.throws(
-      () => parseUpdateCategoryRequest({}),
+      () => parseUpdateCategoryRequest({}, undefined),
       (error: unknown) => error instanceof CategoryError && error.code === 'VALIDATION_FAILED',
     );
     assert.throws(
-      () => parseUpdateCategoryRequest({ parentId: 'NOT-A-UUID' }),
+      () => parseUpdateCategoryRequest({ parentId: 'NOT-A-UUID' }, undefined),
       (error: unknown) => error instanceof CategoryError && error.code === 'VALIDATION_FAILED',
     );
   });

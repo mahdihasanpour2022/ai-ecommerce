@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { CategoryError } from './category.errors.js';
+import type { ProductImageUploadFile } from './product-image.dto.js';
+import { ProductImageMediaType } from '../generated/prisma/enums.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
@@ -11,15 +13,20 @@ export interface NormalizedCategoryName {
 
 export interface CreateCategoryInput extends NormalizedCategoryName {
   readonly parentId: string | null;
+  readonly file: ProductImageUploadFile;
 }
 
 export interface UpdateCategoryInput {
   readonly name?: string;
   readonly nameKey?: string;
   readonly parentId?: string | null;
+  readonly file?: ProductImageUploadFile;
 }
 
 export class CreateCategoryRequestDto {
+  @ApiProperty({ type: 'string', format: 'binary' })
+  file!: unknown;
+
   @ApiProperty({ minLength: 1, maxLength: 120, example: 'پوشاک زنانه' })
   name!: string;
 
@@ -28,11 +35,31 @@ export class CreateCategoryRequestDto {
 }
 
 export class UpdateCategoryRequestDto {
+  @ApiPropertyOptional({ type: 'string', format: 'binary' })
+  file?: unknown;
+
   @ApiPropertyOptional({ minLength: 1, maxLength: 120, example: 'مانتو' })
   name?: string;
 
   @ApiPropertyOptional({ format: 'uuid', nullable: true })
   parentId?: string | null;
+}
+
+export class CategoryImageMetadataDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string;
+
+  @ApiProperty({ enum: ProductImageMediaType })
+  mediaType!: ProductImageMediaType;
+
+  @ApiProperty({ minimum: 1, maximum: 409599 })
+  byteSize!: number;
+
+  @ApiProperty({ minimum: 1, maximum: 8192 })
+  width!: number;
+
+  @ApiProperty({ minimum: 1, maximum: 8192 })
+  height!: number;
 }
 
 export class CategoryResponseDto {
@@ -47,6 +74,9 @@ export class CategoryResponseDto {
 
   @ApiProperty({ minimum: 1, maximum: 6 })
   level!: number;
+
+  @ApiProperty({ type: () => CategoryImageMetadataDto, nullable: true })
+  image!: CategoryImageMetadataDto | null;
 
   @ApiProperty({ type: () => CategoryResponseDto, isArray: true })
   children!: CategoryResponseDto[];
@@ -94,29 +124,38 @@ export function normalizeCategoryName(value: unknown): NormalizedCategoryName {
 }
 
 function parseParentId(value: unknown): string | null {
-  if (value === null) return null;
+  if (value === null || value === '') return null;
   if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
     throw new CategoryError('VALIDATION_FAILED', ['parentId']);
   }
   return value;
 }
 
-export function parseCreateCategoryRequest(body: unknown): CreateCategoryInput {
+export function parseCreateCategoryRequest(
+  body: unknown,
+  files: readonly ProductImageUploadFile[] | undefined,
+): CreateCategoryInput {
   if (!isRecord(body) || !hasOnlyKeys(body, ['name', 'parentId']) || !('name' in body)) {
     throw new CategoryError('VALIDATION_FAILED');
   }
+  const file = parseFile(files, true);
   const normalized = normalizeCategoryName(body.name);
   return {
     ...normalized,
     parentId: 'parentId' in body ? parseParentId(body.parentId) : null,
+    file,
   };
 }
 
-export function parseUpdateCategoryRequest(body: unknown): UpdateCategoryInput {
+export function parseUpdateCategoryRequest(
+  body: unknown,
+  files: readonly ProductImageUploadFile[] | undefined,
+): UpdateCategoryInput {
+  const file = parseFile(files, false);
   if (
     !isRecord(body) ||
     !hasOnlyKeys(body, ['name', 'parentId']) ||
-    Object.keys(body).length === 0
+    (Object.keys(body).length === 0 && file === undefined)
   ) {
     throw new CategoryError('VALIDATION_FAILED');
   }
@@ -124,5 +163,28 @@ export function parseUpdateCategoryRequest(body: unknown): UpdateCategoryInput {
   return {
     ...(normalized ?? {}),
     ...('parentId' in body ? { parentId: parseParentId(body.parentId) } : {}),
+    ...(file === undefined ? {} : { file }),
   };
+}
+
+function parseFile(
+  files: readonly ProductImageUploadFile[] | undefined,
+  required: true,
+): ProductImageUploadFile;
+function parseFile(
+  files: readonly ProductImageUploadFile[] | undefined,
+  required: false,
+): ProductImageUploadFile | undefined;
+function parseFile(
+  files: readonly ProductImageUploadFile[] | undefined,
+  required: boolean,
+): ProductImageUploadFile | undefined {
+  if (files === undefined || files.length === 0) {
+    if (required) throw new CategoryError('CATEGORY_IMAGE_REQUIRED', ['file']);
+    return undefined;
+  }
+  if (files.length !== 1 || files[0]?.fieldname !== 'file') {
+    throw new CategoryError('VALIDATION_FAILED', ['file']);
+  }
+  return files[0];
 }

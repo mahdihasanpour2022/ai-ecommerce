@@ -6,13 +6,24 @@ import { ProductError } from './product.errors.js';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const SKU_PATTERN = /^[A-Z0-9][A-Z0-9_-]{0,63}$/u;
 const PRODUCT_STATUSES = new Set<string>(Object.values(ProductStatus));
+const PRODUCT_AVAILABILITIES = new Set(['IN_STOCK', 'OUT_OF_STOCK'] as const);
 const MAX_DATABASE_INTEGER = 2_147_483_647;
+
+export type ProductAvailability = 'IN_STOCK' | 'OUT_OF_STOCK';
 
 export interface ProductListQuery {
   readonly page: number;
   readonly pageSize: number;
+  readonly name?: string;
   readonly categoryId?: string;
+  readonly sizeKey?: string;
+  readonly colorKey?: string;
   readonly status?: ProductStatus;
+  readonly availability?: ProductAvailability;
+  readonly createdFrom?: Date;
+  readonly createdToExclusive?: Date;
+  readonly minimumPriceRial?: bigint;
+  readonly maximumPriceRial?: bigint;
 }
 
 export interface VariantInput {
@@ -510,8 +521,40 @@ function parsePositiveQueryInteger(value: unknown, fallback: number, maximum?: n
   return parsed;
 }
 
+function parseOptionalPriceQuery(value: unknown, field: string): bigint | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^[1-9][0-9]*$/u.test(value)) fail([field]);
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed % 10 !== 0) fail([field]);
+  return BigInt(parsed);
+}
+
+function parseIsoDateTimeQuery(value: unknown, field: string): Date | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value)) fail([field]);
+  const date = new Date(value);
+  if (Number.isNaN(date.valueOf()) || date.toISOString() !== value) fail([field]);
+  return date;
+}
+
 export function parseProductListQuery(query: unknown): ProductListQuery {
-  if (!isRecord(query) || !hasOnlyKeys(query, ['page', 'pageSize', 'categoryId', 'status'])) {
+  if (
+    !isRecord(query) ||
+    !hasOnlyKeys(query, [
+      'page',
+      'pageSize',
+      'name',
+      'categoryId',
+      'size',
+      'color',
+      'status',
+      'availability',
+      'createdFrom',
+      'createdTo',
+      'minimumPriceRial',
+      'maximumPriceRial',
+    ])
+  ) {
     fail();
   }
   let status: ProductStatus | undefined;
@@ -519,15 +562,52 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
     if (typeof query.status !== 'string' || !PRODUCT_STATUSES.has(query.status)) fail(['status']);
     status = query.status as ProductStatus;
   }
+  let availability: ProductAvailability | undefined;
+  if ('availability' in query) {
+    if (
+      typeof query.availability !== 'string' ||
+      !PRODUCT_AVAILABILITIES.has(query.availability as ProductAvailability)
+    ) {
+      fail(['availability']);
+    }
+    availability = query.availability as ProductAvailability;
+  }
   const page = parsePositiveQueryInteger(query.page, 1);
   const pageSize = parsePositiveQueryInteger(query.pageSize, 25, 100);
+  const name = 'name' in query ? normalizeSingleLine(query.name, 'name', 200) : undefined;
+  const size = 'size' in query ? parseNullableOption(query.size, 'size') : undefined;
+  const color = 'color' in query ? parseNullableOption(query.color, 'color') : undefined;
+  const createdFrom = parseIsoDateTimeQuery(query.createdFrom, 'createdFrom');
+  const createdTo = parseIsoDateTimeQuery(query.createdTo, 'createdTo');
+  const createdToExclusive =
+    createdTo === undefined ? undefined : new Date(createdTo.valueOf() + 1000);
+  const minimumPriceRial = parseOptionalPriceQuery(query.minimumPriceRial, 'minimumPriceRial');
+  const maximumPriceRial = parseOptionalPriceQuery(query.maximumPriceRial, 'maximumPriceRial');
   if ((page - 1) * pageSize > MAX_DATABASE_INTEGER) fail(['page']);
+  if (createdFrom !== undefined && createdToExclusive !== undefined && createdFrom >= createdToExclusive) {
+    fail(['createdFrom', 'createdTo']);
+  }
+  if (
+    minimumPriceRial !== undefined &&
+    maximumPriceRial !== undefined &&
+    minimumPriceRial > maximumPriceRial
+  ) {
+    fail(['minimumPriceRial', 'maximumPriceRial']);
+  }
   return {
     page,
     pageSize,
+    ...(name === undefined ? {} : { name }),
     ...('categoryId' in query
       ? { categoryId: parseCatalogUuid(query.categoryId, 'categoryId') }
       : {}),
+    ...(size?.key === undefined || size.key === null ? {} : { sizeKey: size.key }),
+    ...(color?.key === undefined || color.key === null ? {} : { colorKey: color.key }),
     ...(status === undefined ? {} : { status }),
+    ...(availability === undefined ? {} : { availability }),
+    ...(createdFrom === undefined ? {} : { createdFrom }),
+    ...(createdToExclusive === undefined ? {} : { createdToExclusive }),
+    ...(minimumPriceRial === undefined ? {} : { minimumPriceRial }),
+    ...(maximumPriceRial === undefined ? {} : { maximumPriceRial }),
   };
 }

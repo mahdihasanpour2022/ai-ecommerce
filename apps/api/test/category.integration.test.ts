@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as argon2 from 'argon2';
+import sharp from 'sharp';
 import request from 'supertest';
 import type { Response } from 'supertest';
 import type { App } from 'supertest/types';
@@ -29,6 +33,7 @@ interface CategoryBody {
   readonly name: string;
   readonly parentId: string | null;
   readonly level: number;
+  readonly image: { readonly id: string; readonly mediaType: string } | null;
   readonly children: CategoryBody[];
 }
 
@@ -76,9 +81,13 @@ void describe(
     let app: INestApplication;
     let prisma: PrismaService;
     let loginSecurity: LoginSecurity;
+    let png: Buffer;
+    let storageRoot: string;
 
     async function clearState(): Promise<void> {
       await prisma.$transaction(async (transaction) => {
+        await transaction.categoryImage.deleteMany();
+        await transaction.categoryImageCleanup.deleteMany();
         await transaction.productImage.deleteMany();
         await transaction.inventory.deleteMany();
         await transaction.productVariant.deleteMany();
@@ -90,6 +99,23 @@ void describe(
       await prisma.adminUser.deleteMany();
       await prisma.role.deleteMany({ where: { code: { startsWith: 'TEST_' } } });
       loginSecurity.resetForTests();
+      await rm(storageRoot, { recursive: true, force: true });
+    }
+
+    async function objectNames(): Promise<string[]> {
+      try {
+        return await readdir(join(storageRoot, 'objects'));
+      } catch (error) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          (error as { code?: unknown }).code === 'ENOENT'
+        ) {
+          return [];
+        }
+        throw error;
+      }
     }
 
     async function createSession(roleCode = 'SUPER_ADMIN'): Promise<SessionHeaders> {
@@ -142,9 +168,24 @@ void describe(
         .set('X-CSRF-Token', session.csrfToken);
     }
 
+    function categoryMutation(
+      method: 'patch' | 'post',
+      path: string,
+      session: SessionHeaders,
+      body: Readonly<Record<string, string | null>>,
+    ): request.Test {
+      let pending = mutation(method, path, session);
+      for (const [key, value] of Object.entries(body)) pending = pending.field(key, value ?? '');
+      return pending.attach('file', png, { filename: 'category.png', contentType: 'image/png' });
+    }
+
     void before(async () => {
       assert.ok(testDatabaseUrl);
-      const environment = createTestEnvironment('test', { DATABASE_URL: testDatabaseUrl });
+      storageRoot = await mkdtemp(join(tmpdir(), 'category-image-http-'));
+      const environment = createTestEnvironment('test', {
+        DATABASE_URL: testDatabaseUrl,
+        PRODUCT_IMAGE_STORAGE_ROOT: storageRoot,
+      });
       const moduleRef = await Test.createTestingModule({
         imports: [AppModule.forRoot(environment)],
       }).compile();
@@ -153,6 +194,9 @@ void describe(
       await app.init();
       prisma = moduleRef.get(PrismaService);
       loginSecurity = moduleRef.get(LoginSecurity);
+      png = await sharp({ create: { width: 4, height: 3, channels: 3, background: '#2563eb' } })
+        .png()
+        .toBuffer();
     });
 
     void beforeEach(clearState);
@@ -160,26 +204,37 @@ void describe(
     void after(async () => {
       await clearState();
       await app.close();
+      await rm(storageRoot, { recursive: true, force: true });
     });
 
     void test('creates, returns, renames, moves, and deletes normalized Categories', async () => {
       const session = await createSession();
-      const root = await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: '  پوشاک   زنانه  ' })
+      const root = await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: '  پوشاک   زنانه  ',
+      })
         .expect(201)
         .expect('Cache-Control', 'no-store');
       const rootBody = responseBody<CategoryBody>(root);
       assert.equal(rootBody.name, 'پوشاک زنانه');
       assert.equal(rootBody.parentId, null);
       assert.equal(rootBody.level, 1);
+      assert.equal(rootBody.image?.mediaType, 'PNG');
       assert.deepEqual(rootBody.children, []);
       assert.equal('nameKey' in rootBody, false);
 
-      const child = await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'مانتو', parentId: rootBody.id })
-        .expect(201);
+      await request(server(app))
+        .get(`/api/v1/admin/catalog/category-images/${rootBody.image?.id}/content`)
+        .set('Cookie', session.accessCookie)
+        .expect(200)
+        .expect('Content-Type', 'image/png');
+
+      const child = await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'مانتو',
+        parentId: rootBody.id,
+      }).expect(201);
       const childBody = responseBody<CategoryBody>(child);
       assert.equal(childBody.level, 2);
+      assert.equal((await objectNames()).length, 2);
 
       const tree = await request(server(app))
         .get('/api/v1/admin/catalog/categories')
@@ -206,15 +261,21 @@ void describe(
         200,
       );
       assert.equal(await prisma.category.count(), 1);
+      assert.equal(await prisma.categoryImage.count(), 1);
+      assert.equal(await prisma.categoryImageCleanup.count(), 0);
+      assert.equal((await objectNames()).length, 1);
     });
 
     void test('orders protected Category siblings by creation time and UUID', async () => {
       const session = await createSession();
       const categories = await Promise.all(
         ['Older', 'Newer A', 'Newer B'].map(async (name) => {
-          const response = await mutation('post', '/api/v1/admin/catalog/categories', session)
-            .send({ name })
-            .expect(201);
+          const response = await categoryMutation(
+            'post',
+            '/api/v1/admin/catalog/categories',
+            session,
+            { name },
+          ).expect(201);
           return responseBody<CategoryBody>(response);
         }),
       );
@@ -229,7 +290,10 @@ void describe(
       });
       await prisma.category.updateMany({
         where: { id: { in: newest.map(({ id }) => id) } },
-        data: { createdAt: new Date('2030-01-01T00:00:00.000Z') },
+        data: {
+          createdAt: new Date('2030-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2040-01-01T00:00:00.000Z'),
+        },
       });
 
       const response = await request(server(app))
@@ -252,13 +316,14 @@ void describe(
 
     void test('rejects malformed input, sibling conflicts, invalid moves, and missing parents', async () => {
       const session = await createSession();
-      const root = await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'Root' })
-        .expect(201);
+      const root = await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'Root',
+      }).expect(201);
       const rootBody = responseBody<CategoryBody>(root);
 
-      await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'ＲＯＯＴ' })
+      await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'ＲＯＯＴ',
+      })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'CATEGORY_NAME_CONFLICT'),
@@ -269,8 +334,10 @@ void describe(
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'VALIDATION_FAILED'),
         );
-      await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'Other', parentId: randomUUID() })
+      await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'Other',
+        parentId: randomUUID(),
+      })
         .expect(404)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'CATEGORY_NOT_FOUND'),
@@ -294,19 +361,20 @@ void describe(
       let parentId: string | null = null;
       const ids: string[] = [];
       for (let level = 1; level <= 6; level += 1) {
-        const response: Response = await mutation(
+        const response: Response = await categoryMutation(
           'post',
           '/api/v1/admin/catalog/categories',
           session,
-        )
-          .send({ name: `Level ${level}`, parentId })
-          .expect(201);
+          { name: `Level ${level}`, parentId },
+        ).expect(201);
         const category: CategoryBody = responseBody<CategoryBody>(response);
         ids.push(category.id);
         parentId = category.id;
       }
-      await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'Level 7', parentId })
+      await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'Level 7',
+        parentId,
+      })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'CATEGORY_MOVE_INVALID'),
@@ -380,12 +448,15 @@ void describe(
     void test('maps the 1,000-Category cap and concurrent sibling race to stable conflicts', async () => {
       const session = await createSession();
       const outcomes = await Promise.all([
-        mutation('post', '/api/v1/admin/catalog/categories', session).send({ name: 'Race Name' }),
-        mutation('post', '/api/v1/admin/catalog/categories', session).send({
+        categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+          name: 'Race Name',
+        }),
+        categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
           name: 'Ｒａｃｅ Name',
         }),
       ]);
       assert.deepEqual(outcomes.map(({ status }) => status).sort(), [201, 409]);
+      await prisma.categoryImage.deleteMany();
       await prisma.category.deleteMany();
       await prisma.category.createMany({
         data: Array.from({ length: 1000 }, (_, index) => ({
@@ -394,8 +465,9 @@ void describe(
           nameKey: `cap ${index}`,
         })),
       });
-      await mutation('post', '/api/v1/admin/catalog/categories', session)
-        .send({ name: 'Overflow' })
+      await categoryMutation('post', '/api/v1/admin/catalog/categories', session, {
+        name: 'Overflow',
+      })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'CATEGORY_LIMIT_REACHED'),
@@ -408,10 +480,12 @@ void describe(
       const paths = openApi.paths;
       const collection = paths['/api/v1/admin/catalog/categories'];
       const member = paths['/api/v1/admin/catalog/categories/{categoryId}'];
+      const imageContent = paths['/api/v1/admin/catalog/category-images/{imageId}/content'];
       assert.ok(collection?.get);
       assert.ok(collection?.post);
       assert.ok(member?.patch);
       assert.ok(member?.delete);
+      assert.ok(imageContent?.get);
       for (const operation of [collection.get, collection.post, member.patch, member.delete]) {
         assert.deepEqual(operation?.security, [{ adminAccess: [] }]);
       }

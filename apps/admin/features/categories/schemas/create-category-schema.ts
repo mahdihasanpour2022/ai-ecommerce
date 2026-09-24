@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export const createCategorySchema = z.object({
+  image: z.custom<File>((value) => typeof File !== 'undefined' && value instanceof File, {
+    message: 'تصویر دسته‌بندی را انتخاب کنید.',
+  }),
   name: z
     .string()
     .trim()

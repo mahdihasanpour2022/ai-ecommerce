@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, render, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddCategory from '../features/categories/components/add-category';
 import { CATEGORY_OPTIONS_PAGE_SIZE } from '../features/categories/constants/pagination';
@@ -18,6 +18,17 @@ process.once('beforeExit', restoreDom);
 afterEach(() => cleanup());
 
 const parentId = '10000000-0000-4000-8000-000000000001';
+function validCategoryImage(): File {
+  return new File(
+    [
+      new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]),
+    ],
+    'category.png',
+    { type: 'image/png' },
+  );
+}
 const initialCategories: CategoriesResponse = {
   statusCode: 200,
   hasError: false,
@@ -30,6 +41,7 @@ const initialCategories: CategoriesResponse = {
       name: 'پوشاک زنانه',
       parentId: null,
       level: 1,
+      image: null,
       children: [],
       createdAt: '2026-09-14T00:00:00.000Z',
       updatedAt: '2026-09-14T00:00:00.000Z',
@@ -40,13 +52,18 @@ const initialCategories: CategoriesResponse = {
 };
 
 void test('accepts the Backend Category name bounds and rejects invalid parent identifiers', () => {
-  assert.equal(createCategorySchema.safeParse({ name: ' ', parentId: '' }).success, false);
-  assert.equal(createCategorySchema.safeParse({ name: 'ا'.repeat(121), parentId: '' }).success, false);
+  const image = validCategoryImage();
+  assert.equal(createCategorySchema.safeParse({ image, name: ' ', parentId: '' }).success, false);
   assert.equal(
-    createCategorySchema.safeParse({ name: 'پوشاک', parentId: 'not-a-uuid' }).success,
+    createCategorySchema.safeParse({ image, name: 'ا'.repeat(121), parentId: '' }).success,
     false,
   );
-  assert.deepEqual(createCategorySchema.parse({ name: '  پوشاک  ', parentId: '' }), {
+  assert.equal(
+    createCategorySchema.safeParse({ image, name: 'پوشاک', parentId: 'not-a-uuid' }).success,
+    false,
+  );
+  assert.deepEqual(createCategorySchema.parse({ image, name: '  پوشاک  ', parentId: '' }), {
+    image,
     name: 'پوشاک',
     parentId: '',
   });
@@ -71,6 +88,7 @@ void test('validates and creates a child Category, then refreshes the Category q
             name: 'مانتو',
             parentId,
             level: 2,
+            image: null,
             children: [],
             createdAt: '2026-09-14T00:00:00.000Z',
             updatedAt: '2026-09-14T00:00:00.000Z',
@@ -103,7 +121,11 @@ void test('validates and creates a child Category, then refreshes the Category q
     const screen = render(
       <App message={{ duration: 0.01 }}>
         <QueryClientProvider client={queryClient}>
-          <AddCategory onCreated={() => { created += 1; }} />
+          <AddCategory
+            onCreated={() => {
+              created += 1;
+            }}
+          />
         </QueryClientProvider>
       </App>,
     );
@@ -113,7 +135,7 @@ void test('validates and creates a child Category, then refreshes the Category q
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد دسته‌بندی' });
     const submitButton = within(dialog).getByRole('button', { name: 'ایجاد دسته‌بندی' });
     await user.click(submitButton);
-    assert.ok(await within(dialog).findByRole('alert'));
+    assert.equal((await within(dialog).findAllByRole('alert')).length, 2);
     assert.equal(calls.length, 0);
 
     await user.type(within(dialog).getByRole('textbox', { name: 'نام دسته‌بندی' }), '  مانتو  ');
@@ -121,12 +143,18 @@ void test('validates and creates a child Category, then refreshes the Category q
     const parentCategory = initialCategories.result[0];
     assert.ok(parentCategory);
     await user.click(await screen.findByText(parentCategory.name));
+    fireEvent.change(within(dialog).getByLabelText('تصویر دسته‌بندی'), {
+      target: { files: [validCategoryImage()] },
+    });
     await user.click(submitButton);
 
     await waitFor(() => assert.equal(screen.queryByRole('dialog'), null));
     const post = calls.find(({ method }) => method === 'post');
     assert.ok(post);
-    assert.deepEqual(JSON.parse(String(post.data)), { name: 'مانتو', parentId });
+    assert.ok(post.data instanceof FormData);
+    assert.equal(post.data.get('name'), 'مانتو');
+    assert.equal(post.data.get('parentId'), parentId);
+    assert.ok(post.data.get('file') instanceof File);
     assert.ok(calls.some(({ method }) => method === 'get'));
     assert.equal(created, 1);
   } finally {

@@ -54,10 +54,46 @@ void describe('Product and Variant contract parsing', () => {
       pageSize: 100,
       status: 'ACTIVE',
     });
+    assert.deepEqual(
+      parseProductListQuery({
+        name: '  Cotton   Shirt ',
+        size: '  Ｍ ',
+        color: ' Black ',
+        availability: 'IN_STOCK',
+        createdFrom: '2026-09-01T08:15:20.000Z',
+        createdTo: '2026-09-20T18:30:40.000Z',
+        minimumPriceRial: '1000',
+        maximumPriceRial: '2000',
+      }),
+      {
+        page: 1,
+        pageSize: 25,
+        name: 'Cotton Shirt',
+        sizeKey: 'm',
+        colorKey: 'black',
+        availability: 'IN_STOCK',
+        createdFrom: new Date('2026-09-01T08:15:20.000Z'),
+        createdToExclusive: new Date('2026-09-20T18:30:41.000Z'),
+        minimumPriceRial: 1000n,
+        maximumPriceRial: 2000n,
+      },
+    );
     expectCode(() => parseProductListQuery({ pageSize: '101' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ page: '01' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ page: '2147483648' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ sort: 'name' }), 'VALIDATION_FAILED');
+    expectCode(
+      () => parseProductListQuery({
+        createdFrom: '2026-09-21T00:00:00.000Z',
+        createdTo: '2026-09-20T23:59:59.000Z',
+      }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(() => parseProductListQuery({ createdFrom: '2026-09-20' }), 'VALIDATION_FAILED');
+    expectCode(
+      () => parseProductListQuery({ minimumPriceRial: '2000', maximumPriceRial: '1000' }),
+      'VALIDATION_FAILED',
+    );
   });
 
   void test('rejects ambiguous nullable fields, unsafe prices, markup, and empty patches', () => {

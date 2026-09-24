@@ -37,7 +37,7 @@ export function LoginForm(props: LoginFormProps) {
           ایمیل یا نام کاربری
         </label>
         <input
-          className="min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-slate-900 focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="placeholder:text-gray-300 min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-gray-400! focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           id="identifier"
           type="text"
           autoComplete="username"
@@ -63,7 +63,7 @@ export function LoginForm(props: LoginFormProps) {
           رمز
         </label>
         <input
-          className="min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-slate-900 focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="placeholder:text-gray-300 min-h-12 w-full rounded-xl border border-slate-400 bg-white px-3 py-2.5 text-gray-400! focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           id="password"
           type="password"
           inputMode="numeric"
@@ -94,12 +94,7 @@ export function LoginForm(props: LoginFormProps) {
           {props.error}
         </p>
       ) : null}
-      <UiButton
-        className="w-full"
-        type="submit"
-        disabled={submitting}
-        loading={submitting}
-      >
+      <UiButton className="w-full" type="submit" disabled={submitting} loading={submitting}>
         {submitting ? 'در حال ورود…' : 'ورود'}
       </UiButton>
     </form>

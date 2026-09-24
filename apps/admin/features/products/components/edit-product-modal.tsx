@@ -27,7 +27,7 @@ import {
   PRODUCT_IMAGE_ACCEPT,
   ProductImageSanitizationError,
 } from '../utils/image-sanitizer';
-import { formatPriceInput, normalizePriceInput } from '../utils/price-input';
+import { formatPriceInput, normalizePriceInput } from '../../../utils/price-input';
 
 interface EditProductModalProps {
   readonly product: Product | null;
@@ -39,9 +39,13 @@ interface EditProductModalProps {
 export function EditProductModal({ product, pending, onCancel, onSubmit }: EditProductModalProps) {
   const { message } = App.useApp();
   const detailQuery = useGetProductDetail(product?.id ?? null);
-  const categories = useGetCategories({ page: 1, pageSize: CATEGORY_OPTIONS_PAGE_SIZE });
-  const sizes = useGetProductSizes();
-  const colors = useGetProductColors();
+  const categories = useGetCategories({
+    page: 1,
+    pageSize: CATEGORY_OPTIONS_PAGE_SIZE,
+    enabled: product !== null,
+  });
+  const sizes = useGetProductSizes(product !== null);
+  const colors = useGetProductColors(product !== null);
   const {
     control,
     register,
@@ -91,10 +95,8 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     label: color['color-name'],
     hexCode: color['hex-code'],
   }));
-  const dependenciesPending =
-    detailQuery.isFetching || categories.isPending || sizes.isPending || colors.isPending;
-  const dependenciesFailed =
-    detailQuery.isError || categories.isError || sizes.isError || colors.isError;
+  const detailPending = detailQuery.isFetching;
+  const detailFailed = detailQuery.isError;
   const submitting = pending || isSubmitting;
 
   return (
@@ -107,9 +109,9 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
       mask={{ closable: !submitting }}
       onCancel={onCancel}
     >
-      {dependenciesPending ? (
+      {detailPending ? (
         <p className="m-0 text-sm leading-7 text-muted">در حال دریافت اطلاعات محصول…</p>
-      ) : dependenciesFailed || !detail || !selectedVariant ? (
+      ) : detailFailed || !detail || !selectedVariant ? (
         <div className="grid gap-4">
           <UiForm.Error>دریافت اطلاعات کامل محصول ناموفق بود.</UiForm.Error>
           <UiButton variant="secondary" onClick={() => void detailQuery.refetch()}>
@@ -211,7 +213,8 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                       level: option.level,
                     }))}
                     placeholder="انتخاب دسته‌بندی"
-                    disabled={submitting}
+                    loading={categories.isFetching}
+                    disabled={submitting || categories.isFetching || categories.isError}
                     status={errors.categoryId ? 'error' : ''}
                     aria-invalid={errors.categoryId ? 'true' : 'false'}
                     aria-describedby={errors.categoryId ? 'edit-product-category-error' : undefined}
@@ -224,6 +227,9 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                 <UiForm.Error id="edit-product-category-error">
                   {errors.categoryId.message}
                 </UiForm.Error>
+              ) : null}
+              {categories.isError ? (
+                <UiForm.Error>دریافت دسته‌بندی‌ها ناموفق بود. فرم را ببندید و دوباره تلاش کنید.</UiForm.Error>
               ) : null}
             </UiForm.Field>
           </div>
@@ -317,12 +323,16 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                       options={sizeOptions}
                       placeholder="بدون سایز"
                       allowClear
-                      disabled={submitting}
+                      loading={sizes.isFetching}
+                      disabled={submitting || sizes.isFetching || sizes.isError}
                       onBlur={field.onBlur}
                       onChange={(value) => field.onChange(value ?? '')}
                     />
                   )}
                 />
+                {sizes.isError ? (
+                  <UiForm.Error>دریافت گزینه‌های سایز ناموفق بود.</UiForm.Error>
+                ) : null}
               </UiForm.Field>
 
               <UiForm.Field>
@@ -338,12 +348,16 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                       options={colorOptions}
                       placeholder="بدون رنگ"
                       allowClear
-                      disabled={submitting}
+                      loading={colors.isFetching}
+                      disabled={submitting || colors.isFetching || colors.isError}
                       onBlur={field.onBlur}
                       onChange={(value) => field.onChange(value ?? '')}
                     />
                   )}
                 />
+                {colors.isError ? (
+                  <UiForm.Error>دریافت گزینه‌های رنگ ناموفق بود.</UiForm.Error>
+                ) : null}
               </UiForm.Field>
 
               <UiForm.Field>

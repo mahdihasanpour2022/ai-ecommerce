@@ -3,13 +3,19 @@
 import { Popover } from 'antd';
 import { useState } from 'react';
 import { UiButton } from '../../../app/components/shared/ui-button';
-import { ActionMenuIcon, EditIcon, StatusIcon } from '../../../app/components/shared/ui-icons';
+import {
+  ActionMenuIcon,
+  DeleteIcon,
+  EditIcon,
+  StatusIcon,
+} from '../../../app/components/shared/ui-icons';
 import type { Product } from '../interfaces/product-contract';
 
 interface ProductActionMenuProps {
   readonly product: Product;
   readonly disabled: boolean;
   readonly onChangeStatus: (product: Product) => void;
+  readonly onDelete: (product: Product) => void;
   readonly onEdit: (product: Product) => void;
 }
 
@@ -17,6 +23,7 @@ export function ProductActionMenu({
   product,
   disabled,
   onChangeStatus,
+  onDelete,
   onEdit,
 }: ProductActionMenuProps) {
   const [open, setOpen] = useState(false);
@@ -45,6 +52,18 @@ export function ProductActionMenu({
       >
         <StatusIcon />
         تغییر وضعیت
+      </UiButton>
+      <UiButton
+        className="w-full"
+        size="small"
+        variant="dangerSubtle"
+        onClick={() => {
+          setOpen(false);
+          onDelete(product);
+        }}
+      >
+        <DeleteIcon />
+        حذف
       </UiButton>
     </div>
   );

@@ -24,7 +24,7 @@ import {
   PRODUCT_IMAGE_ACCEPT,
   ProductImageSanitizationError,
 } from '../utils/image-sanitizer';
-import { formatPriceInput, normalizePriceInput } from '../utils/price-input';
+import { formatPriceInput, normalizePriceInput } from '../../../utils/price-input';
 
 const DEFAULT_VALUES: DefaultValues<CreateProductFormValues> = {
   name: '',
@@ -42,9 +42,13 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
   const triggerRef = useRef<HTMLButtonElement>(null);
   const submissionErrorRef = useRef<HTMLParagraphElement>(null);
   const { message } = App.useApp();
-  const categories = useGetCategories({ page: 1, pageSize: CATEGORY_OPTIONS_PAGE_SIZE });
-  const sizes = useGetProductSizes();
-  const colors = useGetProductColors();
+  const categories = useGetCategories({
+    page: 1,
+    pageSize: CATEGORY_OPTIONS_PAGE_SIZE,
+    enabled: open,
+  });
+  const sizes = useGetProductSizes(open);
+  const colors = useGetProductColors(open);
   const createProduct = useCreateProduct();
   const uploadProductImage = useUploadProductImage();
   const {
@@ -242,7 +246,8 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
                       level: option.level,
                     }))}
                     placeholder="انتخاب دسته‌بندی"
-                    disabled={submitting || categories.isPending || categories.isError}
+                    loading={categories.isFetching}
+                    disabled={submitting || categories.isFetching || categories.isError}
                     status={errors.categoryId ? 'error' : ''}
                     aria-invalid={errors.categoryId ? 'true' : 'false'}
                     aria-describedby={errors.categoryId ? 'product-category-error' : undefined}
@@ -336,7 +341,8 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
                       options={sizeOptions}
                       placeholder="انتخاب سایز"
                       notFoundContent="سایزی یافت نشد."
-                      disabled={submitting || sizes.isPending || sizes.isError}
+                      loading={sizes.isFetching}
+                      disabled={submitting || sizes.isFetching || sizes.isError}
                       status={errors.size ? 'error' : ''}
                       aria-invalid={errors.size ? 'true' : 'false'}
                       aria-describedby={errors.size ? 'product-size-error' : undefined}
@@ -368,7 +374,8 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
                       options={colorOptions}
                       placeholder="انتخاب رنگ"
                       notFoundContent="رنگی یافت نشد."
-                      disabled={submitting || colors.isPending || colors.isError}
+                      loading={colors.isFetching}
+                      disabled={submitting || colors.isFetching || colors.isError}
                       status={errors.color ? 'error' : ''}
                       aria-invalid={errors.color ? 'true' : 'false'}
                       aria-describedby={errors.color ? 'product-color-error' : undefined}

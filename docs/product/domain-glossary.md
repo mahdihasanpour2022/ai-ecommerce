@@ -11,7 +11,7 @@
 | Available Quantity | Currently the Variant's on-hand quantity. Public availability additionally requires an Active Product, active Variant, and quantity greater than zero; future reservation semantics may refine the calculation without redefining on-hand stock. |
 | Reserved Quantity | Stock temporarily allocated to pending demand and therefore not freely available. Reservation triggers and expiry are open. |
 | Display Unit | The singleton global `RIAL` or `TOMAN` Admin/Storefront display and Admin-input setting, defaulting to Toman. Canonical Backend prices remain positive integer rials divisible by 10; `1 toman = 10 rials`, and the setting never changes stored value or later payment arithmetic. |
-| Product Lifecycle | `DRAFT`, `ACTIVE`, or `ARCHIVED`. Draft is not public/purchasable; Active is public and exposes only active Variants; Archived is retained but not public/purchasable. Zero inventory does not itself change lifecycle. |
+| Product Lifecycle | `DRAFT`, `ACTIVE`, or `ARCHIVED`. Draft is not public/purchasable; Active is public and exposes only active Variants; Archived is a reversible temporarily unavailable state retained outside public/purchasable views. Permanent deletion is a separate explicit operation. Zero inventory does not itself change lifecycle. |
 | Product Image | A Product-owned ordered image. Position zero is the single main image and positions one through eight are optional additional images. Variant-level image ownership is excluded. |
 | Customer | A person or organization purchasing or intending to purchase products. Guest-account behavior is open. |
 | Admin User | A staff identity eligible for Admin Panel access, subject to status and permissions. It is independent from the Customer identity model. |

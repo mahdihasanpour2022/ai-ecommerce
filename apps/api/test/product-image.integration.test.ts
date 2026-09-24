@@ -295,6 +295,20 @@ void describe(
       assert.equal(JSON.stringify(collection).includes('storageKey'), false);
     });
 
+    void test('deletes Product-owned image bytes only through durable owner cleanup', async () => {
+      const productId = await createProduct();
+      await upload(productId, png, 'image/png', 1).expect(201);
+      await upload(productId, webp, 'image/webp', 2).expect(201);
+      assert.equal((await objectNames()).length, 2);
+
+      await mutation('delete', `/api/v1/admin/catalog/products/${productId}`).expect(200);
+
+      assert.equal(await prisma.product.count({ where: { id: productId } }), 0);
+      assert.equal(await prisma.productImage.count({ where: { productId } }), 0);
+      assert.equal(await prisma.productImageCleanup.count(), 0);
+      assert.deepEqual(await objectNames(), []);
+    });
+
     void test('atomically reorders, replaces identity, compacts deletion, and rejects stale races', async () => {
       const productId = await createProduct();
       const first = body<CollectionBody>(await upload(productId, png, 'image/png', 1).expect(201));

@@ -15,11 +15,12 @@ export const productOptionKeys = {
   statuses: ['product-options', 'statuses'] as const,
 };
 
-export function useGetProductSizes() {
+export function useGetProductSizes(enabled = true) {
   const { message } = App.useApp();
   const response = useRQFetcher<ProductSizesResponse>({
     queryKey: productOptionKeys.sizes,
     url: '/admin/catalog/product-options/sizes',
+    enabled,
     staleTime: Infinity,
   });
 
@@ -32,11 +33,12 @@ export function useGetProductSizes() {
   return response;
 }
 
-export function useGetProductColors() {
+export function useGetProductColors(enabled = true) {
   const { message } = App.useApp();
   const response = useRQFetcher<ProductColorsResponse>({
     queryKey: productOptionKeys.colors,
     url: '/admin/catalog/product-options/colors',
+    enabled,
     staleTime: Infinity,
   });
 
@@ -49,11 +51,12 @@ export function useGetProductColors() {
   return response;
 }
 
-export function useGetProductStatuses() {
+export function useGetProductStatuses(enabled = true) {
   const { message } = App.useApp();
   const response = useRQFetcher<ProductStatusesResponse>({
     queryKey: productOptionKeys.statuses,
     url: '/admin/catalog/product-options/statuses',
+    enabled,
     staleTime: Infinity,
   });
 

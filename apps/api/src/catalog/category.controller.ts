@@ -7,11 +7,14 @@ import {
   Param,
   Patch,
   Post,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBody,
   ApiCookieAuth,
+  ApiConsumes,
   ApiHeader,
   ApiOperation,
   ApiParam,
@@ -32,6 +35,9 @@ import {
 import { CategoryError, toCategoryHttpException } from './category.errors.js';
 import { CategoryService } from './category.service.js';
 import { ApiSuccess } from '../http/api-response.js';
+import { ProductImageMultipartErrorInterceptor } from './product-image.controller.js';
+import type { ProductImageUploadFile } from './product-image.dto.js';
+import { ProductImageError, toProductImageHttpException } from './product-image.errors.js';
 
 const CSRF_HEADER = {
   name: 'X-CSRF-Token',
@@ -64,6 +70,8 @@ export class CategoryController {
   }
 
   @Post()
+  @UseInterceptors(ProductImageMultipartErrorInterceptor)
+  @ApiConsumes('multipart/form-data')
   @ApiSuccess({
     code: 'CATEGORY_CREATED',
     message: 'دسته‌بندی با موفقیت ایجاد شد.',
@@ -80,11 +88,16 @@ export class CategoryController {
   @ApiResponse({ status: 404, type: ApiErrorDto })
   @ApiResponse({ status: 409, type: ApiErrorDto })
   @ApiResponse({ status: 500, type: ApiErrorDto })
-  async create(@Body() body: unknown): Promise<CategoryResponseDto> {
-    return this.handle(() => this.categories.create(parseCreateCategoryRequest(body)));
+  async create(
+    @UploadedFiles() files: ProductImageUploadFile[] | undefined,
+    @Body() body: unknown,
+  ): Promise<CategoryResponseDto> {
+    return this.handle(() => this.categories.create(parseCreateCategoryRequest(body, files)));
   }
 
   @Patch(':categoryId')
+  @UseInterceptors(ProductImageMultipartErrorInterceptor)
+  @ApiConsumes('multipart/form-data')
   @ApiSuccess({
     code: 'CATEGORY_UPDATED',
     message: 'دسته‌بندی با موفقیت ویرایش شد.',
@@ -104,10 +117,11 @@ export class CategoryController {
   @ApiResponse({ status: 500, type: ApiErrorDto })
   async update(
     @Param('categoryId') categoryId: string,
+    @UploadedFiles() files: ProductImageUploadFile[] | undefined,
     @Body() body: unknown,
   ): Promise<CategoryResponseDto> {
     return this.handle(() =>
-      this.categories.update(parseCategoryId(categoryId), parseUpdateCategoryRequest(body)),
+      this.categories.update(parseCategoryId(categoryId), parseUpdateCategoryRequest(body, files)),
     );
   }
 
@@ -134,6 +148,7 @@ export class CategoryController {
       return await work();
     } catch (error) {
       if (error instanceof CategoryError) throw toCategoryHttpException(error);
+      if (error instanceof ProductImageError) throw toProductImageHttpException(error);
       throw safeInternalHttpException();
     }
   }

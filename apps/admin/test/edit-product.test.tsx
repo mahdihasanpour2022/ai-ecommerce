@@ -123,6 +123,7 @@ const categoriesResponse: CategoriesResponse = {
       ...product.category,
       parentId: null,
       level: 1,
+      image: null,
       children: [],
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -169,6 +170,79 @@ function validProductImage(): File {
     { type: 'image/png' },
   );
 }
+
+void test('loads edit options on modal open and keeps only their inputs loading', async () => {
+  const originalAdapter = httpClient.defaults.adapter;
+  const queryClient = createAdminQueryClient();
+  const detailResponse: ProductDetailResponse = {
+    statusCode: 200,
+    hasError: false,
+    message: 'محصول دریافت شد.',
+    code: 'PRODUCT_FETCHED',
+    count: 1,
+    result: null,
+    singleResult: detail,
+    details: null,
+  };
+  const optionCalls: string[] = [];
+  const releases: Array<() => void> = [];
+  httpClient.defaults.adapter = async (config) => {
+    if (config.url === `/admin/catalog/products/${productId}`) {
+      return { data: detailResponse, status: 200, statusText: 'OK', headers: {}, config };
+    }
+    optionCalls.push(config.url ?? '');
+    await new Promise<void>((resolve) => releases.push(resolve));
+    const data =
+      config.url === '/admin/catalog/categories'
+        ? categoriesResponse
+        : config.url === '/admin/catalog/product-options/sizes'
+          ? sizesResponse
+          : colorsResponse;
+    return { data, status: 200, statusText: 'OK', headers: {}, config };
+  };
+
+  try {
+    const screen = render(
+      <App>
+        <QueryClientProvider client={queryClient}>
+          <EditProductModal
+            product={product}
+            pending={false}
+            onCancel={() => undefined}
+            onSubmit={() => Promise.resolve()}
+          />
+        </QueryClientProvider>
+      </App>,
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'ویرایش محصول' });
+    await waitFor(() => assert.equal(optionCalls.length, 3));
+    assert.deepEqual(new Set(optionCalls), new Set([
+      '/admin/catalog/categories',
+      '/admin/catalog/product-options/sizes',
+      '/admin/catalog/product-options/colors',
+    ]));
+    assert.ok(within(dialog).getByRole('textbox', { name: 'نام محصول' }));
+    for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+      const input = within(dialog).getByRole('combobox', { name });
+      assert.equal(input.hasAttribute('disabled'), true);
+      assert.equal(input.closest('.ant-select')?.classList.contains('ant-select-loading'), true);
+    }
+
+    for (const release of releases) release();
+    await waitFor(() => {
+      for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+        const input = within(dialog).getByRole('combobox', { name });
+        assert.equal(input.hasAttribute('disabled'), false);
+      }
+    });
+  } finally {
+    for (const release of releases) release();
+    if (originalAdapter === undefined) delete httpClient.defaults.adapter;
+    else httpClient.defaults.adapter = originalAdapter;
+    queryClient.clear();
+    cleanup();
+  }
+});
 
 void test('renders every create field, selects a Variant, and submits only changed values', async () => {
   const originalAdapter = httpClient.defaults.adapter;

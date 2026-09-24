@@ -157,18 +157,47 @@ model AuthSessionRefreshThrottle {
 }
 
 model Category {
-  id        String     @id(map: "categories_pkey") @default(uuid()) @db.Uuid
-  name      String     @db.VarChar(120)
-  nameKey   String     @map("name_key") @db.VarChar(256)
-  parentId  String?    @map("parent_id") @db.Uuid
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "categories_parent_id_fkey")
-  children  Category[] @relation("CategoryTree")
+  id        String         @id(map: "categories_pkey") @default(uuid()) @db.Uuid
+  name      String         @db.VarChar(120)
+  nameKey   String         @map("name_key") @db.VarChar(256)
+  parentId  String?        @map("parent_id") @db.Uuid
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  parent    Category?      @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "categories_parent_id_fkey")
+  children  Category[]     @relation("CategoryTree")
   products  Product[]
+  image     CategoryImage?
 
   @@unique([parentId, nameKey], map: "categories_parent_id_name_key_key")
   @@map("categories")
+}
+
+model CategoryImage {
+  id         String                @id(map: "category_images_pkey") @default(uuid()) @db.Uuid
+  categoryId String                @unique(map: "category_images_category_id_key") @map("category_id") @db.Uuid
+  storageKey String                @unique(map: "category_images_storage_key_key") @map("storage_key") @db.VarChar(512)
+  mediaType  ProductImageMediaType @map("media_type")
+  byteSize   Int                   @map("byte_size")
+  width      Int
+  height     Int
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  category   Category              @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "category_images_category_id_fkey")
+
+  @@map("category_images")
+}
+
+model CategoryImageCleanup {
+  id              String    @id(map: "category_image_cleanups_pkey") @default(uuid()) @db.Uuid
+  storageKey      String    @unique(map: "category_image_cleanups_storage_key_key") @map("storage_key") @db.VarChar(512)
+  attemptCount    Int       @default(0) @map("attempt_count")
+  lastAttemptAt   DateTime? @map("last_attempt_at") @db.Timestamptz(3)
+  lastFailureCode String?   @map("last_failure_code") @db.VarChar(64)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([createdAt, id], map: "category_image_cleanups_created_id_idx")
+  @@map("category_image_cleanups")
 }
 
 model Product {

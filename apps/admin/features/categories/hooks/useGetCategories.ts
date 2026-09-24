@@ -12,12 +12,17 @@ export const categoryKeys = {
     ['categories', 'list', { page, pageSize }] as const,
 };
 
-export function useGetCategories({ page, pageSize }: GetPageParams) {
+export function useGetCategories({
+  page,
+  pageSize,
+  enabled = true,
+}: GetPageParams & { readonly enabled?: boolean }) {
   const { message } = App.useApp();
   const response = useRQFetcher<CategoriesResponse>({
     queryKey: categoryKeys.list({ page, pageSize }),
     url: '/admin/catalog/categories',
     axiosConfig: { params: { page, pageSize } },
+    enabled,
     staleTime: 5000,
     gcTime: 5000,
   });

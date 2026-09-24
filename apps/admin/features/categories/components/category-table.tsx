@@ -16,6 +16,7 @@ import type { Category, EditCategoryVariables } from '../interfaces/category-con
 import { CategoryActionMenu } from './category-action-menu';
 import { DeleteCategoryModal } from './delete-category-modal';
 import { EditCategoryModal } from './edit-category-modal';
+import { CategoryThumbnail } from './category-thumbnail';
 
 const ROW_LEVEL_CLASSES: Readonly<Record<number, string>> = {
   1: 'category-row-level-1',
@@ -92,6 +93,13 @@ export function CategoryTable({
           {formatPersianInteger(rowNumbers.get(category.id) ?? 0)}
         </span>
       ),
+    },
+    {
+      title: 'تصویر',
+      key: 'image',
+      align: 'center',
+      width: 80,
+      render: (_value, category) => <CategoryThumbnail category={category} />,
     },
     {
       title: 'نام',

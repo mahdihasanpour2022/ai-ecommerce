@@ -13,7 +13,13 @@ export function useCreateCategory() {
     request: {
       method: 'post',
       url: '/admin/catalog/categories',
-      body: (variables) => variables,
+      body: ({ image, name, parentId }) => {
+        const body = new FormData();
+        body.append('file', image);
+        body.append('name', name);
+        body.append('parentId', parentId ?? '');
+        return body;
+      },
     },
     invalidateQueryKeys: [categoryKeys.all],
   });

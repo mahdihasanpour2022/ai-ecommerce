@@ -5,10 +5,10 @@ The API Workspace owns Prisma ORM. Prisma `7.10.0` is pinned exactly for both th
 ## Foundation boundary
 
 - `apps/api/prisma.config.ts` owns the schema path, migration path, and server-only `DATABASE_URL` lookup.
-- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator and declares sixteen implemented models: nine Admin identity/RBAC/session/throttle models and seven Clothing Catalog persistence models, plus the three catalog enums.
+- `apps/api/prisma/schema.prisma` selects PostgreSQL and the current `prisma-client` generator and declares eighteen implemented models: nine Admin identity/RBAC/session/throttle models and nine Clothing Catalog persistence models, plus the three catalog enums.
 - Generated TypeScript is written to `apps/api/src/generated/prisma` in CommonJS form to match the API's NodeNext/CommonJS package boundary.
 - Generated client files are reproducible and ignored. Run generation after schema or generator changes; do not edit generated files.
-- Three reviewed additive migrations live under `apps/api/prisma/migrations/`: the Admin foundation, catalog foundation, and Admin username rollout. Their PostgreSQL-only CHECKs, specialized unique indexes, deferred constraints, narrow triggers, singleton state, explicit `SUPER_ADMIN` grants, and safe existing-row username backfill remain migration-managed where Prisma schema syntax cannot fully represent them.
+- Four reviewed additive migrations live under `apps/api/prisma/migrations/`: the Admin foundation, catalog foundation, Admin username rollout, and Category Image expansion. Their PostgreSQL-only CHECKs, specialized unique indexes, deferred constraints, narrow triggers, singleton state, explicit `SUPER_ADMIN` grants, and safe existing-row username backfill remain migration-managed where Prisma schema syntax cannot fully represent them.
 - The rollback-only suites at `apps/api/prisma/tests/admin-identity-constraints.sql` and `apps/api/prisma/tests/catalog-constraints.sql` verify applied structures, reference state, and critical invariants against an approved disposable database. Focused API integration tests use independent connections for catalog race behavior.
 - The trusted [first-Super-Admin provisioner](admin-provisioning.md) creates a short-lived adapter-backed Prisma Client for its one transaction and disconnects afterward. No general runtime repository/service/client singleton or seed mechanism exists yet.
 

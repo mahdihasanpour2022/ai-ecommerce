@@ -23,6 +23,10 @@ const usernameMigration = readFileSync(
   resolve(apiRoot, 'prisma/migrations/20260905120000_add_admin_username/migration.sql'),
   'utf8',
 );
+const categoryImageMigration = readFileSync(
+  resolve(apiRoot, 'prisma/migrations/20260919172105_add_category_images/migration.sql'),
+  'utf8',
+);
 
 const approvedModels = [
   'AdminUser',
@@ -35,6 +39,8 @@ const approvedModels = [
   'AdminLoginThrottle',
   'AuthSessionRefreshThrottle',
   'Category',
+  'CategoryImage',
+  'CategoryImageCleanup',
   'Product',
   'ProductVariant',
   'Inventory',
@@ -173,5 +179,20 @@ void describe('Prisma schema and reviewed migrations', () => {
     }
     assert.doesNotMatch(catalogMigration, /'product-media\.manage'/);
     assert.doesNotMatch(catalogMigration, /'settings\.price-display-unit\.update'/);
+  });
+
+  void test('adds only the two approved Category Image tables with bounded metadata', () => {
+    const actualTables = [...categoryImageMigration.matchAll(/^CREATE TABLE "([^"]+)"/gm)].map(
+      (match) => match[1],
+    );
+
+    assert.deepEqual(actualTables.sort(), ['category_image_cleanups', 'category_images']);
+    assert.match(categoryImageMigration, /"category_images_category_id_key"/u);
+    assert.match(categoryImageMigration, /"category_images_storage_key_key"/u);
+    assert.match(categoryImageMigration, /"category_image_cleanups_storage_key_key"/u);
+    assert.match(categoryImageMigration, /"category_images_category_id_fkey"/u);
+    assert.match(categoryImageMigration, /"byte_size" BETWEEN 1 AND 409599/u);
+    assert.match(categoryImageMigration, /"width"::BIGINT \* "height"::BIGINT <= 25000000/u);
+    assert.doesNotMatch(categoryImageMigration, /\b(?:DROP|TRUNCATE)\b/iu);
   });
 });

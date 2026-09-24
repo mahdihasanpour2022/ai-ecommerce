@@ -1,15 +1,24 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiLoading } from '../../../app/components/shared/ui-loading';
 import { PRODUCT_PAGE_SIZE } from '../constants/pagination';
 import { useGetProducts } from '../hooks/useGetProducts';
+import type { ProductFilters } from '../interfaces/product-filter';
 import { ProductTable } from './product-table';
 
 export default function Products({
   page = 1,
+  filters = {},
+  filterPanel,
   onPageChange = () => undefined,
-}: Readonly<{ page?: number; onPageChange?: (page: number) => void }>) {
+}: Readonly<{
+  page?: number;
+  filters?: ProductFilters;
+  filterPanel?: ReactNode;
+  onPageChange?: (page: number) => void;
+}>) {
   const {
     data: response,
     isError,
@@ -19,11 +28,8 @@ export default function Products({
   } = useGetProducts({
     page,
     pageSize: PRODUCT_PAGE_SIZE,
+    filters,
   });
-
-  if (isPending) {
-    return <UiLoading message="در حال دریافت محصولات…" className="h-full" />;
-  }
 
   const productList = response?.singleResult;
 
@@ -40,7 +46,11 @@ export default function Products({
         </div>
       </div>
 
-      {isError || !productList ? (
+      {filterPanel}
+
+      {isPending ? (
+        <UiLoading message="در حال دریافت محصولات…" className="min-h-48" />
+      ) : isError || !productList ? (
         <div className="rounded-xl bg-surface-subtle p-4" role="alert">
           <p className="m-0 text-foreground">دریافت محصولات ناموفق بود.</p>
           <UiButton
@@ -53,7 +63,11 @@ export default function Products({
           </UiButton>
         </div>
       ) : productList.items.length === 0 ? (
-        <p className="rounded-xl bg-surface-subtle p-4 text-muted">محصولی ثبت نشده است.</p>
+        <p className="rounded-xl bg-surface-subtle p-4 text-muted">
+          {Object.keys(filters).length > 0
+            ? 'محصولی مطابق فیلترهای انتخاب‌شده پیدا نشد.'
+            : 'محصولی ثبت نشده است.'}
+        </p>
       ) : (
         <ProductTable
           products={productList.items}

@@ -7,16 +7,16 @@ import { normalizeHttpFailure } from '../../../app/http/http-client';
 import { formatPersianDateTime } from '../../../utils/date-time';
 import { formatPersianInteger } from '../../../utils/number';
 import { useChangeProductStatus } from '../hooks/useChangeProductStatus';
+import { useDeleteProduct } from '../hooks/useDeleteProduct';
 import { useEditProductWorkflow } from '../hooks/useEditProductWorkflow';
-import { useGetProductStatuses } from '../hooks/useGetProductOptions';
 import type {
   ChangeProductStatusVariables,
   EditProductWorkflowVariables,
   Product,
   ProductStatus,
 } from '../interfaces/product-contract';
-import type { ProductStatusOption } from '../interfaces/product-option-contract';
 import { ChangeProductStatusModal } from './change-product-status-modal';
+import { DeleteProductModal } from './delete-product-modal';
 import { EditProductModal } from './edit-product-modal';
 import { ProductActionMenu } from './product-action-menu';
 import { ProductThumbnail } from './productThumbnail';
@@ -25,14 +25,15 @@ const rialFormatter = new Intl.NumberFormat('fa-IR', {
   maximumFractionDigits: 0,
 });
 
-function ProductStatusBadge({
-  status,
-  statuses,
-}: Readonly<{ status: ProductStatus; statuses: readonly ProductStatusOption[] }>) {
-  const content = statuses.find(({ status_english_name }) => status_english_name === status);
+function ProductStatusBadge({ status }: Readonly<{ status: ProductStatus }>) {
+  const labels: Readonly<Record<ProductStatus, string>> = {
+    DRAFT: 'پیش‌نویس',
+    ACTIVE: 'فعال',
+    ARCHIVED: 'بایگانی‌شده',
+  };
   return (
     <span className="inline-flex rounded-full bg-surface-muted px-2 py-1 text-xs font-bold text-foreground">
-      {content?.status_persian_name ?? status}
+      {labels[status]}
     </span>
   );
 }
@@ -81,13 +82,15 @@ export function ProductTable({
   onPageChange,
 }: ProductTableProps) {
   const { message } = App.useApp();
-  const statuses = useGetProductStatuses();
   const editProduct = useEditProductWorkflow();
   const changeProductStatus = useChangeProductStatus();
+  const deleteProduct = useDeleteProduct();
   const [editing, setEditing] = useState<Product | null>(null);
   const [changingStatus, setChangingStatus] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState<Product | null>(null);
 
-  const mutationPending = editProduct.isPending || changeProductStatus.isPending;
+  const mutationPending =
+    editProduct.isPending || changeProductStatus.isPending || deleteProduct.isPending;
   async function submitEdit(variables: EditProductWorkflowVariables) {
     try {
       const changed = await editProduct.save(variables);
@@ -108,6 +111,18 @@ export function ProductTable({
       setChangingStatus(null);
       await message.success(response.message);
     } catch (error) {
+      await message.error(normalizeHttpFailure(error).message);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleting) return;
+    try {
+      const response = await deleteProduct.mutateAsync(deleting.id);
+      setDeleting(null);
+      await message.success(response.message);
+    } catch (error) {
+      setDeleting(null);
       await message.error(normalizeHttpFailure(error).message);
     }
   }
@@ -135,7 +150,7 @@ export function ProductTable({
       title: 'محصول',
       dataIndex: 'name',
       key: 'name',
-      // rowScope: 'row',
+      rowScope: 'row',
       render: (_name: string, product) => (
         <div className="min-w-24">
           <p className="m-0 truncate text-foreground" title={product.name}>
@@ -158,7 +173,10 @@ export function ProductTable({
         description === null ? (
           <span className="text-foreground-muted">بدون توضیحات</span>
         ) : (
-          <p className="m-0 max-w-56 line-clamp-2 text-sm text-foreground" title={description}>
+          <p
+            className="m-0 max-w-24 truncate line-clamp-2 text-sm text-foreground"
+            title={description}
+          >
             {description}
           </p>
         ),
@@ -181,9 +199,7 @@ export function ProductTable({
       title: 'وضعیت',
       dataIndex: 'status',
       key: 'status',
-      render: (status: ProductStatus) => (
-        <ProductStatusBadge status={status} statuses={statuses.data?.result ?? []} />
-      ),
+      render: (status: ProductStatus) => <ProductStatusBadge status={status} />,
     },
     {
       title: 'تنوع‌ها',
@@ -232,6 +248,7 @@ export function ProductTable({
           disabled={mutationPending}
           onEdit={setEditing}
           onChangeStatus={setChangingStatus}
+          onDelete={setDeleting}
         />
       ),
     },
@@ -275,9 +292,6 @@ export function ProductTable({
       {changingStatus ? (
         <ChangeProductStatusModal
           product={changingStatus}
-          statuses={statuses.data?.result ?? []}
-          statusesPending={statuses.isPending}
-          statusesFailed={statuses.isError}
           pending={changeProductStatus.isPending}
           onCancel={() => {
             if (!changeProductStatus.isPending) setChangingStatus(null);
@@ -285,6 +299,14 @@ export function ProductTable({
           onSubmit={submitStatusChange}
         />
       ) : null}
+      <DeleteProductModal
+        product={deleting}
+        pending={deleteProduct.isPending}
+        onCancel={() => {
+          if (!deleteProduct.isPending) setDeleting(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+      />
     </>
   );
 }

@@ -24,7 +24,7 @@ export default function Categories({
           مدیریت دسته‌بندی‌ها
         </h2>
         <p className="mb-0 mt-1 text-sm text-muted">
-          فهرست دسته بندی ها دسته‌بندی، موجودی و وضعیت انتشار
+          فهرست دسته بندی ها ، موجودی و وضعیت انتشار
         </p>
       </div>
 

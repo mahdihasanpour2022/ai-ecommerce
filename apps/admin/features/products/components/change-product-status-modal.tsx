@@ -7,16 +7,13 @@ import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
-import type { ProductStatusOption } from '../interfaces/product-option-contract';
+import { useGetProductStatuses } from '../hooks/useGetProductOptions';
 import type { ChangeProductStatusVariables, Product } from '../interfaces/product-contract';
 import type { ChangeProductStatusFormValues } from '../schemas/change-product-status-schema';
 import { changeProductStatusSchema } from '../schemas/change-product-status-schema';
 
 interface ChangeProductStatusModalProps {
   readonly product: Product | null;
-  readonly statuses: readonly ProductStatusOption[];
-  readonly statusesPending: boolean;
-  readonly statusesFailed: boolean;
   readonly pending: boolean;
   readonly onCancel: () => void;
   readonly onSubmit: (variables: ChangeProductStatusVariables) => Promise<void>;
@@ -24,13 +21,12 @@ interface ChangeProductStatusModalProps {
 
 export function ChangeProductStatusModal({
   product,
-  statuses,
-  statusesPending,
-  statusesFailed,
   pending,
   onCancel,
   onSubmit,
 }: ChangeProductStatusModalProps) {
+  const statusesQuery = useGetProductStatuses(product !== null);
+  const statuses = statusesQuery.data?.result ?? [];
   const {
     control,
     handleSubmit,
@@ -90,7 +86,8 @@ export function ChangeProductStatusModal({
                 options={options}
                 placeholder="انتخاب وضعیت جدید"
                 notFoundContent="وضعیت دیگری برای انتخاب وجود ندارد."
-                disabled={submitting || statusesPending || statusesFailed}
+                loading={statusesQuery.isFetching}
+                disabled={submitting || statusesQuery.isFetching || statusesQuery.isError}
                 status={errors.status ? 'error' : ''}
                 aria-invalid={errors.status ? 'true' : 'false'}
                 aria-describedby={errors.status ? 'product-next-status-error' : undefined}
@@ -102,7 +99,7 @@ export function ChangeProductStatusModal({
           {errors.status ? (
             <UiForm.Error id="product-next-status-error">{errors.status.message}</UiForm.Error>
           ) : null}
-          {statusesFailed ? (
+          {statusesQuery.isError ? (
             <UiForm.Error>دریافت وضعیت‌های محصول ناموفق بود. دوباره تلاش کنید.</UiForm.Error>
           ) : null}
         </UiForm.Field>
@@ -113,7 +110,7 @@ export function ChangeProductStatusModal({
           </UiButton>
           <UiButton
             type="submit"
-            disabled={submitting || statusesPending || statusesFailed}
+            disabled={submitting || statusesQuery.isFetching || statusesQuery.isError}
             loading={submitting}
           >
             {submitting ? 'در حال تغییر وضعیت…' : 'تغییر وضعیت'}

@@ -51,3 +51,6 @@ next-env.d.ts
 
 # generated Prisma Client
 apps/api/src/generated/prisma/
+
+# Live development media. These files are application data, never build/test artifacts.
+apps/api/tmp/product-images/

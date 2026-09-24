@@ -4,6 +4,7 @@ import { AuthenticationModule } from '../authentication/authentication.module.js
 import { DatabaseModule } from '../database/database.module.js';
 import { CatalogAccessGuard } from './catalog-access.guard.js';
 import { CategoryController } from './category.controller.js';
+import { CategoryImageController } from './category-image.controller.js';
 import { CategoryRepository } from './category.repository.js';
 import { CategoryService } from './category.service.js';
 import { InventoryController } from './inventory.controller.js';
@@ -37,6 +38,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
   imports: [AuthenticationModule, DatabaseModule],
   controllers: [
     CategoryController,
+    CategoryImageController,
     ProductController,
     ProductOptionController,
     InventoryController,

@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 
 import type { ProductRepository } from '../src/catalog/product.repository.js';
+import type { ProductImageStorage } from '../src/catalog/product-image.storage.js';
 import { ProductService } from '../src/catalog/product.service.js';
 
 void test('maps description and unique size/color labels into protected Product summaries', async () => {
@@ -50,7 +51,8 @@ void test('maps description and unique size/color labels into protected Product 
       }),
   } as unknown as ProductRepository;
 
-  const result = await new ProductService(repository).list({ page: 1, pageSize: 25 });
+  const imageStorage = {} as ProductImageStorage;
+  const result = await new ProductService(repository, imageStorage).list({ page: 1, pageSize: 25 });
 
   assert.equal(result.items[0]?.description, 'پیراهن سبک مناسب تابستان');
   assert.deepEqual(result.items[0]?.sizes, ['M', 'L']);

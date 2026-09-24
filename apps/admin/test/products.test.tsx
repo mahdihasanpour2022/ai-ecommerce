@@ -8,7 +8,7 @@ import { httpClient } from '../app/http/http-client';
 import { createAdminQueryClient } from '../app/react-query-provider';
 import Products from '../features/products/components/products';
 import { ProductTable } from '../features/products/components/product-table';
-import { productOptionKeys } from '../features/products/hooks/useGetProductOptions';
+import { productKeys } from '../features/products/hooks/useGetProducts';
 import type { ProductStatusesResponse } from '../features/products/interfaces/product-option-contract';
 import type { Product } from '../features/products/interfaces/product-contract';
 import { installDomEnvironment } from './dom-environment';
@@ -57,10 +57,14 @@ void test('loads and displays the protected Product summaries', async () => {
   const originalAdapter = httpClient.defaults.adapter;
   let requestedPage: unknown;
   let requestedPageSize: unknown;
+  let requestedName: unknown;
+  let requestedAvailability: unknown;
 
   httpClient.defaults.adapter = async (config) => {
     requestedPage = config.params?.page;
     requestedPageSize = config.params?.pageSize;
+    requestedName = config.params?.name;
+    requestedAvailability = config.params?.availability;
     return {
       data: {
         statusCode: 200,
@@ -112,13 +116,12 @@ void test('loads and displays the protected Product summaries', async () => {
     };
   };
   const queryClient = createAdminQueryClient();
-  queryClient.setQueryData(productOptionKeys.statuses, statusesResponse);
 
   try {
     const view = render(
       <App>
         <QueryClientProvider client={queryClient}>
-          <Products page={2} />
+          <Products page={2} filters={{ name: 'پیراهن', availability: 'IN_STOCK' }} />
         </QueryClientProvider>
       </App>,
     );
@@ -145,6 +148,8 @@ void test('loads and displays the protected Product summaries', async () => {
     });
     assert.equal(requestedPage, 2);
     assert.equal(requestedPageSize, 15);
+    assert.equal(requestedName, 'پیراهن');
+    assert.equal(requestedAvailability, 'IN_STOCK');
 
     const user = userEvent.setup({ document: globalThis.document });
     await user.click(view.getByRole('button', { name: 'نمایش بزرگ تصویر پیراهن لینن' }));
@@ -209,8 +214,22 @@ void test('changes Product status from the server-owned options', async () => {
     readonly url: string | undefined;
     readonly data: unknown;
   }> = [];
+  let releaseStatuses: (() => void) | undefined;
+  const statusesGate = new Promise<void>((resolve) => {
+    releaseStatuses = resolve;
+  });
   httpClient.defaults.adapter = async (config) => {
     calls.push({ method: config.method, url: config.url, data: config.data });
+    if (config.url === '/admin/catalog/product-options/statuses') {
+      await statusesGate;
+      return {
+        data: statusesResponse,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config,
+      };
+    }
     const archived = JSON.parse(String(config.data))?.status === 'ARCHIVED';
     return {
       data: {
@@ -231,7 +250,91 @@ void test('changes Product status from the server-owned options', async () => {
   };
   document.cookie = 'admin_csrf_token=test-token; Path=/; SameSite=Strict';
   const queryClient = createAdminQueryClient();
-  queryClient.setQueryData(productOptionKeys.statuses, statusesResponse);
+
+  try {
+    const screen = render(
+      <App message={{ duration: 0.01 }}>
+        <QueryClientProvider client={queryClient}>
+          <ProductTable
+            products={[product]}
+            page={1}
+            pageSize={15}
+            totalItems={1}
+            onPageChange={() => undefined}
+          />
+        </QueryClientProvider>
+      </App>,
+    );
+    const user = userEvent.setup({ document: globalThis.document });
+    assert.equal(calls.length, 0);
+
+    await user.click(screen.getByRole('button', { name: 'عملیات محصول پیراهن لینن' }));
+    const statusActions = await screen.findByRole('dialog', { name: 'عملیات پیراهن لینن' });
+    await user.click(within(statusActions).getByRole('button', { name: 'تغییر وضعیت' }));
+    const statusDialog = await screen.findByRole('dialog', { name: 'تغییر وضعیت محصول' });
+    await waitFor(() =>
+      assert.ok(calls.some(({ url }) => url === '/admin/catalog/product-options/statuses')),
+    );
+    const statusInput = within(statusDialog).getByRole('combobox', {
+      name: 'وضعیتی که می‌خواهید',
+    });
+    assert.equal(statusInput.hasAttribute('disabled'), true);
+    assert.equal(
+      statusInput.closest('.ant-select')?.classList.contains('ant-select-loading'),
+      true,
+    );
+    releaseStatuses?.();
+    assert.ok(await within(statusDialog).findByText('فعال'));
+    await user.click(within(statusDialog).getByRole('combobox', { name: 'وضعیتی که می‌خواهید' }));
+    await user.click(await within(document.body).findByText('بایگانی‌شده'));
+    await user.click(within(statusDialog).getByRole('button', { name: 'تغییر وضعیت' }));
+    await waitFor(() =>
+      assert.equal(screen.queryByRole('dialog', { name: 'تغییر وضعیت محصول' }), null),
+    );
+
+    const archiveCall = calls.find(({ method }) => method === 'patch');
+    assert.equal(archiveCall?.method, 'patch');
+    assert.equal(archiveCall?.url, `/admin/catalog/products/${productId}`);
+    assert.deepEqual(JSON.parse(String(archiveCall?.data)), { status: 'ARCHIVED' });
+  } finally {
+    releaseStatuses?.();
+    if (originalAdapter === undefined) delete httpClient.defaults.adapter;
+    else httpClient.defaults.adapter = originalAdapter;
+    queryClient.clear();
+    document.cookie = 'admin_csrf_token=; Path=/; Max-Age=0; SameSite=Strict';
+    cleanup();
+  }
+});
+
+void test('permanently deletes a Product after explicit confirmation', async () => {
+  const originalAdapter = httpClient.defaults.adapter;
+  const calls: Array<{
+    readonly method: string | undefined;
+    readonly url: string | undefined;
+  }> = [];
+  httpClient.defaults.adapter = async (config) => {
+    calls.push({ method: config.method, url: config.url });
+    return {
+      data: {
+        statusCode: 200,
+        hasError: false,
+        message: 'محصول با موفقیت حذف شد.',
+        code: 'PRODUCT_DELETED',
+        count: 0,
+        result: null,
+        singleResult: null,
+        details: null,
+      },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
+  };
+  document.cookie = 'admin_csrf_token=test-token; Path=/; SameSite=Strict';
+  const queryClient = createAdminQueryClient();
+  const listKey = productKeys.list({ page: 1, pageSize: 15 });
+  queryClient.setQueryData(listKey, { items: [product] });
 
   try {
     const screen = render(
@@ -249,22 +352,21 @@ void test('changes Product status from the server-owned options', async () => {
     );
     const user = userEvent.setup({ document: globalThis.document });
 
-    await user.click(screen.getByRole('button', { name: 'عملیات محصول پیراهن لینن' }));
-    const statusActions = await screen.findByRole('dialog', { name: 'عملیات پیراهن لینن' });
-    await user.click(within(statusActions).getByRole('button', { name: 'تغییر وضعیت' }));
-    const statusDialog = await screen.findByRole('dialog', { name: 'تغییر وضعیت محصول' });
-    assert.ok(within(statusDialog).getByText('فعال'));
-    await user.click(within(statusDialog).getByRole('combobox', { name: 'وضعیتی که می‌خواهید' }));
-    await user.click(await within(document.body).findByText('بایگانی‌شده'));
-    await user.click(within(statusDialog).getByRole('button', { name: 'تغییر وضعیت' }));
+    await user.click(screen.getByRole('button', { name: `عملیات محصول ${product.name}` }));
+    const actions = await screen.findByRole('dialog', { name: `عملیات ${product.name}` });
+    await user.click(within(actions).getByRole('button', { name: 'حذف' }));
+    const dialog = await screen.findByRole('dialog', { name: 'حذف محصول' });
+    assert.match(dialog.textContent ?? '', /قابل بازگشت نیست/u);
+    await user.click(within(dialog).getByRole('button', { name: 'حذف دائمی محصول' }));
     await waitFor(() =>
-      assert.equal(screen.queryByRole('dialog', { name: 'تغییر وضعیت محصول' }), null),
+      assert.equal(screen.queryByRole('dialog', { name: 'حذف محصول' }), null),
     );
 
-    const archiveCall = calls[0];
-    assert.equal(archiveCall?.method, 'patch');
-    assert.equal(archiveCall?.url, `/admin/catalog/products/${productId}`);
-    assert.deepEqual(JSON.parse(String(archiveCall?.data)), { status: 'ARCHIVED' });
+    assert.deepEqual(calls.find(({ method }) => method === 'delete'), {
+      method: 'delete',
+      url: `/admin/catalog/products/${productId}`,
+    });
+    assert.equal(queryClient.getQueryState(listKey)?.isInvalidated, true);
   } finally {
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;
     else httpClient.defaults.adapter = originalAdapter;

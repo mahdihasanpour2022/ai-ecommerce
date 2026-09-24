@@ -24,10 +24,14 @@ import type {
   ProductTransaction,
 } from './product.repository.js';
 import { ProductRepository } from './product.repository.js';
+import { ProductImageStorage } from './product-image.storage.js';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly repository: ProductRepository) {}
+  constructor(
+    private readonly repository: ProductRepository,
+    private readonly imageStorage: ProductImageStorage,
+  ) {}
 
   async list(query: ProductListQuery): Promise<ProductListResponseDto> {
     const result = await this.repository.list(query);
@@ -102,6 +106,42 @@ export class ProductService {
         return toProductDetailDto(updated);
       }),
     );
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.retryImageCleanup();
+    const cleanups = await this.runMutation('delete-product', () =>
+      this.repository.transaction(async (transaction) => {
+        if (!(await this.repository.lockProduct(transaction, id))) {
+          throw new ProductError('PRODUCT_NOT_FOUND');
+        }
+        const images = await transaction.productImage.findMany({
+          where: { productId: id },
+          select: { id: true, storageKey: true },
+          orderBy: { position: 'asc' },
+        });
+        const cleanups: Array<{ readonly id: string; readonly storageKey: string }> = [];
+        for (const image of images) {
+          const cleanup = await transaction.productImageCleanup.create({
+            data: { storageKey: image.storageKey },
+            select: { id: true },
+          });
+          cleanups.push({ id: cleanup.id, storageKey: image.storageKey });
+        }
+        const variants = await transaction.productVariant.findMany({
+          where: { productId: id },
+          select: { id: true },
+        });
+        await transaction.productImage.deleteMany({ where: { productId: id } });
+        await transaction.inventory.deleteMany({
+          where: { variantId: { in: variants.map(({ id: variantId }) => variantId) } },
+        });
+        await transaction.productVariant.deleteMany({ where: { productId: id } });
+        await transaction.product.delete({ where: { id } });
+        return cleanups;
+      }),
+    );
+    for (const cleanup of cleanups) await this.finishImageCleanup(cleanup);
   }
 
   async createVariant(productId: string, input: VariantInput): Promise<ProductVariantResponseDto> {
@@ -210,6 +250,24 @@ export class ProductService {
       const mapped = mapProductPersistenceError(error, operation);
       if (mapped !== undefined) throw mapped;
       throw error;
+    }
+  }
+
+  private async finishImageCleanup(cleanup: {
+    readonly id: string;
+    readonly storageKey: string;
+  }): Promise<void> {
+    try {
+      await this.imageStorage.discard(cleanup.storageKey);
+      await this.repository.deleteImageCleanup(cleanup.id);
+    } catch {
+      await this.repository.markImageCleanupFailure(cleanup.id).catch(() => undefined);
+    }
+  }
+
+  private async retryImageCleanup(): Promise<void> {
+    for (const cleanup of await this.repository.pendingImageCleanups()) {
+      await this.finishImageCleanup(cleanup);
     }
   }
 }

@@ -63,7 +63,11 @@ export function toProductHttpException(error: ProductError): HttpException {
 }
 
 export type ProductPersistenceOperation =
-  'create-product' | 'create-variant' | 'update-product' | 'update-variant';
+  | 'create-product'
+  | 'create-variant'
+  | 'delete-product'
+  | 'update-product'
+  | 'update-variant';
 
 function databaseConstraint(error: Prisma.PrismaClientKnownRequestError): string | undefined {
   const databaseError = error.meta?.database_error;

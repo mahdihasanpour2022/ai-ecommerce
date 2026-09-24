@@ -17,7 +17,7 @@ import type {
   ProductSizesResponse,
 } from '../features/products/interfaces/product-option-contract';
 import { createProductSchema } from '../features/products/schemas/create-product-schema';
-import { formatPriceInput, normalizePriceInput } from '../features/products/utils/price-input';
+import { formatPriceInput, normalizePriceInput } from '../utils/price-input';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -50,6 +50,7 @@ const categoriesResponse: CategoriesResponse = {
       name: 'پیراهن',
       parentId: null,
       level: 1,
+      image: null,
       children: [],
       createdAt: '2026-09-16T08:00:00.000Z',
       updatedAt: '2026-09-16T08:00:00.000Z',
@@ -114,6 +115,8 @@ void test('validates Product fields against the Backend boundaries', () => {
   );
   assert.equal(formatPriceInput('1200000'), '1,200,000');
   assert.equal(normalizePriceInput('1,200,000'), '1200000');
+  assert.equal(formatPriceInput('۱٬۲۰۰٬۰۰۰ ریال'), '1,200,000');
+  assert.equal(normalizePriceInput('١٬٢٠٠٬٠٠٠'), '1200000');
 });
 
 async function completeRequiredFields(dialog: HTMLElement) {
@@ -134,6 +137,72 @@ async function completeRequiredFields(dialog: HTMLElement) {
   await user.type(within(dialog).getByRole('spinbutton', { name: 'موجودی اولیه' }), '12');
   return user;
 }
+
+void test('loads form options only after opening and shows loading on each related input', async () => {
+  const originalAdapter = httpClient.defaults.adapter;
+  const calls: string[] = [];
+  const releases: Array<() => void> = [];
+  httpClient.defaults.adapter = async (config) => {
+    calls.push(config.url ?? '');
+    await new Promise<void>((resolve) => releases.push(resolve));
+    const data =
+      config.url === '/admin/catalog/categories'
+        ? categoriesResponse
+        : config.url === '/admin/catalog/product-options/sizes'
+          ? sizesResponse
+          : colorsResponse;
+    return {
+      data,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
+  };
+  const queryClient = createAdminQueryClient();
+
+  try {
+    const screen = render(
+      <App>
+        <QueryClientProvider client={queryClient}>
+          <AddProduct />
+        </QueryClientProvider>
+      </App>,
+    );
+    assert.deepEqual(calls, []);
+
+    const user = userEvent.setup({ document: globalThis.document });
+    await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
+    const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
+    await waitFor(() => assert.equal(calls.length, 3));
+    assert.deepEqual(new Set(calls), new Set([
+      '/admin/catalog/categories',
+      '/admin/catalog/product-options/sizes',
+      '/admin/catalog/product-options/colors',
+    ]));
+
+    for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+      const input = within(dialog).getByRole('combobox', { name });
+      assert.equal(input.hasAttribute('disabled'), true);
+      assert.equal(input.closest('.ant-select')?.classList.contains('ant-select-loading'), true);
+    }
+
+    for (const release of releases) release();
+    await waitFor(() => {
+      for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+        const input = within(dialog).getByRole('combobox', { name });
+        assert.equal(input.hasAttribute('disabled'), false);
+        assert.equal(input.closest('.ant-select')?.classList.contains('ant-select-loading'), false);
+      }
+    });
+  } finally {
+    for (const release of releases) release();
+    if (originalAdapter === undefined) delete httpClient.defaults.adapter;
+    else httpClient.defaults.adapter = originalAdapter;
+    queryClient.clear();
+    cleanup();
+  }
+});
 
 void test('creates a Product, closes the modal, and reports the new first page', async () => {
   const originalAdapter = httpClient.defaults.adapter;

@@ -169,9 +169,14 @@ void describe(
       };
     }
 
-    function mutation(method: 'patch' | 'post', path: string, session = superAdmin): request.Test {
+    function mutation(
+      method: 'delete' | 'patch' | 'post',
+      path: string,
+      session = superAdmin,
+    ): request.Test {
       const agent = request(server(app));
-      const pending = method === 'post' ? agent.post(path) : agent.patch(path);
+      const pending =
+        method === 'post' ? agent.post(path) : method === 'patch' ? agent.patch(path) : agent.delete(path);
       return pending
         .set('Cookie', session.accessCookie)
         .set('Origin', allowedOrigin)
@@ -215,7 +220,7 @@ void describe(
       const image = await prisma.productImage.create({
         data: {
           productId,
-          storageKey: `test/${randomUUID()}.webp`,
+          storageKey: `objects/${randomUUID()}.webp`,
           mediaType: 'WEBP',
           byteSize: 128,
           width: 20,
@@ -314,6 +319,36 @@ void describe(
       assert.equal(listBody.items[0]?.maximumPriceRial, 140_000);
       assert.equal(listBody.items[0]?.totalOnHandQuantity, 5);
       assert.equal('storageKey' in (listBody.items[0] ?? {}), false);
+    });
+
+    void test('permanently deletes complete Product aggregates in every lifecycle status', async () => {
+      const categoryId = await createCategory('Deletion');
+      for (const status of ['DRAFT', 'ACTIVE', 'ARCHIVED'] as const) {
+        const product = await createProduct(categoryId, { name: `Delete ${status}` });
+        await addReadyMainImage(product.id);
+        if (status !== 'DRAFT') {
+          await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
+            .send({ status })
+            .expect(200);
+        }
+
+        await mutation('delete', `/api/v1/admin/catalog/products/${product.id}`)
+          .expect(200)
+          .expect((response: Response) =>
+            assert.equal((response.body as ErrorBody).code, 'PRODUCT_DELETED'),
+          );
+        await request(server(app))
+          .get(`/api/v1/admin/catalog/products/${product.id}`)
+          .set('Cookie', superAdmin.accessCookie)
+          .expect(404);
+      }
+
+      assert.equal(await prisma.product.count(), 0);
+      assert.equal(await prisma.productVariant.count(), 0);
+      assert.equal(await prisma.inventory.count(), 0);
+      assert.equal(await prisma.productImage.count(), 0);
+      assert.equal(await prisma.productImageCleanup.count(), 0);
+      await mutation('delete', `/api/v1/admin/catalog/products/${randomUUID()}`).expect(404);
     });
 
     void test('rejects malformed requests and rolls back the complete Product aggregate', async () => {
@@ -445,10 +480,10 @@ void describe(
 
       const imageId = await addReadyMainImage(product.id);
       const active = await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
-        .send({ description: 'Now complete with zero stock', status: 'ACTIVE' })
+        .send({ description: 'Now complete', status: 'ACTIVE' })
         .expect(200);
       assert.equal(responseBody<ProductBody>(active).images[0]?.id, imageId);
-      assert.equal(responseBody<ProductBody>(active).variants[0]?.inventory.onHandQuantity, 0);
+      assert.equal(responseBody<ProductBody>(active).variants[0]?.inventory.onHandQuantity, 1);
       const activeList = await request(server(app))
         .get('/api/v1/admin/catalog/products?status=ACTIVE')
         .set('Cookie', superAdmin.accessCookie)
@@ -503,7 +538,10 @@ void describe(
       });
       await prisma.product.updateMany({
         where: { id: { in: newest.map(({ id }) => id) } },
-        data: { createdAt: new Date('2030-01-01T00:00:00.000Z') },
+        data: {
+          createdAt: new Date('2030-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2040-01-01T00:00:00.000Z'),
+        },
       });
       const response = await request(server(app))
         .get('/api/v1/admin/catalog/products?page=1&pageSize=2')
@@ -520,6 +558,51 @@ void describe(
       );
       assert.equal(body.totalItems, 3);
       assert.equal(body.totalPages, 2);
+    });
+
+    void test('combines protected Product name, variant, inventory, date, category, status, and price filters', async () => {
+      const categoryId = await createCategory('Filtered category');
+      const otherCategoryId = await createCategory('Other category');
+      const matching = await createProduct(categoryId, {
+        name: 'Premium Cotton Shirt',
+        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 3 }],
+      });
+      await createProduct(categoryId, {
+        name: 'Premium Cotton Shirt unavailable',
+        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 1 }],
+      }).then(async (product) => {
+        await prisma.inventory.update({
+          where: { variantId: product.variants[0]?.id ?? '' },
+          data: { onHandQuantity: 0 },
+        });
+      });
+      await createProduct(otherCategoryId, {
+        name: 'Premium Cotton Shirt other',
+        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 3 }],
+      });
+      await prisma.product.update({
+        where: { id: matching.id },
+        data: { createdAt: new Date('2026-09-20T20:00:00.000Z') },
+      });
+
+      const response = await request(server(app))
+        .get('/api/v1/admin/catalog/products')
+        .query({
+          name: 'cotton shirt',
+          categoryId,
+          size: 'm',
+          color: 'black',
+          status: 'DRAFT',
+          availability: 'IN_STOCK',
+          createdFrom: '2026-09-20T00:00:00.000Z',
+          createdTo: '2026-09-20T23:59:59.000Z',
+          minimumPriceRial: '100000',
+          maximumPriceRial: '130000',
+        })
+        .set('Cookie', superAdmin.accessCookie)
+        .expect(200);
+
+      assert.deepEqual(responseBody<ProductListBody>(response).items.map(({ id }) => id), [matching.id]);
     });
 
     void test('returns protected server-owned Product size and color options', async () => {
@@ -651,6 +734,11 @@ void describe(
           ['200', '400', '401', '403', '404', '409', '500'],
         ],
         [
+          '/api/v1/admin/catalog/products/{productId}',
+          'delete',
+          ['200', '400', '401', '403', '404', '500'],
+        ],
+        [
           '/api/v1/admin/catalog/products/{productId}/variants',
           'post',
           ['201', '400', '401', '403', '404', '409', '500'],
@@ -670,14 +758,27 @@ void describe(
       const listParameters =
         document.paths['/api/v1/admin/catalog/products']?.get?.parameters ?? [];
       assert.deepEqual(listParameters.map(({ name }) => name).sort(), [
+        'availability',
         'categoryId',
+        'color',
+        'createdFrom',
+        'createdTo',
+        'maximumPriceRial',
+        'minimumPriceRial',
+        'name',
         'page',
         'pageSize',
+        'size',
         'status',
       ]);
+      for (const name of ['createdFrom', 'createdTo']) {
+        const parameter = listParameters.find((item) => item.name === name);
+        assert.equal((parameter as { readonly schema?: { readonly format?: string } } | undefined)?.schema?.format, 'date-time');
+      }
       for (const operation of [
         document.paths['/api/v1/admin/catalog/products']?.post,
         document.paths['/api/v1/admin/catalog/products/{productId}']?.patch,
+        document.paths['/api/v1/admin/catalog/products/{productId}']?.delete,
         document.paths['/api/v1/admin/catalog/products/{productId}/variants']?.post,
         document.paths['/api/v1/admin/catalog/variants/{variantId}']?.patch,
       ]) {

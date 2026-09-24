@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBody,
   ApiCookieAuth,
@@ -66,7 +66,15 @@ export class ProductController {
     example: 25,
   })
   @ApiQuery({ name: 'categoryId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({ name: 'name', required: false, type: String, minLength: 1, maxLength: 200 })
+  @ApiQuery({ name: 'size', required: false, type: String, minLength: 1, maxLength: 80 })
+  @ApiQuery({ name: 'color', required: false, type: String, minLength: 1, maxLength: 80 })
   @ApiQuery({ name: 'status', required: false, enum: ProductStatus })
+  @ApiQuery({ name: 'availability', required: false, enum: ['IN_STOCK', 'OUT_OF_STOCK'] })
+  @ApiQuery({ name: 'createdFrom', required: false, type: String, format: 'date-time' })
+  @ApiQuery({ name: 'createdTo', required: false, type: String, format: 'date-time' })
+  @ApiQuery({ name: 'minimumPriceRial', required: false, type: Number, minimum: 10, multipleOf: 10 })
+  @ApiQuery({ name: 'maximumPriceRial', required: false, type: Number, minimum: 10, multipleOf: 10 })
   @ApiResponse({ status: 200, type: ProductListResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto })
   @ApiResponse({ status: 401, type: ApiErrorDto })
@@ -132,6 +140,28 @@ export class ProductController {
         parseCatalogUuid(productId, 'productId'),
         parseUpdateProductRequest(body),
       ),
+    );
+  }
+
+  @Delete('products/:productId')
+  @ApiSuccess({
+    code: 'PRODUCT_DELETED',
+    message: 'محصول با موفقیت حذف شد.',
+    kind: 'none',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Permanently delete a Product and its complete owned aggregate' })
+  @ApiParam({ name: 'productId', format: 'uuid' })
+  @ApiResponse({ status: 200, description: 'Product permanently deleted.' })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  async delete(@Param('productId') productId: string): Promise<void> {
+    await this.handle(() =>
+      this.products.delete(parseCatalogUuid(productId, 'productId')),
     );
   }
 

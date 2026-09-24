@@ -6,6 +6,8 @@ export type CategoryErrorCode =
   | 'CATEGORY_LIMIT_REACHED'
   | 'CATEGORY_MOVE_INVALID'
   | 'CATEGORY_NAME_CONFLICT'
+  | 'CATEGORY_IMAGE_NOT_FOUND'
+  | 'CATEGORY_IMAGE_REQUIRED'
   | 'CATEGORY_NOT_EMPTY'
   | 'CATEGORY_NOT_FOUND'
   | 'VALIDATION_FAILED';
@@ -14,6 +16,8 @@ const MESSAGES: Readonly<Record<CategoryErrorCode, string>> = {
   CATEGORY_LIMIT_REACHED: 'حداکثر تعداد دسته‌بندی‌ها ثبت شده است.',
   CATEGORY_MOVE_INVALID: 'انتقال دسته‌بندی با ساختار مجاز سازگار نیست.',
   CATEGORY_NAME_CONFLICT: 'دسته‌بندی هم‌نامی در این سطح وجود دارد.',
+  CATEGORY_IMAGE_NOT_FOUND: 'تصویر دسته‌بندی مورد نظر یافت نشد.',
+  CATEGORY_IMAGE_REQUIRED: 'انتخاب تصویر دسته‌بندی الزامی است.',
   CATEGORY_NOT_EMPTY: 'دسته‌بندی دارای زیرمجموعه یا محصول است.',
   CATEGORY_NOT_FOUND: 'دسته‌بندی مورد نظر یافت نشد.',
   VALIDATION_FAILED: 'اطلاعات درخواست معتبر نیست.',
@@ -23,6 +27,8 @@ const STATUS: Readonly<Record<CategoryErrorCode, number>> = {
   CATEGORY_LIMIT_REACHED: 409,
   CATEGORY_MOVE_INVALID: 409,
   CATEGORY_NAME_CONFLICT: 409,
+  CATEGORY_IMAGE_NOT_FOUND: 404,
+  CATEGORY_IMAGE_REQUIRED: 422,
   CATEGORY_NOT_EMPTY: 409,
   CATEGORY_NOT_FOUND: 404,
   VALIDATION_FAILED: 400,

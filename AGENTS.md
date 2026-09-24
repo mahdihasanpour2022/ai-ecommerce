@@ -202,6 +202,7 @@ When authorized, make the smallest coherent change, follow established architect
 - Installed does not mean architecturally mandatory: preserve already-installed useful packages, do not force their use, and do not remove them merely for minimalism. Use them only when an approved task has a concrete need.
 - Do not create, modify, generate, or apply a database migration unless the approved task explicitly includes the corresponding schema change. Do not change the Prisma schema outside approved task scope. For a non-trivial schema change, present the proposed model and migration impact before implementation unless that implementation was already explicitly approved.
 - Never make unrelated changes, silently decide an ambiguous major architecture issue, expose secrets, or claim planned behavior is implemented.
+- Treat every file below `apps/api/tmp/product-images/` as live application-owned Product/Category media. Never delete, rename, rewrite, clean, or use those files as test fixtures. Media removal is authorized only through the owning HTTP/domain operation and its durable database cleanup record; tests must use their own temporary storage root outside this directory.
 - Backend authorization is authoritative; UI visibility is not authorization.
 - Avoid speculative infrastructure and abstraction. No microservices, Kafka, Kubernetes, Elasticsearch, or Redis until approved requirements justify them.
 

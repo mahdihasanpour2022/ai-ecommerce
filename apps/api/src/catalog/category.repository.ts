@@ -8,6 +8,16 @@ export const CATEGORY_SELECT = {
   name: true,
   nameKey: true,
   parentId: true,
+  image: {
+    select: {
+      id: true,
+      storageKey: true,
+      mediaType: true,
+      byteSize: true,
+      width: true,
+      height: true,
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -42,6 +52,39 @@ export class CategoryRepository {
     return transaction.category.findMany({
       select: CATEGORY_SELECT,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+  }
+
+  content(imageId: string) {
+    return this.prisma.categoryImage.findUnique({
+      where: { id: imageId },
+      select: { id: true, storageKey: true, mediaType: true, byteSize: true },
+    });
+  }
+
+  createCleanupOutside(storageKey: string) {
+    return this.prisma.categoryImageCleanup.create({ data: { storageKey }, select: { id: true } });
+  }
+
+  pendingCleanups() {
+    return this.prisma.categoryImageCleanup.findMany({
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, storageKey: true },
+    });
+  }
+
+  deleteCleanup(id: string) {
+    return this.prisma.categoryImageCleanup.deleteMany({ where: { id } });
+  }
+
+  markCleanupFailure(id: string) {
+    return this.prisma.categoryImageCleanup.updateMany({
+      where: { id },
+      data: {
+        attemptCount: { increment: 1 },
+        lastAttemptAt: new Date(),
+        lastFailureCode: 'DISCARD_FAILED',
+      },
     });
   }
 }

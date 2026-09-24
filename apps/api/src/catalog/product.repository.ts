@@ -100,9 +100,42 @@ export class ProductRepository {
     readonly rows: ProductSummaryRecord[];
     readonly totalItems: number;
   }> {
+    const variantFilter: Prisma.ProductVariantWhereInput = {
+      ...(query.sizeKey === undefined ? {} : { sizeKey: query.sizeKey }),
+      ...(query.colorKey === undefined ? {} : { colorKey: query.colorKey }),
+      ...(query.minimumPriceRial === undefined && query.maximumPriceRial === undefined
+        ? {}
+        : {
+            priceRial: {
+              ...(query.minimumPriceRial === undefined ? {} : { gte: query.minimumPriceRial }),
+              ...(query.maximumPriceRial === undefined ? {} : { lte: query.maximumPriceRial }),
+            },
+          }),
+    };
+    const hasVariantFilter = Object.keys(variantFilter).length > 0;
+    const inStock: Prisma.ProductVariantWhereInput = {
+      inventory: { is: { onHandQuantity: { gt: 0 } } },
+    };
     const where: Prisma.ProductWhereInput = {
+      ...(query.name === undefined
+        ? {}
+        : { name: { contains: query.name, mode: 'insensitive' as const } }),
       ...(query.categoryId === undefined ? {} : { categoryId: query.categoryId }),
       ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.createdFrom === undefined && query.createdToExclusive === undefined
+        ? {}
+        : {
+            createdAt: {
+              ...(query.createdFrom === undefined ? {} : { gte: query.createdFrom }),
+              ...(query.createdToExclusive === undefined ? {} : { lt: query.createdToExclusive }),
+            },
+          }),
+      ...(hasVariantFilter ? { variants: { some: variantFilter } } : {}),
+      ...(query.availability === 'IN_STOCK'
+        ? { AND: [{ variants: { some: inStock } }] }
+        : query.availability === 'OUT_OF_STOCK'
+          ? { AND: [{ variants: { none: inStock } }] }
+          : {}),
     };
     const categoryCount =
       query.categoryId === undefined
@@ -152,6 +185,29 @@ export class ProductRepository {
     productId: string,
   ): Promise<ProductDetailRecord | null> {
     return this.loadAggregate(transaction, productId);
+  }
+
+  pendingImageCleanups(): Promise<Array<{ readonly id: string; readonly storageKey: string }>> {
+    return this.prisma.productImageCleanup.findMany({
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: 10,
+      select: { id: true, storageKey: true },
+    });
+  }
+
+  deleteImageCleanup(id: string): Promise<unknown> {
+    return this.prisma.productImageCleanup.deleteMany({ where: { id } });
+  }
+
+  markImageCleanupFailure(id: string): Promise<unknown> {
+    return this.prisma.productImageCleanup.updateMany({
+      where: { id },
+      data: {
+        attemptCount: { increment: 1 },
+        lastAttemptAt: new Date(),
+        lastFailureCode: 'STORAGE_UNAVAILABLE',
+      },
+    });
   }
 
   private async loadAggregate(

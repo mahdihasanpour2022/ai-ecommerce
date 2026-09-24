@@ -63,7 +63,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 
 ### State and invariants
 
-- Category has immutable UUID `id`, required normalized `name`, nullable `parentId`, and implementation timestamps.
+- Category has immutable UUID `id`, required normalized `name`, nullable `parentId`, and implementation timestamps. Every newly created Category has exactly one content-validated Category Image; an existing pre-migration Category without one must receive an image on its next update.
 - `parentId = null` identifies a root. Any non-null parent must exist.
 - The root is level 1 and the maximum allowed level is 6.
 - Normalized names are case-insensitively unique among siblings. Root Categories share one sibling scope. The same name may appear under different parents.
@@ -92,9 +92,9 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 - Product creation requires name, Category, and at least one Variant in one atomic operation. New Products always begin `DRAFT`; clients cannot create them directly as Active or Archived.
 - `DRAFT` is editable and neither public nor purchasable.
 - `ACTIVE` is publicly retrievable. Only its active Variants are returned publicly.
-- `ARCHIVED` is retained, immutable except for transition back to Draft, and neither public nor purchasable.
+- `ARCHIVED` is the reversible temporarily unavailable state: it is retained, immutable except for transition back to Draft, and neither public nor purchasable. Permanent deletion is a separate explicit operation.
 - Allowed transitions are Draft to/from Active, Draft or Active to Archived, and Archived to Draft. Other transitions return a conflict.
-- The current contract has no Product hard-delete operation.
+- A separately confirmed permanent delete removes a Product in any lifecycle state together with its owned Variants, Inventory, and Images; Archive remains the reversible temporarily unavailable state.
 
 ### Activation and continued validity
 
@@ -238,6 +238,7 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `POST /api/v1/admin/catalog/categories` | `catalog.manage` | Yes | Create Category; `201` with Category DTO. |
 | `PATCH /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Rename and/or atomically move; `200` with Category DTO. |
 | `DELETE /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Delete eligible empty leaf; `200` with the canonical no-payload success envelope. |
+| `GET /api/v1/admin/catalog/category-images/{imageId}/content` | `catalog.read` | No | Controlled Category Image bytes for authorized Admins. |
 | `GET /api/v1/admin/catalog/products` | `catalog.read` | No | Page-bounded protected Product summaries. |
 | `GET /api/v1/admin/catalog/products/{productId}` | `catalog.read` | No | Full protected Product, Variant, exact Inventory, and ready Image metadata. |
 | `GET /api/v1/admin/catalog/product-options/sizes` | `catalog.read` | No | Server-owned Product size options for Admin forms. |
@@ -245,6 +246,7 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/product-options/statuses` | `catalog.read` | No | Server-owned Product lifecycle English identifiers and Persian display names. |
 | `POST /api/v1/admin/catalog/products` | `catalog.manage` | Yes | Atomically create Draft Product, initial Variants, and Inventory; `201`. |
 | `PATCH /api/v1/admin/catalog/products/{productId}` | `catalog.manage` | Yes | Update Product fields and/or perform one allowed lifecycle transition; `200`. |
+| `DELETE /api/v1/admin/catalog/products/{productId}` | `catalog.manage` | Yes | Permanently delete a Product in any lifecycle state with its Variants, Inventory, and Images; `200` with the canonical no-payload success envelope. |
 | `POST /api/v1/admin/catalog/products/{productId}/variants` | `catalog.manage` | Yes | Create Variant plus Inventory; `201`. |
 | `PATCH /api/v1/admin/catalog/variants/{variantId}` | `catalog.manage` | Yes | Update SKU/labels/price/active state; `200`. |
 | `PUT /api/v1/admin/catalog/variants/{variantId}/inventory` | `inventory.update` | Yes | Guarded absolute quantity update; `200` with quantity/version. |
@@ -256,12 +258,12 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/settings/price-display-unit` | `catalog.read` | No | Current global unit. |
 | `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price.display.unit.update` | Yes | Replace global unit; `200`. |
 
-Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `createdAt DESC, id DESC`. It may filter by exact `categoryId` and lifecycle `status`; other filters/sorts are rejected by the current contract. The protected Category tree orders every sibling collection by `createdAt DESC, id DESC`, so newly created root Categories and children appear first within their respective levels. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
+Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `createdAt DESC, id DESC`. It may combine case-insensitive partial `name`, exact `categoryId`, normalized exact Variant `size` and `color`, lifecycle `status`, `IN_STOCK`/`OUT_OF_STOCK` availability, inclusive `createdFrom`/`createdTo` ISO-8601 UTC date-time bounds (`YYYY-MM-DDTHH:mm:ss.sssZ`; `createdTo` includes the selected whole second), and inclusive Variant `minimumPriceRial`/`maximumPriceRial` bounds. Unknown filters and invalid or reversed bounds are rejected. The protected Category tree orders every sibling collection by `createdAt DESC, id DESC`, so newly created root Categories and children appear first within their respective levels. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
 
 ### Protected mutation DTO boundaries
 
-- Create Category JSON: required `name`; optional nullable `parentId`, default `null`.
-- Patch Category JSON: optional `name` and optional nullable `parentId`; at least one field must be present. Supplying `parentId: null` moves it to the root.
+- Create Category multipart: exactly one required `file`, required `name`, and optional empty/UUID `parentId`. The image follows the same content, size, dimension, and storage-safety boundary as Product Images.
+- Patch Category multipart: optional replacement `file`, optional `name`, and optional empty/UUID `parentId`; at least one field/file must be present. Omitting the file preserves an existing image, while a legacy Category without an image requires one.
 - Create Product JSON: required `name`, `categoryId`, and non-empty `variants`; optional nullable `description`. Product status is server-owned `DRAFT`.
 - Initial Variant inside Create Product JSON: required `priceRial` and positive `onHandQuantity` (`1..2147483647`); optional nullable `size`/`color`; optional `isActive`, default `true`. Backend generates the globally unique normalized `sku`.
 - Create Variant JSON: required `sku` and `priceRial`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`.
@@ -277,7 +279,7 @@ Normalized values returned by successful mutations are authoritative. Validation
 
 ### Minimum protected DTO boundaries
 
-- Category: `id`, `name`, `parentId`, `level`, `children`; protected responses may include `createdAt`/`updatedAt`.
+- Category: `id`, `name`, `parentId`, `level`, nullable Image metadata, `children`; protected responses may include `createdAt`/`updatedAt`.
 - Product summary: `id`, `name`, nullable plain-text `description`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, main Image metadata if present, minimum/maximum `priceRial`, exact aggregate on-hand quantity, `createdAt`, `updatedAt`.
 - Product detail: Product fields plus all retained Variants with `id`, `sku`, `size`, `color`, `priceRial`, `isActive`, Inventory `{ onHandQuantity, version }`; ordered ready Images; `imageVersion`; timestamps.
 - Mutations return the smallest complete affected DTO needed for the Admin to update state without guessing. They never return persistence-only normalized keys, cleanup state, or storage paths/keys.
@@ -363,6 +365,7 @@ Database uniqueness/concurrency violations must map to these domain errors rathe
 - SKU, normalized Variant combination, normalized sibling Category name, Inventory non-negativity, Product Image position/count/version, and singleton setting integrity require database constraints/indexes where PostgreSQL can enforce them.
 - Inventory update is one version-matched atomic mutation.
 - Image metadata/order updates are atomic; external file operations never hold a database transaction open. Staging/compensation and durable cleanup state bridge that boundary.
+- Product deletion atomically removes the complete Product-owned relational aggregate in every lifecycle state, records durable cleanup for every Image key before commit, and performs idempotent byte cleanup after commit.
 - Public reads apply lifecycle/Variant/Image eligibility in the authoritative query/service, not only response filtering after loading protected rows.
 - Important list/detail queries are bounded, deterministically ordered, avoid N+1 access, and receive only indexes justified by these known contracts.
 
@@ -422,6 +425,6 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ## Explicit deferrals
 
-This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, Product/Variant deletion, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, search, advanced filters, exact public stock, Admin/Storefront UI, image transformations, video, CDN/DAM, production object storage, multiple currencies, discounts/tax/history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, BFF, Redis, microservices, or unrelated legacy identifier renaming.
+This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, independent Variant deletion, deletion recovery, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, public search, public advanced filters, exact public stock, image transformations, video, CDN/DAM, production object storage, multiple currencies, discounts/tax/history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, Redis, microservices, or unrelated legacy identifier renaming.
 
 Adding these requires a new explicit owner decision and an approved route or feature plan. Additive refactoring caused by genuinely new requirements is acceptable; new work must avoid breaking rework caused by contradicting the accepted semantics above.

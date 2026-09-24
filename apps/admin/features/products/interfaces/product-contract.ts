@@ -159,3 +159,4 @@ export interface ChangeProductStatusVariables {
 }
 
 export type ChangeProductStatusResponse = ApiResponse<null, ProductDetail, null>;
+export type DeleteProductResponse = ApiResponse<null, null, null>;
