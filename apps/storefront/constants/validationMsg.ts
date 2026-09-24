@@ -1,6 +1,2 @@
+export const isRequired = (fieldName: string) => `وارد کردن ${fieldName} الزامی است.`;
 
-
-export const validationMessage = ()=>{
-  isRequired = (fieldName: string) => `وارد کردن ${fieldName} ضروری است.`;
-
-}
