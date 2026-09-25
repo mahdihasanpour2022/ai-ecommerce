@@ -28,7 +28,7 @@ const ProductPrice = ({ product }: { product: Product }) => {
             alt={product.currency}
             width={300}
             height={300}
-            className="h-5! w-5!"
+            className="h-4! w-4! sm:h-5! sm:w-5!"
           />
         </div>
       </div>

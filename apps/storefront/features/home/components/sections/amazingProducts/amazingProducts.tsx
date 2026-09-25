@@ -139,14 +139,14 @@ const products: Product[] = [
 export const AmazingProducts = () => {
   return (
     <div className="h-80 w-full px-0 py-2 sm:px-12 sm:pt-4 lg:px-24 2xl:px-36">
-      <div className="bg-nice-red flex h-full w-full flex-col items-center justify-start gap-2 py-4 pr-2 sm:flex-row sm:rounded-xl sm:pl-0.5">
+      <div className="bg-nice-red flex h-full w-full flex-col items-center justify-start gap-2 py-4 pr-2 sm:flex-row sm:rounded-xl sm:pl-0.5 overflow-hidden!">
         <div className="flex h-fit w-full flex-col items-center justify-between gap-4 pt-1 pb-0 sm:h-full sm:w-48 sm:pt-10! sm:pr-2 sm:pb-4">
           <UiP variant="style_2" className="mx-auto">
             شگفت انگیز
           </UiP>
           <UiButton className="" variant="style_3" size="small">{`مشاهده همه >`}</UiButton>
         </div>
-        <div className="h-auto flex-1 bg-nice-red overflow-hidden!">
+        <div className="bg-nice-red h-auto flex-1 overflow-hidden!">
           <UiCarousel
             className="h-full w-full"
             options={{ loop: true, direction: 'rtl', slidesToScroll: 1 }}
@@ -155,7 +155,7 @@ export const AmazingProducts = () => {
             labels={{ carousel: 'محصولات' }}
             containerClassName="h-full"
             // slideClassName="basis-1/2 sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 2xl:basis-1/6 3xl:basis-1/7 h-64 px-1"
-            slideClassName="w-44 h-64 px-1"
+            slideClassName="w-32 sm:w-44 h-64 px-1"
           >
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
