@@ -1,6 +1,6 @@
 'use client';
 
-import { Categories, Header, NavBar, TopSliders } from './sections';
+import { AmazingProducts, Categories, Header, NavBar, TopSliders } from './sections';
 
 // https://theme56.mywebzi.ir/
 const HomeCmp = () => {
@@ -10,6 +10,7 @@ const HomeCmp = () => {
       <NavBar />
       <TopSliders />
       <Categories />
+      <AmazingProducts />
     </main>
   );
 };

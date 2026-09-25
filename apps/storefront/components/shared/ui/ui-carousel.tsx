@@ -6,6 +6,7 @@ import useEmblaCarousel from 'embla-carousel-react';
 import {
   Children,
   type HTMLAttributes,
+  isValidElement,
   type ReactNode,
   useCallback,
   useMemo,
@@ -165,9 +166,10 @@ export function UiCarousel({
         >
           {slides.map((slide, index) => (
             <div
-              key={index}
+              key={isValidElement(slide) && slide.key !== null ? slide.key : index}
               className={clsx(
-                'relative shrink-0 grow-0 basis-full',
+                'relative shrink-0 grow-0',
+                !slideClassName && 'basis-full',
                 axis === 'x' ? 'min-w-0' : 'min-h-0',
                 slideClassName,
               )}
@@ -191,7 +193,7 @@ export function UiCarousel({
           <UiButton
             variant="style_2"
             size="icon"
-            className="pointer-events-auto rounded-full border border-white/70 bg-black/45 text-white shadow-sm hover:bg-black/60"
+            className="pointer-events-auto cursor-pointer rounded-2xl border border-white/20 bg-black/45! text-white shadow-sm hover:bg-black/60"
             onClick={() => carouselApi?.scrollPrev()}
             disabled={!canScrollPrevious}
             aria-label={labels?.previous ?? 'اسلاید قبلی'}
@@ -202,7 +204,7 @@ export function UiCarousel({
           <UiButton
             variant="style_2"
             size="icon"
-            className="pointer-events-auto rounded-full border border-white/70 bg-black/45 text-white shadow-sm hover:bg-black/60"
+            className="pointer-events-auto cursor-pointer rounded-2xl border border-white/20 bg-black/45! text-white shadow-sm hover:bg-black/60"
             onClick={() => carouselApi?.scrollNext()}
             disabled={!canScrollNext}
             aria-label={labels?.next ?? 'اسلاید بعدی'}
@@ -255,7 +257,7 @@ function ChevronIcon({ direction }: { readonly direction: 'left' | 'right' }) {
       fill="none"
       stroke="currentColor"
       strokeWidth="1"
-      className={clsx('size-4 sm:size-5', direction === 'right' && 'rotate-180')}
+      className={clsx('mx-auto size-4 sm:size-6', direction === 'right' && 'rotate-180')}
     >
       <path strokeLinecap="round" strokeLinejoin="round" d="m15 18-6-6 6-6" />
     </svg>

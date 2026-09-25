@@ -30,9 +30,9 @@ const slides = [
 export const TopSliders = () => {
   return (
     <UiCarousel
-      className="h-32 w-full bg-red-500 sm:h-90!"
+      className="h-32 w-full sm:h-90!"
       options={{ loop: true, direction: 'rtl' }}
-      autoplay={{ delay: 6000 }}
+      autoplay={{ delay: 5000 }}
       controls="both"
       labels={{ carousel: 'بنرهای صفحه اصلی' }}
     >
