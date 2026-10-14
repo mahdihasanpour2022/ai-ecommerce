@@ -15,6 +15,7 @@ const routes = [
   { name: 'صفحه اصلی', href: '/' },
   { name: 'دسته‌بندی‌ها', href: '/categories' },
   { name: 'محصولات', href: '/products' },
+  { name: 'مدیریت بنرها', href: '/banners' },
 ] as const;
 
 export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode }>) {

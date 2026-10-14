@@ -22,11 +22,12 @@ const TYPES: Readonly<
 
 @Injectable()
 export class ProductImageValidator {
-  async validate(file: ProductImageUploadFile): Promise<ValidatedProductImage> {
+  // سقف حجم را برای هر مصرف‌کننده اعمال می‌کند و اعتبار واقعی محتوای تصویر را می‌سنجد.
+  async validate(file: ProductImageUploadFile, maxBytes = MAX_BYTES): Promise<ValidatedProductImage> {
     if (file.size !== file.buffer.length) {
       throw new ProductImageError('PRODUCT_IMAGE_CONTENT_INVALID');
     }
-    if (file.buffer.length > MAX_BYTES) {
+    if (file.buffer.length > maxBytes) {
       throw new ProductImageError('PRODUCT_IMAGE_TOO_LARGE');
     }
     if (file.buffer.length === 0) {

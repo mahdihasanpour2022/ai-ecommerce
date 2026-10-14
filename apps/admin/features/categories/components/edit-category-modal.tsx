@@ -6,16 +6,12 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
+import { UiImageInput } from '../../../app/components/shared/ui-image-input';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import type { Category, EditCategoryVariables } from '../interfaces/category-contract';
 import type { EditCategoryFormValues } from '../schemas/edit-category-schema';
 import { editCategorySchema } from '../schemas/edit-category-schema';
 import { validEditParentOptions } from '../utils/category-options';
-import {
-  IMAGE_ACCEPT,
-  ImageSanitizationError,
-  imageSanitizer,
-} from '../../../utils/image-sanitizer';
 
 interface EditCategoryModalProps {
   readonly category: Category | null;
@@ -83,61 +79,29 @@ export function EditCategoryModal({
       onCancel={onCancel}
     >
       <UiForm.Root onSubmit={(event) => void submit(event)}>
-        <UiForm.Field>
-          <UiForm.Label htmlFor="edit-category-image">
-            {category?.image ? 'تصویر جدید (اختیاری)' : 'تصویر دسته‌بندی'}
-          </UiForm.Label>
-          <Controller
-            name="image"
-            control={control}
-            render={({ field }) => (
-              <UiForm.TextInput
-                key={category?.image?.id ?? category?.id}
-                id="edit-category-image"
-                ref={field.ref}
-                name={field.name}
-                type="file"
-                accept={IMAGE_ACCEPT}
-                disabled={submitting}
-                aria-invalid={errors.image ? 'true' : 'false'}
-                aria-describedby={
-                  errors.image
-                    ? 'edit-category-image-help edit-category-image-error'
-                    : 'edit-category-image-help'
-                }
-                className="cursor-pointer file:me-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:font-bold file:text-accent-foreground"
-                onBlur={field.onBlur}
-                onChange={(event) => {
-                  const input = event.currentTarget;
-                  const file = input.files?.[0];
-                  if (!file) return field.onChange(undefined);
-                  void imageSanitizer(file)
-                    .then((safeFile) => {
-                      field.onChange(safeFile);
-                      clearErrors('image');
-                    })
-                    .catch(async (error: unknown) => {
-                      const content =
-                        error instanceof ImageSanitizationError
-                          ? error.message
-                          : 'بررسی تصویر ممکن نشد. تصویر دیگری انتخاب کنید.';
-                      input.value = '';
-                      field.onChange(undefined);
-                      setError('image', { type: 'validate', message: content });
-                      await message.error({ key: 'edit-category-image-validation-error', content });
-                    });
-                }}
-              />
-            )}
-          />
-          <p id="edit-category-image-help" className="m-0 text-xs leading-6 text-muted">
-            {category?.image ? 'انتخاب نکردن فایل، تصویر فعلی را حفظ می‌کند. ' : ''}
-            فرمت‌های مجاز: JPG، JPEG، PNG و WebP — حجم حداکثر ۴۰۰ کیلوبایت است.
-          </p>
-          {errors.image ? (
-            <UiForm.Error id="edit-category-image-error">{errors.image.message}</UiForm.Error>
-          ) : null}
-        </UiForm.Field>
+        <Controller
+          name="image"
+          control={control}
+          render={({ field }) => (
+            <UiImageInput
+              key={category?.image?.id ?? category?.id}
+              id="edit-category-image"
+              ref={field.ref}
+              name={field.name}
+              label={category?.image ? 'تصویر جدید (اختیاری)' : 'تصویر دسته‌بندی'}
+              help={`${category?.image ? 'انتخاب نکردن فایل، تصویر فعلی را حفظ می‌کند. ' : ''}فرمت‌های مجاز: JPG، JPEG، PNG و WebP — حجم حداکثر ۴۰۰ کیلوبایت است.`}
+              error={errors.image?.message}
+              disabled={submitting}
+              toastKey="edit-category-image-validation-error"
+              onBlur={field.onBlur}
+              onChange={(file) => {
+                field.onChange(file);
+                if (file) clearErrors('image');
+              }}
+              onValidationError={(content) => setError('image', { type: 'validate', message: content })}
+            />
+          )}
+        />
 
         <UiForm.Field>
           <UiForm.Label htmlFor="edit-category-name">نام دسته‌بندی</UiForm.Label>

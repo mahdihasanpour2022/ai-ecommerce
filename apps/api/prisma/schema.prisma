@@ -200,6 +200,33 @@ model CategoryImageCleanup {
   @@map("category_image_cleanups")
 }
 
+model Banner {
+  id         String                @id(map: "banners_pkey") @default(uuid()) @db.Uuid
+  storageKey String                @unique(map: "banners_storage_key_key") @map("storage_key") @db.VarChar(512)
+  mediaType  ProductImageMediaType @map("media_type")
+  byteSize   Int                   @map("byte_size")
+  width      Int
+  height     Int
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([createdAt, id], map: "banners_created_id_idx")
+  @@map("banners")
+}
+
+model BannerImageCleanup {
+  id              String    @id(map: "banner_image_cleanups_pkey") @default(uuid()) @db.Uuid
+  storageKey      String    @unique(map: "banner_image_cleanups_storage_key_key") @map("storage_key") @db.VarChar(512)
+  attemptCount    Int       @default(0) @map("attempt_count")
+  lastAttemptAt   DateTime? @map("last_attempt_at") @db.Timestamptz(3)
+  lastFailureCode String?   @map("last_failure_code") @db.VarChar(64)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([createdAt, id], map: "banner_image_cleanups_created_id_idx")
+  @@map("banner_image_cleanups")
+}
+
 model Product {
   id           String           @id(map: "products_pkey") @default(uuid()) @db.Uuid
   name         String           @db.VarChar(200)

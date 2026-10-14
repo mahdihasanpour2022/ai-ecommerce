@@ -7,6 +7,7 @@ import type { DefaultValues } from 'react-hook-form';
 import { Controller, useForm } from 'react-hook-form';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
+import { UiImageInput } from '../../../app/components/shared/ui-image-input';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
 import { normalizeHttpFailure } from '../../../app/http/http-client';
@@ -19,11 +20,6 @@ import { useUploadProductImage } from '../hooks/useUploadProductImage';
 import type { ProductDetail } from '../interfaces/product-contract';
 import type { CreateProductFormValues } from '../schemas/create-product-schema';
 import { createProductSchema } from '../schemas/create-product-schema';
-import {
-  imageSanitizer,
-  PRODUCT_IMAGE_ACCEPT,
-  ProductImageSanitizationError,
-} from '../utils/image-sanitizer';
 import { formatPriceInput, normalizePriceInput } from '../../../utils/price-input';
 
 const DEFAULT_VALUES: DefaultValues<CreateProductFormValues> = {
@@ -154,62 +150,31 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
         }}
       >
         <UiForm.Root onSubmit={(event) => void submit(event)}>
-          <UiForm.Field>
-            <UiForm.Label htmlFor="product-image">تصویر محصول</UiForm.Label>
-            <Controller
-              name="image"
-              control={control}
-              render={({ field }) => (
-                <UiForm.TextInput
-                  key={imageInputKey}
-                  id="product-image"
-                  ref={field.ref}
-                  name={field.name}
-                  type="file"
-                  accept={PRODUCT_IMAGE_ACCEPT}
-                  disabled={submitting}
-                  aria-invalid={errors.image ? 'true' : 'false'}
-                  aria-describedby={
-                    errors.image ? 'product-image-help product-image-error' : 'product-image-help'
-                  }
-                  className="cursor-pointer file:me-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-2 file:font-bold file:text-accent-foreground"
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0];
-                    if (!file) {
-                      field.onChange(undefined);
-                      return;
-                    }
-                    void imageSanitizer(file)
-                      .then((safeFile) => {
-                        field.onChange(safeFile);
-                        clearErrors('image');
-                      })
-                      .catch(async (error: unknown) => {
-                        const errorMessage =
-                          error instanceof ProductImageSanitizationError
-                            ? error.message
-                            : 'بررسی تصویر ممکن نشد. تصویر دیگری انتخاب کنید.';
-                        input.value = '';
-                        field.onChange(undefined);
-                        setError('image', { type: 'validate', message: errorMessage });
-                        await message.error({
-                          key: 'product-image-validation-error',
-                          content: errorMessage,
-                        });
-                      });
-                  }}
-                />
-              )}
-            />
-            <p id="product-image-help" className="m-0 text-xs leading-6 text-muted">
-              فرمت‌های مجاز: JPG، JPEG، PNG و WebP — حجم حداکثر ۴۰۰ کیلوبایت است.
-            </p>
-            {errors.image ? (
-              <UiForm.Error id="product-image-error">{errors.image.message}</UiForm.Error>
-            ) : null}
-          </UiForm.Field>
+          <Controller
+            name="image"
+            control={control}
+            render={({ field }) => (
+              <UiImageInput
+                key={imageInputKey}
+                id="product-image"
+                ref={field.ref}
+                name={field.name}
+                label="تصویر محصول"
+                help="فرمت‌های مجاز: JPG، JPEG، PNG و WebP — حجم حداکثر ۴۰۰ کیلوبایت است."
+                error={errors.image?.message}
+                disabled={submitting}
+                toastKey="product-image-validation-error"
+                onBlur={field.onBlur}
+                onChange={(file) => {
+                  field.onChange(file);
+                  if (file) clearErrors('image');
+                }}
+                onValidationError={(errorMessage) =>
+                  setError('image', { type: 'validate', message: errorMessage })
+                }
+              />
+            )}
+          />
 
           <div className="grid gap-5 md:grid-cols-2">
             <UiForm.Field>

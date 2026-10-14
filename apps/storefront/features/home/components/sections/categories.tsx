@@ -33,7 +33,7 @@ export const Categories = () => {
       {categoryList.map((category: Category) => (
         <UiButton
           key={nanoid()}
-          className="flex h-fit w-fit! flex-col items-center justify-center gap-0 sm:gap-1 px-2! sm:px-4!"
+          className="flex h-fit w-fit! flex-col items-center justify-center gap-0 px-2! sm:gap-1 sm:px-4!"
         >
           <UiImage
             alt={category.alt}

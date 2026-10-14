@@ -1,6 +1,7 @@
 import { UiButton, UiCarousel, UiP } from '@/components/shared/ui';
 
-import { Product } from '@/features/home/interfaces/product';
+import ProductCard from '@/features/components/shared/productCard';
+import { Product } from '@/interfaces/product';
 import cap1 from '@/public/assets/product/cap/cap_1.webp';
 import cap10 from '@/public/assets/product/cap/cap_10.webp';
 import cap2 from '@/public/assets/product/cap/cap_2.webp';
@@ -11,9 +12,8 @@ import cap6 from '@/public/assets/product/cap/cap_6.webp';
 import cap7 from '@/public/assets/product/cap/cap_7.webp';
 import cap8 from '@/public/assets/product/cap/cap_8.webp';
 import cap9 from '@/public/assets/product/cap/cap_9.webp';
-import ProductCard from './subsets/productCard';
 
-const products: Product[] = [
+export const products: Product[] = [
   {
     id: 1,
     name: 'کلاه کتان سنگ شور مدل سنگشور',
@@ -25,6 +25,8 @@ const products: Product[] = [
     original_price: 6900000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 2,
@@ -37,6 +39,8 @@ const products: Product[] = [
     original_price: 3850000,
     discount: 15,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 3,
@@ -49,6 +53,8 @@ const products: Product[] = [
     original_price: 8000000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 4,
@@ -61,6 +67,8 @@ const products: Product[] = [
     original_price: 3000000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 5,
@@ -73,6 +81,8 @@ const products: Product[] = [
     original_price: 7500000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 6,
@@ -85,6 +95,8 @@ const products: Product[] = [
     original_price: 9350000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 7,
@@ -97,6 +109,8 @@ const products: Product[] = [
     original_price: 3000000,
     discount: 18,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 8,
@@ -109,6 +123,8 @@ const products: Product[] = [
     original_price: 7500000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 9,
@@ -121,6 +137,8 @@ const products: Product[] = [
     original_price: 5900000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
   {
     id: 10,
@@ -133,6 +151,8 @@ const products: Product[] = [
     original_price: 6300000,
     discount: 0,
     currency: 'IRR',
+    quantity: 1,
+    isAvailable: true,
   },
 ];
 

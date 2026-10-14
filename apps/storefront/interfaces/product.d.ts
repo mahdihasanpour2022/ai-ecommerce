@@ -12,4 +12,6 @@ export interface Product {
   original_price: number;
   discount: number;
   currency: Currency;
+  quantity: number;
+  isAvailable: boolean;
 }

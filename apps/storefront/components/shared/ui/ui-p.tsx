@@ -3,7 +3,9 @@ import type { ComponentPropsWithoutRef } from 'react';
 
 const VARIANT_CLASSES = {
   style_1: 'w-full py-1 text-sm leading-4 sm:leading-5 font-normal text-foreground/80 ',
-  style_2: 'text-white text-bold text-base sm:text-2xl leading-4 whitespace-nowrap',
+  style_2: 'text-white font-bold text-base sm:text-2xl leading-4 whitespace-nowrap',
+  style_3: 'text-foreground/80! font-bold text-xl leading-10 whitespace-nowrap',
+  style_4:'text-xl text-foreground/60 font-medium pb-3'
 } as const;
 
 interface UiP_Props extends ComponentPropsWithoutRef<'p'> {

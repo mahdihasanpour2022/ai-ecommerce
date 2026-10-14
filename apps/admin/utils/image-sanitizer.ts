@@ -14,9 +14,18 @@ export class ImageSanitizationError extends Error {
   }
 }
 
-export async function imageSanitizer(file: File): Promise<File> {
+export interface ImageSanitizerOptions {
+  readonly maxBytes?: number;
+  readonly maxSizeLabel?: string;
+}
+
+// نوع، پسوند و محتوای واقعی تصویر را با سقف حجم مصرف‌کننده هماهنگ می‌کند.
+export async function imageSanitizer(
+  file: File,
+  { maxBytes = IMAGE_MAX_BYTES, maxSizeLabel = '۴۰۰ کیلوبایت' }: ImageSanitizerOptions = {},
+): Promise<File> {
   if (file.size === 0) fail('فایل تصویر خالی است.');
-  if (file.size >= IMAGE_MAX_BYTES) fail('حجم تصویر باید کمتر از ۴۰۰ کیلوبایت باشد.');
+  if (file.size >= maxBytes) fail(`حجم تصویر باید کمتر از ${maxSizeLabel} باشد.`);
 
   const allowedExtensions = MIME_EXTENSIONS[file.type];
   const extension = file.name.split('.').pop()?.toLowerCase();

@@ -14,6 +14,13 @@ This repository is a production-oriented clothing-commerce monorepo with three i
 
 Start with [the project overview](docs/00-project-overview.md). Detailed architecture, standards, security rules, product context, and feature specifications live under [`docs/`](docs/00-project-overview.md). Treat those documents as constraints, not evidence that planned functionality exists.
 
+## Owner-enforced low-consumption rules
+
+- Do not load the full documentation set, architecture documentation, Codebase Memory, Context7, or the web unless a genuine blocker makes that source necessary.
+- Do not run lint, typecheck, tests, or builds. At the end of the task, provide only the commands the owner needs to run those checks.
+- Keep all progress commentary and the final report to no more than five lines each.
+- Do not make any change outside the explicit scope of the task.
+
 ## Context hierarchy
 
 Use focused context rather than loading all documentation:
