@@ -8,6 +8,8 @@ const VARIANT_CLASSES = {
   style_4: 'text-white w-fit text-[10px] sm:text-xs bg-nice-red px-1.5 py-0.5 rounded-2xl',
   style_5: 'text-foreground/80 w-fit text-xs sm:text-base pt-0.5 rounded-2xl font-bold',
   style_6: 'py-0 whitespace-normal text-foreground/40! text-xs leading-5 font-normal w-full',
+  style_7:
+    'py-0 whitespace-nowrap text-foreground/40! text-2xs sm:text-xs leading-5 font-normal w-fit text-gray-500!',
 } as const;
 
 interface UiSpanProps extends ComponentPropsWithoutRef<'span'> {

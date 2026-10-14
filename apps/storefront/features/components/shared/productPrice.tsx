@@ -3,7 +3,7 @@ import { Product } from '@/interfaces/product';
 // import rial from '@/public/assets/currency/rial.svg';
 import toman from '@/public/assets/currency/toman.svg';
 
-const ProductPrice = ({ product }: { product: Product }) => {
+export const ProductPrice = ({ product }: { product: Product }) => {
   const { final_price, original_price, discount, currency } = product;
   return (
     <div className="flex h-fit w-full flex-col items-end justify-center">
@@ -34,5 +34,3 @@ const ProductPrice = ({ product }: { product: Product }) => {
     </div>
   );
 };
-
-export default ProductPrice;

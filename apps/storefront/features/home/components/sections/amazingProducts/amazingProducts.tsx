@@ -1,6 +1,6 @@
 import { UiButton, UiCarousel, UiP } from '@/components/shared/ui';
 
-import ProductCard from '@/features/components/shared/productCard';
+import {ProductCard} from '@/features/components/shared/productCard';
 import { Product } from '@/interfaces/product';
 import cap1 from '@/public/assets/product/cap/cap_1.webp';
 import cap10 from '@/public/assets/product/cap/cap_10.webp';

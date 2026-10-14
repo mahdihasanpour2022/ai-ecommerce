@@ -1,5 +1,6 @@
 'use client';
 
+import { Footer } from '@/features/components/shared';
 import {
   AmazingProducts,
   CapProducts,
@@ -23,6 +24,7 @@ const HomeCmp = () => {
       <OurSuggestion />
       <DiscountedProduct />
       <CapProducts />
+      <Footer />
     </main>
   );
 };

@@ -1,5 +1,5 @@
 import { UiImage, UiP } from '@/components/shared/ui';
-import ProductPrice from '@/features/components/shared/productPrice';
+import { ProductPrice } from '@/features/components/shared/productPrice';
 import { Product } from '@/interfaces/product';
 import clsx from 'clsx';
 
@@ -8,7 +8,7 @@ interface Props {
   containerClassName?: string;
 }
 
-const ProductCard = ({ product, containerClassName }: Props) => {
+export const ProductCard = ({ product, containerClassName }: Props) => {
   const { id, alt, image, name } = product;
   return (
     <div
@@ -39,5 +39,3 @@ const ProductCard = ({ product, containerClassName }: Props) => {
     </div>
   );
 };
-
-export default ProductCard;

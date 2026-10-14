@@ -1,5 +1,5 @@
 import { UiButton, UiCarousel, UiP, UiSpan } from '@/components/shared/ui';
-import ProductCard from '@/features/components/shared/productCard';
+import {ProductCard} from '@/features/components/shared/productCard';
 import { products } from './amazingProducts/amazingProducts';
 
 export const CapProducts = () => {

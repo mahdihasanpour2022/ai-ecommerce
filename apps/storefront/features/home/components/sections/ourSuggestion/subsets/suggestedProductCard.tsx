@@ -1,5 +1,5 @@
 import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
-import ProductPrice from '@/features/components/shared/productPrice';
+import {ProductPrice} from '@/features/components/shared/productPrice';
 import { Product } from '@/interfaces/product';
 
 export const SuggestedProductCard = ({ product }: { product: Product }) => {
