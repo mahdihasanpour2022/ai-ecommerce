@@ -1,12 +1,12 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { App as AntdApp, ConfigProvider, theme as antTheme } from 'antd';
 import faIR from 'antd/locale/fa_IR';
-import { ADMIN_THEME_COOKIE } from './admin-theme';
+import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactQueryProvider } from '../providers/react-query-provider';
 import type { AdminTheme } from './admin-theme';
-import { ReactQueryProvider } from './react-query-provider';
+import { ADMIN_THEME_COOKIE } from './admin-theme';
 
 interface AdminThemeContextValue {
   readonly theme: AdminTheme;

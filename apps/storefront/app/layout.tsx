@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
+import { Toaster } from 'sonner';
+import { ReactQueryProvider } from '../providers/react-query-provider';
 import '../styles/globals.css';
 
 const iranSans = localFont({
@@ -33,7 +35,10 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="fa-IR" dir="rtl" className={`${iranSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col" cz-shortcut-listen="true">
-        {children}
+        <ReactQueryProvider>
+          <Toaster position="top-center" richColors dir="rtl" />
+          {children}
+        </ReactQueryProvider>
       </body>
     </html>
   );

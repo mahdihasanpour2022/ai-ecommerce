@@ -36,7 +36,14 @@ import { catchError } from 'rxjs';
 import { safeInternalHttpException } from '../authentication/authentication-http.js';
 import { ApiErrorDto } from '../authentication/login.dto.js';
 import { ApiSuccess, RawApiResponse } from '../http/api-response.js';
-import { BannerImageRequestDto, BannerResponseDto, parseBannerId, parseBannerImage } from './banner.dto.js';
+import {
+  BannerResponseDto,
+  CreateBannerRequestDto,
+  parseBannerId,
+  parseCreateBannerRequest,
+  parseUpdateBannerRequest,
+  UpdateBannerRequestDto,
+} from './banner.dto.js';
 import { BannerError, toBannerHttpException } from './banner.errors.js';
 import { BannerService } from './banner.service.js';
 import { CatalogAccessGuard, CatalogPermission } from './catalog-access.guard.js';
@@ -122,7 +129,7 @@ export class BannerController {
   @CatalogPermission('catalog.manage')
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Create a Homepage Banner' })
-  @ApiBody({ type: BannerImageRequestDto })
+  @ApiBody({ type: CreateBannerRequestDto })
   @ApiResponse({ status: 201, type: BannerResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto })
   @ApiResponse({ status: 422, type: ApiErrorDto })
@@ -130,7 +137,7 @@ export class BannerController {
     @UploadedFiles() files: ProductImageUploadFile[] | undefined,
     @Body() body: unknown,
   ): Promise<BannerResponseDto> {
-    return this.handle(() => this.banners.create(parseBannerImage(files, body)));
+    return this.handle(() => this.banners.create(parseCreateBannerRequest(files, body)));
   }
 
   @Patch(':bannerId')
@@ -141,7 +148,7 @@ export class BannerController {
   @ApiHeader(CSRF_HEADER)
   @ApiOperation({ summary: 'Replace a Homepage Banner image' })
   @ApiParam({ name: 'bannerId', format: 'uuid' })
-  @ApiBody({ type: BannerImageRequestDto })
+  @ApiBody({ type: UpdateBannerRequestDto })
   @ApiResponse({ status: 200, type: BannerResponseDto })
   @ApiResponse({ status: 404, type: ApiErrorDto })
   @ApiResponse({ status: 422, type: ApiErrorDto })
@@ -151,7 +158,7 @@ export class BannerController {
     @Body() body: unknown,
   ): Promise<BannerResponseDto> {
     return this.handle(() =>
-      this.banners.update(parseBannerId(bannerId), parseBannerImage(files, body)),
+      this.banners.update(parseBannerId(bannerId), parseUpdateBannerRequest(files, body)),
     );
   }
 
@@ -175,6 +182,51 @@ export class BannerController {
     } catch (error) {
       if (error instanceof BannerError) throw toBannerHttpException(error);
       if (error instanceof ProductImageError) throw toProductImageHttpException(error);
+      throw safeInternalHttpException();
+    }
+  }
+}
+
+@ApiTags('Public Homepage Banners')
+@Controller('catalog/banners')
+export class PublicBannerController {
+  constructor(private readonly banners: BannerService) {}
+
+  @Get()
+  @ApiSuccess({ code: 'BANNERS_FETCHED', message: 'بنرها با موفقیت دریافت شدند.', kind: 'collection' })
+  @ApiOperation({ summary: 'Return Homepage Banners for the public Storefront' })
+  @ApiResponse({ status: 200, type: BannerResponseDto, isArray: true })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async list(): Promise<BannerResponseDto[]> {
+    return this.handle(() => this.banners.list());
+  }
+
+  @Get(':bannerId/content')
+  @RawApiResponse()
+  @ApiOperation({ summary: 'Return public Banner image content' })
+  @ApiParam({ name: 'bannerId', format: 'uuid' })
+  @ApiProduces('image/jpeg', 'image/png', 'image/webp')
+  @ApiResponse({ status: 200, description: 'Validated immutable Banner image bytes.' })
+  @ApiResponse({ status: 400, type: ApiErrorDto, description: 'VALIDATION_FAILED.' })
+  @ApiResponse({ status: 404, type: ApiErrorDto, description: 'BANNER_NOT_FOUND.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
+  async content(
+    @Param('bannerId') bannerId: string,
+    @Res({ passthrough: true }) response: HeaderResponse,
+  ): Promise<StreamableFile> {
+    const result = await this.handle(() => this.banners.content(parseBannerId(bannerId)));
+    response.setHeader('Content-Type', mediaType(result.banner.mediaType));
+    response.setHeader('Content-Length', result.banner.byteSize);
+    response.setHeader('Cache-Control', 'public, max-age=300, no-transform');
+    response.setHeader('X-Content-Type-Options', 'nosniff');
+    return new StreamableFile(result.bytes);
+  }
+
+  private async handle<T>(work: () => Promise<T>): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      if (error instanceof BannerError) throw toBannerHttpException(error);
       throw safeInternalHttpException();
     }
   }

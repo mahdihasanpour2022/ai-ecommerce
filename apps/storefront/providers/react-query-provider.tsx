@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider, isServer } from '@tanstack/react-query';
+import { environmentManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AdminHttpError } from './http/http-client';
+import { useState, type ReactNode } from 'react';
+import { StorefrontHttpError } from '../app/http/http-client';
 
 const THREE_MINUTES = 3 * 60 * 1_000;
 const FIVE_MINUTES = 5 * 60 * 1_000;
 const MAX_QUERY_RETRIES = 2;
 
-export function shouldRetryAdminQuery(failureCount: number, error: unknown): boolean {
-  if (failureCount >= MAX_QUERY_RETRIES || !(error instanceof AdminHttpError)) return false;
+// فقط خواندن‌های ناموفق موقت را با تعداد محدود دوباره اجرا می‌کند.
+export function shouldRetryStorefrontQuery(failureCount: number, error: unknown): boolean {
+  if (failureCount >= MAX_QUERY_RETRIES || !(error instanceof StorefrontHttpError)) return false;
   return (
     error.kind === 'network' ||
     error.kind === 'timeout' ||
@@ -18,15 +19,15 @@ export function shouldRetryAdminQuery(failureCount: number, error: unknown): boo
   );
 }
 
-export function createAdminQueryClient(): QueryClient {
-  const runningNodeTests = process.env.NODE_TEST_CONTEXT !== undefined;
+// تنظیمات cache و retry مشترک همه feature hookهای Storefront را ایجاد می‌کند.
+export function createStorefrontQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: THREE_MINUTES,
         gcTime: FIVE_MINUTES,
         refetchOnWindowFocus: false,
-        retry: runningNodeTests ? false : shouldRetryAdminQuery,
+        retry: shouldRetryStorefrontQuery,
       },
       mutations: { retry: false },
     },
@@ -35,11 +36,10 @@ export function createAdminQueryClient(): QueryClient {
 
 let browserQueryClient: QueryClient | undefined;
 
+// cache مرورگر را پایدار نگه می‌دارد ولی برای هر render سرور cache مستقل می‌سازد.
 function getQueryClient(): QueryClient {
-  if (isServer || process.env.NODE_ENV === 'test' || process.env.NODE_TEST_CONTEXT !== undefined) {
-    return createAdminQueryClient();
-  }
-  browserQueryClient ??= createAdminQueryClient();
+  if (environmentManager.isServer()) return createStorefrontQueryClient();
+  browserQueryClient ??= createStorefrontQueryClient();
   return browserQueryClient;
 }
 

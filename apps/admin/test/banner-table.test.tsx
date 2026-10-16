@@ -14,6 +14,8 @@ afterEach(() => cleanup());
 
 const banner: Banner = {
   id: '10000000-0000-4000-8000-000000000001',
+  src: '/api/v1/catalog/banners/10000000-0000-4000-8000-000000000001/content',
+  alt: 'فروش ویژه',
   mediaType: 'WEBP',
   byteSize: 1024,
   width: 1440,
@@ -42,6 +44,7 @@ void test('shows Banner metadata and exposes edit and delete actions', async () 
   );
 
   assert.match(view.getByText(/۱۴۴۰/u).textContent ?? '', /۴۸۰/u);
+  assert.ok(view.getByText('فروش ویژه'));
   await user.click(view.getByRole('button', { name: 'ویرایش' }));
   await user.click(view.getByRole('button', { name: 'حذف' }));
   assert.equal(edited, banner);

@@ -1,22 +1,22 @@
-import assert from 'node:assert/strict';
-import { afterEach, test } from 'node:test';
-import axios from 'axios';
-import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
+import axios from 'axios';
+import assert from 'node:assert/strict';
+import { afterEach, test } from 'node:test';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
-import AddProduct from '../features/products/components/add-product';
 import { CATEGORY_OPTIONS_PAGE_SIZE } from '../features/categories/constants/pagination';
 import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
+import AddProduct from '../features/products/components/add-product';
 import { productOptionKeys } from '../features/products/hooks/useGetProductOptions';
 import type {
   ProductColorsResponse,
   ProductSizesResponse,
 } from '../features/products/interfaces/product-option-contract';
 import { createProductSchema } from '../features/products/schemas/create-product-schema';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { formatPriceInput, normalizePriceInput } from '../utils/price-input';
 import { installDomEnvironment } from './dom-environment';
 
@@ -175,11 +175,14 @@ void test('loads form options only after opening and shows loading on each relat
     await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
     await waitFor(() => assert.equal(calls.length, 3));
-    assert.deepEqual(new Set(calls), new Set([
-      '/admin/catalog/categories',
-      '/admin/catalog/product-options/sizes',
-      '/admin/catalog/product-options/colors',
-    ]));
+    assert.deepEqual(
+      new Set(calls),
+      new Set([
+        '/admin/catalog/categories',
+        '/admin/catalog/product-options/sizes',
+        '/admin/catalog/product-options/colors',
+      ]),
+    );
 
     for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
       const input = within(dialog).getByRole('combobox', { name });

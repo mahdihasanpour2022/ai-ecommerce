@@ -2,6 +2,8 @@ import type { ApiResponse } from '../../../app/http/api-response';
 
 export interface Banner {
   readonly id: string;
+  readonly src: string;
+  readonly alt: string | null;
   readonly mediaType: 'JPEG' | 'PNG' | 'WEBP';
   readonly byteSize: number;
   readonly width: number;
@@ -16,8 +18,11 @@ export type DeleteBannerResponse = ApiResponse<null, null, null>;
 
 export interface CreateBannerVariables {
   readonly image: File;
+  readonly alt: string;
 }
 
-export interface UpdateBannerVariables extends CreateBannerVariables {
+export interface UpdateBannerVariables {
   readonly bannerId: string;
+  readonly image?: File;
+  readonly alt: string;
 }

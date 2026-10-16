@@ -1,12 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
 import type { ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
-import { createAdminQueryClient, shouldRetryAdminQuery } from '../app/react-query-provider';
 import { AdminHttpError, httpClient } from '../app/http/http-client';
 import { safeFetcherPath, useRQFetcher } from '../hooks/rq_hooks/useRQFetcher';
 import { useRQSender } from '../hooks/rq_hooks/useRQSender';
+import { createAdminQueryClient, shouldRetryAdminQuery } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -141,7 +141,10 @@ void test('sender owns declarative HTTP execution and invalidates exact query ke
     );
 
     await act(async () => {
-      const result = await hook.result.current.mutateAsync({ categoryId: 'category-id', name: 'زنانه' });
+      const result = await hook.result.current.mutateAsync({
+        categoryId: 'category-id',
+        name: 'زنانه',
+      });
       assert.deepEqual(result, { saved: true });
     });
 

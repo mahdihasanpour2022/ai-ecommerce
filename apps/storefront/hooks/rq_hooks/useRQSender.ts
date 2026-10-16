@@ -3,8 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { QueryKey, UseMutationOptions, UseMutationResult } from '@tanstack/react-query';
 import type { AxiosRequestConfig } from 'axios';
-import { AdminHttpError, httpClient } from '../../app/http/http-client';
-import { safeRequestPath } from '../../utils/request-path';
+import { StorefrontHttpError, httpClient } from '../../app/http/http-client';
 
 type MutationMethod = 'delete' | 'patch' | 'post' | 'put';
 type MutationQueryParams = Readonly<
@@ -12,7 +11,7 @@ type MutationQueryParams = Readonly<
 >;
 type SafeMutationConfig = Omit<
   AxiosRequestConfig,
-  | 'authPolicy'
+  | 'allowAbsoluteUrls'
   | 'baseURL'
   | 'data'
   | 'headers'
@@ -33,13 +32,13 @@ export interface RQMutationRequest<Variables> {
 }
 
 type RQSenderBaseOptions<Data, Variables, OnMutateResult> = Omit<
-  UseMutationOptions<Data, AdminHttpError, Variables, OnMutateResult>,
+  UseMutationOptions<Data, StorefrontHttpError, Variables, OnMutateResult>,
   'mutationFn' | 'onSuccess'
 > & {
   readonly invalidateQueryKeys?: readonly QueryKey[];
   readonly onSuccess?: UseMutationOptions<
     Data,
-    AdminHttpError,
+    StorefrontHttpError,
     Variables,
     OnMutateResult
   >['onSuccess'];
@@ -77,17 +76,16 @@ async function sendMutation<Data, Variables>(
   const response = await httpClient.request<Data>({
     ...axiosConfig,
     method: request.method,
-    url: safeRequestPath(resolveVariable(request.url, variables)),
+    url: resolveVariable(request.url, variables),
     ...(request.body ? { data: request.body(variables) } : {}),
     ...(request.params ? { params: request.params(variables) } : {}),
-    authPolicy: { csrf: 'required', failure: 'caller', refresh: 'eligible' },
   });
   return response.data;
 }
 
 export function useRQSender<Data, Variables, OnMutateResult = unknown>(
   options: RQSenderOptions<Data, Variables, OnMutateResult>,
-): UseMutationResult<Data, AdminHttpError, Variables, OnMutateResult> {
+): UseMutationResult<Data, StorefrontHttpError, Variables, OnMutateResult> {
   const queryClient = useQueryClient();
   const executionOptions = options as RQSenderBaseOptions<Data, Variables, OnMutateResult> & {
     readonly request?: RQMutationRequest<Variables>;
@@ -104,7 +102,7 @@ export function useRQSender<Data, Variables, OnMutateResult = unknown>(
     ? (variables: Variables) => sendMutation<Data, Variables>(request, variables)
     : customMutationFn;
   if (!mutationFn) {
-    throw new AdminHttpError('configuration', null, 'MISSING_MUTATION_EXECUTOR');
+    throw new StorefrontHttpError('configuration', null, 'MISSING_MUTATION_EXECUTOR');
   }
   return useMutation({
     ...mutationOptions,

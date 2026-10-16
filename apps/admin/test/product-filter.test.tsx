@@ -1,14 +1,14 @@
-import assert from 'node:assert/strict';
-import { after, test } from 'node:test';
-import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
+import assert from 'node:assert/strict';
+import { after, test } from 'node:test';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
 import { ProductFilterPanel } from '../features/products/components/product-filter-panel';
 import { parseProductFilters } from '../features/products/hooks/use-product-filters';
 import type { ProductFilterFormValues } from '../features/products/schemas/product-filter-schema';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -37,21 +37,72 @@ void test('loads filter options only after expansion and applies or clears the c
   const originalAdapter = httpClient.defaults.adapter;
   const calls: string[] = [];
   let releaseOptions: (() => void) | undefined;
-  const optionsGate = new Promise<void>((resolve) => { releaseOptions = resolve; });
+  const optionsGate = new Promise<void>((resolve) => {
+    releaseOptions = resolve;
+  });
   httpClient.defaults.adapter = async (config) => {
     calls.push(config.url ?? '');
     await optionsGate;
     const responses: Record<string, unknown> = {
       '/admin/catalog/categories': {
-        statusCode: 200, hasError: false, message: 'ok', code: 'CATEGORIES_FETCHED', count: 1,
-        result: [{ id: '22222222-2222-4222-8222-222222222222', name: 'پیراهن', parentId: null, level: 1, image: null, children: [], createdAt: '2026-09-20T00:00:00.000Z', updatedAt: '2026-09-20T00:00:00.000Z' }],
-        singleResult: null, details: null,
+        statusCode: 200,
+        hasError: false,
+        message: 'ok',
+        code: 'CATEGORIES_FETCHED',
+        count: 1,
+        result: [
+          {
+            id: '22222222-2222-4222-8222-222222222222',
+            name: 'پیراهن',
+            parentId: null,
+            level: 1,
+            image: null,
+            children: [],
+            createdAt: '2026-09-20T00:00:00.000Z',
+            updatedAt: '2026-09-20T00:00:00.000Z',
+          },
+        ],
+        singleResult: null,
+        details: null,
       },
-      '/admin/catalog/product-options/sizes': { statusCode: 200, hasError: false, message: 'ok', code: 'PRODUCT_SIZE_OPTIONS_FETCHED', count: 1, result: ['medium'], singleResult: null, details: null },
-      '/admin/catalog/product-options/colors': { statusCode: 200, hasError: false, message: 'ok', code: 'PRODUCT_COLOR_OPTIONS_FETCHED', count: 1, result: [{ 'color-name': 'black', 'hex-code': '#111827' }], singleResult: null, details: null },
-      '/admin/catalog/product-options/statuses': { statusCode: 200, hasError: false, message: 'ok', code: 'PRODUCT_STATUS_OPTIONS_FETCHED', count: 1, result: [{ status_persian_name: 'فعال', status_english_name: 'ACTIVE' }], singleResult: null, details: null },
+      '/admin/catalog/product-options/sizes': {
+        statusCode: 200,
+        hasError: false,
+        message: 'ok',
+        code: 'PRODUCT_SIZE_OPTIONS_FETCHED',
+        count: 1,
+        result: ['medium'],
+        singleResult: null,
+        details: null,
+      },
+      '/admin/catalog/product-options/colors': {
+        statusCode: 200,
+        hasError: false,
+        message: 'ok',
+        code: 'PRODUCT_COLOR_OPTIONS_FETCHED',
+        count: 1,
+        result: [{ 'color-name': 'black', 'hex-code': '#111827' }],
+        singleResult: null,
+        details: null,
+      },
+      '/admin/catalog/product-options/statuses': {
+        statusCode: 200,
+        hasError: false,
+        message: 'ok',
+        code: 'PRODUCT_STATUS_OPTIONS_FETCHED',
+        count: 1,
+        result: [{ status_persian_name: 'فعال', status_english_name: 'ACTIVE' }],
+        singleResult: null,
+        details: null,
+      },
     };
-    return { data: responses[config.url ?? ''], status: 200, statusText: 'OK', headers: {}, config };
+    return {
+      data: responses[config.url ?? ''],
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
   };
   const queryClient = createAdminQueryClient();
   let applied: ProductFilterFormValues | undefined;
@@ -61,7 +112,15 @@ void test('loads filter options only after expansion and applies or clears the c
     const view = render(
       <App>
         <QueryClientProvider client={queryClient}>
-          <ProductFilterPanel filters={{}} onApply={(values) => { applied = values; }} onClear={() => { cleared = true; }} />
+          <ProductFilterPanel
+            filters={{}}
+            onApply={(values) => {
+              applied = values;
+            }}
+            onClear={() => {
+              cleared = true;
+            }}
+          />
         </QueryClientProvider>
       </App>,
     );

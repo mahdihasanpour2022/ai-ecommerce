@@ -8,7 +8,6 @@ import type { Banner } from '../interfaces/banner-contract';
 
 export function BannerThumbnail({ banner }: Readonly<{ banner: Banner }>) {
   const [previewOpen, setPreviewOpen] = useState(false);
-  const src = `/api/v1/admin/catalog/banners/${banner.id}/content`;
 
   return (
     <>
@@ -18,7 +17,14 @@ export function BannerThumbnail({ banner }: Readonly<{ banner: Banner }>) {
         aria-label="نمایش بزرگ تصویر بنر"
         onClick={() => setPreviewOpen(true)}
       >
-        <Image className="size-full object-cover" src={src} alt="تصویر بنر" width={96} height={48} unoptimized />
+        <Image
+          className="size-full object-cover"
+          src={banner.src}
+          alt={banner.alt ?? ''}
+          width={96}
+          height={48}
+          unoptimized
+        />
       </button>
       <UiModal.Root
         open={previewOpen}
@@ -28,8 +34,8 @@ export function BannerThumbnail({ banner }: Readonly<{ banner: Banner }>) {
       >
         <Image
           className="h-auto w-full rounded-xl object-contain"
-          src={src}
-          alt="تصویر بزرگ بنر"
+          src={banner.src}
+          alt={banner.alt ?? ''}
           width={banner.width}
           height={banner.height}
           sizes="(min-width: 640px) 70vw, calc(100vw - 2rem)"

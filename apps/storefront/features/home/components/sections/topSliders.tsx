@@ -1,53 +1,42 @@
-import { UiCarousel, UiImage } from '@/components/shared/ui';
-import Slide from '@/public/assets/slides/sample_banner.webp';
-import Slide2 from '@/public/assets/slides/sample_banner_2.webp';
-import Slide3 from '@/public/assets/slides/sample_banner_3.webp';
-import Slide4 from '@/public/assets/slides/sample_banner_4.webp';
+'use client';
 
-const slides = [
-  {
-    id: 'main-banner',
-    image: Slide,
-    alt: 'بنر اول صفحه اصلی',
-  },
-  {
-    id: 'main-banner-2',
-    image: Slide2,
-    alt: 'بنر دوم صفحه اصلی',
-  },
-  {
-    id: 'main-banner-3',
-    image: Slide3,
-    alt: 'بنر سوم صفحه اصلی',
-  },
-  {
-    id: 'main-banner-4',
-    image: Slide4,
-    alt: 'بنر چهارم صفحه اصلی',
-  },
-] as const;
+import { Skeleton } from '@/components/shared';
+import { UiCarousel, UiImage } from '@/components/shared/ui';
+import { useGetHomeBanners } from '@/features/home/hooks/useGetHomeBanners';
+import { useMemo } from 'react';
 
 export const TopSliders = () => {
+  const { data, isLoading } = useGetHomeBanners();
+  const banners = useMemo(() => {
+    return data?.result ?? [];
+  }, [data?.result]);
+
   return (
-    <UiCarousel
-      className="h-32 w-full sm:h-90!"
-      options={{ loop: true, direction: 'rtl' }}
-      autoplay={{ delay: 5000 }}
-      controls="both"
-      labels={{ carousel: 'بنرهای صفحه اصلی' }}
-    >
-      {slides.map((slide) => (
-        <UiImage
-          key={slide.id}
-          src={slide.image}
-          alt={slide.alt}
-          width={slide.image.width}
-          height={slide.image.height}
-          sizes="100vw"
-          className="h-32! w-full bg-center! object-cover! sm:h-90!"
-          preload
-        />
-      ))}
-    </UiCarousel>
+    <div className="h-fit w-full">
+      {isLoading || banners.length === 0 ? (
+        <Skeleton className="h-32 w-full sm:h-90!" />
+      ) : (
+        <UiCarousel
+          className="h-32 w-full sm:h-90!"
+          options={{ loop: true, direction: 'rtl' }}
+          autoplay={{ delay: 5000 }}
+          controls="both"
+          labels={{ carousel: 'بنرهای صفحه اصلی' }}
+        >
+          {banners.map((banner, index) => (
+            <UiImage
+              key={banner.id}
+              src={banner.src}
+              alt={banner.alt ?? ''}
+              width={banner.width}
+              height={banner.height}
+              sizes="100vw"
+              className="h-32! w-full bg-center! object-cover! sm:h-90!"
+              preload={index === 0}
+            />
+          ))}
+        </UiCarousel>
+      )}
+    </div>
   );
 };

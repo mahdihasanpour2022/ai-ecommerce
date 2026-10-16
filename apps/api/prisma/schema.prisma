@@ -202,6 +202,7 @@ model CategoryImageCleanup {
 
 model Banner {
   id         String                @id(map: "banners_pkey") @default(uuid()) @db.Uuid
+  altText    String?               @map("alt_text") @db.VarChar(160)
   storageKey String                @unique(map: "banners_storage_key_key") @map("storage_key") @db.VarChar(512)
   mediaType  ProductImageMediaType @map("media_type")
   byteSize   Int                   @map("byte_size")

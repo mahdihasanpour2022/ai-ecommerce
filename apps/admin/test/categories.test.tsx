@@ -1,12 +1,12 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, render, waitFor } from '@testing-library/react';
+import { App } from 'antd';
+import axios from 'axios';
 import assert from 'node:assert/strict';
 import { after, test } from 'node:test';
-import axios from 'axios';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { App } from 'antd';
-import { cleanup, render, waitFor } from '@testing-library/react';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
 import Categories from '../features/categories/components/categories';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();

@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service.js';
 
 export const BANNER_SELECT = {
   id: true,
+  altText: true,
   storageKey: true,
   mediaType: true,
   byteSize: true,

@@ -28,9 +28,10 @@ export default function BannersRouteContent() {
   const mutating = createBanner.isPending || updateBanner.isPending || deleteBanner.isPending;
 
   // ایجاد بنر را با toast فارسی و تازه‌سازی declarative فهرست نهایی می‌کند.
-  async function submitCreate({ image }: BannerFormValues): Promise<void> {
+  async function submitCreate({ image, alt }: BannerFormValues): Promise<void> {
+    if (!image) return;
     try {
-      const response = await createBanner.mutateAsync({ image });
+      const response = await createBanner.mutateAsync({ image, alt });
       setCreating(false);
       await message.success(response.message);
     } catch (error) {
@@ -39,10 +40,14 @@ export default function BannersRouteContent() {
   }
 
   // جایگزینی تصویر بنر انتخاب‌شده را بدون بستن فرم در خطا انجام می‌دهد.
-  async function submitEdit({ image }: BannerFormValues): Promise<void> {
+  async function submitEdit({ image, alt }: BannerFormValues): Promise<void> {
     if (!editing) return;
     try {
-      const response = await updateBanner.mutateAsync({ bannerId: editing.id, image });
+      const response = await updateBanner.mutateAsync({
+        bannerId: editing.id,
+        alt,
+        ...(image ? { image } : {}),
+      });
       setEditing(null);
       await message.success(response.message);
     } catch (error) {
@@ -100,6 +105,7 @@ export default function BannersRouteContent() {
         open={creating}
         mode="create"
         pending={createBanner.isPending}
+        banner={null}
         onCancel={() => setCreating(false)}
         onSubmit={submitCreate}
       />
@@ -108,6 +114,7 @@ export default function BannersRouteContent() {
         open={editing !== null}
         mode="edit"
         pending={updateBanner.isPending}
+        banner={editing}
         onCancel={() => setEditing(null)}
         onSubmit={submitEdit}
       />

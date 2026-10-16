@@ -1,15 +1,15 @@
-import assert from 'node:assert/strict';
-import { afterEach, test } from 'node:test';
-import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
 import axios from 'axios';
+import assert from 'node:assert/strict';
+import { afterEach, test } from 'node:test';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
 import { CategoryTable } from '../features/categories/components/category-table';
 import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { Category } from '../features/categories/interfaces/category-contract';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { formatPersianDateTime } from '../utils/date-time';
 import { installDomEnvironment } from './dom-environment';
 

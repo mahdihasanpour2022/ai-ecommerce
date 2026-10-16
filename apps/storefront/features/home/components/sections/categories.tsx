@@ -2,6 +2,7 @@ import { UiButton, UiImage, UiSpan } from '@/components/shared/ui';
 import { nanoid } from 'nanoid';
 import { StaticImageData } from 'next/image';
 
+import { useGetCategories } from '@/features/home/hooks/useGetCategories';
 import babyDress_1 from '@/public/assets/category/baby_dress_1.webp';
 import babyDress_2 from '@/public/assets/category/baby_dress_2.webp';
 import babyDress_3 from '@/public/assets/category/baby_dress_3.webp';
@@ -28,6 +29,10 @@ const categoryList: Category[] = [
 ];
 
 export const Categories = () => {
+  const { data, isPending } = useGetCategories();
+
+  console.log('****', data, isPending);
+
   return (
     <div className="flex w-full flex-wrap items-center justify-center gap-0! px-6 sm:gap-3 sm:px-12 sm:pt-2 lg:px-24 2xl:px-36">
       {categoryList.map((category: Category) => (

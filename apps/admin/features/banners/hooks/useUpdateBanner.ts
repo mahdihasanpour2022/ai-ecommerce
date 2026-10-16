@@ -10,9 +10,10 @@ export function useUpdateBanner() {
     request: {
       method: 'patch',
       url: ({ bannerId }) => `/admin/catalog/banners/${encodeURIComponent(bannerId)}`,
-      body: ({ image }) => {
+      body: ({ image, alt }) => {
         const body = new FormData();
-        body.append('file', image);
+        if (image) body.append('file', image);
+        body.append('alt', alt);
         return body;
       },
     },

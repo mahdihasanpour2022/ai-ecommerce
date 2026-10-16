@@ -1,6 +1,3 @@
-import assert from 'node:assert/strict';
-import { afterEach, test } from 'node:test';
-import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   act,
@@ -12,26 +9,29 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
+import assert from 'node:assert/strict';
+import { afterEach, test } from 'node:test';
 import type { ReactNode } from 'react';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
 import { CATEGORY_OPTIONS_PAGE_SIZE } from '../features/categories/constants/pagination';
 import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
 import { EditProductModal } from '../features/products/components/edit-product-modal';
 import { useEditProductWorkflow } from '../features/products/hooks/useEditProductWorkflow';
-import { productKeys } from '../features/products/hooks/useGetProducts';
 import { productOptionKeys } from '../features/products/hooks/useGetProductOptions';
-import type {
-  ProductColorsResponse,
-  ProductSizesResponse,
-} from '../features/products/interfaces/product-option-contract';
+import { productKeys } from '../features/products/hooks/useGetProducts';
 import type {
   EditProductWorkflowVariables,
   Product,
   ProductDetail,
   ProductDetailResponse,
 } from '../features/products/interfaces/product-contract';
+import type {
+  ProductColorsResponse,
+  ProductSizesResponse,
+} from '../features/products/interfaces/product-option-contract';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -216,11 +216,14 @@ void test('loads edit options on modal open and keeps only their inputs loading'
     );
     const dialog = await screen.findByRole('dialog', { name: 'ویرایش محصول' });
     await waitFor(() => assert.equal(optionCalls.length, 3));
-    assert.deepEqual(new Set(optionCalls), new Set([
-      '/admin/catalog/categories',
-      '/admin/catalog/product-options/sizes',
-      '/admin/catalog/product-options/colors',
-    ]));
+    assert.deepEqual(
+      new Set(optionCalls),
+      new Set([
+        '/admin/catalog/categories',
+        '/admin/catalog/product-options/sizes',
+        '/admin/catalog/product-options/colors',
+      ]),
+    );
     assert.ok(within(dialog).getByRole('textbox', { name: 'نام محصول' }));
     for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
       const input = within(dialog).getByRole('combobox', { name });

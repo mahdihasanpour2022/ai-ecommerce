@@ -1,16 +1,16 @@
+import { QueryClientProvider } from '@tanstack/react-query';
+import { cleanup, renderHook, waitFor } from '@testing-library/react';
+import { App } from 'antd';
 import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import type { ReactNode } from 'react';
-import { App } from 'antd';
-import { QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
 import {
   useGetProductColors,
   useGetProductSizes,
   useGetProductStatuses,
 } from '../features/products/hooks/useGetProductOptions';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import type { BannerImageInput, BannerResponseDto } from './banner.dto.js';
+import type { BannerResponseDto, CreateBannerInput, UpdateBannerInput } from './banner.dto.js';
 import { BannerError } from './banner.errors.js';
 import { BANNER_SELECT, BannerRepository, type BannerRecord } from './banner.repository.js';
 import type { ValidatedProductImage } from './product-image.dto.js';
@@ -24,14 +24,14 @@ export class BannerService {
   }
 
   // تصویر معتبر را ابتدا پایدار و سپس رکورد بنر را اتمیک ایجاد می‌کند.
-  async create(input: BannerImageInput): Promise<BannerResponseDto> {
+  async create(input: CreateBannerInput): Promise<BannerResponseDto> {
     await this.retryCleanup();
     const validated = await this.validator.validate(input.file, BANNER_MAX_BYTES);
     const prepared = await this.prepare(validated);
     try {
       const created = await this.repository.transaction((transaction) =>
         transaction.banner.create({
-          data: imageData(prepared.storageKey, validated),
+          data: { ...imageData(prepared.storageKey, validated), altText: input.alt },
           select: BANNER_SELECT,
         }),
       );
@@ -43,8 +43,20 @@ export class BannerService {
   }
 
   // تصویر جدید را جایگزین می‌کند و حذف فایل قبلی را با cleanup پایدار ادامه می‌دهد.
-  async update(id: string, input: BannerImageInput): Promise<BannerResponseDto> {
+  async update(id: string, input: UpdateBannerInput): Promise<BannerResponseDto> {
     await this.retryCleanup();
+    if (input.file === undefined) {
+      const updated = await this.repository.transaction(async (transaction) => {
+        const existing = await transaction.banner.findUnique({ where: { id }, select: { id: true } });
+        if (existing === null) throw new BannerError('BANNER_NOT_FOUND');
+        return transaction.banner.update({
+          where: { id },
+          data: { altText: input.alt ?? null },
+          select: BANNER_SELECT,
+        });
+      });
+      return toBannerDto(updated);
+    }
     const validated = await this.validator.validate(input.file, BANNER_MAX_BYTES);
     const prepared = await this.prepare(validated);
     let cleanup: { readonly id: string; readonly storageKey: string } | undefined;
@@ -59,7 +71,10 @@ export class BannerService {
         cleanup = { id: cleanupRow.id, storageKey: existing.storageKey };
         return transaction.banner.update({
           where: { id },
-          data: imageData(prepared.storageKey, validated),
+          data: {
+            ...imageData(prepared.storageKey, validated),
+            ...('alt' in input ? { altText: input.alt ?? null } : {}),
+          },
           select: BANNER_SELECT,
         });
       });
@@ -133,6 +148,8 @@ export class BannerService {
 function toBannerDto(row: BannerRecord): BannerResponseDto {
   return {
     id: row.id,
+    src: `/api/v1/catalog/banners/${row.id}/content`,
+    alt: row.altText,
     mediaType: row.mediaType,
     byteSize: row.byteSize,
     width: row.width,

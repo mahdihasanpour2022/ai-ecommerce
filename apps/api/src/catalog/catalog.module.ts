@@ -2,7 +2,11 @@ import { Module } from '@nestjs/common';
 
 import { AuthenticationModule } from '../authentication/authentication.module.js';
 import { DatabaseModule } from '../database/database.module.js';
-import { BannerController, BannerImageMultipartErrorInterceptor } from './banner.controller.js';
+import {
+  BannerController,
+  BannerImageMultipartErrorInterceptor,
+  PublicBannerController,
+} from './banner.controller.js';
 import { BannerRepository } from './banner.repository.js';
 import { BannerService } from './banner.service.js';
 import { CatalogAccessGuard } from './catalog-access.guard.js';
@@ -41,6 +45,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
   imports: [AuthenticationModule, DatabaseModule],
   controllers: [
     BannerController,
+    PublicBannerController,
     CategoryController,
     CategoryImageController,
     ProductController,

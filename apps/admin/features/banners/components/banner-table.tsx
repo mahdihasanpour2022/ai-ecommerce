@@ -25,6 +25,11 @@ export function BannerTable({ banners, pending, onDelete, onEdit }: BannerTableP
       render: (_, banner) => <BannerThumbnail banner={banner} />,
     },
     {
+      title: 'متن جایگزین',
+      dataIndex: 'alt',
+      render: (alt: string | null) => alt || '—',
+    },
+    {
       title: 'ابعاد',
       key: 'dimensions',
       render: (_, banner) => `${formatPersianInteger(banner.width)} × ${formatPersianInteger(banner.height)}`,
@@ -65,7 +70,7 @@ export function BannerTable({ banners, pending, onDelete, onEdit }: BannerTableP
         dataSource={[...banners]}
         pagination={false}
         loading={pending}
-        scroll={{ x: 760 }}
+        scroll={{ x: 900 }}
       />
     </div>
   );

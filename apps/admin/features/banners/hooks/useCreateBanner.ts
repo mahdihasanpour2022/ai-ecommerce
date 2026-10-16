@@ -10,9 +10,10 @@ export function useCreateBanner() {
     request: {
       method: 'post',
       url: '/admin/catalog/banners',
-      body: ({ image }) => {
+      body: ({ image, alt }) => {
         const body = new FormData();
         body.append('file', image);
+        body.append('alt', alt);
         return body;
       },
     },

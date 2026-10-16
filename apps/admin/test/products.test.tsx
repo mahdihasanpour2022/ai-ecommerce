@@ -1,16 +1,16 @@
-import assert from 'node:assert/strict';
-import { after, test } from 'node:test';
-import { App } from 'antd';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { App } from 'antd';
+import assert from 'node:assert/strict';
+import { after, test } from 'node:test';
 import { httpClient } from '../app/http/http-client';
-import { createAdminQueryClient } from '../app/react-query-provider';
-import Products from '../features/products/components/products';
 import { ProductTable } from '../features/products/components/product-table';
+import Products from '../features/products/components/products';
 import { productKeys } from '../features/products/hooks/useGetProducts';
-import type { ProductStatusesResponse } from '../features/products/interfaces/product-option-contract';
 import type { Product } from '../features/products/interfaces/product-contract';
+import type { ProductStatusesResponse } from '../features/products/interfaces/product-option-contract';
+import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
 const restoreDom = installDomEnvironment();
@@ -358,14 +358,15 @@ void test('permanently deletes a Product after explicit confirmation', async () 
     const dialog = await screen.findByRole('dialog', { name: 'حذف محصول' });
     assert.match(dialog.textContent ?? '', /قابل بازگشت نیست/u);
     await user.click(within(dialog).getByRole('button', { name: 'حذف دائمی محصول' }));
-    await waitFor(() =>
-      assert.equal(screen.queryByRole('dialog', { name: 'حذف محصول' }), null),
-    );
+    await waitFor(() => assert.equal(screen.queryByRole('dialog', { name: 'حذف محصول' }), null));
 
-    assert.deepEqual(calls.find(({ method }) => method === 'delete'), {
-      method: 'delete',
-      url: `/admin/catalog/products/${productId}`,
-    });
+    assert.deepEqual(
+      calls.find(({ method }) => method === 'delete'),
+      {
+        method: 'delete',
+        url: `/admin/catalog/products/${productId}`,
+      },
+    );
     assert.equal(queryClient.getQueryState(listKey)?.isInvalidated, true);
   } finally {
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;
