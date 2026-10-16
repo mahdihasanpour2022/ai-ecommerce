@@ -11,7 +11,10 @@ import { BannerRepository } from './banner.repository.js';
 import { BannerService } from './banner.service.js';
 import { CatalogAccessGuard } from './catalog-access.guard.js';
 import { CategoryController } from './category.controller.js';
-import { CategoryImageController } from './category-image.controller.js';
+import {
+  CategoryImageController,
+  PublicCategoryImageController,
+} from './category-image.controller.js';
 import { CategoryRepository } from './category.repository.js';
 import { CategoryService } from './category.service.js';
 import { InventoryController } from './inventory.controller.js';
@@ -48,6 +51,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
     PublicBannerController,
     CategoryController,
     CategoryImageController,
+    PublicCategoryImageController,
     ProductController,
     ProductOptionController,
     InventoryController,

@@ -54,7 +54,18 @@ export class PublicCatalogService {
 
 export function publicCategoryTree(rows: readonly PublicCategoryRecord[]): PublicCategoryDto[] {
   const nodes = new Map<string, PublicCategoryDto>(
-    rows.map((row) => [row.id, { id: row.id, name: row.name, children: [] }]),
+    rows.map((row) => [
+      row.id,
+      {
+        id: row.id,
+        name: row.name,
+        src:
+          row.image === null
+            ? null
+            : `/api/v1/catalog/category-images/${row.image.id}/content`,
+        children: [],
+      },
+    ]),
   );
   const roots: PublicCategoryDto[] = [];
   for (const row of rows) {

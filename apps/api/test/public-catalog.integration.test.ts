@@ -229,8 +229,13 @@ void describe(
       const response = await request(server(app)).get('/api/v1/catalog/categories').expect(200);
       const tree = body<unknown[]>(response);
       assert.deepEqual(tree, [
-        { id: rootA, name: 'A Root', children: [{ id: child, name: 'Child', children: [] }] },
-        { id: rootB, name: 'B Root', children: [] },
+        {
+          id: rootA,
+          name: 'A Root',
+          src: null,
+          children: [{ id: child, name: 'Child', src: null, children: [] }],
+        },
+        { id: rootB, name: 'B Root', src: null, children: [] },
       ]);
       assert.equal(JSON.stringify(tree).includes('parentId'), false);
       assert.equal(JSON.stringify(tree).includes('createdAt'), false);
@@ -398,12 +403,15 @@ void describe(
       const response = await request(server(app)).get('/api/docs-json').expect(200);
       const document = body<OpenApiDocument>(response);
       const categories = document.paths['/api/v1/catalog/categories']?.get;
+      const categoryImage =
+        document.paths['/api/v1/catalog/category-images/{imageId}/content']?.get;
       const products = document.paths['/api/v1/catalog/products']?.get;
       const detail = document.paths['/api/v1/catalog/products/{productId}']?.get;
       assert.ok(categories);
+      assert.ok(categoryImage);
       assert.ok(products);
       assert.ok(detail);
-      for (const operation of [categories, products, detail]) {
+      for (const operation of [categories, categoryImage, products, detail]) {
         assert.equal(operation.security, undefined);
         assert.equal(
           operation.parameters?.some(({ name }) => name === 'X-CSRF-Token') ?? false,
@@ -411,6 +419,12 @@ void describe(
         );
       }
       assert.deepEqual(Object.keys(categories.responses ?? {}).sort(), ['200', '500']);
+      assert.deepEqual(Object.keys(categoryImage.responses ?? {}).sort(), [
+        '200',
+        '400',
+        '404',
+        '500',
+      ]);
       assert.deepEqual(Object.keys(products.responses ?? {}).sort(), ['200', '400', '404', '500']);
       assert.deepEqual(Object.keys(detail.responses ?? {}).sort(), ['200', '400', '404', '500']);
       assert.deepEqual(products.parameters?.map(({ name }) => name).sort(), [
@@ -424,6 +438,8 @@ void describe(
         ),
       );
       const schemas = JSON.stringify(document.components.schemas);
+      assert.match(schemas, /PublicCategoryDto/u);
+      assert.match(schemas, /"src"/u);
       assert.match(schemas, /PublicProductDetailDto/u);
       assert.equal(schemas.includes('storageKey'), false);
     });

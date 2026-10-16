@@ -4,7 +4,12 @@ import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { PublicProductListQuery } from './public-catalog.dto.js';
 
-const PUBLIC_CATEGORY_SELECT = { id: true, name: true, parentId: true } as const;
+const PUBLIC_CATEGORY_SELECT = {
+  id: true,
+  name: true,
+  parentId: true,
+  image: { select: { id: true } },
+} as const;
 const PUBLIC_IMAGE_SELECT = {
   id: true,
   mediaType: true,
@@ -74,12 +79,13 @@ export class PublicCatalogRepository {
   }> {
     const where: Prisma.ProductWhereInput = {
       status: 'ACTIVE',
-      ...(query.categoryId === undefined ? {} : { categoryId: query.categoryId }),
+      ...(query.categories === undefined ? {} : { categoryId: { in: query.categories } }),
+      ...(query.tags === undefined ? {} : { tag: { in: query.tags } }),
     };
     const categoryCount =
-      query.categoryId === undefined
+      query.categories === undefined
         ? 1
-        : await this.prisma.category.count({ where: { id: query.categoryId } });
+        : await this.prisma.category.count({ where: { id: { in: query.categories } } });
     const [totalItems, baseRows] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
@@ -97,7 +103,11 @@ export class PublicCatalogRepository {
         throw new Error('Persisted Active Product has no active Variant.');
       return { ...row, ...aggregate };
     });
-    return { categoryExists: categoryCount === 1, rows, totalItems };
+    return {
+      categoryExists: query.categories === undefined || categoryCount === query.categories.length,
+      rows,
+      totalItems,
+    };
   }
 
   product(id: string): Promise<PublicProductDetailRecord | null> {

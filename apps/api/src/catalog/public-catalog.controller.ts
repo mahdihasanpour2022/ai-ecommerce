@@ -14,7 +14,7 @@ import {
 } from './public-catalog.dto.js';
 import { PublicCatalogService } from './public-catalog.service.js';
 
-@ApiTags('Public Catalog')
+@ApiTags('site_endpoints')
 @Controller('catalog')
 export class PublicCatalogController {
   constructor(private readonly catalog: PublicCatalogService) {}
@@ -49,7 +49,22 @@ export class PublicCatalogController {
     maximum: 60,
     example: 24,
   })
-  @ApiQuery({ name: 'categoryId', required: false, type: String, format: 'uuid' })
+  @ApiQuery({
+    name: 'categories',
+    required: false,
+    type: String,
+    format: 'uuid',
+    isArray: true,
+    description: 'Repeat the query parameter to match Products in any supplied Category.',
+  })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    isArray: true,
+    pattern: '^[a-z]+(?:_[a-z]+)*$',
+    description: 'Repeat the query parameter to match Products having any supplied tag.',
+  })
   @ApiResponse({ status: 200, type: PublicProductListResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto, description: 'VALIDATION_FAILED.' })
   @ApiResponse({ status: 404, type: ApiErrorDto, description: 'CATEGORY_NOT_FOUND.' })

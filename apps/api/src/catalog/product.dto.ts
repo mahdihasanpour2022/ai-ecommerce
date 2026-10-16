@@ -5,6 +5,7 @@ import { ProductError } from './product.errors.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const SKU_PATTERN = /^[A-Z0-9][A-Z0-9_-]{0,63}$/u;
+const PRODUCT_TAG_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const PRODUCT_STATUSES = new Set<string>(Object.values(ProductStatus));
 const PRODUCT_AVAILABILITIES = new Set(['IN_STOCK', 'OUT_OF_STOCK'] as const);
 const MAX_DATABASE_INTEGER = 2_147_483_647;
@@ -52,6 +53,7 @@ export interface VariantUpdateInput {
 export interface CreateProductInput {
   readonly name: string;
   readonly description: string | null;
+  readonly tag: string | null;
   readonly categoryId: string;
   readonly variants: readonly InitialVariantInput[];
 }
@@ -59,6 +61,7 @@ export interface CreateProductInput {
 export interface UpdateProductInput {
   readonly name?: string;
   readonly description?: string | null;
+  readonly tag?: string | null;
   readonly categoryId?: string;
   readonly status?: ProductStatus;
 }
@@ -119,6 +122,16 @@ export class CreateProductRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 200, nullable: true, default: null })
   description?: string | null;
 
+  @ApiPropertyOptional({
+    minLength: 1,
+    maxLength: 80,
+    pattern: PRODUCT_TAG_PATTERN.source,
+    nullable: true,
+    default: null,
+    example: 'my_amazing',
+  })
+  tag?: string | null;
+
   @ApiProperty({ format: 'uuid' })
   categoryId!: string;
 
@@ -132,6 +145,15 @@ export class UpdateProductRequestDto {
 
   @ApiPropertyOptional({ minLength: 1, maxLength: 200, nullable: true })
   description?: string | null;
+
+  @ApiPropertyOptional({
+    minLength: 1,
+    maxLength: 80,
+    pattern: PRODUCT_TAG_PATTERN.source,
+    nullable: true,
+    example: 'my_amazing',
+  })
+  tag?: string | null;
 
   @ApiPropertyOptional({ format: 'uuid' })
   categoryId?: string;
@@ -224,6 +246,9 @@ export class ProductSummaryDto {
   @ApiProperty({ minLength: 1, maxLength: 200, nullable: true })
   description!: string | null;
 
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: PRODUCT_TAG_PATTERN.source, nullable: true })
+  tag!: string | null;
+
   @ApiProperty({ type: () => ProductCategoryDto })
   category!: ProductCategoryDto;
 
@@ -270,6 +295,9 @@ export class ProductDetailDto {
 
   @ApiProperty({ minLength: 1, maxLength: 200, nullable: true })
   description!: string | null;
+
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: PRODUCT_TAG_PATTERN.source, nullable: true })
+  tag!: string | null;
 
   @ApiProperty({ type: () => ProductCategoryDto })
   category!: ProductCategoryDto;
@@ -366,6 +394,14 @@ function normalizeDescription(value: unknown): string | null {
   return description;
 }
 
+function normalizeProductTag(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== 'string') fail(['tag']);
+  const tag = value.normalize('NFKC').trim().toLowerCase();
+  if (!PRODUCT_TAG_PATTERN.test(tag) || tag.length > 80) fail(['tag']);
+  return tag;
+}
+
 function parseSku(value: unknown): string {
   if (typeof value !== 'string') fail(['sku']);
   const sku = value.normalize('NFKC').trim().toUpperCase();
@@ -446,7 +482,7 @@ function parseVariant(record: Record<string, unknown>): VariantInput {
 export function parseCreateProductRequest(body: unknown): CreateProductInput {
   if (
     !isRecord(body) ||
-    !hasOnlyKeys(body, ['name', 'description', 'categoryId', 'variants']) ||
+    !hasOnlyKeys(body, ['name', 'description', 'tag', 'categoryId', 'variants']) ||
     !('name' in body) ||
     !('categoryId' in body) ||
     !Array.isArray(body.variants) ||
@@ -461,6 +497,7 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
   return {
     name: normalizeSingleLine(body.name, 'name', 200),
     description: 'description' in body ? normalizeDescription(body.description) : null,
+    tag: 'tag' in body ? normalizeProductTag(body.tag) : null,
     categoryId: parseCatalogUuid(body.categoryId, 'categoryId'),
     variants,
   };
@@ -474,7 +511,7 @@ export function parseCreateVariantRequest(body: unknown): VariantInput {
 export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
   if (
     !isRecord(body) ||
-    !hasOnlyKeys(body, ['name', 'description', 'categoryId', 'status']) ||
+    !hasOnlyKeys(body, ['name', 'description', 'tag', 'categoryId', 'status']) ||
     Object.keys(body).length === 0
   ) {
     fail();
@@ -487,6 +524,7 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
   return {
     ...('name' in body ? { name: normalizeSingleLine(body.name, 'name', 200) } : {}),
     ...('description' in body ? { description: normalizeDescription(body.description) } : {}),
+    ...('tag' in body ? { tag: normalizeProductTag(body.tag) } : {}),
     ...('categoryId' in body
       ? { categoryId: parseCatalogUuid(body.categoryId, 'categoryId') }
       : {}),

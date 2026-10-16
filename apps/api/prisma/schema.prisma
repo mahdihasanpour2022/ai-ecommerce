@@ -232,6 +232,7 @@ model Product {
   id           String           @id(map: "products_pkey") @default(uuid()) @db.Uuid
   name         String           @db.VarChar(200)
   description  String?          @db.Text
+  tag          String?          @db.VarChar(80)
   categoryId   String           @map("category_id") @db.Uuid
   status       ProductStatus    @default(DRAFT)
   imageVersion Int              @default(1) @map("image_version")
@@ -247,6 +248,7 @@ model Product {
   @@index([categoryId, status, updatedAt(sort: Desc), id(sort: Desc)], map: "products_category_status_updated_id_idx")
   @@index([status, createdAt(sort: Desc), id(sort: Desc)], map: "products_status_created_id_idx")
   @@index([categoryId, status, createdAt(sort: Desc), id(sort: Desc)], map: "products_category_status_created_id_idx")
+  @@index([status, tag, createdAt(sort: Desc), id(sort: Desc)], map: "products_status_tag_created_id_idx")
   @@map("products")
 }
 

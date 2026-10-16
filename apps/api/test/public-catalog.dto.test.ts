@@ -44,16 +44,18 @@ void describe('public catalog contract parsing and projection', () => {
   void test('projects deterministic nested public Categories without internal fields', () => {
     const rootId = randomUUID();
     const childId = randomUUID();
+    const rootImageId = randomUUID();
     assert.deepEqual(
       publicCategoryTree([
-        { id: rootId, name: 'Apparel', parentId: null },
-        { id: childId, name: 'Shirts', parentId: rootId },
+        { id: rootId, name: 'Apparel', parentId: null, image: { id: rootImageId } },
+        { id: childId, name: 'Shirts', parentId: rootId, image: null },
       ]),
       [
         {
           id: rootId,
           name: 'Apparel',
-          children: [{ id: childId, name: 'Shirts', children: [] }],
+          src: `/api/v1/catalog/category-images/${rootImageId}/content`,
+          children: [{ id: childId, name: 'Shirts', src: null, children: [] }],
         },
       ],
     );

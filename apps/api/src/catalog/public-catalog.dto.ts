@@ -4,12 +4,15 @@ import { ProductImageMediaType } from '../generated/prisma/enums.js';
 import { ProductError } from './product.errors.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+const PRODUCT_TAG_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const MAX_DATABASE_INTEGER = 2_147_483_647;
+const MAX_FILTER_VALUES = 50;
 
 export interface PublicProductListQuery {
   readonly page: number;
   readonly pageSize: number;
-  readonly categoryId?: string;
+  readonly categories?: readonly string[];
+  readonly tags?: readonly string[];
 }
 
 export class PublicCategoryDto {
@@ -18,6 +21,14 @@ export class PublicCategoryDto {
 
   @ApiProperty({ minLength: 1, maxLength: 120 })
   name!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example:
+      '/api/v1/catalog/category-images/00000000-0000-4000-8000-000000000000/content',
+  })
+  src!: string | null;
 
   @ApiProperty({ type: () => PublicCategoryDto, isArray: true })
   children!: PublicCategoryDto[];
@@ -124,7 +135,7 @@ export class PublicProductListResponseDto {
 export function parsePublicProductListQuery(query: unknown): PublicProductListQuery {
   if (query === null || Array.isArray(query) || typeof query !== 'object') fail();
   const record = query as Record<string, unknown>;
-  if (!Object.keys(record).every((key) => ['page', 'pageSize', 'categoryId'].includes(key))) {
+  if (!Object.keys(record).every((key) => ['page', 'pageSize', 'categories', 'tags'].includes(key))) {
     fail();
   }
   const page = positiveInteger(record.page, 1);
@@ -133,10 +144,34 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   return {
     page,
     pageSize,
-    ...('categoryId' in record
-      ? { categoryId: publicCatalogUuid(record.categoryId, 'categoryId') }
+    ...('categories' in record
+      ? {
+          categories: parseFilterArray(record.categories, 'categories', (value) =>
+            publicCatalogUuid(value, 'categories'),
+          ),
+        }
+      : {}),
+    ...('tags' in record
+      ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) }
       : {}),
   };
+}
+
+function parseFilterArray(
+  value: unknown,
+  field: string,
+  parse: (item: unknown) => string,
+): readonly string[] {
+  const values = Array.isArray(value) ? value : [value];
+  if (values.length === 0 || values.length > MAX_FILTER_VALUES) fail([field]);
+  return [...new Set(values.map(parse))];
+}
+
+function publicProductTag(value: unknown): string {
+  if (typeof value !== 'string') fail(['tags']);
+  const tag = value.normalize('NFKC').trim().toLowerCase();
+  if (!PRODUCT_TAG_PATTERN.test(tag) || tag.length > 80) fail(['tags']);
+  return tag;
 }
 
 export function publicCatalogUuid(value: unknown, field: string): string {

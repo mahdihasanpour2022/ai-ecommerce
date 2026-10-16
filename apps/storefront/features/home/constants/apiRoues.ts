@@ -3,6 +3,5 @@ export const ApiRoutes = {
   categories: '/catalog/categories',
   products: '/catalog/products',
   product: (productId: string) => `/catalog/products/${encodeURIComponent(productId)}`,
-  banner_content: (bannerId: string) =>
-    `/catalog/banners/${encodeURIComponent(bannerId)}/content`,
+  banner_content: (bannerId: string) => `/catalog/banners/${encodeURIComponent(bannerId)}/content`,
 } as const;

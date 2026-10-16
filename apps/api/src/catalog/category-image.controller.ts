@@ -57,6 +57,39 @@ export class CategoryImageController {
   }
 }
 
+@ApiTags('Public Catalog Category Images')
+@Controller('catalog/category-images')
+export class PublicCategoryImageController {
+  constructor(private readonly categories: CategoryService) {}
+
+  @Get(':imageId/content')
+  @RawApiResponse()
+  @ApiOperation({ summary: 'Return immutable public Category Image content' })
+  @ApiParam({ name: 'imageId', format: 'uuid' })
+  @ApiProduces('image/jpeg', 'image/png', 'image/webp')
+  @ApiResponse({ status: 200, description: 'Validated immutable Category Image bytes.' })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  async content(
+    @Param('imageId') imageId: string,
+    @Res({ passthrough: true }) response: HeaderResponse,
+  ): Promise<StreamableFile> {
+    try {
+      const result = await this.categories.content(parseCategoryId(imageId));
+      response.setHeader('Content-Type', mediaType(result.image.mediaType));
+      response.setHeader('Content-Length', result.image.byteSize);
+      response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      response.setHeader('X-Content-Type-Options', 'nosniff');
+      return new StreamableFile(result.bytes);
+    } catch (error) {
+      if (error instanceof CategoryError) throw toCategoryHttpException(error);
+      if (error instanceof ProductImageError) throw toProductImageHttpException(error);
+      throw safeInternalHttpException();
+    }
+  }
+}
+
 function mediaType(value: 'JPEG' | 'PNG' | 'WEBP'): string {
   if (value === 'JPEG') return 'image/jpeg';
   if (value === 'PNG') return 'image/png';

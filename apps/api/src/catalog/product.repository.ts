@@ -37,6 +37,7 @@ const PRODUCT_BASE_SELECT = {
   id: true,
   name: true,
   description: true,
+  tag: true,
   categoryId: true,
   status: true,
   imageVersion: true,
@@ -48,6 +49,7 @@ export const PRODUCT_DETAIL_SELECT = {
   id: true,
   name: true,
   description: true,
+  tag: true,
   categoryId: true,
   category: { select: CATEGORY_SELECT },
   status: true,
@@ -62,6 +64,7 @@ const PRODUCT_SUMMARY_SELECT = {
   id: true,
   name: true,
   description: true,
+  tag: true,
   category: { select: CATEGORY_SELECT },
   status: true,
   variants: {

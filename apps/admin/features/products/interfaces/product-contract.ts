@@ -22,6 +22,7 @@ export interface Product {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
+  readonly tag: string | null;
   readonly category: ProductCategory;
   readonly status: ProductStatus;
   readonly variantCount: number;
@@ -57,6 +58,7 @@ export interface CreateProductVariantVariables {
 export interface CreateProductVariables {
   readonly name: string;
   readonly description: string | null;
+  readonly tag: string | null;
   readonly categoryId: string;
   readonly variants: readonly CreateProductVariantVariables[];
 }
@@ -83,6 +85,7 @@ export interface ProductDetail {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
+  readonly tag: string | null;
   readonly category: ProductCategory;
   readonly status: ProductStatus;
   readonly imageVersion: number;
@@ -112,6 +115,7 @@ export interface EditProductVariables {
   readonly productId: string;
   readonly name?: string;
   readonly description?: string | null;
+  readonly tag?: string | null;
   readonly categoryId?: string;
 }
 

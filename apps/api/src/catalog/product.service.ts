@@ -66,6 +66,7 @@ export class ProductService {
           data: {
             name: input.name,
             description: input.description,
+            tag: input.tag,
             categoryId: input.categoryId,
           },
           select: { id: true },
@@ -97,6 +98,7 @@ export class ProductService {
           data: {
             ...(input.name === undefined ? {} : { name: input.name }),
             ...(input.description === undefined ? {} : { description: input.description }),
+            ...(input.tag === undefined ? {} : { tag: input.tag }),
             ...(input.categoryId === undefined ? {} : { categoryId: input.categoryId }),
             ...(input.status === undefined ? {} : { status: input.status }),
           },
@@ -395,6 +397,7 @@ function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
     id: product.id,
     name: product.name,
     description: product.description,
+    tag: product.tag,
     category: product.category,
     status: product.status,
     imageVersion: product.imageVersion,
@@ -414,6 +417,7 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
     id: product.id,
     name: product.name,
     description: product.description,
+    tag: product.tag,
     category: product.category,
     status: product.status,
     variantCount: product.variants.length,

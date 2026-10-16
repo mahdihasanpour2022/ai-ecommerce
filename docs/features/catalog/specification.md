@@ -290,13 +290,18 @@ Implementation status: the bounded public Category tree, Active Product summary 
 
 | Method and path | Success behavior |
 | --- | --- |
-| `GET /api/v1/catalog/categories` | Complete six-level Category tree of at most 1,000 Categories. |
+| `GET /api/v1/catalog/categories` | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
+| `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes. |
 | `GET /api/v1/catalog/products` | Page-bounded deterministic Active Product summaries; optional exact `categoryId`. |
 | `GET /api/v1/catalog/products/{productId}` | Active Product detail by UUID. |
 | `GET /api/v1/catalog/product-images/{imageId}/content` | Controlled immutable ready image bytes only when owning Product is Active. |
 | `GET /api/v1/catalog/settings/price-display-unit` | Current global `RIAL`/`TOMAN` unit. |
 
 Public Product list uses `page` default 1 and `pageSize` default 24, maximum 60, ordered by `createdAt DESC, id DESC`. Only optional exact `categoryId` is accepted. Descendant-inclusive filtering, selectable sorting, search, and advanced filters are deferred.
+
+Each public Category node contains `id`, `name`, nullable `src`, and recursive `children`.
+`src` is derived from the Category Image identifier as
+`/api/v1/catalog/category-images/{imageId}/content`; it is never persisted as a database field.
 
 Public pagination response:
 
@@ -333,6 +338,7 @@ All failures use the accepted top-level error envelope with safe Persian display
 | `403` | `INSUFFICIENT_PERMISSION` | Authenticated Admin lacks the exact permission. |
 | `403` | `CSRF_VALIDATION_FAILED` | Protected state-changing request fails accepted CSRF/origin policy. |
 | `404` | `CATEGORY_NOT_FOUND` | Protected request or public exact filter references unavailable Category. |
+| `404` | `CATEGORY_IMAGE_NOT_FOUND` | Category Image content identifier is unavailable. |
 | `404` | `PRODUCT_NOT_FOUND` | Protected Product is missing, or public Product is missing/ineligible. |
 | `404` | `PRODUCT_VARIANT_NOT_FOUND` | Protected Variant is missing. |
 | `404` | `PRODUCT_IMAGE_NOT_FOUND` | Protected Image is missing, or public Image is missing/ineligible. |
