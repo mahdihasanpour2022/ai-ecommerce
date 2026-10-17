@@ -1,10 +1,11 @@
-import { UiButton, UiCarousel, UiP, UiSpan } from '@/components/shared/ui';
+import { UiCarousel, UiLink, UiP, UiSpan } from '@/components/shared/ui';
+import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { ProductCard } from '@/features/components/shared/productCard';
 import { useGetProducts } from '@/features/home/hooks/useGetProducts';
 import { useMemo } from 'react';
 
 export const CapProducts = () => {
-  const { data } = useGetProducts({});
+  const { data } = useGetProducts({}); // {tags :PRODUCT_COLLECTIONS.cap.tags}
 
   const products = useMemo(() => {
     return data?.result ?? [];
@@ -22,9 +23,7 @@ export const CapProducts = () => {
               بر اساس سلیقه شما
             </UiSpan>
           </div>
-          <UiButton size="small" variant="style_5" className="">
-            {`مشاهده همه`} <UiSpan variant="style_1" className="pr-2">{`>`}</UiSpan>{' '}
-          </UiButton>
+          <UiLink href={PRODUCT_COLLECTIONS.cap.href}>مشاهده بیشتر</UiLink>
         </div>
         <UiCarousel
           className="h-full w-full"

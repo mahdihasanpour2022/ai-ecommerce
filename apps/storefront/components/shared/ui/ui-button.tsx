@@ -8,7 +8,7 @@ const VARIANT_CLASSES = {
   style_3:
     'bg-white border-0 text-foreground/60 text-xs py-1! px-4! whitespace-nowrap leading-4 font-medium rounded-lg sm:rounded-xl cursor-pointer',
   style_4: 'w-full h-fit cursor-pointer hover:shadow-product-card z-10 over:z-20',
-  style_5: 'w-fit bg-foreground/10 text-foreground/80 rounded-xl text-xs font-medium cursor-pointer',
+  style_5: 'w-fit bg-nice-red text-white rounded-xl text-xs font-medium cursor-pointer hover:bg-foreground/10 transition-colors hover:text-foreground/80',
 } as const;
 
 const SIZE_CLASSES = {

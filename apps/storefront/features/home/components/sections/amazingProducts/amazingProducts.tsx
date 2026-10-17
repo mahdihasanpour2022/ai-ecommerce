@@ -1,5 +1,6 @@
 import { Skeleton } from '@/components/shared';
-import { UiButton, UiCarousel, UiP } from '@/components/shared/ui';
+import { UiCarousel, UiLink, UiP } from '@/components/shared/ui';
+import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 
 import { ProductCard } from '@/features/components/shared/productCard';
 import { useGetProducts } from '@/features/home/hooks/useGetProducts';
@@ -19,7 +20,7 @@ export const AmazingProducts = () => {
           <UiP variant="style_2" className="mx-auto">
             شگفت انگیز
           </UiP>
-          <UiButton className="" variant="style_3" size="small">{`مشاهده همه >`}</UiButton>
+          <UiLink href={PRODUCT_COLLECTIONS.amazing.href} variant='style_2'>مشاهده بیشتر</UiLink>
         </div>
         <div className="bg-nice-red h-auto w-full min-w-0 flex-1 overflow-hidden!">
           {isLoading ? (

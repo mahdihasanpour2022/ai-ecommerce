@@ -23,9 +23,9 @@ const images = [
 
 export const Footer = () => {
   return (
-    <div className="w-full pb-16">
-      <Seperator className="my-0!" />
-      <div className="h-fit w-full bg-gray-50 px-6 sm:px-12 sm:pt-6 lg:px-24 2xl:px-36">
+    <section className="w-full">
+      <Seperator className="my-0! bg-gray-100!" />
+      <div className="h-fit w-full bg-gray-50 px-6 pb-16 sm:px-12 sm:pt-6 lg:px-24 2xl:px-36">
         <UiImage
           alt="siteLogo"
           src={siteLogo}
@@ -140,6 +140,6 @@ export const Footer = () => {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
