@@ -23,7 +23,7 @@ import { parseCatalogUuid } from './product.dto.js';
 import { ProductError } from './product.errors.js';
 import { ApiSuccess } from '../http/api-response.js';
 
-@ApiTags('Admin Catalog Inventory')
+@ApiTags('panel / inventory')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog')

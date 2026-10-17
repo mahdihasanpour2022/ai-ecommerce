@@ -9,6 +9,7 @@ const PRODUCT_TAG_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const PRODUCT_STATUSES = new Set<string>(Object.values(ProductStatus));
 const PRODUCT_AVAILABILITIES = new Set(['IN_STOCK', 'OUT_OF_STOCK'] as const);
 const MAX_DATABASE_INTEGER = 2_147_483_647;
+const MAX_PRODUCT_FILTER_VALUES = 50;
 
 export type ProductAvailability = 'IN_STOCK' | 'OUT_OF_STOCK';
 
@@ -16,6 +17,7 @@ export interface ProductListQuery {
   readonly page: number;
   readonly pageSize: number;
   readonly name?: string;
+  readonly tags?: readonly string[];
   readonly categoryId?: string;
   readonly sizeKey?: string;
   readonly colorKey?: string;
@@ -25,6 +27,7 @@ export interface ProductListQuery {
   readonly createdToExclusive?: Date;
   readonly minimumPriceRial?: bigint;
   readonly maximumPriceRial?: bigint;
+  readonly maximumDiscountPercent?: number;
 }
 
 export interface VariantInput {
@@ -33,7 +36,6 @@ export interface VariantInput {
   readonly sizeKey: string | null;
   readonly color: string | null;
   readonly colorKey: string | null;
-  readonly priceRial: bigint;
   readonly isActive: boolean;
   readonly onHandQuantity: number;
 }
@@ -46,7 +48,6 @@ export interface VariantUpdateInput {
   readonly sizeKey?: string | null;
   readonly color?: string | null;
   readonly colorKey?: string | null;
-  readonly priceRial?: bigint;
   readonly isActive?: boolean;
 }
 
@@ -54,6 +55,8 @@ export interface CreateProductInput {
   readonly name: string;
   readonly description: string | null;
   readonly tag: string | null;
+  readonly originalPriceRial: bigint;
+  readonly discountPercent: number;
   readonly categoryId: string;
   readonly variants: readonly InitialVariantInput[];
 }
@@ -62,6 +65,8 @@ export interface UpdateProductInput {
   readonly name?: string;
   readonly description?: string | null;
   readonly tag?: string | null;
+  readonly originalPriceRial?: bigint;
+  readonly discountPercent?: number;
   readonly categoryId?: string;
   readonly status?: ProductStatus;
 }
@@ -72,9 +77,6 @@ class VariantValuesRequestDto {
 
   @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true, default: null })
   color?: string | null;
-
-  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  priceRial!: number;
 
   @ApiPropertyOptional({ default: true })
   isActive?: boolean;
@@ -108,9 +110,6 @@ export class UpdateVariantRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true })
   color?: string | null;
 
-  @ApiPropertyOptional({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  priceRial?: number;
-
   @ApiPropertyOptional()
   isActive?: boolean;
 }
@@ -131,6 +130,12 @@ export class CreateProductRequestDto {
     example: 'my_amazing',
   })
   tag?: string | null;
+
+  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
+  originalPriceRial!: number;
+
+  @ApiProperty({ minimum: 0, maximum: 100, example: 0 })
+  discountPercent!: number;
 
   @ApiProperty({ format: 'uuid' })
   categoryId!: string;
@@ -154,6 +159,12 @@ export class UpdateProductRequestDto {
     example: 'my_amazing',
   })
   tag?: string | null;
+
+  @ApiPropertyOptional({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
+  originalPriceRial?: number;
+
+  @ApiPropertyOptional({ minimum: 0, maximum: 100 })
+  discountPercent?: number;
 
   @ApiPropertyOptional({ format: 'uuid' })
   categoryId?: string;
@@ -193,9 +204,6 @@ export class ProductVariantResponseDto {
 
   @ApiProperty({ minLength: 1, maxLength: 80, nullable: true })
   color!: string | null;
-
-  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  priceRial!: number;
 
   @ApiProperty()
   isActive!: boolean;
@@ -271,10 +279,16 @@ export class ProductSummaryDto {
   mainImage!: ProductImageMetadataDto | null;
 
   @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  minimumPriceRial!: number;
+  originalPriceRial!: number;
 
-  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  maximumPriceRial!: number;
+  @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
+  finalPriceRial!: number;
+
+  @ApiProperty({ minimum: 0, maximum: 100 })
+  discountPercent!: number;
+
+  @ApiProperty({ enum: ['IRR'], example: 'IRR' })
+  currency!: 'IRR';
 
   @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
   totalOnHandQuantity!: number;
@@ -298,6 +312,18 @@ export class ProductDetailDto {
 
   @ApiProperty({ minLength: 1, maxLength: 80, pattern: PRODUCT_TAG_PATTERN.source, nullable: true })
   tag!: string | null;
+
+  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
+  originalPriceRial!: number;
+
+  @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
+  finalPriceRial!: number;
+
+  @ApiProperty({ minimum: 0, maximum: 100 })
+  discountPercent!: number;
+
+  @ApiProperty({ enum: ['IRR'], example: 'IRR' })
+  currency!: 'IRR';
 
   @ApiProperty({ type: () => ProductCategoryDto })
   category!: ProductCategoryDto;
@@ -409,11 +435,18 @@ function parseSku(value: unknown): string {
   return sku;
 }
 
-function parsePrice(value: unknown): bigint {
+function parsePrice(value: unknown, field = 'originalPriceRial'): bigint {
   if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0 || value % 10 !== 0) {
-    fail(['priceRial']);
+    fail([field]);
   }
   return BigInt(value);
+}
+
+function parseDiscountPercent(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 100) {
+    fail(['discountPercent']);
+  }
+  return value;
 }
 
 function parseQuantity(value: unknown): number {
@@ -443,7 +476,6 @@ function parseNullableOption(
 }
 
 function parseVariantValues(record: Record<string, unknown>): InitialVariantInput {
-  if (!('priceRial' in record)) fail(['priceRial']);
   const size = parseNullableOption('size' in record ? record.size : null, 'size');
   const color = parseNullableOption('color' in record ? record.color : null, 'color');
   return {
@@ -451,7 +483,6 @@ function parseVariantValues(record: Record<string, unknown>): InitialVariantInpu
     sizeKey: size.key,
     color: color.value,
     colorKey: color.key,
-    priceRial: parsePrice(record.priceRial),
     isActive: 'isActive' in record ? parseBoolean(record.isActive, 'isActive') : true,
     onHandQuantity: 'onHandQuantity' in record ? parseQuantity(record.onHandQuantity) : 0,
   };
@@ -459,7 +490,7 @@ function parseVariantValues(record: Record<string, unknown>): InitialVariantInpu
 
 function parseInitialVariant(record: Record<string, unknown>): InitialVariantInput {
   if (
-    !hasOnlyKeys(record, ['size', 'color', 'priceRial', 'isActive', 'onHandQuantity']) ||
+    !hasOnlyKeys(record, ['size', 'color', 'isActive', 'onHandQuantity']) ||
     !('onHandQuantity' in record)
   ) {
     fail(['onHandQuantity']);
@@ -471,7 +502,7 @@ function parseInitialVariant(record: Record<string, unknown>): InitialVariantInp
 
 function parseVariant(record: Record<string, unknown>): VariantInput {
   if (
-    !hasOnlyKeys(record, ['sku', 'size', 'color', 'priceRial', 'isActive', 'onHandQuantity']) ||
+    !hasOnlyKeys(record, ['sku', 'size', 'color', 'isActive', 'onHandQuantity']) ||
     !('sku' in record)
   ) {
     fail();
@@ -482,8 +513,18 @@ function parseVariant(record: Record<string, unknown>): VariantInput {
 export function parseCreateProductRequest(body: unknown): CreateProductInput {
   if (
     !isRecord(body) ||
-    !hasOnlyKeys(body, ['name', 'description', 'tag', 'categoryId', 'variants']) ||
+    !hasOnlyKeys(body, [
+      'name',
+      'description',
+      'tag',
+      'originalPriceRial',
+      'discountPercent',
+      'categoryId',
+      'variants',
+    ]) ||
     !('name' in body) ||
+    !('originalPriceRial' in body) ||
+    !('discountPercent' in body) ||
     !('categoryId' in body) ||
     !Array.isArray(body.variants) ||
     body.variants.length === 0
@@ -498,6 +539,8 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
     name: normalizeSingleLine(body.name, 'name', 200),
     description: 'description' in body ? normalizeDescription(body.description) : null,
     tag: 'tag' in body ? normalizeProductTag(body.tag) : null,
+    originalPriceRial: parsePrice(body.originalPriceRial),
+    discountPercent: parseDiscountPercent(body.discountPercent),
     categoryId: parseCatalogUuid(body.categoryId, 'categoryId'),
     variants,
   };
@@ -511,7 +554,15 @@ export function parseCreateVariantRequest(body: unknown): VariantInput {
 export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
   if (
     !isRecord(body) ||
-    !hasOnlyKeys(body, ['name', 'description', 'tag', 'categoryId', 'status']) ||
+    !hasOnlyKeys(body, [
+      'name',
+      'description',
+      'tag',
+      'originalPriceRial',
+      'discountPercent',
+      'categoryId',
+      'status',
+    ]) ||
     Object.keys(body).length === 0
   ) {
     fail();
@@ -525,6 +576,12 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
     ...('name' in body ? { name: normalizeSingleLine(body.name, 'name', 200) } : {}),
     ...('description' in body ? { description: normalizeDescription(body.description) } : {}),
     ...('tag' in body ? { tag: normalizeProductTag(body.tag) } : {}),
+    ...('originalPriceRial' in body
+      ? { originalPriceRial: parsePrice(body.originalPriceRial) }
+      : {}),
+    ...('discountPercent' in body
+      ? { discountPercent: parseDiscountPercent(body.discountPercent) }
+      : {}),
     ...('categoryId' in body
       ? { categoryId: parseCatalogUuid(body.categoryId, 'categoryId') }
       : {}),
@@ -535,7 +592,7 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
 export function parseUpdateVariantRequest(body: unknown): VariantUpdateInput {
   if (
     !isRecord(body) ||
-    !hasOnlyKeys(body, ['sku', 'size', 'color', 'priceRial', 'isActive']) ||
+    !hasOnlyKeys(body, ['sku', 'size', 'color', 'isActive']) ||
     Object.keys(body).length === 0
   ) {
     fail();
@@ -546,7 +603,6 @@ export function parseUpdateVariantRequest(body: unknown): VariantUpdateInput {
     ...('sku' in body ? { sku: parseSku(body.sku) } : {}),
     ...(size === undefined ? {} : { size: size.value, sizeKey: size.key }),
     ...(color === undefined ? {} : { color: color.value, colorKey: color.key }),
-    ...('priceRial' in body ? { priceRial: parsePrice(body.priceRial) } : {}),
     ...('isActive' in body ? { isActive: parseBoolean(body.isActive, 'isActive') } : {}),
   };
 }
@@ -567,12 +623,35 @@ function parseOptionalPriceQuery(value: unknown, field: string): bigint | undefi
   return BigInt(parsed);
 }
 
+function parseOptionalDiscountPercentQuery(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^(?:0|[1-9][0-9]{0,2})$/u.test(value)) {
+    fail(['maximumDiscountPercent']);
+  }
+  const parsed = Number(value);
+  if (parsed > 100) fail(['maximumDiscountPercent']);
+  return parsed;
+}
+
 function parseIsoDateTimeQuery(value: unknown, field: string): Date | undefined {
   if (value === undefined) return undefined;
-  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value)) fail([field]);
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(value))
+    fail([field]);
   const date = new Date(value);
   if (Number.isNaN(date.valueOf()) || date.toISOString() !== value) fail([field]);
   return date;
+}
+
+function parseProductTagFilters(value: unknown): readonly string[] {
+  const values = Array.isArray(value) ? value : [value];
+  if (values.length === 0 || values.length > MAX_PRODUCT_FILTER_VALUES) fail(['tags']);
+  const tags = values.map((item) => {
+    if (typeof item !== 'string') fail(['tags']);
+    const tag = item.normalize('NFKC').trim().toLowerCase();
+    if (!PRODUCT_TAG_PATTERN.test(tag) || tag.length > 80) fail(['tags']);
+    return tag;
+  });
+  return [...new Set(tags)];
 }
 
 export function parseProductListQuery(query: unknown): ProductListQuery {
@@ -582,6 +661,7 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
       'page',
       'pageSize',
       'name',
+      'tags',
       'categoryId',
       'size',
       'color',
@@ -591,6 +671,7 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
       'createdTo',
       'minimumPriceRial',
       'maximumPriceRial',
+      'maximumDiscountPercent',
     ])
   ) {
     fail();
@@ -613,6 +694,7 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
   const page = parsePositiveQueryInteger(query.page, 1);
   const pageSize = parsePositiveQueryInteger(query.pageSize, 25, 100);
   const name = 'name' in query ? normalizeSingleLine(query.name, 'name', 200) : undefined;
+  const tags = 'tags' in query ? parseProductTagFilters(query.tags) : undefined;
   const size = 'size' in query ? parseNullableOption(query.size, 'size') : undefined;
   const color = 'color' in query ? parseNullableOption(query.color, 'color') : undefined;
   const createdFrom = parseIsoDateTimeQuery(query.createdFrom, 'createdFrom');
@@ -621,8 +703,13 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
     createdTo === undefined ? undefined : new Date(createdTo.valueOf() + 1000);
   const minimumPriceRial = parseOptionalPriceQuery(query.minimumPriceRial, 'minimumPriceRial');
   const maximumPriceRial = parseOptionalPriceQuery(query.maximumPriceRial, 'maximumPriceRial');
+  const maximumDiscountPercent = parseOptionalDiscountPercentQuery(query.maximumDiscountPercent);
   if ((page - 1) * pageSize > MAX_DATABASE_INTEGER) fail(['page']);
-  if (createdFrom !== undefined && createdToExclusive !== undefined && createdFrom >= createdToExclusive) {
+  if (
+    createdFrom !== undefined &&
+    createdToExclusive !== undefined &&
+    createdFrom >= createdToExclusive
+  ) {
     fail(['createdFrom', 'createdTo']);
   }
   if (
@@ -636,6 +723,7 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
     page,
     pageSize,
     ...(name === undefined ? {} : { name }),
+    ...(tags === undefined ? {} : { tags }),
     ...('categoryId' in query
       ? { categoryId: parseCatalogUuid(query.categoryId, 'categoryId') }
       : {}),
@@ -647,5 +735,6 @@ export function parseProductListQuery(query: unknown): ProductListQuery {
     ...(createdToExclusive === undefined ? {} : { createdToExclusive }),
     ...(minimumPriceRial === undefined ? {} : { minimumPriceRial }),
     ...(maximumPriceRial === undefined ? {} : { maximumPriceRial }),
+    ...(maximumDiscountPercent === undefined ? {} : { maximumDiscountPercent }),
   };
 }

@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const ProductCard = ({ product, containerClassName }: Props) => {
-  const { id, alt, image, name } = product;
+  const { id, image, name } = product;
   return (
     <div
       className={clsx(
@@ -20,7 +20,7 @@ export const ProductCard = ({ product, containerClassName }: Props) => {
       <UiImage
         key={id}
         src={image}
-        alt={alt}
+        alt={name}
         width={500}
         height={500}
         className="h-auto! w-full! bg-center! object-contain! sm:h-44!"
@@ -30,7 +30,7 @@ export const ProductCard = ({ product, containerClassName }: Props) => {
         <UiP
           variant="style_1"
           className="h-10! pb-1 text-xs wrap-break-word whitespace-normal sm:h-full! sm:text-[14px]! sm:leading-4!"
-          title={alt}
+          title={name}
         >
           {name}
         </UiP>

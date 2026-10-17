@@ -46,7 +46,7 @@ const CSRF_HEADER = {
   schema: { type: 'string' },
 } as const;
 
-@ApiTags('Admin Catalog Categories')
+@ApiTags('panel / categories')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog/categories')

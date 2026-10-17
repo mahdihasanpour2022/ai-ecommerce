@@ -25,8 +25,7 @@ export class PublicCategoryDto {
   @ApiProperty({
     type: String,
     nullable: true,
-    example:
-      '/api/v1/catalog/category-images/00000000-0000-4000-8000-000000000000/content',
+    example: '/api/v1/catalog/category-images/00000000-0000-4000-8000-000000000000/content',
   })
   src!: string | null;
 
@@ -68,17 +67,34 @@ export class PublicProductSummaryDto {
   @ApiProperty({ minLength: 1, maxLength: 200 })
   name!: string;
 
+  @ApiProperty({ minLength: 1, maxLength: 5000 })
+  description!: string;
+
   @ApiProperty({ type: () => PublicProductCategoryDto })
   category!: PublicProductCategoryDto;
 
-  @ApiProperty({ type: () => PublicProductImageDto })
-  mainImage!: PublicProductImageDto;
+  @ApiProperty({
+    example: '/api/v1/catalog/product-images/00000000-0000-4000-8000-000000000000/content',
+  })
+  image!: string;
+
+  @ApiProperty({ minLength: 1, maxLength: 200 })
+  alt!: string;
 
   @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  minimumPriceRial!: number;
+  original_price!: number;
 
-  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  maximumPriceRial!: number;
+  @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
+  final_price!: number;
+
+  @ApiProperty({ minimum: 0, maximum: 100 })
+  discount!: number;
+
+  @ApiProperty({ enum: ['IRR', 'IRT'], example: 'IRR' })
+  currency!: 'IRR' | 'IRT';
+
+  @ApiProperty({ minimum: 0, maximum: MAX_DATABASE_INTEGER })
+  quantity!: number;
 
   @ApiProperty()
   isAvailable!: boolean;
@@ -94,17 +110,11 @@ export class PublicProductVariantDto {
   @ApiProperty({ minLength: 1, maxLength: 80, nullable: true })
   color!: string | null;
 
-  @ApiProperty({ minimum: 10, maximum: Number.MAX_SAFE_INTEGER, multipleOf: 10 })
-  priceRial!: number;
-
   @ApiProperty()
   isAvailable!: boolean;
 }
 
 export class PublicProductDetailDto extends PublicProductSummaryDto {
-  @ApiProperty({ minLength: 1, maxLength: 5000 })
-  description!: string;
-
   @ApiProperty({ type: () => PublicProductCategoryDto, isArray: true, maxItems: 6 })
   categoryPath!: PublicProductCategoryDto[];
 
@@ -135,7 +145,9 @@ export class PublicProductListResponseDto {
 export function parsePublicProductListQuery(query: unknown): PublicProductListQuery {
   if (query === null || Array.isArray(query) || typeof query !== 'object') fail();
   const record = query as Record<string, unknown>;
-  if (!Object.keys(record).every((key) => ['page', 'pageSize', 'categories', 'tags'].includes(key))) {
+  if (
+    !Object.keys(record).every((key) => ['page', 'pageSize', 'categories', 'tags'].includes(key))
+  ) {
     fail();
   }
   const page = positiveInteger(record.page, 1);
@@ -151,9 +163,7 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
           ),
         }
       : {}),
-    ...('tags' in record
-      ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) }
-      : {}),
+    ...('tags' in record ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) } : {}),
   };
 }
 

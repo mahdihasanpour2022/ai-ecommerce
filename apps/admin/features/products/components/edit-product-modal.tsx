@@ -56,11 +56,13 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     defaultValues: {
       name: '',
       description: '',
+      tag: '',
       categoryId: '',
       variantId: '',
       size: '',
       color: '',
-      priceRial: '',
+      originalPriceRial: '',
+      discountPercent: '0',
       onHandQuantity: '',
     },
     mode: 'onChange',
@@ -106,7 +108,7 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
       onCancel={onCancel}
     >
       {detailPending ? (
-        <p className="m-0 text-sm leading-7 text-muted">در حال دریافت اطلاعات محصول…</p>
+        <p className="text-muted m-0 text-sm leading-7">در حال دریافت اطلاعات محصول…</p>
       ) : detailFailed || !detail || !selectedVariant ? (
         <div className="grid gap-4">
           <UiForm.Error>دریافت اطلاعات کامل محصول ناموفق بود.</UiForm.Error>
@@ -191,7 +193,9 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                 </UiForm.Error>
               ) : null}
               {categories.isError ? (
-                <UiForm.Error>دریافت دسته‌بندی‌ها ناموفق بود. فرم را ببندید و دوباره تلاش کنید.</UiForm.Error>
+                <UiForm.Error>
+                  دریافت دسته‌بندی‌ها ناموفق بود. فرم را ببندید و دوباره تلاش کنید.
+                </UiForm.Error>
               ) : null}
             </UiForm.Field>
           </div>
@@ -213,8 +217,33 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
             ) : null}
           </UiForm.Field>
 
-          <fieldset className="grid gap-5 rounded-xl border border-border p-4">
-            <legend className="px-2 text-sm font-bold text-foreground">تنوع محصول</legend>
+          <UiForm.Field>
+            <UiForm.Label htmlFor="edit-product-tag">تگ انگلیسی (اختیاری)</UiForm.Label>
+            <UiForm.TextInput
+              id="edit-product-tag"
+              dir="ltr"
+              autoComplete="off"
+              maxLength={80}
+              placeholder="my_amazing"
+              disabled={submitting}
+              aria-invalid={errors.tag ? 'true' : 'false'}
+              aria-describedby={
+                errors.tag
+                  ? 'edit-product-tag-help edit-product-tag-error'
+                  : 'edit-product-tag-help'
+              }
+              {...register('tag')}
+            />
+            <p id="edit-product-tag-help" className="text-muted m-0 text-xs leading-6">
+              فقط حروف انگلیسی؛ برای چند کلمه از _ استفاده کنید.
+            </p>
+            {errors.tag ? (
+              <UiForm.Error id="edit-product-tag-error">{errors.tag.message}</UiForm.Error>
+            ) : null}
+          </UiForm.Field>
+
+          <fieldset className="border-border grid gap-5 rounded-xl border p-4">
+            <legend className="text-foreground px-2 text-sm font-bold">قیمت و تنوع محصول</legend>
             {detail.variants.length > 1 ? (
               <UiForm.Field>
                 <UiForm.Label htmlFor="edit-product-variant">انتخاب تنوع</UiForm.Label>
@@ -245,9 +274,9 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
 
             <div className="grid gap-5 md:grid-cols-2">
               <UiForm.Field>
-                <UiForm.Label htmlFor="edit-product-price">قیمت (ریال)</UiForm.Label>
+                <UiForm.Label htmlFor="edit-product-price">قیمت اصلی (ریال)</UiForm.Label>
                 <Controller
-                  name="priceRial"
+                  name="originalPriceRial"
                   control={control}
                   render={({ field }) => (
                     <UiForm.TextInput
@@ -258,16 +287,48 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                       inputMode="numeric"
                       dir="ltr"
                       disabled={submitting}
-                      aria-invalid={errors.priceRial ? 'true' : 'false'}
-                      aria-describedby={errors.priceRial ? 'edit-product-price-error' : undefined}
+                      aria-invalid={errors.originalPriceRial ? 'true' : 'false'}
+                      aria-describedby={
+                        errors.originalPriceRial ? 'edit-product-price-error' : undefined
+                      }
                       onBlur={field.onBlur}
                       onChange={(event) => field.onChange(normalizePriceInput(event.target.value))}
                     />
                   )}
                 />
-                {errors.priceRial ? (
+                {errors.originalPriceRial ? (
                   <UiForm.Error id="edit-product-price-error">
-                    {errors.priceRial.message}
+                    {errors.originalPriceRial.message}
+                  </UiForm.Error>
+                ) : null}
+              </UiForm.Field>
+
+              <UiForm.Field>
+                <UiForm.Label htmlFor="edit-product-discount">درصد تخفیف</UiForm.Label>
+                <Controller
+                  name="discountPercent"
+                  control={control}
+                  render={({ field }) => (
+                    <UiForm.TextInput
+                      id="edit-product-discount"
+                      ref={field.ref}
+                      name={field.name}
+                      value={field.value}
+                      inputMode="numeric"
+                      dir="ltr"
+                      disabled={submitting}
+                      aria-invalid={errors.discountPercent ? 'true' : 'false'}
+                      aria-describedby={
+                        errors.discountPercent ? 'edit-product-discount-error' : undefined
+                      }
+                      onBlur={field.onBlur}
+                      onChange={(event) => field.onChange(normalizePriceInput(event.target.value))}
+                    />
+                  )}
+                />
+                {errors.discountPercent ? (
+                  <UiForm.Error id="edit-product-discount-error">
+                    {errors.discountPercent.message}
                   </UiForm.Error>
                 ) : null}
               </UiForm.Field>
@@ -366,11 +427,13 @@ function formValues(detail: ProductDetail, variant: ProductVariant): EditProduct
   return {
     name: detail.name,
     description: detail.description ?? '',
+    tag: detail.tag ?? '',
     categoryId: detail.category.id,
     variantId: variant.id,
     size: variant.size ?? '',
     color: variant.color ?? '',
-    priceRial: String(variant.priceRial),
+    originalPriceRial: String(detail.originalPriceRial),
+    discountPercent: String(detail.discountPercent),
     onHandQuantity: String(variant.inventory.onHandQuantity),
   };
 }
@@ -381,7 +444,6 @@ function setVariantValues(
 ): void {
   setValue('size', variant.size ?? '');
   setValue('color', variant.color ?? '');
-  setValue('priceRial', String(variant.priceRial));
   setValue('onHandQuantity', String(variant.inventory.onHandQuantity));
 }
 
@@ -395,19 +457,25 @@ function editWorkflowChanges(
   values: EditProductFormValues,
 ): EditProductWorkflowVariables {
   const nextDescription = values.description || null;
+  const nextTag = values.tag || null;
   const nextSize = values.size || null;
   const nextColor = values.color || null;
-  const nextPrice = Number(values.priceRial);
+  const nextOriginalPrice = Number(values.originalPriceRial);
+  const nextDiscount = Number(values.discountPercent);
   const nextQuantity = Number(values.onHandQuantity);
   const productChanges = {
     ...(values.name === detail.name ? {} : { name: values.name }),
     ...(nextDescription === detail.description ? {} : { description: nextDescription }),
+    ...(nextTag === detail.tag ? {} : { tag: nextTag }),
+    ...(nextOriginalPrice === detail.originalPriceRial
+      ? {}
+      : { originalPriceRial: nextOriginalPrice }),
+    ...(nextDiscount === detail.discountPercent ? {} : { discountPercent: nextDiscount }),
     ...(values.categoryId === detail.category.id ? {} : { categoryId: values.categoryId }),
   };
   const variantChanges = {
     ...(nextSize === variant.size ? {} : { size: nextSize }),
     ...(nextColor === variant.color ? {} : { color: nextColor }),
-    ...(nextPrice === variant.priceRial ? {} : { priceRial: nextPrice }),
   };
   const mainImage = detail.images.find(({ position }) => position === 0) ?? null;
 

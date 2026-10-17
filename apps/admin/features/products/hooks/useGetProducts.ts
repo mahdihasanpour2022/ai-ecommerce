@@ -21,7 +21,10 @@ export function useGetProducts({ page, pageSize, filters = {} }: GetProductsPara
   const response = useRQFetcher<ProductsResponse>({
     queryKey: productKeys.list({ page, pageSize, filters }),
     url: '/admin/catalog/products',
-    axiosConfig: { params: { page, pageSize, ...filters } },
+    axiosConfig: {
+      params: { page, pageSize, ...filters },
+      paramsSerializer: { indexes: null },
+    },
     staleTime: 5000,
     gcTime: 5000,
   });

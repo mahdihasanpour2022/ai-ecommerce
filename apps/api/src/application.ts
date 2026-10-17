@@ -45,7 +45,9 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
     .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'adminRefresh')
     .build();
   const documentFactory = () =>
-    applyApiResponseContract(SwaggerModule.createDocument(app, openApiConfig));
+    applyApiResponseContract(
+      SwaggerModule.createDocument(app, openApiConfig, { autoTagControllers: false }),
+    );
 
   SwaggerModule.setup(SWAGGER_PATH, app, documentFactory, {
     jsonDocumentUrl: `/${OPENAPI_JSON_PATH}`,

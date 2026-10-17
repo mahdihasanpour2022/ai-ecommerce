@@ -31,7 +31,7 @@ export default function Products({
     filters,
   });
 
-  const productList = response?.singleResult;
+  const products = response?.result;
 
   return (
     <section aria-labelledby="products-title">
@@ -50,7 +50,7 @@ export default function Products({
 
       {isPending ? (
         <UiLoading message="در حال دریافت محصولات…" className="min-h-48" />
-      ) : isError || !productList ? (
+      ) : isError || !products || !response ? (
         <div className="rounded-xl bg-surface-subtle p-4" role="alert">
           <p className="m-0 text-foreground">دریافت محصولات ناموفق بود.</p>
           <UiButton
@@ -62,7 +62,7 @@ export default function Products({
             تلاش دوباره
           </UiButton>
         </div>
-      ) : productList.items.length === 0 ? (
+      ) : products.length === 0 ? (
         <p className="rounded-xl bg-surface-subtle p-4 text-muted">
           {Object.keys(filters).length > 0
             ? 'محصولی مطابق فیلترهای انتخاب‌شده پیدا نشد.'
@@ -70,10 +70,10 @@ export default function Products({
         </p>
       ) : (
         <ProductTable
-          products={productList.items}
-          page={productList.page}
-          pageSize={productList.pageSize}
-          totalItems={productList.totalItems}
+          products={products}
+          page={response.page}
+          pageSize={response.pageSize}
+          totalItems={response.totalItems}
           onPageChange={onPageChange}
         />
       )}

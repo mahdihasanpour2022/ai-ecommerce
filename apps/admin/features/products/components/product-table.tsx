@@ -32,16 +32,14 @@ function ProductStatusBadge({ status }: Readonly<{ status: ProductStatus }>) {
     ARCHIVED: 'بایگانی‌شده',
   };
   return (
-    <span className="inline-flex rounded-full bg-surface-muted px-2 py-1 text-xs font-bold text-foreground">
+    <span className="bg-surface-muted text-foreground inline-flex rounded-full px-2 py-1 text-xs font-bold">
       {labels[status]}
     </span>
   );
 }
 
-function formatPriceRange(product: Product): string {
-  const minimum = `${rialFormatter.format(product.minimumPriceRial)} ریال`;
-  if (product.minimumPriceRial === product.maximumPriceRial) return minimum;
-  return `${minimum} تا ${rialFormatter.format(product.maximumPriceRial)} ریال`;
+function formatRialPrice(price: number): string {
+  return `${rialFormatter.format(price)} ریال`;
 }
 
 function ProductLabels({
@@ -57,7 +55,7 @@ function ProductLabels({
       {labels.map((label) => (
         <span
           key={label}
-          className="inline-flex rounded-full bg-surface-muted px-2 py-1 text-xs font-semibold text-foreground"
+          className="bg-surface-muted text-foreground inline-flex rounded-full px-2 py-1 text-xs font-semibold"
         >
           {label}
         </span>
@@ -153,7 +151,7 @@ export function ProductTable({
       rowScope: 'row',
       render: (_name: string, product) => (
         <div className="min-w-24">
-          <p className="m-0 truncate text-foreground" title={product.name}>
+          <p className="text-foreground m-0 truncate" title={product.name}>
             {product.name}
           </p>
         </div>
@@ -163,7 +161,17 @@ export function ProductTable({
       title: 'دسته‌بندی',
       dataIndex: ['category', 'name'],
       key: 'category',
-      render: (name: string) => <span className="whitespace-nowrap text-foreground">{name}</span>,
+      render: (name: string) => <span className="text-foreground whitespace-nowrap">{name}</span>,
+    },
+    {
+      title: 'تگ',
+      dataIndex: 'tag',
+      key: 'tag',
+      render: (tag: string | null) => (
+        <span className="text-foreground whitespace-nowrap" dir="ltr">
+          {tag ?? '—'}
+        </span>
+      ),
     },
     {
       title: 'توضیحات',
@@ -174,7 +182,7 @@ export function ProductTable({
           <span className="text-foreground-muted">بدون توضیحات</span>
         ) : (
           <p
-            className="m-0 max-w-24 truncate line-clamp-2 text-sm text-foreground"
+            className="text-foreground m-0 line-clamp-2 max-w-24 truncate text-sm"
             title={description}
           >
             {description}
@@ -206,7 +214,7 @@ export function ProductTable({
       key: 'variants',
       align: 'center',
       render: (_value, product) => (
-        <span className="whitespace-nowrap text-foreground">
+        <span className="text-foreground whitespace-nowrap">
           {formatPersianInteger(product.activeVariantCount)} فعال از{' '}
           {formatPersianInteger(product.variantCount)}
         </span>
@@ -222,10 +230,30 @@ export function ProductTable({
       ),
     },
     {
-      title: 'قیمت',
-      key: 'price',
-      render: (_value, product) => (
-        <span className="whitespace-nowrap text-foreground">{formatPriceRange(product)}</span>
+      title: 'قیمت اصلی',
+      dataIndex: 'originalPriceRial',
+      key: 'originalPriceRial',
+      render: (price: number) => (
+        <span className="text-foreground whitespace-nowrap">{formatRialPrice(price)}</span>
+      ),
+    },
+    {
+      title: 'درصد تخفیف',
+      dataIndex: 'discountPercent',
+      key: 'discountPercent',
+      align: 'center',
+      render: (discountPercent: number) => (
+        <span className="text-foreground whitespace-nowrap">
+          {formatPersianInteger(discountPercent)}٪
+        </span>
+      ),
+    },
+    {
+      title: 'قیمت نهایی',
+      dataIndex: 'finalPriceRial',
+      key: 'finalPriceRial',
+      render: (price: number) => (
+        <span className="text-foreground whitespace-nowrap">{formatRialPrice(price)}</span>
       ),
     },
     {
@@ -233,7 +261,7 @@ export function ProductTable({
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (createdAt: string) => (
-        <time className="whitespace-nowrap text-foreground" dateTime={createdAt}>
+        <time className="text-foreground whitespace-nowrap" dateTime={createdAt}>
           {formatPersianDateTime(createdAt)}
         </time>
       ),
@@ -257,7 +285,7 @@ export function ProductTable({
   return (
     <>
       <div
-        className="rounded-xl border border-border bg-surface shadow-panel"
+        className="border-border bg-surface shadow-panel rounded-xl border"
         role="region"
         aria-label="جدول محصولات"
         tabIndex={0}

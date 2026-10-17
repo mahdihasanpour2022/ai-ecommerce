@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExtension, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { safeInternalHttpException } from '../authentication/authentication-http.js';
 import { ApiErrorDto } from '../authentication/login.dto.js';
@@ -14,12 +14,12 @@ import {
 } from './public-catalog.dto.js';
 import { PublicCatalogService } from './public-catalog.service.js';
 
-@ApiTags('site_endpoints')
 @Controller('catalog')
 export class PublicCatalogController {
   constructor(private readonly catalog: PublicCatalogService) {}
 
   @Get('categories')
+  @ApiTags('site / categories')
   @ApiSuccess({
     code: 'CATEGORIES_FETCHED',
     message: 'دسته‌بندی‌ها با موفقیت دریافت شدند.',
@@ -33,10 +33,12 @@ export class PublicCatalogController {
   }
 
   @Get('products')
+  @ApiTags('site / products')
+  @ApiExtension('x-api-response-kind', 'page')
   @ApiSuccess({
     code: 'PRODUCTS_FETCHED',
     message: 'محصولات با موفقیت دریافت شدند.',
-    kind: 'single',
+    kind: 'page',
     countProperty: 'totalItems',
   })
   @ApiOperation({ summary: 'Return deterministic page-bounded Active Product summaries' })
@@ -74,6 +76,7 @@ export class PublicCatalogController {
   }
 
   @Get('products/:productId')
+  @ApiTags('site / products')
   @ApiSuccess({ code: 'PRODUCT_FETCHED', message: 'محصول با موفقیت دریافت شد.', kind: 'single' })
   @ApiOperation({ summary: 'Return public detail for one Active Product' })
   @ApiParam({ name: 'productId', format: 'uuid' })

@@ -12,6 +12,7 @@ type SafeGetConfig = Omit<
   | 'baseURL'
   | 'headers'
   | 'method'
+  | 'paramsSerializer'
   | 'signal'
   | 'url'
   | 'withCredentials'
@@ -35,6 +36,12 @@ export function useRQFetcher<Data>({
     queryFn: async ({ signal }) => {
       const response = await httpClient.get<Data>(url, {
         ...axiosConfig,
+        params: {
+          ...axiosConfig?.params,
+          page: axiosConfig?.params?.page ?? 1,
+          pageSize: axiosConfig?.params?.pageSize ?? 20,
+        },
+        paramsSerializer: { indexes: null },
         signal,
       });
       return response.data;

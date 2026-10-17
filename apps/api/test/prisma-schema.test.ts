@@ -27,6 +27,10 @@ const categoryImageMigration = readFileSync(
   resolve(apiRoot, 'prisma/migrations/20260919172105_add_category_images/migration.sql'),
   'utf8',
 );
+const productPricingMigration = readFileSync(
+  resolve(apiRoot, 'prisma/migrations/20261016000000_move_pricing_to_products/migration.sql'),
+  'utf8',
+);
 
 const approvedModels = [
   'AdminUser',
@@ -194,5 +198,15 @@ void describe('Prisma schema and reviewed migrations', () => {
     assert.match(categoryImageMigration, /"byte_size" BETWEEN 1 AND 409599/u);
     assert.match(categoryImageMigration, /"width"::BIGINT \* "height"::BIGINT <= 25000000/u);
     assert.doesNotMatch(categoryImageMigration, /\b(?:DROP|TRUNCATE)\b/iu);
+  });
+
+  void test('moves canonical pricing from Variant to Product with bounded discount', () => {
+    assert.match(schema, /originalPriceRial\s+BigInt/u);
+    assert.match(schema, /discountPercent\s+Int/u);
+    assert.doesNotMatch(schema, /model ProductVariant \{[^}]*priceRial/su);
+    assert.match(productPricingMigration, /MIN\(variant\."price_rial"\)/u);
+    assert.match(productPricingMigration, /"products_original_price_rial_check"/u);
+    assert.match(productPricingMigration, /"products_discount_percent_check"/u);
+    assert.match(productPricingMigration, /DROP COLUMN "price_rial"/u);
   });
 });

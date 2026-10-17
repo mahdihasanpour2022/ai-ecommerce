@@ -18,27 +18,27 @@ void test('maps description and unique size/color labels into protected Product 
             id: randomUUID(),
             name: 'پیراهن لینن',
             description: 'پیراهن سبک مناسب تابستان',
+            tag: 'summer_collection',
+            originalPriceRial: 1_400_000n,
+            discountPercent: 10,
             category: { id: randomUUID(), name: 'پیراهن' },
             status: 'DRAFT',
             variants: [
               {
                 size: 'M',
                 color: 'مشکی',
-                priceRial: 1_200_000n,
                 isActive: true,
                 inventory: { onHandQuantity: 4 },
               },
               {
                 size: 'L',
                 color: 'مشکی',
-                priceRial: 1_400_000n,
                 isActive: true,
                 inventory: { onHandQuantity: 2 },
               },
               {
                 size: null,
                 color: null,
-                priceRial: 1_300_000n,
                 isActive: false,
                 inventory: { onHandQuantity: 1 },
               },
@@ -55,8 +55,12 @@ void test('maps description and unique size/color labels into protected Product 
   const result = await new ProductService(repository, imageStorage).list({ page: 1, pageSize: 25 });
 
   assert.equal(result.items[0]?.description, 'پیراهن سبک مناسب تابستان');
+  assert.equal(result.items[0]?.tag, 'summer_collection');
   assert.deepEqual(result.items[0]?.sizes, ['M', 'L']);
   assert.deepEqual(result.items[0]?.colors, ['مشکی']);
   assert.equal(result.items[0]?.variantCount, 3);
+  assert.equal(result.items[0]?.originalPriceRial, 1_400_000);
+  assert.equal(result.items[0]?.finalPriceRial, 1_260_000);
+  assert.equal(result.items[0]?.discountPercent, 10);
   assert.equal(result.items[0]?.totalOnHandQuantity, 7);
 });

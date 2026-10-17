@@ -24,7 +24,6 @@ const VARIANT_SCALAR_SELECT = {
   sizeKey: true,
   color: true,
   colorKey: true,
-  priceRial: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
@@ -38,6 +37,8 @@ const PRODUCT_BASE_SELECT = {
   name: true,
   description: true,
   tag: true,
+  originalPriceRial: true,
+  discountPercent: true,
   categoryId: true,
   status: true,
   imageVersion: true,
@@ -50,6 +51,8 @@ export const PRODUCT_DETAIL_SELECT = {
   name: true,
   description: true,
   tag: true,
+  originalPriceRial: true,
+  discountPercent: true,
   categoryId: true,
   category: { select: CATEGORY_SELECT },
   status: true,
@@ -65,13 +68,14 @@ const PRODUCT_SUMMARY_SELECT = {
   name: true,
   description: true,
   tag: true,
+  originalPriceRial: true,
+  discountPercent: true,
   category: { select: CATEGORY_SELECT },
   status: true,
   variants: {
     select: {
       size: true,
       color: true,
-      priceRial: true,
       isActive: true,
       inventory: { select: { onHandQuantity: true } },
     },
@@ -106,14 +110,6 @@ export class ProductRepository {
     const variantFilter: Prisma.ProductVariantWhereInput = {
       ...(query.sizeKey === undefined ? {} : { sizeKey: query.sizeKey }),
       ...(query.colorKey === undefined ? {} : { colorKey: query.colorKey }),
-      ...(query.minimumPriceRial === undefined && query.maximumPriceRial === undefined
-        ? {}
-        : {
-            priceRial: {
-              ...(query.minimumPriceRial === undefined ? {} : { gte: query.minimumPriceRial }),
-              ...(query.maximumPriceRial === undefined ? {} : { lte: query.maximumPriceRial }),
-            },
-          }),
     };
     const hasVariantFilter = Object.keys(variantFilter).length > 0;
     const inStock: Prisma.ProductVariantWhereInput = {
@@ -123,8 +119,20 @@ export class ProductRepository {
       ...(query.name === undefined
         ? {}
         : { name: { contains: query.name, mode: 'insensitive' as const } }),
+      ...(query.tags === undefined ? {} : { tag: { in: [...query.tags] } }),
       ...(query.categoryId === undefined ? {} : { categoryId: query.categoryId }),
       ...(query.status === undefined ? {} : { status: query.status }),
+      ...(query.maximumDiscountPercent === undefined
+        ? {}
+        : { discountPercent: { lte: query.maximumDiscountPercent } }),
+      ...(query.minimumPriceRial === undefined && query.maximumPriceRial === undefined
+        ? {}
+        : {
+            originalPriceRial: {
+              ...(query.minimumPriceRial === undefined ? {} : { gte: query.minimumPriceRial }),
+              ...(query.maximumPriceRial === undefined ? {} : { lte: query.maximumPriceRial }),
+            },
+          }),
       ...(query.createdFrom === undefined && query.createdToExclusive === undefined
         ? {}
         : {

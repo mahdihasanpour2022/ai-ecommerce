@@ -1,8 +1,15 @@
 import { UiButton, UiCarousel, UiP, UiSpan } from '@/components/shared/ui';
-import {ProductCard} from '@/features/components/shared/productCard';
-import { products } from './amazingProducts/amazingProducts';
+import { ProductCard } from '@/features/components/shared/productCard';
+import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useMemo } from 'react';
 
 export const CapProducts = () => {
+  const { data } = useGetProducts({});
+
+  const products = useMemo(() => {
+    return data?.result ?? [];
+  }, [data?.result]);
+
   return (
     <section className="px w-full sm:px-12 sm:py-8 lg:px-24 2xl:px-36">
       <div className="border-foreground/10 flex w-full flex-col items-start justify-center gap-4 rounded-2xl border px-6 py-6">

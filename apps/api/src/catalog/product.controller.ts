@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import {
   ApiBody,
   ApiCookieAuth,
+  ApiExtension,
   ApiHeader,
   ApiOperation,
   ApiParam,
@@ -40,7 +41,7 @@ const CSRF_HEADER = {
   schema: { type: 'string' },
 } as const;
 
-@ApiTags('Admin Catalog Products')
+@ApiTags('panel / products')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog')
@@ -48,10 +49,11 @@ export class ProductController {
   constructor(private readonly products: ProductService) {}
 
   @Get('products')
+  @ApiExtension('x-api-response-kind', 'page')
   @ApiSuccess({
     code: 'PRODUCTS_FETCHED',
     message: 'محصولات با موفقیت دریافت شدند.',
-    kind: 'single',
+    kind: 'page',
     countProperty: 'totalItems',
   })
   @CatalogPermission('catalog.read')
@@ -67,6 +69,14 @@ export class ProductController {
   })
   @ApiQuery({ name: 'categoryId', required: false, type: String, format: 'uuid' })
   @ApiQuery({ name: 'name', required: false, type: String, minLength: 1, maxLength: 200 })
+  @ApiQuery({
+    name: 'tags',
+    required: false,
+    type: String,
+    isArray: true,
+    pattern: '^[a-z]+(?:_[a-z]+)*$',
+    description: 'Repeat the query parameter to match Products having any supplied tag.',
+  })
   @ApiQuery({ name: 'size', required: false, type: String, minLength: 1, maxLength: 80 })
   @ApiQuery({ name: 'color', required: false, type: String, minLength: 1, maxLength: 80 })
   @ApiQuery({ name: 'status', required: false, enum: ProductStatus })
@@ -75,6 +85,14 @@ export class ProductController {
   @ApiQuery({ name: 'createdTo', required: false, type: String, format: 'date-time' })
   @ApiQuery({ name: 'minimumPriceRial', required: false, type: Number, minimum: 10, multipleOf: 10 })
   @ApiQuery({ name: 'maximumPriceRial', required: false, type: Number, minimum: 10, multipleOf: 10 })
+  @ApiQuery({
+    name: 'maximumDiscountPercent',
+    required: false,
+    type: Number,
+    minimum: 0,
+    maximum: 100,
+    description: 'Return products whose discount percentage is less than or equal to this value.',
+  })
   @ApiResponse({ status: 200, type: ProductListResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto })
   @ApiResponse({ status: 401, type: ApiErrorDto })

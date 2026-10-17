@@ -174,6 +174,7 @@ void describe(
           data: {
             name: 'Inventory Product',
             description: status === 'ACTIVE' ? 'Complete product' : null,
+            originalPriceRial: 1000n,
             categoryId: category.id,
             status,
           },
@@ -187,7 +188,6 @@ void describe(
             sizeKey: 'm',
             color: null,
             colorKey: null,
-            priceRial: 1000n,
           },
           select: { id: true },
         });

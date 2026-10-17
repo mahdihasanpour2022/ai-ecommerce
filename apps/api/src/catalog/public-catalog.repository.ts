@@ -20,12 +20,14 @@ const PUBLIC_VARIANT_SELECT = {
   id: true,
   size: true,
   color: true,
-  priceRial: true,
   inventory: { select: { onHandQuantity: true } },
 } as const;
 const PUBLIC_LIST_SELECT = {
   id: true,
   name: true,
+  description: true,
+  originalPriceRial: true,
+  discountPercent: true,
   category: { select: { id: true, name: true } },
   images: {
     where: { position: 0 },
@@ -35,7 +37,6 @@ const PUBLIC_LIST_SELECT = {
 } as const;
 const PUBLIC_DETAIL_SELECT = {
   ...PUBLIC_LIST_SELECT,
-  description: true,
   categoryId: true,
   variants: {
     where: { isActive: true },
@@ -53,8 +54,7 @@ export type PublicCategoryRecord = Prisma.CategoryGetPayload<{
 }>;
 type PublicProductListBase = Prisma.ProductGetPayload<{ select: typeof PUBLIC_LIST_SELECT }>;
 export type PublicProductSummaryRecord = PublicProductListBase & {
-  readonly minimumPriceRial: bigint;
-  readonly maximumPriceRial: bigint;
+  readonly quantity: bigint;
   readonly isAvailable: boolean;
 };
 export type PublicProductDetailRecord = Prisma.ProductGetPayload<{
@@ -79,13 +79,13 @@ export class PublicCatalogRepository {
   }> {
     const where: Prisma.ProductWhereInput = {
       status: 'ACTIVE',
-      ...(query.categories === undefined ? {} : { categoryId: { in: query.categories } }),
-      ...(query.tags === undefined ? {} : { tag: { in: query.tags } }),
+      ...(query.categories === undefined ? {} : { categoryId: { in: [...query.categories] } }),
+      ...(query.tags === undefined ? {} : { tag: { in: [...query.tags] } }),
     };
     const categoryCount =
       query.categories === undefined
         ? 1
-        : await this.prisma.category.count({ where: { id: { in: query.categories } } });
+        : await this.prisma.category.count({ where: { id: { in: [...query.categories] } } });
     const [totalItems, baseRows] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
@@ -139,8 +139,7 @@ export class PublicCatalogRepository {
     Map<
       string,
       {
-        readonly minimumPriceRial: bigint;
-        readonly maximumPriceRial: bigint;
+        readonly quantity: bigint;
         readonly isAvailable: boolean;
       }
     >
@@ -149,15 +148,13 @@ export class PublicCatalogRepository {
     const rows = await this.prisma.$queryRaw<
       Array<{
         readonly productId: string;
-        readonly minimumPriceRial: bigint;
-        readonly maximumPriceRial: bigint;
+        readonly quantity: bigint;
         readonly isAvailable: boolean;
       }>
     >`
       SELECT
         variant.product_id::text AS "productId",
-        MIN(variant.price_rial) AS "minimumPriceRial",
-        MAX(variant.price_rial) AS "maximumPriceRial",
+        SUM(inventory.on_hand_quantity) AS "quantity",
         BOOL_OR(inventory.on_hand_quantity > 0) AS "isAvailable"
       FROM product_variants variant
       INNER JOIN inventories inventory ON inventory.variant_id = variant.id

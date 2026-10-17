@@ -18,11 +18,20 @@ void describe('public catalog contract parsing and projection', () => {
   void test('applies exact public page defaults and accepted bounds', () => {
     const categoryId = randomUUID();
     assert.deepEqual(parsePublicProductListQuery({}), { page: 1, pageSize: 24 });
-    assert.deepEqual(parsePublicProductListQuery({ page: '2', pageSize: '60', categoryId }), {
-      page: 2,
-      pageSize: 60,
-      categoryId,
-    });
+    assert.deepEqual(
+      parsePublicProductListQuery({
+        page: '2',
+        pageSize: '60',
+        categories: [categoryId, categoryId],
+        tags: [' Featured_Product ', 'sale'],
+      }),
+      {
+        page: 2,
+        pageSize: 60,
+        categories: [categoryId],
+        tags: ['featured_product', 'sale'],
+      },
+    );
   });
 
   void test('rejects unknown, malformed, non-canonical, and unsafe query values', () => {
@@ -34,7 +43,9 @@ void describe('public catalog contract parsing and projection', () => {
       { page: '0' },
       { page: '01' },
       { pageSize: '61' },
-      { categoryId: 'not-a-uuid' },
+      { categories: 'not-a-uuid' },
+      { categories: [] },
+      { tags: 'my|_amazing' },
       { page: '2147483648', pageSize: '2' },
     ]) {
       rejectsValidation(() => parsePublicProductListQuery(query));

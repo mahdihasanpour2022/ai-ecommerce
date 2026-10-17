@@ -13,14 +13,15 @@ interface Category {
   readonly children: Category[];
 }
 
-type Categories = ApiResponse<readonly Category[], null, null>;
+type CategoriesResponse = ApiResponse<readonly Category[], null, null>;
 
 export const useGetCategories = () => {
-  const response = useRQFetcher<Categories>({
+  const response = useRQFetcher<CategoriesResponse>({
     queryKey: ['all-categories'],
     staleTime: 0,
     gcTime: 0,
     url: ApiRoutes.categories,
+    axiosConfig: { params: { page: 1, pageSize: 30 } },
   });
 
   const { error, isError } = response;

@@ -49,6 +49,7 @@ const product: Product = {
   id: productId,
   name: 'پیراهن لینن',
   description: 'توضیحات فعلی',
+  tag: 'featured_product',
   category: { id: categoryId, name: 'پیراهن' },
   status: 'DRAFT',
   variantCount: 2,
@@ -56,8 +57,10 @@ const product: Product = {
   sizes: ['medium', 'large'],
   colors: ['blue', 'black'],
   mainImage: null,
-  minimumPriceRial: 1_200_000,
-  maximumPriceRial: 2_000_000,
+  originalPriceRial: 1_200_000,
+  finalPriceRial: 1_080_000,
+  discountPercent: 10,
+  currency: 'IRR',
   totalOnHandQuantity: 20,
   createdAt: timestamp,
   updatedAt: timestamp,
@@ -67,6 +70,11 @@ const detail: ProductDetail = {
   id: productId,
   name: product.name,
   description: 'توضیحات فعلی',
+  tag: 'featured_product',
+  originalPriceRial: 1_200_000,
+  finalPriceRial: 1_080_000,
+  discountPercent: 10,
+  currency: 'IRR',
   category: product.category,
   status: 'DRAFT',
   imageVersion: 3,
@@ -77,7 +85,6 @@ const detail: ProductDetail = {
       sku: 'SKU-FIRST',
       size: 'medium',
       color: 'blue',
-      priceRial: 1_200_000,
       isActive: true,
       inventory: { onHandQuantity: 12, version: 2 },
       createdAt: timestamp,
@@ -89,7 +96,6 @@ const detail: ProductDetail = {
       sku: 'SKU-SECOND',
       size: 'large',
       color: 'red',
-      priceRial: 2_000_000,
       isActive: true,
       inventory: { onHandQuantity: 8, version: 5 },
       createdAt: timestamp,
@@ -300,7 +306,7 @@ void test('renders every create field, selects a Variant, and submits only chang
     assert.ok(within(dialog).getByRole('textbox', { name: 'توضیحات (اختیاری)' }));
     assert.ok(within(dialog).getByRole('combobox', { name: 'دسته‌بندی' }));
     assert.ok(within(dialog).getByRole('combobox', { name: 'انتخاب تنوع' }));
-    assert.ok(within(dialog).getByRole('textbox', { name: 'قیمت (ریال)' }));
+    assert.ok(within(dialog).getByRole('textbox', { name: 'قیمت اصلی (ریال)' }));
     assert.ok(within(dialog).getByRole('combobox', { name: 'سایز' }));
     assert.ok(within(dialog).getByRole('combobox', { name: 'رنگ' }));
     assert.ok(within(dialog).getByRole('spinbutton', { name: 'موجودی' }));
@@ -310,7 +316,7 @@ void test('renders every create field, selects a Variant, and submits only chang
     const name = within(dialog).getByRole('textbox', { name: 'نام محصول' });
     await user.clear(name);
     await user.type(name, 'پیراهن ویرایش‌شده');
-    const price = within(dialog).getByRole('textbox', { name: 'قیمت (ریال)' });
+    const price = within(dialog).getByRole('textbox', { name: 'قیمت اصلی (ریال)' });
     await user.clear(price);
     await user.type(price, '2400000');
     const quantity = within(dialog).getByRole('spinbutton', { name: 'موجودی' });
@@ -323,8 +329,12 @@ void test('renders every create field, selects a Variant, and submits only chang
 
     await waitFor(() => assert.ok(submitted));
     assert.equal(submitted?.product?.productId, productId);
-    assert.deepEqual(submitted?.product, { productId, name: 'پیراهن ویرایش‌شده' });
-    assert.deepEqual(submitted?.variant, { variantId: secondVariantId, priceRial: 2_400_000 });
+    assert.deepEqual(submitted?.product, {
+      productId,
+      name: 'پیراهن ویرایش‌شده',
+      originalPriceRial: 2_400_000,
+    });
+    assert.equal(submitted?.variant, undefined);
     assert.deepEqual(submitted?.inventory, {
       variantId: secondVariantId,
       onHandQuantity: 6,
@@ -383,8 +393,7 @@ void test('coordinates only supplied edit mutations and invalidates Product data
     await act(async () => {
       assert.equal(
         await hook.result.current.save({
-          product: { productId, name: 'نام جدید' },
-          variant: { variantId: secondVariantId, priceRial: 2_400_000 },
+          product: { productId, name: 'نام جدید', originalPriceRial: 2_400_000 },
           inventory: { variantId: secondVariantId, onHandQuantity: 6, version: 5 },
           image: { productId, currentImageId: imageId, imageVersion: 3, file },
         }),
@@ -396,15 +405,16 @@ void test('coordinates only supplied edit mutations and invalidates Product data
       calls.map(({ method, url }) => [method, url]),
       [
         ['patch', `/admin/catalog/products/${productId}`],
-        ['patch', `/admin/catalog/variants/${secondVariantId}`],
         ['put', `/admin/catalog/variants/${secondVariantId}/inventory`],
         ['post', `/admin/catalog/product-images/${imageId}/replacements`],
       ],
     );
-    assert.deepEqual(JSON.parse(String(calls[0]?.data)), { name: 'نام جدید' });
-    assert.deepEqual(JSON.parse(String(calls[1]?.data)), { priceRial: 2_400_000 });
-    assert.deepEqual(JSON.parse(String(calls[2]?.data)), { onHandQuantity: 6, version: 5 });
-    assert.ok(calls[3]?.data instanceof FormData);
+    assert.deepEqual(JSON.parse(String(calls[0]?.data)), {
+      name: 'نام جدید',
+      originalPriceRial: 2_400_000,
+    });
+    assert.deepEqual(JSON.parse(String(calls[1]?.data)), { onHandQuantity: 6, version: 5 });
+    assert.ok(calls[2]?.data instanceof FormData);
     assert.equal(invalidations, 1);
     hook.unmount();
   } finally {

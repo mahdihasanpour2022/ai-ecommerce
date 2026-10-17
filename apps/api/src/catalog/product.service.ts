@@ -67,6 +67,8 @@ export class ProductService {
             name: input.name,
             description: input.description,
             tag: input.tag,
+            originalPriceRial: input.originalPriceRial,
+            discountPercent: input.discountPercent,
             categoryId: input.categoryId,
           },
           select: { id: true },
@@ -99,6 +101,12 @@ export class ProductService {
             ...(input.name === undefined ? {} : { name: input.name }),
             ...(input.description === undefined ? {} : { description: input.description }),
             ...(input.tag === undefined ? {} : { tag: input.tag }),
+            ...(input.originalPriceRial === undefined
+              ? {}
+              : { originalPriceRial: input.originalPriceRial }),
+            ...(input.discountPercent === undefined
+              ? {}
+              : { discountPercent: input.discountPercent }),
             ...(input.categoryId === undefined ? {} : { categoryId: input.categoryId }),
             ...(input.status === undefined ? {} : { status: input.status }),
           },
@@ -192,7 +200,6 @@ export class ProductService {
             ...(input.sku === undefined ? {} : { sku: input.sku }),
             ...(input.size === undefined ? {} : { size: input.size, sizeKey: input.sizeKey }),
             ...(input.color === undefined ? {} : { color: input.color, colorKey: input.colorKey }),
-            ...(input.priceRial === undefined ? {} : { priceRial: input.priceRial }),
             ...(input.isActive === undefined ? {} : { isActive: input.isActive }),
           },
         });
@@ -222,7 +229,6 @@ export class ProductService {
         sizeKey: input.sizeKey,
         color: input.color,
         colorKey: input.colorKey,
-        priceRial: input.priceRial,
         isActive: input.isActive,
       },
       select: { id: true },
@@ -287,6 +293,9 @@ function assertProductMutationAllowed(
     input.status !== 'DRAFT' ||
     input.name !== undefined ||
     input.description !== undefined ||
+    input.tag !== undefined ||
+    input.originalPriceRial !== undefined ||
+    input.discountPercent !== undefined ||
     input.categoryId !== undefined
   ) {
     throw new ProductError('PRODUCT_LIFECYCLE_CONFLICT');
@@ -371,7 +380,6 @@ function toVariantDto(variant: ProductDetailRecord['variants'][number]): Product
     sku: variant.sku,
     size: variant.size,
     color: variant.color,
-    priceRial: safeRial(variant.priceRial),
     isActive: variant.isActive,
     inventory: variant.inventory,
     createdAt: variant.createdAt.toISOString(),
@@ -398,6 +406,10 @@ function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
     name: product.name,
     description: product.description,
     tag: product.tag,
+    originalPriceRial: safeRial(product.originalPriceRial),
+    finalPriceRial: finalPriceRial(product.originalPriceRial, product.discountPercent),
+    discountPercent: product.discountPercent,
+    currency: 'IRR',
     category: product.category,
     status: product.status,
     imageVersion: product.imageVersion,
@@ -409,10 +421,6 @@ function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
 }
 
 function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
-  const prices = product.variants.map((variant) => variant.priceRial);
-  if (prices.length === 0) throw new Error('Persisted Product has no Variants.');
-  const minimumPriceRial = prices.reduce((minimum, price) => (price < minimum ? price : minimum));
-  const maximumPriceRial = prices.reduce((maximum, price) => (price > maximum ? price : maximum));
   return {
     id: product.id,
     name: product.name,
@@ -425,8 +433,10 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
     sizes: uniqueLabels(product.variants.map((variant) => variant.size)),
     colors: uniqueLabels(product.variants.map((variant) => variant.color)),
     mainImage: product.images[0] === undefined ? null : toImageDto(product.images[0]),
-    minimumPriceRial: safeRial(minimumPriceRial),
-    maximumPriceRial: safeRial(maximumPriceRial),
+    originalPriceRial: safeRial(product.originalPriceRial),
+    finalPriceRial: finalPriceRial(product.originalPriceRial, product.discountPercent),
+    discountPercent: product.discountPercent,
+    currency: 'IRR',
     totalOnHandQuantity: safeTotal(
       product.variants.map((variant) => {
         if (variant.inventory === null) throw new Error('Persisted Variant Inventory is missing.');
@@ -436,6 +446,10 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };
+}
+
+function finalPriceRial(originalPriceRial: bigint, discountPercent: number): number {
+  return safeRial((originalPriceRial * BigInt(100 - discountPercent)) / 100n);
 }
 
 function uniqueLabels(labels: ReadonlyArray<string | null>): string[] {

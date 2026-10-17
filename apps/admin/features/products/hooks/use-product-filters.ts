@@ -14,6 +14,7 @@ const STATUSES = new Set<ProductStatus>(['DRAFT', 'ACTIVE', 'ARCHIVED']);
 const AVAILABILITIES = new Set<ProductAvailability>(['IN_STOCK', 'OUT_OF_STOCK']);
 const ISO_DATE_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u;
 const PRICE_PATTERN = /^[1-9][0-9]*$/u;
+const PRODUCT_TAG_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
 function bounded(value: string | null, maximum: number): string | undefined {
@@ -33,8 +34,26 @@ function validPrice(value: string | null): value is string {
   return Number.isSafeInteger(parsed) && parsed % 10 === 0;
 }
 
-export function parseProductFilters(searchParams: Pick<URLSearchParams, 'get'>): ProductFilters {
+function validDiscountPercent(value: string | null): value is string {
+  if (!value || !/^(?:0|[1-9][0-9]{0,2})$/u.test(value)) return false;
+  return Number(value) <= 100;
+}
+
+function normalizedTags(values: readonly string[]): readonly string[] {
+  return [
+    ...new Set(
+      values
+        .map((value) => value.normalize('NFKC').trim().toLowerCase())
+        .filter((value) => value.length <= 80 && PRODUCT_TAG_PATTERN.test(value)),
+    ),
+  ].slice(0, 50);
+}
+
+export function parseProductFilters(
+  searchParams: Pick<URLSearchParams, 'get' | 'getAll'>,
+): ProductFilters {
   const name = bounded(searchParams.get('name'), 200);
+  const tags = normalizedTags(searchParams.getAll('tags'));
   const categoryId = bounded(searchParams.get('categoryId'), 36);
   const size = bounded(searchParams.get('size'), 80);
   const color = bounded(searchParams.get('color'), 80);
@@ -44,8 +63,10 @@ export function parseProductFilters(searchParams: Pick<URLSearchParams, 'get'>):
   const createdTo = searchParams.get('createdTo');
   const minimumPriceRial = searchParams.get('minimumPriceRial');
   const maximumPriceRial = searchParams.get('maximumPriceRial');
+  const maximumDiscountPercent = searchParams.get('maximumDiscountPercent');
   return {
     ...(name ? { name } : {}),
+    ...(tags.length > 0 ? { tags } : {}),
     ...(categoryId && UUID_PATTERN.test(categoryId) ? { categoryId } : {}),
     ...(size ? { size } : {}),
     ...(color ? { color } : {}),
@@ -57,12 +78,14 @@ export function parseProductFilters(searchParams: Pick<URLSearchParams, 'get'>):
     ...(validIsoDateTime(createdTo) ? { createdTo } : {}),
     ...(validPrice(minimumPriceRial) ? { minimumPriceRial } : {}),
     ...(validPrice(maximumPriceRial) ? { maximumPriceRial } : {}),
+    ...(validDiscountPercent(maximumDiscountPercent) ? { maximumDiscountPercent } : {}),
   };
 }
 
 export function productFilterFormValues(filters: ProductFilters): ProductFilterFormValues {
   return {
     name: filters.name ?? '',
+    tags: filters.tags ? [...filters.tags] : [],
     categoryId: filters.categoryId ?? '',
     size: filters.size ?? '',
     color: filters.color ?? '',
@@ -72,15 +95,20 @@ export function productFilterFormValues(filters: ProductFilters): ProductFilterF
     createdTo: filters.createdTo ?? '',
     minimumPriceRial: filters.minimumPriceRial ?? '',
     maximumPriceRial: filters.maximumPriceRial ?? '',
+    maximumDiscountPercent: filters.maximumDiscountPercent ?? '',
   };
 }
 
 function compact(values: ProductFilterFormValues): ProductFilters {
-  return Object.fromEntries(
-    Object.entries(values)
-      .map(([key, value]) => [key, value.trim()] as const)
-      .filter(([, value]) => value.length > 0),
-  ) as ProductFilters;
+  return {
+    ...Object.fromEntries(
+      Object.entries(values)
+        .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+        .map(([key, value]) => [key, value.trim()] as const)
+        .filter(([, value]) => value.length > 0),
+    ),
+    ...(values.tags.length > 0 ? { tags: normalizedTags(values.tags) } : {}),
+  } as ProductFilters;
 }
 
 export function useProductFilters() {
@@ -96,7 +124,11 @@ export function useProductFilters() {
       for (const name of PRODUCT_FILTER_PARAMETER_NAMES) params.delete(name);
       params.set('page', '1');
       for (const [name, value] of Object.entries(nextFilters)) {
-        if (value) params.set(name, value);
+        if (Array.isArray(value)) {
+          for (const item of value) params.append(name, item);
+        } else if (value) {
+          params.set(name, value);
+        }
       }
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },

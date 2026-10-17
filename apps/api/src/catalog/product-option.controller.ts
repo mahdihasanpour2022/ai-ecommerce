@@ -12,7 +12,7 @@ import {
 } from './product-option.dto.js';
 import { ProductOptionService } from './product-option.service.js';
 
-@ApiTags('Admin Catalog Product Options')
+@ApiTags('panel / product-options')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog/product-options')

@@ -21,7 +21,7 @@ interface HeaderResponse {
   setHeader(name: string, value: string | number): unknown;
 }
 
-@ApiTags('Admin Catalog Category Images')
+@ApiTags('panel / category-images')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog/category-images')
@@ -57,7 +57,7 @@ export class CategoryImageController {
   }
 }
 
-@ApiTags('Public Catalog Category Images')
+@ApiTags('site / category-images')
 @Controller('catalog/category-images')
 export class PublicCategoryImageController {
   constructor(private readonly categories: CategoryService) {}

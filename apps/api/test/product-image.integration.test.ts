@@ -180,12 +180,12 @@ void describe(
         data: {
           name: 'Image Product',
           description: 'Complete product description',
+          originalPriceRial: 1000n,
           categoryId: category.id,
           status,
           variants: {
             create: {
               sku: `IMAGE-${randomUUID().toUpperCase()}`,
-              priceRial: 1000,
               inventory: { create: { onHandQuantity: 1 } },
             },
           },

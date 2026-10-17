@@ -93,22 +93,33 @@ void test('validates Product fields against the Backend boundaries', () => {
     image: validProductImage(),
     name: ' پیراهن لینن ',
     description: '',
+    tag: '',
     categoryId,
     size: 'medium',
     color: 'blue',
-    priceRial: '1200000',
+    originalPriceRial: '1200000',
+    discountPercent: '0',
     onHandQuantity: '12',
   };
   assert.deepEqual(createProductSchema.parse(valid), {
     ...valid,
     name: 'پیراهن لینن',
   });
-  assert.equal(createProductSchema.safeParse({ ...valid, priceRial: '12.5' }).success, false);
+  assert.equal(
+    createProductSchema.safeParse({ ...valid, originalPriceRial: '12.5' }).success,
+    false,
+  );
+  assert.equal(createProductSchema.safeParse({ ...valid, discountPercent: '101' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, categoryId: 'invalid' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, size: '' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, color: '' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, onHandQuantity: '' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, onHandQuantity: '0' }).success, false);
+  assert.equal(createProductSchema.safeParse({ ...valid, tag: 'my|_amazing' }).success, false);
+  assert.equal(
+    createProductSchema.parse({ ...valid, tag: ' Featured_Product ' }).tag,
+    'featured_product',
+  );
   assert.equal(
     createProductSchema.safeParse({ ...valid, description: 'ت'.repeat(201) }).success,
     false,
@@ -124,7 +135,7 @@ async function completeRequiredFields(dialog: HTMLElement) {
   await user.type(within(dialog).getByRole('textbox', { name: 'نام محصول' }), 'پیراهن لینن');
   await user.click(within(dialog).getByRole('combobox', { name: 'دسته‌بندی' }));
   await user.click(await within(document.body).findByText('پیراهن'));
-  const price = within(dialog).getByRole('textbox', { name: 'قیمت (ریال)' });
+  const price = within(dialog).getByRole('textbox', { name: 'قیمت اصلی (ریال)' });
   await user.type(price, '1200000');
   assert.equal(price.getAttribute('value'), '1,200,000');
   await user.click(within(dialog).getByRole('combobox', { name: 'سایز' }));
@@ -293,12 +304,14 @@ void test('creates a Product, closes the modal, and reports the new first page',
     assert.deepEqual(JSON.parse(String(post.data)), {
       name: 'پیراهن لینن',
       description: null,
+      tag: null,
+      originalPriceRial: 1200000,
+      discountPercent: 0,
       categoryId,
       variants: [
         {
           size: 'medium',
           color: 'blue',
-          priceRial: 1200000,
           isActive: true,
           onHandQuantity: 12,
         },

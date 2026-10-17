@@ -4,6 +4,7 @@ export type ProductAvailability = 'IN_STOCK' | 'OUT_OF_STOCK';
 
 export interface ProductFilters {
   readonly name?: string;
+  readonly tags?: readonly string[];
   readonly categoryId?: string;
   readonly size?: string;
   readonly color?: string;
@@ -13,10 +14,12 @@ export interface ProductFilters {
   readonly createdTo?: string;
   readonly minimumPriceRial?: string;
   readonly maximumPriceRial?: string;
+  readonly maximumDiscountPercent?: string;
 }
 
 export const PRODUCT_FILTER_PARAMETER_NAMES = [
   'name',
+  'tags',
   'categoryId',
   'size',
   'color',
@@ -26,6 +29,7 @@ export const PRODUCT_FILTER_PARAMETER_NAMES = [
   'createdTo',
   'minimumPriceRial',
   'maximumPriceRial',
+  'maximumDiscountPercent',
 ] as const;
 
 export function productFilterCount(filters: ProductFilters): number {

@@ -11,7 +11,15 @@ export interface ApiResponse<Result = null, SingleResult = null, Details = null>
   details: Details;
 }
 
-export type ApiResponseKind = 'collection' | 'single' | 'none';
+export interface PaginatedApiResponse<Result = readonly unknown[]>
+  extends ApiResponse<Result, null, null> {
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+export type ApiResponseKind = 'collection' | 'page' | 'single' | 'none';
 
 export interface ApiSuccessMetadata {
   readonly code: string;

@@ -168,7 +168,11 @@ void describe(
           select: { id: true },
         });
         const product = await transaction.product.create({
-          data: { name: 'Canonical price product', categoryId: category.id },
+          data: {
+            name: 'Canonical price product',
+            originalPriceRial: 987_650n,
+            categoryId: category.id,
+          },
           select: { id: true },
         });
         const variant = await transaction.productVariant.create({
@@ -179,12 +183,11 @@ void describe(
             sizeKey: null,
             color: null,
             colorKey: null,
-            priceRial: 987_650n,
           },
           select: { id: true },
         });
         await transaction.inventory.create({ data: { variantId: variant.id } });
-        return variant.id;
+        return product.id;
       });
     }
 
@@ -228,11 +231,11 @@ void describe(
       assert.deepEqual(responseBody<SettingBody>(protectedRead), { unit: 'TOMAN' });
     });
 
-    void test('sets either unit and the same unit without changing canonical Variant prices', async () => {
-      const variantId = await createCanonicalVariant();
-      const original = await prisma.productVariant.findUniqueOrThrow({
-        where: { id: variantId },
-        select: { priceRial: true },
+    void test('sets either unit and the same unit without changing canonical Product prices', async () => {
+      const productId = await createCanonicalVariant();
+      const original = await prisma.product.findUniqueOrThrow({
+        where: { id: productId },
+        select: { originalPriceRial: true },
       });
       for (const unit of ['RIAL', 'RIAL', 'TOMAN'] as const) {
         const response = await updateSetting({ unit }).expect(200);
@@ -240,9 +243,9 @@ void describe(
         assert.deepEqual(Object.keys(responseBody<SettingBody>(response)), ['unit']);
       }
       assert.deepEqual(
-        await prisma.productVariant.findUniqueOrThrow({
-          where: { id: variantId },
-          select: { priceRial: true },
+        await prisma.product.findUniqueOrThrow({
+          where: { id: productId },
+          select: { originalPriceRial: true },
         }),
         original,
       );

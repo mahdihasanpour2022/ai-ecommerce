@@ -38,10 +38,15 @@ interface PublicImageBody {
 interface PublicSummaryBody {
   readonly id: string;
   readonly name: string;
+  readonly description: string;
   readonly category: { readonly id: string; readonly name: string };
-  readonly mainImage: PublicImageBody;
-  readonly minimumPriceRial: number;
-  readonly maximumPriceRial: number;
+  readonly image: string;
+  readonly alt: string;
+  readonly original_price: number;
+  readonly final_price: number;
+  readonly discount: number;
+  readonly currency: 'IRR' | 'IRT';
+  readonly quantity: number;
   readonly isAvailable: boolean;
 }
 
@@ -54,19 +59,18 @@ interface PublicListBody {
 }
 
 interface PublicDetailBody extends PublicSummaryBody {
-  readonly description: string;
   readonly categoryPath: Array<{ readonly id: string; readonly name: string }>;
   readonly images: PublicImageBody[];
   readonly variants: Array<{
     readonly id: string;
     readonly size: string | null;
     readonly color: string | null;
-    readonly priceRial: number;
     readonly isAvailable: boolean;
   }>;
 }
 
 interface OpenApiOperation {
+  readonly tags?: string[];
   readonly security?: Array<Record<string, unknown>>;
   readonly parameters?: Array<{ readonly name?: string; readonly in?: string }>;
   readonly responses?: Record<string, unknown>;
@@ -84,7 +88,24 @@ function server(app: INestApplication): App {
 function body<T>(response: Response): T {
   const value = response.body as unknown;
   if (typeof value !== 'object' || value === null || !('hasError' in value)) return value as T;
-  const envelope = value as { hasError: boolean; result: T | null; singleResult: T | null };
+  const envelope = value as {
+    hasError: boolean;
+    result: T | readonly unknown[] | null;
+    singleResult: T | null;
+    page?: number;
+    pageSize?: number;
+    totalItems?: number;
+    totalPages?: number;
+  };
+  if (Array.isArray(envelope.result) && envelope.page !== undefined) {
+    return {
+      items: envelope.result,
+      page: envelope.page,
+      pageSize: envelope.pageSize,
+      totalItems: envelope.totalItems,
+      totalPages: envelope.totalPages,
+    } as unknown as T;
+  }
   return (envelope.hasError ? envelope : (envelope.singleResult ?? envelope.result)) as T;
 }
 
@@ -124,9 +145,11 @@ void describe(
       readonly status?: 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
       readonly createdAt?: Date;
       readonly name?: string;
+      readonly tag?: string;
+      readonly originalPriceRial?: number;
+      readonly discountPercent?: number;
       readonly variants?: ReadonlyArray<{
         readonly active: boolean;
-        readonly price: number;
         readonly quantity: number;
         readonly size?: string;
         readonly color?: string;
@@ -137,11 +160,14 @@ void describe(
       readonly imageIds: string[];
       readonly variantIds: string[];
     }> {
-      const variants = options.variants ?? [{ active: true, price: 1000, quantity: 1, size: 'M' }];
+      const variants = options.variants ?? [{ active: true, quantity: 1, size: 'M' }];
       const created = await prisma.product.create({
         data: {
           name: options.name ?? `Product ${randomUUID()}`,
           description: 'Public plain-text description',
+          tag: options.tag ?? null,
+          originalPriceRial: options.originalPriceRial ?? 1000,
+          discountPercent: options.discountPercent ?? 0,
           categoryId: options.categoryId,
           ...(options.createdAt === undefined ? {} : { createdAt: options.createdAt }),
           variants: {
@@ -151,7 +177,6 @@ void describe(
               sizeKey: variant.size?.toLowerCase() ?? null,
               color: variant.color ?? null,
               colorKey: variant.color?.toLowerCase() ?? null,
-              priceRial: variant.price,
               isActive: variant.active,
               inventory: { create: { onHandQuantity: variant.quantity } },
             })),
@@ -251,10 +276,13 @@ void describe(
         status: 'ACTIVE',
         createdAt: tiedAt,
         name: 'Root Active',
+        tag: 'featured_product',
+        originalPriceRial: 4000,
+        discountPercent: 25,
         variants: [
-          { active: true, price: 2000, quantity: 0, size: 'M' },
-          { active: true, price: 4000, quantity: 2, size: 'L' },
-          { active: false, price: 10, quantity: 99, size: 'XL' },
+          { active: true, quantity: 0, size: 'M' },
+          { active: true, quantity: 2, size: 'L' },
+          { active: false, quantity: 99, size: 'XL' },
         ],
       });
       const second = await product({
@@ -262,11 +290,26 @@ void describe(
         status: 'ACTIVE',
         createdAt: tiedAt,
         name: 'Child Active',
+        tag: 'sale',
       });
       await product({ categoryId: root, status: 'DRAFT', name: 'Hidden Draft' });
       await product({ categoryId: root, status: 'ARCHIVED', name: 'Hidden Archived' });
 
       const response = await request(server(app)).get('/api/v1/catalog/products').expect(200);
+      const envelope = response.body as {
+        readonly result: readonly PublicSummaryBody[];
+        readonly singleResult: null;
+        readonly page: number;
+        readonly pageSize: number;
+        readonly totalItems: number;
+        readonly totalPages: number;
+      };
+      assert.ok(Array.isArray(envelope.result));
+      assert.equal(envelope.singleResult, null);
+      assert.equal(envelope.page, 1);
+      assert.equal(envelope.pageSize, 24);
+      assert.equal(envelope.totalItems, 2);
+      assert.equal(envelope.totalPages, 1);
       const page = body<PublicListBody>(response);
       assert.equal(page.page, 1);
       assert.equal(page.pageSize, 24);
@@ -279,16 +322,24 @@ void describe(
       const rootSummary = page.items.find(({ id }) => id === first.id);
       assert.ok(rootSummary);
       assert.deepEqual(Object.keys(rootSummary).sort(), [
+        'alt',
         'category',
+        'currency',
+        'description',
+        'discount',
+        'final_price',
         'id',
+        'image',
         'isAvailable',
-        'mainImage',
-        'maximumPriceRial',
-        'minimumPriceRial',
         'name',
+        'original_price',
+        'quantity',
       ]);
-      assert.equal(rootSummary.minimumPriceRial, 2000);
-      assert.equal(rootSummary.maximumPriceRial, 4000);
+      assert.equal(rootSummary.original_price, 4000);
+      assert.equal(rootSummary.final_price, 3000);
+      assert.equal(rootSummary.discount, 25);
+      assert.equal(rootSummary.currency, 'IRR');
+      assert.equal(rootSummary.quantity, 2);
       assert.equal(rootSummary.isAvailable, true);
 
       const firstPage = body<PublicListBody>(
@@ -302,7 +353,7 @@ void describe(
 
       const exactRoot = body<PublicListBody>(
         await request(server(app))
-          .get(`/api/v1/catalog/products?categoryId=${root}&page=1&pageSize=1`)
+          .get(`/api/v1/catalog/products?categories=${root}&page=1&pageSize=1`)
           .expect(200),
       );
       assert.deepEqual(
@@ -311,15 +362,24 @@ void describe(
       );
       assert.equal(exactRoot.totalItems, 1);
       const emptyPage = body<PublicListBody>(
-        await request(server(app)).get(`/api/v1/catalog/products?categoryId=${empty}`).expect(200),
+        await request(server(app)).get(`/api/v1/catalog/products?categories=${empty}`).expect(200),
       );
       assert.deepEqual(emptyPage.items, []);
       await request(server(app))
-        .get(`/api/v1/catalog/products?categoryId=${randomUUID()}`)
+        .get(`/api/v1/catalog/products?categories=${randomUUID()}`)
         .expect(404)
         .expect((result: Response) =>
           assert.equal(body<ErrorBody>(result).code, 'CATEGORY_NOT_FOUND'),
         );
+      const tagged = body<PublicListBody>(
+        await request(server(app))
+          .get(`/api/v1/catalog/products?categories=${root}&tags=featured_product`)
+          .expect(200),
+      );
+      assert.deepEqual(
+        tagged.items.map(({ id }) => id),
+        [first.id],
+      );
       await request(server(app)).get('/api/v1/catalog/products?pageSize=61').expect(400);
       await request(server(app)).get('/api/v1/catalog/products?status=ACTIVE').expect(400);
     });
@@ -331,10 +391,12 @@ void describe(
         categoryId: child,
         status: 'ACTIVE',
         imageCount: 2,
+        originalPriceRial: 5000,
+        discountPercent: 20,
         variants: [
-          { active: true, price: 3000, quantity: 0, size: 'M', color: 'Blue' },
-          { active: true, price: 5000, quantity: 4, size: 'L', color: 'Blue' },
-          { active: false, price: 1000, quantity: 8, size: 'XL', color: 'Red' },
+          { active: true, quantity: 0, size: 'M', color: 'Blue' },
+          { active: true, quantity: 4, size: 'L', color: 'Blue' },
+          { active: false, quantity: 8, size: 'XL', color: 'Red' },
         ],
       });
       const response = await request(server(app))
@@ -342,16 +404,20 @@ void describe(
         .expect(200);
       const detail = body<PublicDetailBody>(response);
       assert.deepEqual(Object.keys(detail).sort(), [
+        'alt',
         'category',
         'categoryPath',
+        'currency',
         'description',
+        'discount',
+        'final_price',
         'id',
+        'image',
         'images',
         'isAvailable',
-        'mainImage',
-        'maximumPriceRial',
-        'minimumPriceRial',
         'name',
+        'original_price',
+        'quantity',
         'variants',
       ]);
       assert.deepEqual(detail.categoryPath, [
@@ -369,7 +435,7 @@ void describe(
       assert.equal(JSON.stringify(detail).includes('sku'), false);
       assert.equal(JSON.stringify(detail).includes('onHandQuantity'), false);
       assert.equal(JSON.stringify(detail).includes('storageKey'), false);
-      assert.equal(detail.mainImage.id, created.imageIds[0]);
+      assert.equal(detail.image, detail.images[0]?.url);
 
       const content = await request(server(app))
         .get(detail.images[0]?.url ?? '')
@@ -411,6 +477,10 @@ void describe(
       assert.ok(categoryImage);
       assert.ok(products);
       assert.ok(detail);
+      assert.deepEqual(categories.tags, ['site / categories']);
+      assert.deepEqual(categoryImage.tags, ['site / category-images']);
+      assert.deepEqual(products.tags, ['site / products']);
+      assert.deepEqual(detail.tags, ['site / products']);
       for (const operation of [categories, categoryImage, products, detail]) {
         assert.equal(operation.security, undefined);
         assert.equal(
@@ -428,9 +498,10 @@ void describe(
       assert.deepEqual(Object.keys(products.responses ?? {}).sort(), ['200', '400', '404', '500']);
       assert.deepEqual(Object.keys(detail.responses ?? {}).sort(), ['200', '400', '404', '500']);
       assert.deepEqual(products.parameters?.map(({ name }) => name).sort(), [
-        'categoryId',
+        'categories',
         'page',
         'pageSize',
+        'tags',
       ]);
       assert.ok(
         detail.parameters?.some(

@@ -84,7 +84,7 @@ export class BannerImageMultipartErrorInterceptor implements NestInterceptor {
   }
 }
 
-@ApiTags('Admin Homepage Banners')
+@ApiTags('panel / banners')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog/banners')
@@ -187,7 +187,7 @@ export class BannerController {
   }
 }
 
-@ApiTags('Public Homepage Banners')
+@ApiTags('site / banners')
 @Controller('catalog/banners')
 export class PublicBannerController {
   constructor(private readonly banners: BannerService) {}

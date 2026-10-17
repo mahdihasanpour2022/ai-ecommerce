@@ -35,7 +35,6 @@ interface VariantBody {
   readonly sku: string;
   readonly size: string | null;
   readonly color: string | null;
-  readonly priceRial: number;
   readonly isActive: boolean;
   readonly inventory: { readonly onHandQuantity: number; readonly version: number };
 }
@@ -44,6 +43,11 @@ interface ProductBody {
   readonly id: string;
   readonly name: string;
   readonly description: string | null;
+  readonly tag: string | null;
+  readonly originalPriceRial: number;
+  readonly finalPriceRial: number;
+  readonly discountPercent: number;
+  readonly currency: 'IRR';
   readonly category: { readonly id: string; readonly name: string };
   readonly status: 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
   readonly imageVersion: number;
@@ -55,12 +59,15 @@ interface ProductListBody {
   readonly items: Array<{
     readonly id: string;
     readonly description: string | null;
+    readonly tag: string | null;
     readonly variantCount: number;
     readonly activeVariantCount: number;
     readonly sizes: string[];
     readonly colors: string[];
-    readonly minimumPriceRial: number;
-    readonly maximumPriceRial: number;
+    readonly originalPriceRial: number;
+    readonly finalPriceRial: number;
+    readonly discountPercent: number;
+    readonly currency: 'IRR';
     readonly totalOnHandQuantity: number;
     readonly mainImage: { readonly id: string } | null;
   }>;
@@ -71,6 +78,7 @@ interface ProductListBody {
 }
 
 interface OpenApiOperation {
+  readonly tags?: string[];
   readonly security?: Array<Record<string, unknown>>;
   readonly parameters?: Array<{
     readonly name?: string;
@@ -99,7 +107,24 @@ function responseCookies(response: Response): string[] {
 function responseBody<T>(response: Response): T {
   const value = response.body as unknown;
   if (typeof value !== 'object' || value === null || !('hasError' in value)) return value as T;
-  const envelope = value as { hasError: boolean; result: T | null; singleResult: T | null };
+  const envelope = value as {
+    hasError: boolean;
+    result: T | readonly unknown[] | null;
+    singleResult: T | null;
+    page?: number;
+    pageSize?: number;
+    totalItems?: number;
+    totalPages?: number;
+  };
+  if (Array.isArray(envelope.result) && envelope.page !== undefined) {
+    return {
+      items: envelope.result,
+      page: envelope.page,
+      pageSize: envelope.pageSize,
+      totalItems: envelope.totalItems,
+      totalPages: envelope.totalPages,
+    } as unknown as T;
+  }
   return (envelope.hasError ? envelope : (envelope.singleResult ?? envelope.result)) as T;
 }
 
@@ -176,7 +201,11 @@ void describe(
     ): request.Test {
       const agent = request(server(app));
       const pending =
-        method === 'post' ? agent.post(path) : method === 'patch' ? agent.patch(path) : agent.delete(path);
+        method === 'post'
+          ? agent.post(path)
+          : method === 'patch'
+            ? agent.patch(path)
+            : agent.delete(path);
       return pending
         .set('Cookie', session.accessCookie)
         .set('Origin', allowedOrigin)
@@ -201,12 +230,13 @@ void describe(
         .send({
           name: 'Cotton Shirt',
           description: 'Soft cotton shirt',
+          originalPriceRial: 120_000,
+          discountPercent: 0,
           categoryId,
           variants: [
             {
               size: 'M',
               color: 'Black',
-              priceRial: 120_000,
               onHandQuantity: 3,
             },
           ],
@@ -260,18 +290,19 @@ void describe(
         .send({
           name: '  پیراهن   نخی ',
           description: '  توضیح محصول  ',
+          tag: ' Featured_Product ',
+          originalPriceRial: 140_000,
+          discountPercent: 10,
           categoryId,
           variants: [
             {
               size: ' Ｍ ',
               color: ' مشکی ',
-              priceRial: 120_000,
               onHandQuantity: 4,
             },
             {
               size: 'L',
               color: 'مشکی',
-              priceRial: 140_000,
               onHandQuantity: 1,
             },
           ],
@@ -280,6 +311,7 @@ void describe(
         .expect('Cache-Control', 'no-store');
       const product = responseBody<ProductBody>(response);
       assert.equal(product.name, 'پیراهن نخی');
+      assert.equal(product.tag, 'featured_product');
       assert.equal(product.status, 'DRAFT');
       assert.equal(new Set(product.variants.map(({ sku }) => sku)).size, 2);
       for (const variant of product.variants) {
@@ -300,6 +332,20 @@ void describe(
         )
         .set('Cookie', superAdmin.accessCookie)
         .expect(200);
+      const listEnvelope = list.body as {
+        readonly result: readonly ProductBody[];
+        readonly singleResult: null;
+        readonly page: number;
+        readonly pageSize: number;
+        readonly totalItems: number;
+        readonly totalPages: number;
+      };
+      assert.ok(Array.isArray(listEnvelope.result));
+      assert.equal(listEnvelope.singleResult, null);
+      assert.equal(listEnvelope.page, 1);
+      assert.equal(listEnvelope.pageSize, 10);
+      assert.equal(listEnvelope.totalItems, 1);
+      assert.equal(listEnvelope.totalPages, 1);
       const listBody = responseBody<ProductListBody>(list);
       assert.deepEqual(
         {
@@ -313,10 +359,12 @@ void describe(
       assert.equal(listBody.items[0]?.variantCount, 2);
       assert.equal(listBody.items[0]?.activeVariantCount, 2);
       assert.equal(listBody.items[0]?.description, 'توضیح محصول');
+      assert.equal(listBody.items[0]?.tag, 'featured_product');
       assert.deepEqual(new Set(listBody.items[0]?.sizes), new Set(['M', 'L']));
       assert.deepEqual(listBody.items[0]?.colors, ['مشکی']);
-      assert.equal(listBody.items[0]?.minimumPriceRial, 120_000);
-      assert.equal(listBody.items[0]?.maximumPriceRial, 140_000);
+      assert.equal(listBody.items[0]?.originalPriceRial, 140_000);
+      assert.equal(listBody.items[0]?.finalPriceRial, 126_000);
+      assert.equal(listBody.items[0]?.discountPercent, 10);
       assert.equal(listBody.items[0]?.totalOnHandQuantity, 5);
       assert.equal('storageKey' in (listBody.items[0] ?? {}), false);
     });
@@ -356,10 +404,12 @@ void describe(
       await mutation('post', '/api/v1/admin/catalog/products')
         .send({
           name: 'Rollback',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
           variants: [
-            { size: 'M', color: 'Black', priceRial: 1000, onHandQuantity: 1 },
-            { size: 'm', color: 'black', priceRial: 2000, onHandQuantity: 1 },
+            { size: 'M', color: 'Black', onHandQuantity: 1 },
+            { size: 'm', color: 'black', onHandQuantity: 1 },
           ],
         })
         .expect(409)
@@ -373,8 +423,10 @@ void describe(
       await mutation('post', '/api/v1/admin/catalog/products')
         .send({
           name: 'Missing Category',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId: randomUUID(),
-          variants: [{ priceRial: 1000, onHandQuantity: 1 }],
+          variants: [{ onHandQuantity: 1 }],
         })
         .expect(404)
         .expect((response: Response) =>
@@ -383,8 +435,10 @@ void describe(
       await mutation('post', '/api/v1/admin/catalog/products')
         .send({
           name: 'Invalid Price',
+          originalPriceRial: 1001,
+          discountPercent: 0,
           categoryId,
-          variants: [{ priceRial: 1001, onHandQuantity: 1 }],
+          variants: [{ onHandQuantity: 1 }],
           unexpected: true,
         })
         .expect(400);
@@ -403,7 +457,7 @@ void describe(
       const product = await createProduct(categoryId);
       const defaultProduct = await createProduct(categoryId, {
         name: 'Default Variant Product',
-        variants: [{ priceRial: 1000, onHandQuantity: 1 }],
+        variants: [{ onHandQuantity: 1 }],
       });
       assert.equal(defaultProduct.variants[0]?.size, null);
       assert.equal(defaultProduct.variants[0]?.color, null);
@@ -412,7 +466,6 @@ void describe(
           sku: 'SECOND-L',
           size: 'L',
           color: 'Black',
-          priceRial: 130_000,
           isActive: false,
         })
         .expect(201);
@@ -425,7 +478,6 @@ void describe(
           sku: ' second-l-updated ',
           color: ' Navy ',
           isActive: true,
-          priceRial: 150_000,
         })
         .expect(200);
       const reactivatedBody = responseBody<VariantBody>(reactivated);
@@ -434,19 +486,19 @@ void describe(
       assert.equal(reactivatedBody.color, 'Navy');
 
       await mutation('post', `/api/v1/admin/catalog/products/${product.id}/variants`)
-        .send({ sku: reactivatedBody.sku, size: 'XL', priceRial: 1000 })
+        .send({ sku: reactivatedBody.sku, size: 'XL' })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'SKU_CONFLICT'),
         );
       await mutation('post', `/api/v1/admin/catalog/products/${product.id}/variants`)
-        .send({ sku: 'OTHER-SKU', size: 'L', color: 'navy', priceRial: 1000 })
+        .send({ sku: 'OTHER-SKU', size: 'L', color: 'navy' })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'VARIANT_COMBINATION_CONFLICT'),
         );
       await mutation('post', `/api/v1/admin/catalog/products/${product.id}/variants`)
-        .send({ sku: 'DEFAULT-ACTIVE', priceRial: 1000 })
+        .send({ sku: 'DEFAULT-ACTIVE' })
         .expect(409)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'VARIANT_MODE_CONFLICT'),
@@ -460,7 +512,6 @@ void describe(
         variants: [
           {
             size: 'M',
-            priceRial: 1000,
             onHandQuantity: 1,
           },
         ],
@@ -513,7 +564,7 @@ void describe(
           assert.equal(responseBody<ErrorBody>(response).code, 'PRODUCT_LIFECYCLE_CONFLICT'),
         );
       await mutation('patch', `/api/v1/admin/catalog/variants/${product.variants[0]?.id ?? ''}`)
-        .send({ priceRial: 200_000 })
+        .send({ size: 'XL' })
         .expect(409);
       await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
         .send({ status: 'DRAFT' })
@@ -560,16 +611,27 @@ void describe(
       assert.equal(body.totalPages, 2);
     });
 
-    void test('combines protected Product name, variant, inventory, date, category, status, and price filters', async () => {
+    void test('combines protected Product name, tag, variant, inventory, date, category, status, and price filters', async () => {
       const categoryId = await createCategory('Filtered category');
       const otherCategoryId = await createCategory('Other category');
       const matching = await createProduct(categoryId, {
         name: 'Premium Cotton Shirt',
-        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 3 }],
+        tag: 'featured_product',
+        originalPriceRial: 120_000,
+        discountPercent: 10,
+        variants: [{ size: 'M', color: 'Black', onHandQuantity: 3 }],
+      });
+      const excessiveDiscount = await createProduct(categoryId, {
+        name: 'Premium Cotton Shirt discounted',
+        tag: 'seasonal_sale',
+        originalPriceRial: 120_000,
+        discountPercent: 20,
+        variants: [{ size: 'M', color: 'Black', onHandQuantity: 3 }],
       });
       await createProduct(categoryId, {
         name: 'Premium Cotton Shirt unavailable',
-        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 1 }],
+        originalPriceRial: 120_000,
+        variants: [{ size: 'M', color: 'Black', onHandQuantity: 1 }],
       }).then(async (product) => {
         await prisma.inventory.update({
           where: { variantId: product.variants[0]?.id ?? '' },
@@ -578,10 +640,15 @@ void describe(
       });
       await createProduct(otherCategoryId, {
         name: 'Premium Cotton Shirt other',
-        variants: [{ size: 'M', color: 'Black', priceRial: 120_000, onHandQuantity: 3 }],
+        originalPriceRial: 120_000,
+        variants: [{ size: 'M', color: 'Black', onHandQuantity: 3 }],
       });
       await prisma.product.update({
         where: { id: matching.id },
+        data: { createdAt: new Date('2026-09-20T20:00:00.000Z') },
+      });
+      await prisma.product.update({
+        where: { id: excessiveDiscount.id },
         data: { createdAt: new Date('2026-09-20T20:00:00.000Z') },
       });
 
@@ -589,6 +656,7 @@ void describe(
         .get('/api/v1/admin/catalog/products')
         .query({
           name: 'cotton shirt',
+          tags: ['featured_product', 'missing_tag'],
           categoryId,
           size: 'm',
           color: 'black',
@@ -598,11 +666,15 @@ void describe(
           createdTo: '2026-09-20T23:59:59.000Z',
           minimumPriceRial: '100000',
           maximumPriceRial: '130000',
+          maximumDiscountPercent: '10',
         })
         .set('Cookie', superAdmin.accessCookie)
         .expect(200);
 
-      assert.deepEqual(responseBody<ProductListBody>(response).items.map(({ id }) => id), [matching.id]);
+      assert.deepEqual(
+        responseBody<ProductListBody>(response).items.map(({ id }) => id),
+        [matching.id],
+      );
     });
 
     void test('returns protected server-owned Product size and color options', async () => {
@@ -638,8 +710,8 @@ void describe(
       const categoryId = await createCategory();
       const product = await createProduct(categoryId, {
         variants: [
-          { size: 'M', priceRial: 1000, onHandQuantity: 1 },
-          { size: 'L', priceRial: 1000, onHandQuantity: 1 },
+          { size: 'M', onHandQuantity: 1 },
+          { size: 'L', onHandQuantity: 1 },
         ],
       });
       await addReadyMainImage(product.id);
@@ -665,13 +737,11 @@ void describe(
         mutation('post', `/api/v1/admin/catalog/products/${productA.id}/variants`).send({
           sku: 'GLOBAL-RACE',
           size: 'XL',
-          priceRial: 1000,
           isActive: false,
         }),
         mutation('post', `/api/v1/admin/catalog/products/${productB.id}/variants`).send({
           sku: 'global-race',
           size: 'XL',
-          priceRial: 1000,
           isActive: false,
         }),
       ]);
@@ -752,6 +822,7 @@ void describe(
       for (const [path, method, statuses] of expected) {
         const operation = document.paths[path]?.[method];
         assert.ok(operation);
+        assert.deepEqual(operation.tags, ['panel / products']);
         assert.deepEqual(operation.security, [{ adminAccess: [] }]);
         assert.deepEqual(Object.keys(operation.responses ?? {}).sort(), [...statuses].sort());
       }
@@ -763,6 +834,7 @@ void describe(
         'color',
         'createdFrom',
         'createdTo',
+        'maximumDiscountPercent',
         'maximumPriceRial',
         'minimumPriceRial',
         'name',
@@ -770,10 +842,35 @@ void describe(
         'pageSize',
         'size',
         'status',
+        'tags',
       ]);
+      const tagsParameter = listParameters.find((item) => item.name === 'tags') as
+        | { readonly schema?: { readonly type?: string; readonly items?: { readonly type?: string } } }
+        | undefined;
+      assert.equal(tagsParameter?.schema?.type, 'array');
+      assert.equal(tagsParameter?.schema?.items?.type, 'string');
+      const listSchema = (
+        document.paths['/api/v1/admin/catalog/products']?.get?.responses?.['200'] as {
+          readonly content?: {
+            readonly 'application/json'?: {
+              readonly schema?: {
+                readonly required?: readonly string[];
+                readonly properties?: Record<string, { readonly type?: string }>;
+              };
+            };
+          };
+        }
+      ).content?.['application/json']?.schema;
+      assert.equal(listSchema?.properties?.result?.type, 'array');
+      assert.ok(listSchema?.required?.includes('page'));
+      assert.ok(listSchema?.required?.includes('totalPages'));
       for (const name of ['createdFrom', 'createdTo']) {
         const parameter = listParameters.find((item) => item.name === name);
-        assert.equal((parameter as { readonly schema?: { readonly format?: string } } | undefined)?.schema?.format, 'date-time');
+        assert.equal(
+          (parameter as { readonly schema?: { readonly format?: string } } | undefined)?.schema
+            ?.format,
+          'date-time',
+        );
       }
       for (const operation of [
         document.paths['/api/v1/admin/catalog/products']?.post,
@@ -805,11 +902,20 @@ void describe(
         readonly required?: string[];
         readonly properties?: Record<string, unknown>;
       };
-      assert.deepEqual(createProductSchema.required?.sort(), ['categoryId', 'name', 'variants']);
+      assert.deepEqual(createProductSchema.required?.sort(), [
+        'categoryId',
+        'discountPercent',
+        'name',
+        'originalPriceRial',
+        'variants',
+      ]);
       assert.deepEqual(Object.keys(createProductSchema.properties ?? {}).sort(), [
         'categoryId',
         'description',
+        'discountPercent',
         'name',
+        'originalPriceRial',
+        'tag',
         'variants',
       ]);
       assert.equal(
@@ -820,24 +926,22 @@ void describe(
         readonly required?: string[];
         readonly properties?: Record<string, unknown>;
       };
-      assert.deepEqual(initialVariantSchema.required?.sort(), ['onHandQuantity', 'priceRial']);
+      assert.deepEqual(initialVariantSchema.required?.sort(), ['onHandQuantity']);
       assert.deepEqual(Object.keys(initialVariantSchema.properties ?? {}).sort(), [
         'color',
         'isActive',
         'onHandQuantity',
-        'priceRial',
         'size',
       ]);
       const createVariantSchema = document.components.schemas.CreateVariantRequestDto as {
         readonly required?: string[];
         readonly properties?: Record<string, unknown>;
       };
-      assert.deepEqual(createVariantSchema.required?.sort(), ['priceRial', 'sku']);
+      assert.deepEqual(createVariantSchema.required?.sort(), ['sku']);
       assert.deepEqual(Object.keys(createVariantSchema.properties ?? {}).sort(), [
         'color',
         'isActive',
         'onHandQuantity',
-        'priceRial',
         'size',
         'sku',
       ]);

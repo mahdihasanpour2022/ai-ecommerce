@@ -43,6 +43,30 @@ void test('builds the canonical collection and no-payload success shapes', () =>
   );
 });
 
+void test('lifts paginated collection metadata into the response envelope', () => {
+  assert.deepEqual(
+    buildSuccessResponse(
+      200,
+      { code: 'ITEMS_FETCHED', message: 'داده‌ها دریافت شدند.', kind: 'page' },
+      { items: [{ id: 'one' }], page: 2, pageSize: 20, totalItems: 21, totalPages: 2 },
+    ),
+    {
+      statusCode: 200,
+      hasError: false,
+      message: 'داده‌ها دریافت شدند.',
+      code: 'ITEMS_FETCHED',
+      count: 21,
+      result: [{ id: 'one' }],
+      singleResult: null,
+      page: 2,
+      pageSize: 20,
+      totalItems: 21,
+      totalPages: 2,
+      details: null,
+    },
+  );
+});
+
 void test('normalizes known and unknown failures without leaking diagnostics', () => {
   assert.deepEqual(
     buildErrorResponse(409, {
@@ -85,6 +109,34 @@ void test('wraps JSON success schemas while preserving raw binary responses', ()
           },
         },
       },
+      '/page': {
+        get: {
+          'x-api-response-kind': 'page',
+          responses: {
+            '200': {
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/PageDto' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    components: {
+      schemas: {
+        PageDto: {
+          type: 'object',
+          properties: {
+            items: { type: 'array', items: { type: 'string' } },
+            page: { type: 'integer', minimum: 1 },
+            pageSize: { type: 'integer', minimum: 1 },
+            totalItems: { type: 'integer', minimum: 0 },
+            totalPages: { type: 'integer', minimum: 0 },
+          },
+        },
+      },
     },
   } as unknown as OpenAPIObject;
 
@@ -104,4 +156,14 @@ void test('wraps JSON success schemas while preserving raw binary responses', ()
     (document.paths['/image']?.get?.responses?.['200'] as { content?: unknown }).content,
     { 'image/png': { schema: { type: 'string', format: 'binary' } } },
   );
+  const pageSchema = (
+    document.paths['/page']?.get?.responses?.['200'] as {
+      content?: { 'application/json'?: { schema?: Record<string, unknown> } };
+    }
+  ).content?.['application/json']?.schema;
+  assert.deepEqual((pageSchema?.properties as Record<string, unknown>).result, {
+    type: 'array',
+    items: { type: 'string' },
+  });
+  assert.ok((pageSchema?.required as string[]).includes('totalPages'));
 });

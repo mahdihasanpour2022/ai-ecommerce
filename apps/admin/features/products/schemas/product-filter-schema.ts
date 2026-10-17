@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+const productTag = z
+  .string()
+  .trim()
+  .min(1, 'تگ نمی‌تواند خالی باشد.')
+  .max(80, 'هر تگ حداکثر ۸۰ نویسه است.')
+  .regex(/^[a-z]+(?:_[a-z]+)*$/u, 'تگ باید با حروف کوچک انگلیسی و جداکننده زیرخط نوشته شود.');
+
 const optionalPrice = z
   .string()
   .trim()
@@ -19,9 +26,22 @@ const optionalIsoDateTime = z
     'تاریخ و ساعت انتخاب‌شده معتبر نیست.',
   );
 
+const optionalDiscountPercent = z
+  .string()
+  .trim()
+  .refine(
+    (value) => value === '' || /^(?:0|[1-9][0-9]{0,2})$/u.test(value),
+    'درصد تخفیف باید یک عدد صحیح بین ۰ تا ۱۰۰ باشد.',
+  )
+  .refine(
+    (value) => value === '' || Number(value) <= 100,
+    'درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد.',
+  );
+
 export const productFilterSchema = z
   .object({
     name: z.string().trim().max(200, 'نام محصول حداکثر ۲۰۰ نویسه است.'),
+    tags: z.array(productTag).max(50, 'حداکثر ۵۰ تگ قابل انتخاب است.'),
     categoryId: z.string(),
     size: z.string(),
     color: z.string(),
@@ -31,6 +51,7 @@ export const productFilterSchema = z
     createdTo: optionalIsoDateTime,
     minimumPriceRial: optionalPrice,
     maximumPriceRial: optionalPrice,
+    maximumDiscountPercent: optionalDiscountPercent,
   })
   .superRefine((values, context) => {
     if (

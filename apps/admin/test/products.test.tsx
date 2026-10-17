@@ -24,6 +24,7 @@ const product: Product = {
   id: productId,
   name: 'پیراهن لینن',
   description: 'پیراهن سبک مناسب تابستان',
+  tag: 'summer_collection',
   category: { id: productCategoryId, name: 'پیراهن' },
   status: 'ACTIVE',
   variantCount: 1,
@@ -31,8 +32,10 @@ const product: Product = {
   sizes: ['M'],
   colors: ['مشکی'],
   mainImage: null,
-  minimumPriceRial: 1_200_000,
-  maximumPriceRial: 1_200_000,
+  originalPriceRial: 1_200_000,
+  finalPriceRial: 1_080_000,
+  discountPercent: 10,
+  currency: 'IRR',
   totalOnHandQuantity: 12,
   createdAt: '2026-09-16T08:00:00.000Z',
   updatedAt: '2026-09-16T08:00:00.000Z',
@@ -58,12 +61,14 @@ void test('loads and displays the protected Product summaries', async () => {
   let requestedPage: unknown;
   let requestedPageSize: unknown;
   let requestedName: unknown;
+  let requestedTags: unknown;
   let requestedAvailability: unknown;
 
   httpClient.defaults.adapter = async (config) => {
     requestedPage = config.params?.page;
     requestedPageSize = config.params?.pageSize;
     requestedName = config.params?.name;
+    requestedTags = config.params?.tags;
     requestedAvailability = config.params?.availability;
     return {
       data: {
@@ -71,42 +76,43 @@ void test('loads and displays the protected Product summaries', async () => {
         hasError: false,
         message: 'محصولات با موفقیت دریافت شدند.',
         code: 'PRODUCTS_FETCHED',
-        count: 1,
-        result: null,
-        singleResult: {
-          items: [
-            {
-              id: '11111111-1111-4111-8111-111111111111',
-              name: 'پیراهن لینن',
-              description: 'پیراهن سبک مناسب تابستان',
-              category: { id: '22222222-2222-4222-8222-222222222222', name: 'پیراهن' },
-              status: 'ACTIVE',
-              variantCount: 3,
-              activeVariantCount: 2,
-              sizes: ['M', 'L'],
-              colors: ['مشکی', 'سفید'],
-              mainImage: {
-                id: '33333333-3333-4333-8333-333333333333',
-                mediaType: 'WEBP',
-                byteSize: 2048,
-                width: 1200,
-                height: 800,
-                position: 0,
-                createdAt: '2026-09-16T08:00:00.000Z',
-                updatedAt: '2026-09-16T08:00:00.000Z',
-              },
-              minimumPriceRial: 1200000,
-              maximumPriceRial: 1800000,
-              totalOnHandQuantity: 12,
+        count: 16,
+        result: [
+          {
+            id: '11111111-1111-4111-8111-111111111111',
+            name: 'پیراهن لینن',
+            description: 'پیراهن سبک مناسب تابستان',
+            tag: 'summer_collection',
+            category: { id: '22222222-2222-4222-8222-222222222222', name: 'پیراهن' },
+            status: 'ACTIVE',
+            variantCount: 3,
+            activeVariantCount: 2,
+            sizes: ['M', 'L'],
+            colors: ['مشکی', 'سفید'],
+            mainImage: {
+              id: '33333333-3333-4333-8333-333333333333',
+              mediaType: 'WEBP',
+              byteSize: 2048,
+              width: 1200,
+              height: 800,
+              position: 0,
               createdAt: '2026-09-16T08:00:00.000Z',
               updatedAt: '2026-09-16T08:00:00.000Z',
             },
-          ],
-          page: 2,
-          pageSize: 15,
-          totalItems: 16,
-          totalPages: 2,
-        },
+            originalPriceRial: 1200000,
+            finalPriceRial: 1080000,
+            discountPercent: 10,
+            currency: 'IRR',
+            totalOnHandQuantity: 12,
+            createdAt: '2026-09-16T08:00:00.000Z',
+            updatedAt: '2026-09-16T08:00:00.000Z',
+          },
+        ],
+        singleResult: null,
+        page: 2,
+        pageSize: 15,
+        totalItems: 16,
+        totalPages: 2,
         details: null,
       },
       status: 200,
@@ -121,7 +127,10 @@ void test('loads and displays the protected Product summaries', async () => {
     const view = render(
       <App>
         <QueryClientProvider client={queryClient}>
-          <Products page={2} filters={{ name: 'پیراهن', availability: 'IN_STOCK' }} />
+          <Products
+            page={2}
+            filters={{ name: 'پیراهن', tags: ['featured_product', 'seasonal_sale'], availability: 'IN_STOCK' }}
+          />
         </QueryClientProvider>
       </App>,
     );
@@ -134,6 +143,9 @@ void test('loads and displays the protected Product summaries', async () => {
       assert.ok(view.getByRole('columnheader', { name: 'توضیحات' }));
       assert.ok(view.getByRole('columnheader', { name: 'سایز' }));
       assert.ok(view.getByRole('columnheader', { name: 'رنگ' }));
+      assert.ok(view.getByRole('columnheader', { name: 'قیمت اصلی' }));
+      assert.ok(view.getByRole('columnheader', { name: 'درصد تخفیف' }));
+      assert.ok(view.getByRole('columnheader', { name: 'قیمت نهایی' }));
       assert.ok(view.getByRole('cell', { name: '۱۶' }));
       assert.ok(view.getByText('پیراهن'));
       assert.ok(view.getByText('پیراهن سبک مناسب تابستان'));
@@ -143,12 +155,15 @@ void test('loads and displays the protected Product summaries', async () => {
       assert.ok(view.getByText('سفید'));
       assert.ok(view.getByText('فعال'));
       assert.ok(view.getByText('۲ فعال از ۳'));
-      assert.ok(view.getByText('۱٬۲۰۰٬۰۰۰ ریال تا ۱٬۸۰۰٬۰۰۰ ریال'));
+      assert.ok(view.getByText('۱٬۲۰۰٬۰۰۰ ریال'));
+      assert.ok(view.getByText('۱۰٪'));
+      assert.ok(view.getByText('۱٬۰۸۰٬۰۰۰ ریال'));
       assert.ok(view.getByRole('img', { name: 'تصویر پیراهن لینن' }));
     });
     assert.equal(requestedPage, 2);
     assert.equal(requestedPageSize, 15);
     assert.equal(requestedName, 'پیراهن');
+    assert.deepEqual(requestedTags, ['featured_product', 'seasonal_sale']);
     assert.equal(requestedAvailability, 'IN_STOCK');
 
     const user = userEvent.setup({ document: globalThis.document });
@@ -179,8 +194,12 @@ void test('shows the empty state when no Products exist', async () => {
       message: 'محصولات با موفقیت دریافت شدند.',
       code: 'PRODUCTS_FETCHED',
       count: 0,
-      result: null,
-      singleResult: { items: [], page: 1, pageSize: 15, totalItems: 0, totalPages: 0 },
+      result: [],
+      singleResult: null,
+      page: 1,
+      pageSize: 15,
+      totalItems: 0,
+      totalPages: 0,
       details: null,
     },
     status: 200,

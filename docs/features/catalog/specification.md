@@ -24,7 +24,7 @@ The implemented Backend baseline establishes the minimum persistent contract for
 ```text
 Category (parent -> children, maximum six levels)
   -> Product (exactly one Category; DRAFT | ACTIVE | ARCHIVED)
-       -> ProductVariant (one or more; sellable SKU, price, active state)
+       -> ProductVariant (one or more; sellable SKU and active state)
             -> Inventory (exactly one; on-hand quantity and version)
        -> ProductImage (zero to nine; ordered, Product-owned)
 
@@ -88,7 +88,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 
 ### Fields and lifecycle
 
-- Product has immutable UUID `id`, normalized `name`, nullable normalized plain-text `description`, required `categoryId`, lifecycle `status`, and implementation timestamps.
+- Product has immutable UUID `id`, normalized `name`, nullable normalized plain-text `description`, one nullable normalized merchandising `tag`, required `categoryId`, lifecycle `status`, and implementation timestamps.
 - Product creation requires name, Category, and at least one Variant in one atomic operation. New Products always begin `DRAFT`; clients cannot create them directly as Active or Archived.
 - `DRAFT` is editable and neither public nor purchasable.
 - `ACTIVE` is publicly retrievable. Only its active Variants are returned publicly.
@@ -112,10 +112,10 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 ### Fields and ownership
 
-- Product Variant has immutable UUID `id`, required `productId`, globally unique normalized `sku`, nullable normalized `size`, nullable normalized `color`, required positive `priceRial`, boolean `isActive`, and implementation timestamps.
-- Variant owns the exact sellable identity, price, active state, and its one-to-one Inventory record.
+- Product Variant has immutable UUID `id`, required `productId`, globally unique normalized `sku`, nullable normalized `size`, nullable normalized `color`, boolean `isActive`, and implementation timestamps.
+- Variant owns the exact sellable identity, active state, and its one-to-one Inventory record; pricing is shared by every Variant of its Product.
 - SKU remains globally unique across active and inactive Variants. Reusing an inactive Variant's SKU for another row is forbidden.
-- `priceRial` is an integer greater than zero and exactly divisible by 10. Invalid prices are rejected; the Backend never rounds.
+- Product `originalPriceRial` is an integer greater than zero and exactly divisible by 10. Product `discountPercent` is a required integer from 0 through 100. Invalid values are rejected and `finalPriceRial` is derived by integer rial arithmetic.
 - Size/color combination uniqueness is case-insensitive within one Product after normalization. Two null labels represent the default unnamed combination.
 
 ### Default and named modes
@@ -138,17 +138,17 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 
 ### Canonical price
 
-- The only persisted/wire monetary value in current catalog contracts is `priceRial`.
-- Backend protected/public Product/Variant DTOs accept or return `priceRial` regardless of the display setting.
-- `priceRial` is a required positive safe integer divisible by 10.
-- The current catalog contract does not model sale price, compare-at price, discount, tax, exchange rate, multi-currency, price history, or order totals.
+- The persisted monetary value is Product `originalPriceRial`; `finalPriceRial` is derived from required Product `discountPercent` and is never accepted from clients.
+- Backend protected Product DTOs expose original/final prices, discount, and canonical `IRR`; public summaries expose `original_price`, `final_price`, `discount`, and `currency` for direct Storefront consumption.
+- `originalPriceRial` is a required positive safe integer divisible by 10; `discountPercent` is a required integer from 0 through 100.
+- The current catalog contract does not model tax, exchange rates, multi-currency storage, price history, or order totals.
 
 ### Global display/input unit
 
 - Exactly one global setting has value `RIAL` or `TOMAN`; initial value is `TOMAN`.
 - Public and protected reads return `{ "unit": "RIAL" | "TOMAN" }`.
 - Only a caller with `settings.price.display.unit.update` may update it, and the state-changing request requires valid session CSRF.
-- The Admin frontend later interprets Toman input as a positive integer and multiplies by 10 before submitting canonical `priceRial`. Toman display divides `priceRial` by 10 exactly.
+- The Admin frontend interprets Toman input as a positive integer and multiplies by 10 before submitting canonical `originalPriceRial`. Toman display divides rial values by 10 exactly.
 - Setting changes affect display/input only. They do not update Product Variant rows, change public price values, or affect Backend/payment calculations.
 - A later payment provider begins with canonical rial values and may convert only at its approved provider boundary.
 
@@ -212,13 +212,13 @@ Implementation status: the protected upload, reorder, immutable-identity replace
 
 ## Authorization
 
-| Permission | Protected capability |
-| --- | --- |
-| `catalog.read` | Read Categories, Products, Variants, exact Inventory, Image metadata/content, and the setting through Admin contracts. |
-| `catalog.manage` | Create/rename/move/delete eligible Categories and create/update/transition Products and Variants. |
-| `inventory.update` | Set absolute Variant on-hand quantity using optimistic version. |
-| `product.media.manage` | Upload, reorder, replace, and remove Product Images. |
-| `settings.price.display.unit.update` | Change the global rial/toman display/input unit. |
+| Permission                           | Protected capability                                                                                                   |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `catalog.read`                       | Read Categories, Products, Variants, exact Inventory, Image metadata/content, and the setting through Admin contracts. |
+| `catalog.manage`                     | Create/rename/move/delete eligible Categories and create/update/transition Products and Variants.                      |
+| `inventory.update`                   | Set absolute Variant on-hand quantity using optimistic version.                                                        |
+| `product.media.manage`               | Upload, reorder, replace, and remove Product Images.                                                                   |
+| `settings.price.display.unit.update` | Change the global rial/toman display/input unit.                                                                       |
 
 - The migration registers all five Permission rows and explicitly grants each to the existing `SUPER_ADMIN` Role. There is no wildcard, Role-name bypass, or token permission claim.
 - Current Admin/session/permission checks remain authoritative for every protected operation. Missing authentication returns the applicable stable `401`; authenticated insufficient permission returns `403 INSUFFICIENT_PERMISSION` and never triggers refresh.
@@ -232,72 +232,74 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 
 ### Protected Admin contracts
 
-| Method and path | Permission | CSRF | Success behavior |
-| --- | --- | --- | --- |
-| `GET /api/v1/admin/catalog/categories` | `catalog.read` | No | Complete Category tree, bounded by the catalog Category cap. |
-| `POST /api/v1/admin/catalog/categories` | `catalog.manage` | Yes | Create Category; `201` with Category DTO. |
-| `PATCH /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Rename and/or atomically move; `200` with Category DTO. |
-| `DELETE /api/v1/admin/catalog/categories/{categoryId}` | `catalog.manage` | Yes | Delete eligible empty leaf; `200` with the canonical no-payload success envelope. |
-| `GET /api/v1/admin/catalog/category-images/{imageId}/content` | `catalog.read` | No | Controlled Category Image bytes for authorized Admins. |
-| `GET /api/v1/admin/catalog/products` | `catalog.read` | No | Page-bounded protected Product summaries. |
-| `GET /api/v1/admin/catalog/products/{productId}` | `catalog.read` | No | Full protected Product, Variant, exact Inventory, and ready Image metadata. |
-| `GET /api/v1/admin/catalog/product-options/sizes` | `catalog.read` | No | Server-owned Product size options for Admin forms. |
-| `GET /api/v1/admin/catalog/product-options/colors` | `catalog.read` | No | Server-owned Product color names and hexadecimal swatches for Admin forms. |
-| `GET /api/v1/admin/catalog/product-options/statuses` | `catalog.read` | No | Server-owned Product lifecycle English identifiers and Persian display names. |
-| `POST /api/v1/admin/catalog/products` | `catalog.manage` | Yes | Atomically create Draft Product, initial Variants, and Inventory; `201`. |
-| `PATCH /api/v1/admin/catalog/products/{productId}` | `catalog.manage` | Yes | Update Product fields and/or perform one allowed lifecycle transition; `200`. |
-| `DELETE /api/v1/admin/catalog/products/{productId}` | `catalog.manage` | Yes | Permanently delete a Product in any lifecycle state with its Variants, Inventory, and Images; `200` with the canonical no-payload success envelope. |
-| `POST /api/v1/admin/catalog/products/{productId}/variants` | `catalog.manage` | Yes | Create Variant plus Inventory; `201`. |
-| `PATCH /api/v1/admin/catalog/variants/{variantId}` | `catalog.manage` | Yes | Update SKU/labels/price/active state; `200`. |
-| `PUT /api/v1/admin/catalog/variants/{variantId}/inventory` | `inventory.update` | Yes | Guarded absolute quantity update; `200` with quantity/version. |
-| `POST /api/v1/admin/catalog/products/{productId}/images` | `product.media.manage` | Yes | Validate/store/append one ready image; `201`. |
-| `PUT /api/v1/admin/catalog/products/{productId}/images/order` | `product.media.manage` | Yes | Atomically reorder all current ready images; `200` with ordered metadata. |
-| `POST /api/v1/admin/catalog/product-images/{imageId}/replacements` | `product.media.manage` | Yes | Create a replacement with a new immutable Image identity at the same position; `201`. |
-| `DELETE /api/v1/admin/catalog/product-images/{imageId}` | `product.media.manage` | Yes | Remove eligible image metadata/order and schedule recoverable cleanup; `204`. |
-| `GET /api/v1/admin/catalog/product-images/{imageId}/content` | `catalog.read` | No | Controlled ready image content for any Product lifecycle. |
-| `GET /api/v1/admin/catalog/settings/price-display-unit` | `catalog.read` | No | Current global unit. |
-| `PUT /api/v1/admin/catalog/settings/price-display-unit` | `settings.price.display.unit.update` | Yes | Replace global unit; `200`. |
+| Method and path                                                    | Permission                           | CSRF | Success behavior                                                                                                                                    |
+| ------------------------------------------------------------------ | ------------------------------------ | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/admin/catalog/categories`                             | `catalog.read`                       | No   | Complete Category tree, bounded by the catalog Category cap.                                                                                        |
+| `POST /api/v1/admin/catalog/categories`                            | `catalog.manage`                     | Yes  | Create Category; `201` with Category DTO.                                                                                                           |
+| `PATCH /api/v1/admin/catalog/categories/{categoryId}`              | `catalog.manage`                     | Yes  | Rename and/or atomically move; `200` with Category DTO.                                                                                             |
+| `DELETE /api/v1/admin/catalog/categories/{categoryId}`             | `catalog.manage`                     | Yes  | Delete eligible empty leaf; `200` with the canonical no-payload success envelope.                                                                   |
+| `GET /api/v1/admin/catalog/category-images/{imageId}/content`      | `catalog.read`                       | No   | Controlled Category Image bytes for authorized Admins.                                                                                              |
+| `GET /api/v1/admin/catalog/products`                               | `catalog.read`                       | No   | Page-bounded protected Product summaries.                                                                                                           |
+| `GET /api/v1/admin/catalog/products/{productId}`                   | `catalog.read`                       | No   | Full protected Product, Variant, exact Inventory, and ready Image metadata.                                                                         |
+| `GET /api/v1/admin/catalog/product-options/sizes`                  | `catalog.read`                       | No   | Server-owned Product size options for Admin forms.                                                                                                  |
+| `GET /api/v1/admin/catalog/product-options/colors`                 | `catalog.read`                       | No   | Server-owned Product color names and hexadecimal swatches for Admin forms.                                                                          |
+| `GET /api/v1/admin/catalog/product-options/statuses`               | `catalog.read`                       | No   | Server-owned Product lifecycle English identifiers and Persian display names.                                                                       |
+| `POST /api/v1/admin/catalog/products`                              | `catalog.manage`                     | Yes  | Atomically create Draft Product, initial Variants, and Inventory; `201`.                                                                            |
+| `PATCH /api/v1/admin/catalog/products/{productId}`                 | `catalog.manage`                     | Yes  | Update Product fields and/or perform one allowed lifecycle transition; `200`.                                                                       |
+| `DELETE /api/v1/admin/catalog/products/{productId}`                | `catalog.manage`                     | Yes  | Permanently delete a Product in any lifecycle state with its Variants, Inventory, and Images; `200` with the canonical no-payload success envelope. |
+| `POST /api/v1/admin/catalog/products/{productId}/variants`         | `catalog.manage`                     | Yes  | Create Variant plus Inventory; `201`.                                                                                                               |
+| `PATCH /api/v1/admin/catalog/variants/{variantId}`                 | `catalog.manage`                     | Yes  | Update SKU/labels/price/active state; `200`.                                                                                                        |
+| `PUT /api/v1/admin/catalog/variants/{variantId}/inventory`         | `inventory.update`                   | Yes  | Guarded absolute quantity update; `200` with quantity/version.                                                                                      |
+| `POST /api/v1/admin/catalog/products/{productId}/images`           | `product.media.manage`               | Yes  | Validate/store/append one ready image; `201`.                                                                                                       |
+| `PUT /api/v1/admin/catalog/products/{productId}/images/order`      | `product.media.manage`               | Yes  | Atomically reorder all current ready images; `200` with ordered metadata.                                                                           |
+| `POST /api/v1/admin/catalog/product-images/{imageId}/replacements` | `product.media.manage`               | Yes  | Create a replacement with a new immutable Image identity at the same position; `201`.                                                               |
+| `DELETE /api/v1/admin/catalog/product-images/{imageId}`            | `product.media.manage`               | Yes  | Remove eligible image metadata/order and schedule recoverable cleanup; `204`.                                                                       |
+| `GET /api/v1/admin/catalog/product-images/{imageId}/content`       | `catalog.read`                       | No   | Controlled ready image content for any Product lifecycle.                                                                                           |
+| `GET /api/v1/admin/catalog/settings/price-display-unit`            | `catalog.read`                       | No   | Current global unit.                                                                                                                                |
+| `PUT /api/v1/admin/catalog/settings/price-display-unit`            | `settings.price.display.unit.update` | Yes  | Replace global unit; `200`.                                                                                                                         |
 
-Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `createdAt DESC, id DESC`. It may combine case-insensitive partial `name`, exact `categoryId`, normalized exact Variant `size` and `color`, lifecycle `status`, `IN_STOCK`/`OUT_OF_STOCK` availability, inclusive `createdFrom`/`createdTo` ISO-8601 UTC date-time bounds (`YYYY-MM-DDTHH:mm:ss.sssZ`; `createdTo` includes the selected whole second), and inclusive Variant `minimumPriceRial`/`maximumPriceRial` bounds. Unknown filters and invalid or reversed bounds are rejected. The protected Category tree orders every sibling collection by `createdAt DESC, id DESC`, so newly created root Categories and children appear first within their respective levels. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
+Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 100, ordered by `createdAt DESC, id DESC`. It may combine case-insensitive partial `name`, up to 50 repeated normalized exact `tags` using OR semantics, exact `categoryId`, normalized exact Variant `size` and `color`, lifecycle `status`, `IN_STOCK`/`OUT_OF_STOCK` availability, inclusive `createdFrom`/`createdTo` ISO-8601 UTC date-time bounds (`YYYY-MM-DDTHH:mm:ss.sssZ`; `createdTo` includes the selected whole second), inclusive Product `minimumPriceRial`/`maximumPriceRial` bounds, and `maximumDiscountPercent` (`0..100`) for Products whose discount is less than or equal to the supplied value. Unknown filters and invalid or reversed bounds are rejected. The protected Category tree orders every sibling collection by `createdAt DESC, id DESC`, so newly created root Categories and children appear first within their respective levels. Category tree creation is capped at 1,000 total Categories so its complete response remains bounded; exceeding the cap returns conflict.
 
 ### Protected mutation DTO boundaries
 
 - Create Category multipart: exactly one required `file`, required `name`, and optional empty/UUID `parentId`. The image follows the same content, size, dimension, and storage-safety boundary as Product Images.
 - Patch Category multipart: optional replacement `file`, optional `name`, and optional empty/UUID `parentId`; at least one field/file must be present. Omitting the file preserves an existing image, while a legacy Category without an image requires one.
-- Create Product JSON: required `name`, `categoryId`, and non-empty `variants`; optional nullable `description`. Product status is server-owned `DRAFT`.
-- Initial Variant inside Create Product JSON: required `priceRial` and positive `onHandQuantity` (`1..2147483647`); optional nullable `size`/`color`; optional `isActive`, default `true`. Backend generates the globally unique normalized `sku`.
-- Create Variant JSON: required `sku` and `priceRial`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`.
-- Patch Product JSON: optional `name`, nullable `description`, `categoryId`, and `status`; at least one field must be present. A lifecycle transition and completeness-restoring field updates may be submitted together for one atomic validation. Archived Product requests may contain only `status: "DRAFT"`.
-- Patch Variant JSON: optional `sku`, nullable `size`/`color`, `priceRial`, and `isActive`; at least one field must be present.
+- Create Product JSON: required `name`, `categoryId`, and non-empty `variants`; optional nullable `description` and `tag`. Product status is server-owned `DRAFT`.
+- Create Product JSON requires Product-level `originalPriceRial` and `discountPercent`. Its initial Variant requires positive `onHandQuantity` (`1..2147483647`); nullable `size`/`color` and `isActive` are optional, with `isActive` defaulting to `true`. Backend generates the globally unique normalized `sku`.
+- Create Variant JSON requires `sku`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`. It inherits Product pricing.
+- Patch Product JSON: optional `name`, nullable `description`, nullable `tag`, `categoryId`, and `status`; at least one field must be present. A lifecycle transition and completeness-restoring field updates may be submitted together for one atomic validation. Archived Product requests may contain only `status: "DRAFT"`.
+- Patch Variant JSON accepts optional `sku`, nullable `size`/`color`, and `isActive`; at least one field must be present. Product pricing is patched through the Product endpoint.
 - Put Inventory JSON: exactly `{ "onHandQuantity": <non-negative safe integer>, "version": <positive integer> }`.
 - Product Image upload/replacement multipart: exactly one `file` plus required positive integer `imageVersion`; no caller position, filename, path, key, Product ownership, or media metadata is trusted.
 - Product Image reorder JSON: exactly `{ "imageIds": [<UUID>], "imageVersion": <positive integer> }`; the array contains every current ready Image once and may be empty only for a Draft Product.
 - Product Image delete uses required positive integer `imageVersion` as an explicit query parameter because a DELETE request body is not accepted.
 - Put display setting JSON: exactly `{ "unit": "RIAL" | "TOMAN" }`.
 
-Normalized values returned by successful mutations are authoritative. Validation rejects ambiguous mixed representations such as `price` plus `priceRial`, a Toman amount sent to a canonical Product contract, empty-string nullable labels, or caller-supplied lifecycle/storage fields.
+Normalized values returned by successful mutations are authoritative. Validation rejects ambiguous mixed representations such as `finalPriceRial` supplied by a client, a Toman amount sent as canonical `originalPriceRial`, empty-string nullable labels, or caller-supplied lifecycle/storage fields.
 
 ### Minimum protected DTO boundaries
 
 - Category: `id`, `name`, `parentId`, `level`, nullable Image metadata, `children`; protected responses may include `createdAt`/`updatedAt`.
-- Product summary: `id`, `name`, nullable plain-text `description`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, main Image metadata if present, minimum/maximum `priceRial`, exact aggregate on-hand quantity, `createdAt`, `updatedAt`.
-- Product detail: Product fields plus all retained Variants with `id`, `sku`, `size`, `color`, `priceRial`, `isActive`, Inventory `{ onHandQuantity, version }`; ordered ready Images; `imageVersion`; timestamps.
+- Product summary: `id`, `name`, nullable plain-text `description`, nullable `tag`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, main Image metadata if present, `originalPriceRial`, derived `finalPriceRial`, `discountPercent`, `currency`, exact aggregate on-hand quantity, `createdAt`, and `updatedAt`.
+- Product detail: Product fields plus all retained Variants with `id`, `sku`, `size`, `color`, `isActive`, Inventory `{ onHandQuantity, version }`; ordered ready Images; `imageVersion`; timestamps.
 - Mutations return the smallest complete affected DTO needed for the Admin to update state without guessing. They never return persistence-only normalized keys, cleanup state, or storage paths/keys.
 
 ### Public contracts
 
 Implementation status: the bounded public Category tree, Active Product summary list with exact-Category filtering, and Active Product detail projections below are implemented alongside the existing public Image content and price-display-setting reads.
 
-| Method and path | Success behavior |
-| --- | --- |
-| `GET /api/v1/catalog/categories` | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
-| `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes. |
-| `GET /api/v1/catalog/products` | Page-bounded deterministic Active Product summaries; optional exact `categoryId`. |
-| `GET /api/v1/catalog/products/{productId}` | Active Product detail by UUID. |
-| `GET /api/v1/catalog/product-images/{imageId}/content` | Controlled immutable ready image bytes only when owning Product is Active. |
-| `GET /api/v1/catalog/settings/price-display-unit` | Current global `RIAL`/`TOMAN` unit. |
+| Method and path                                         | Success behavior                                                                                                 |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/catalog/categories`                        | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
+| `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes.                                                                |
+| `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional repeated `categories` and `tags` filters.          |
+| `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID.                                                                                   |
+| `GET /api/v1/catalog/product-images/{imageId}/content`  | Controlled immutable ready image bytes only when owning Product is Active.                                       |
+| `GET /api/v1/catalog/settings/price-display-unit`       | Current global `RIAL`/`TOMAN` unit.                                                                              |
 
-Public Product list uses `page` default 1 and `pageSize` default 24, maximum 60, ordered by `createdAt DESC, id DESC`. Only optional exact `categoryId` is accepted. Descendant-inclusive filtering, selectable sorting, search, and advanced filters are deferred.
+Public Product list uses `page` default 1 and `pageSize` default 24, maximum 60, ordered by `createdAt DESC, id DESC`. Optional repeated `categories` UUID values and normalized exact `tags` may each contain at most 50 unique values. Values within one filter use OR semantics; when both filters are present they combine with AND semantics. Every supplied Category must exist. Descendant-inclusive filtering, selectable sorting, search, and other advanced filters are deferred.
+
+Each Product has one optional normalized merchandising `tag`, limited to 80 lowercase ASCII letters with words separated by a single underscore (`^[a-z]+(?:_[a-z]+)*$`). Protected create/update responses expose it for Admin editing; public Product projections use it only as a filter and do not expose it.
 
 Each public Category node contains `id`, `name`, nullable `src`, and recursive `children`.
 `src` is derived from the Category Image identifier as
@@ -307,11 +309,18 @@ Public pagination response:
 
 ```json
 {
-  "items": [],
+  "statusCode": 200,
+  "hasError": false,
+  "message": "محصولات با موفقیت دریافت شدند.",
+  "code": "PRODUCTS_FETCHED",
+  "count": 0,
+  "result": [],
+  "singleResult": null,
   "page": 1,
   "pageSize": 24,
   "totalItems": 0,
-  "totalPages": 0
+  "totalPages": 0,
+  "details": null
 }
 ```
 
@@ -323,7 +332,7 @@ Public Product summary contains:
 - `minimumPriceRial`, `maximumPriceRial` across active Variants; and
 - aggregate `isAvailable`, true when any active Variant has positive on-hand quantity.
 
-Public Product detail contains summary fields plus plain-text `description`, Category path from root to assigned Category, all ordered ready Images, and all active Variants with `id`, nullable `size`/`color`, `priceRial`, and boolean `isAvailable`. It omits SKU, exact Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
+Public Product summary contains the Storefront card fields `id`, `name`, `description`, `image`, `alt`, `original_price`, derived `final_price`, `discount`, `currency`, aggregate `quantity`, and `isAvailable`, plus Category identity. Public Product detail adds the Category path, all ordered ready Images, and all active Variants with `id`, nullable `size`/`color`, and boolean `isAvailable`. It omits SKU, exact per-Variant Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
 
 Public requests for Draft/Archived Products, inactive/foreign Images, or unknown IDs return the same `404` resource-not-found boundary so lifecycle/existence is not disclosed. Public Category filtering by a valid but empty Category returns an empty page; unknown Category returns `404 CATEGORY_NOT_FOUND`.
 
@@ -331,35 +340,35 @@ Public requests for Draft/Archived Products, inactive/foreign Images, or unknown
 
 All failures use the accepted top-level error envelope with safe Persian display text and the stable English code. Validation details may identify safe field names/reasons but never SQL, paths, keys, internal state, or existence that public filtering intentionally hides.
 
-| Status | Stable code | Meaning |
-| --- | --- | --- |
-| `400` | `VALIDATION_FAILED` | Malformed UUID/query/body, unknown fields, invalid normalization/length/range, invalid price/SKU/Variant shape, or unsafe pagination. |
-| `401` | Existing authentication code | Protected request lacks valid current authentication/session state. |
-| `403` | `INSUFFICIENT_PERMISSION` | Authenticated Admin lacks the exact permission. |
-| `403` | `CSRF_VALIDATION_FAILED` | Protected state-changing request fails accepted CSRF/origin policy. |
-| `404` | `CATEGORY_NOT_FOUND` | Protected request or public exact filter references unavailable Category. |
-| `404` | `CATEGORY_IMAGE_NOT_FOUND` | Category Image content identifier is unavailable. |
-| `404` | `PRODUCT_NOT_FOUND` | Protected Product is missing, or public Product is missing/ineligible. |
-| `404` | `PRODUCT_VARIANT_NOT_FOUND` | Protected Variant is missing. |
-| `404` | `PRODUCT_IMAGE_NOT_FOUND` | Protected Image is missing, or public Image is missing/ineligible. |
-| `409` | `CATEGORY_NAME_CONFLICT` | Normalized sibling name already exists. |
-| `409` | `CATEGORY_MOVE_INVALID` | Move creates a cycle, exceeds depth, or targets invalid hierarchy state. |
-| `409` | `CATEGORY_NOT_EMPTY` | Category has children or any Product reference. |
-| `409` | `CATEGORY_LIMIT_REACHED` | The bounded 1,000-Category catalog cap is reached. |
-| `409` | `PRODUCT_LIFECYCLE_CONFLICT` | Transition is disallowed or Archived content is mutated before restoration. |
-| `409` | `PRODUCT_ACTIVATION_INCOMPLETE` | Activation or Active-state mutation violates completeness. |
-| `409` | `SKU_CONFLICT` | Normalized SKU is already owned by another Variant. |
-| `409` | `VARIANT_COMBINATION_CONFLICT` | Normalized size/color combination already exists in the Product. |
-| `409` | `VARIANT_MODE_CONFLICT` | Active default/named exclusivity or last-active-Variant invariant would fail. |
-| `409` | `INVENTORY_VERSION_CONFLICT` | Expected optimistic version is stale. |
-| `409` | `PRODUCT_IMAGE_LIMIT_REACHED` | Product already has nine ready images. |
-| `409` | `PRODUCT_IMAGE_ORDER_CONFLICT` | Image collection version is stale or submitted membership/order is invalid. |
-| `409` | `PRODUCT_MAIN_IMAGE_REQUIRED` | Operation would leave an Active Product without position zero. |
-| `413` | `PRODUCT_IMAGE_TOO_LARGE` | Upload is not strictly below 409,600 bytes. |
-| `415` | `PRODUCT_IMAGE_TYPE_UNSUPPORTED` | Declared/detected type is not an allowed matching static format. |
-| `422` | `PRODUCT_IMAGE_CONTENT_INVALID` | Bytes are undecodable, malformed, animated/multipage, polyglot, or otherwise invalid. |
-| `422` | `PRODUCT_IMAGE_DIMENSIONS_INVALID` | Decoded dimensions/pixel count exceed accepted bounds. |
-| `503` | `PRODUCT_IMAGE_STORAGE_UNAVAILABLE` | Safe storage/compensation cannot complete; no false success is returned. |
+| Status | Stable code                         | Meaning                                                                                                                               |
+| ------ | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `400`  | `VALIDATION_FAILED`                 | Malformed UUID/query/body, unknown fields, invalid normalization/length/range, invalid price/SKU/Variant shape, or unsafe pagination. |
+| `401`  | Existing authentication code        | Protected request lacks valid current authentication/session state.                                                                   |
+| `403`  | `INSUFFICIENT_PERMISSION`           | Authenticated Admin lacks the exact permission.                                                                                       |
+| `403`  | `CSRF_VALIDATION_FAILED`            | Protected state-changing request fails accepted CSRF/origin policy.                                                                   |
+| `404`  | `CATEGORY_NOT_FOUND`                | Protected request or public exact filter references unavailable Category.                                                             |
+| `404`  | `CATEGORY_IMAGE_NOT_FOUND`          | Category Image content identifier is unavailable.                                                                                     |
+| `404`  | `PRODUCT_NOT_FOUND`                 | Protected Product is missing, or public Product is missing/ineligible.                                                                |
+| `404`  | `PRODUCT_VARIANT_NOT_FOUND`         | Protected Variant is missing.                                                                                                         |
+| `404`  | `PRODUCT_IMAGE_NOT_FOUND`           | Protected Image is missing, or public Image is missing/ineligible.                                                                    |
+| `409`  | `CATEGORY_NAME_CONFLICT`            | Normalized sibling name already exists.                                                                                               |
+| `409`  | `CATEGORY_MOVE_INVALID`             | Move creates a cycle, exceeds depth, or targets invalid hierarchy state.                                                              |
+| `409`  | `CATEGORY_NOT_EMPTY`                | Category has children or any Product reference.                                                                                       |
+| `409`  | `CATEGORY_LIMIT_REACHED`            | The bounded 1,000-Category catalog cap is reached.                                                                                    |
+| `409`  | `PRODUCT_LIFECYCLE_CONFLICT`        | Transition is disallowed or Archived content is mutated before restoration.                                                           |
+| `409`  | `PRODUCT_ACTIVATION_INCOMPLETE`     | Activation or Active-state mutation violates completeness.                                                                            |
+| `409`  | `SKU_CONFLICT`                      | Normalized SKU is already owned by another Variant.                                                                                   |
+| `409`  | `VARIANT_COMBINATION_CONFLICT`      | Normalized size/color combination already exists in the Product.                                                                      |
+| `409`  | `VARIANT_MODE_CONFLICT`             | Active default/named exclusivity or last-active-Variant invariant would fail.                                                         |
+| `409`  | `INVENTORY_VERSION_CONFLICT`        | Expected optimistic version is stale.                                                                                                 |
+| `409`  | `PRODUCT_IMAGE_LIMIT_REACHED`       | Product already has nine ready images.                                                                                                |
+| `409`  | `PRODUCT_IMAGE_ORDER_CONFLICT`      | Image collection version is stale or submitted membership/order is invalid.                                                           |
+| `409`  | `PRODUCT_MAIN_IMAGE_REQUIRED`       | Operation would leave an Active Product without position zero.                                                                        |
+| `413`  | `PRODUCT_IMAGE_TOO_LARGE`           | Upload is not strictly below 409,600 bytes.                                                                                           |
+| `415`  | `PRODUCT_IMAGE_TYPE_UNSUPPORTED`    | Declared/detected type is not an allowed matching static format.                                                                      |
+| `422`  | `PRODUCT_IMAGE_CONTENT_INVALID`     | Bytes are undecodable, malformed, animated/multipage, polyglot, or otherwise invalid.                                                 |
+| `422`  | `PRODUCT_IMAGE_DIMENSIONS_INVALID`  | Decoded dimensions/pixel count exceed accepted bounds.                                                                                |
+| `503`  | `PRODUCT_IMAGE_STORAGE_UNAVAILABLE` | Safe storage/compensation cannot complete; no false success is returned.                                                              |
 
 Database uniqueness/concurrency violations must map to these domain errors rather than leak Prisma/PostgreSQL details. Unexpected failures return the existing safe server envelope and are logged with correlation context but without catalog payloads, paths, image bytes, or protected metadata.
 
@@ -388,7 +397,7 @@ S2-T04 through S2-T09 must document within the same implementation task:
 - CSRF header requirement for protected unsafe methods;
 - success statuses and every applicable stable failure status/code;
 - public-versus-protected field differences;
-- canonical `priceRial` semantics and display-setting enum;
+- canonical Product original/final price and discount semantics plus the display-setting enum;
 - upload byte/type/content/dimension rules; and
 - representative safe examples without credentials, paths, storage keys, or internal fields.
 
@@ -431,6 +440,6 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ## Explicit deferrals
 
-This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, independent Variant deletion, deletion recovery, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, public search, public advanced filters, exact public stock, image transformations, video, CDN/DAM, production object storage, multiple currencies, discounts/tax/history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, Redis, microservices, or unrelated legacy identifier renaming.
+This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, independent Variant deletion, deletion recovery, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, public search, public advanced filters, image transformations, video, CDN/DAM, production object storage, multiple persisted currencies, tax or pricing history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, Redis, microservices, or unrelated legacy identifier renaming.
 
 Adding these requires a new explicit owner decision and an approved route or feature plan. Additive refactoring caused by genuinely new requirements is acceptable; new work must avoid breaking rework caused by contradicting the accepted semantics above.

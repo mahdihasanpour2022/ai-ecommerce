@@ -392,14 +392,18 @@ void describe(
         const productId = randomUUID();
         const variantId = randomUUID();
         await transaction.product.create({
-          data: { id: productId, name: 'Referenced Product', categoryId: ids[5] as string },
+          data: {
+            id: productId,
+            name: 'Referenced Product',
+            originalPriceRial: 1000n,
+            categoryId: ids[5] as string,
+          },
         });
         await transaction.productVariant.create({
           data: {
             id: variantId,
             productId,
             sku: `CATEGORY-${variantId}`.toUpperCase(),
-            priceRial: 1000n,
           },
         });
         await transaction.inventory.create({ data: { variantId } });

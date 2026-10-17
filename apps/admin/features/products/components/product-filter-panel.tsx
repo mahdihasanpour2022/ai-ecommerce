@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useId, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { Select } from 'antd';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { formatPriceInput, normalizePriceInput } from '../../../utils/price-input';
@@ -73,6 +74,30 @@ export function ProductFilterPanel({ filters, onApply, onClear }: ProductFilterP
                 <UiForm.Label htmlFor="product-filter-name">نام محصول</UiForm.Label>
                 <UiForm.TextInput id="product-filter-name" maxLength={200} autoComplete="off" placeholder="بخشی از نام محصول" aria-invalid={errors.name ? 'true' : 'false'} aria-describedby={errors.name ? 'product-filter-name-error' : undefined} {...register('name')} />
                 {errors.name ? <UiForm.Error id="product-filter-name-error">{errors.name.message}</UiForm.Error> : null}
+              </UiForm.Field>
+
+              <UiForm.Field>
+                <UiForm.Label htmlFor="product-filter-tags">تگ</UiForm.Label>
+                <Controller name="tags" control={control} render={({ field }) => (
+                  <Select
+                    id="product-filter-tags"
+                    mode="tags"
+                    className="w-full"
+                    value={field.value}
+                    tokenSeparators={[',', '،']}
+                    maxTagCount="responsive"
+                    placeholder="تگ را بنویسید و Enter بزنید"
+                    aria-invalid={errors.tags ? 'true' : 'false'}
+                    aria-describedby={errors.tags ? 'product-filter-tags-error' : undefined}
+                    onBlur={field.onBlur}
+                    onChange={(values) =>
+                      field.onChange(
+                        values.map((value) => value.normalize('NFKC').trim().toLowerCase()),
+                      )
+                    }
+                  />
+                )} />
+                {errors.tags ? <UiForm.Error id="product-filter-tags-error">{errors.tags.message}</UiForm.Error> : null}
               </UiForm.Field>
 
               <UiForm.Field>
@@ -200,6 +225,23 @@ export function ProductFilterPanel({ filters, onApply, onClear }: ProductFilterP
                   />
                 )} />
                 {errors.maximumPriceRial ? <UiForm.Error id="product-filter-maximum-price-error">{errors.maximumPriceRial.message}</UiForm.Error> : null}
+              </UiForm.Field>
+
+              <UiForm.Field>
+                <UiForm.Label htmlFor="product-filter-maximum-discount">تخفیف تا (درصد)</UiForm.Label>
+                <UiForm.TextInput
+                  id="product-filter-maximum-discount"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={100}
+                  step={1}
+                  autoComplete="off"
+                  aria-invalid={errors.maximumDiscountPercent ? 'true' : 'false'}
+                  aria-describedby={errors.maximumDiscountPercent ? 'product-filter-maximum-discount-error' : undefined}
+                  {...register('maximumDiscountPercent')}
+                />
+                {errors.maximumDiscountPercent ? <UiForm.Error id="product-filter-maximum-discount-error">{errors.maximumDiscountPercent.message}</UiForm.Error> : null}
               </UiForm.Field>
             </div>
 

@@ -59,10 +59,7 @@ export function publicCategoryTree(rows: readonly PublicCategoryRecord[]): Publi
       {
         id: row.id,
         name: row.name,
-        src:
-          row.image === null
-            ? null
-            : `/api/v1/catalog/category-images/${row.image.id}/content`,
+        src: row.image === null ? null : `/api/v1/catalog/category-images/${row.image.id}/content`,
         children: [],
       },
     ]),
@@ -83,23 +80,19 @@ export function publicCategoryTree(rows: readonly PublicCategoryRecord[]): Publi
 
 function publicListSummary(product: PublicProductSummaryRecord): PublicProductSummaryDto {
   if (product.images[0] === undefined) failPersistedProduct();
-  return publicSummaryFields(
-    product,
-    product.minimumPriceRial,
-    product.maximumPriceRial,
-    product.isAvailable,
-  );
+  return publicSummaryFields(product, safeQuantity(product.quantity), product.isAvailable);
 }
 
 function publicDetailSummary(product: PublicProductDetailRecord): PublicProductSummaryDto {
   if (product.variants.length === 0 || product.images[0] === undefined) failPersistedProduct();
-  const prices = product.variants.map(({ priceRial }) => priceRial);
-  const minimum = prices.reduce((current, value) => (value < current ? value : current));
-  const maximum = prices.reduce((current, value) => (value > current ? value : current));
   return publicSummaryFields(
     product,
-    minimum,
-    maximum,
+    safeQuantity(
+      product.variants.reduce((total, { inventory }) => {
+        if (inventory === null) failPersistedProduct();
+        return total + BigInt(inventory.onHandQuantity);
+      }, 0n),
+    ),
     product.variants.some(({ inventory }) => {
       if (inventory === null) failPersistedProduct();
       return inventory.onHandQuantity > 0;
@@ -108,20 +101,28 @@ function publicDetailSummary(product: PublicProductDetailRecord): PublicProductS
 }
 
 function publicSummaryFields(
-  product: Pick<PublicProductSummaryRecord, 'category' | 'id' | 'images' | 'name'>,
-  minimum: bigint,
-  maximum: bigint,
+  product: Pick<
+    PublicProductSummaryRecord,
+    'category' | 'description' | 'discountPercent' | 'id' | 'images' | 'name' | 'originalPriceRial'
+  >,
+  quantity: number,
   isAvailable: boolean,
 ): PublicProductSummaryDto {
   const mainImage = product.images[0];
-  if (mainImage === undefined) failPersistedProduct();
+  if (mainImage === undefined || product.description === null) failPersistedProduct();
+  const originalPriceRial = safeRial(product.originalPriceRial);
   return {
     id: product.id,
     name: product.name,
+    description: product.description,
     category: product.category,
-    mainImage: publicImage(mainImage),
-    minimumPriceRial: safeRial(minimum),
-    maximumPriceRial: safeRial(maximum),
+    image: publicImage(mainImage).url,
+    alt: product.name,
+    original_price: originalPriceRial,
+    final_price: finalPriceRial(product.originalPriceRial, product.discountPercent),
+    discount: product.discountPercent,
+    currency: 'IRR',
+    quantity,
     isAvailable,
   };
 }
@@ -134,7 +135,6 @@ function publicVariant(
     id: variant.id,
     size: variant.size,
     color: variant.color,
-    priceRial: safeRial(variant.priceRial),
     isAvailable: variant.inventory.onHandQuantity > 0,
   };
 }
@@ -153,6 +153,16 @@ function safeRial(value: bigint): number {
   const result = Number(value);
   if (!Number.isSafeInteger(result)) failPersistedProduct();
   return result;
+}
+
+function safeQuantity(value: bigint): number {
+  const result = Number(value);
+  if (!Number.isSafeInteger(result) || result < 0) failPersistedProduct();
+  return result;
+}
+
+function finalPriceRial(originalPriceRial: bigint, discountPercent: number): number {
+  return safeRial((originalPriceRial * BigInt(100 - discountPercent)) / 100n);
 }
 
 function failPersistedProduct(): never {

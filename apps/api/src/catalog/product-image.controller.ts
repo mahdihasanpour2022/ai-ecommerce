@@ -96,7 +96,7 @@ function throwMultipartError(error: unknown): never {
   throw error;
 }
 
-@ApiTags('Admin Catalog Product Images')
+@ApiTags('panel / product-images')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog')
@@ -286,7 +286,7 @@ export class AdminProductImageController {
   }
 }
 
-@ApiTags('Public Catalog Product Images')
+@ApiTags('site / product-images')
 @Controller('catalog/product-images')
 export class PublicProductImageController {
   constructor(private readonly images: ProductImageService) {}

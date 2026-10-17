@@ -1,4 +1,4 @@
-import type { ApiResponse } from '../../../app/http/api-response';
+import type { ApiResponse, PaginatedApiResponse } from '../../../app/http/api-response';
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
@@ -30,27 +30,20 @@ export interface Product {
   readonly sizes: readonly string[];
   readonly colors: readonly string[];
   readonly mainImage: ProductImage | null;
-  readonly minimumPriceRial: number;
-  readonly maximumPriceRial: number;
+  readonly originalPriceRial: number;
+  readonly finalPriceRial: number;
+  readonly discountPercent: number;
+  readonly currency: 'IRR';
   readonly totalOnHandQuantity: number;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
 
-export interface ProductList {
-  readonly items: readonly Product[];
-  readonly page: number;
-  readonly pageSize: number;
-  readonly totalItems: number;
-  readonly totalPages: number;
-}
-
-export type ProductsResponse = ApiResponse<null, ProductList, null>;
+export type ProductsResponse = PaginatedApiResponse<readonly Product[]>;
 
 export interface CreateProductVariantVariables {
   readonly size: string | null;
   readonly color: string | null;
-  readonly priceRial: number;
   readonly isActive: boolean;
   readonly onHandQuantity: number;
 }
@@ -59,6 +52,8 @@ export interface CreateProductVariables {
   readonly name: string;
   readonly description: string | null;
   readonly tag: string | null;
+  readonly originalPriceRial: number;
+  readonly discountPercent: number;
   readonly categoryId: string;
   readonly variants: readonly CreateProductVariantVariables[];
 }
@@ -74,7 +69,6 @@ export interface ProductVariant {
   readonly sku: string;
   readonly size: string | null;
   readonly color: string | null;
-  readonly priceRial: number;
   readonly isActive: boolean;
   readonly inventory: ProductInventory;
   readonly createdAt: string;
@@ -86,6 +80,10 @@ export interface ProductDetail {
   readonly name: string;
   readonly description: string | null;
   readonly tag: string | null;
+  readonly originalPriceRial: number;
+  readonly finalPriceRial: number;
+  readonly discountPercent: number;
+  readonly currency: 'IRR';
   readonly category: ProductCategory;
   readonly status: ProductStatus;
   readonly imageVersion: number;
@@ -116,6 +114,8 @@ export interface EditProductVariables {
   readonly name?: string;
   readonly description?: string | null;
   readonly tag?: string | null;
+  readonly originalPriceRial?: number;
+  readonly discountPercent?: number;
   readonly categoryId?: string;
 }
 
@@ -125,7 +125,6 @@ export interface EditProductVariantVariables {
   readonly variantId: string;
   readonly size?: string | null;
   readonly color?: string | null;
-  readonly priceRial?: number;
 }
 
 export type EditProductVariantResponse = ApiResponse<null, ProductVariant, null>;

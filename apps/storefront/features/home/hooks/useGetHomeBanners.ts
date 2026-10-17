@@ -26,6 +26,7 @@ export function useGetHomeBanners() {
     staleTime: 60_000,
     gcTime: 60_000,
     url: ApiRoutes.home_banners,
+    axiosConfig: { params: { page: 1, pageSize: 20 } },
   });
   const { error, isError } = response;
 

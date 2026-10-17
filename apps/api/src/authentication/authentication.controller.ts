@@ -55,7 +55,7 @@ interface ErrorEnvelope {
   details: string[];
 }
 
-@ApiTags('Authentication')
+@ApiTags('common / authentication')
 @Controller('auth')
 export class AuthenticationController {
   constructor(

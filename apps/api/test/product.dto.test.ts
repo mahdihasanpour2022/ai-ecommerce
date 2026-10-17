@@ -29,22 +29,26 @@ void describe('Product and Variant contract parsing', () => {
     const parsed = parseCreateProductRequest({
       name: '  پیراهن   نخی  ',
       description: '  توضیح خط اول\r\nتوضیح خط دوم  ',
+      tag: ' Featured_Product ',
+      originalPriceRial: 120_000,
+      discountPercent: 15,
       categoryId,
       variants: [
         {
           size: '  Ｍ ',
           color: '  مشکی  ',
-          priceRial: 120_000,
           onHandQuantity: 5,
         },
       ],
     });
     assert.equal(parsed.name, 'پیراهن نخی');
     assert.equal(parsed.description, 'توضیح خط اول\nتوضیح خط دوم');
+    assert.equal(parsed.tag, 'featured_product');
     assert.equal(parsed.variants[0]?.size, 'M');
     assert.equal(parsed.variants[0]?.isActive, true);
     assert.equal(parsed.variants[0]?.onHandQuantity, 5);
-    assert.equal(parsed.variants[0]?.priceRial, 120_000n);
+    assert.equal(parsed.originalPriceRial, 120_000n);
+    assert.equal(parsed.discountPercent, 15);
   });
 
   void test('parses only bounded allowlisted Product list query values', () => {
@@ -57,6 +61,7 @@ void describe('Product and Variant contract parsing', () => {
     assert.deepEqual(
       parseProductListQuery({
         name: '  Cotton   Shirt ',
+        tags: [' Featured_Product ', 'seasonal_sale', 'featured_product'],
         size: '  Ｍ ',
         color: ' Black ',
         availability: 'IN_STOCK',
@@ -64,11 +69,13 @@ void describe('Product and Variant contract parsing', () => {
         createdTo: '2026-09-20T18:30:40.000Z',
         minimumPriceRial: '1000',
         maximumPriceRial: '2000',
+        maximumDiscountPercent: '25',
       }),
       {
         page: 1,
         pageSize: 25,
         name: 'Cotton Shirt',
+        tags: ['featured_product', 'seasonal_sale'],
         sizeKey: 'm',
         colorKey: 'black',
         availability: 'IN_STOCK',
@@ -76,17 +83,32 @@ void describe('Product and Variant contract parsing', () => {
         createdToExclusive: new Date('2026-09-20T18:30:41.000Z'),
         minimumPriceRial: 1000n,
         maximumPriceRial: 2000n,
+        maximumDiscountPercent: 25,
       },
     );
     expectCode(() => parseProductListQuery({ pageSize: '101' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ page: '01' }), 'VALIDATION_FAILED');
+    expectCode(() => parseProductListQuery({ tags: ['valid_tag', 'not-valid'] }), 'VALIDATION_FAILED');
+    expectCode(
+      () => parseProductListQuery({ tags: Array.from({ length: 51 }, () => 'valid_tag') }),
+      'VALIDATION_FAILED',
+    );
     expectCode(() => parseProductListQuery({ page: '2147483648' }), 'VALIDATION_FAILED');
+    expectCode(
+      () => parseProductListQuery({ maximumDiscountPercent: '101' }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () => parseProductListQuery({ maximumDiscountPercent: '-1' }),
+      'VALIDATION_FAILED',
+    );
     expectCode(() => parseProductListQuery({ sort: 'name' }), 'VALIDATION_FAILED');
     expectCode(
-      () => parseProductListQuery({
-        createdFrom: '2026-09-21T00:00:00.000Z',
-        createdTo: '2026-09-20T23:59:59.000Z',
-      }),
+      () =>
+        parseProductListQuery({
+          createdFrom: '2026-09-21T00:00:00.000Z',
+          createdTo: '2026-09-20T23:59:59.000Z',
+        }),
       'VALIDATION_FAILED',
     );
     expectCode(() => parseProductListQuery({ createdFrom: '2026-09-20' }), 'VALIDATION_FAILED');
@@ -103,8 +125,10 @@ void describe('Product and Variant contract parsing', () => {
         parseCreateProductRequest({
           name: 'Product',
           description: '<b>markup</b>',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
-          variants: [{ priceRial: 1000, onHandQuantity: 1 }],
+          variants: [{ onHandQuantity: 1 }],
         }),
       'VALIDATION_FAILED',
     );
@@ -113,8 +137,10 @@ void describe('Product and Variant contract parsing', () => {
         parseCreateProductRequest({
           name: 'Product',
           description: 'a'.repeat(201),
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
-          variants: [{ priceRial: 1000, onHandQuantity: 1 }],
+          variants: [{ onHandQuantity: 1 }],
         }),
       'VALIDATION_FAILED',
     );
@@ -122,8 +148,10 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           name: 'Product',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
-          variants: [{ size: '', priceRial: 1000, onHandQuantity: 1 }],
+          variants: [{ size: '', onHandQuantity: 1 }],
         }),
       'VALIDATION_FAILED',
     );
@@ -131,19 +159,25 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           name: 'Product',
+          originalPriceRial: 1001,
+          discountPercent: 0,
           categoryId,
-          variants: [{ priceRial: 1001, onHandQuantity: 1 }],
+          variants: [{ onHandQuantity: 1 }],
         }),
       'VALIDATION_FAILED',
     );
     expectCode(() => parseUpdateProductRequest({}), 'VALIDATION_FAILED');
+    expectCode(() => parseUpdateProductRequest({ tag: 'my|_amazing' }), 'VALIDATION_FAILED');
+    expectCode(() => parseUpdateProductRequest({ discountPercent: 101 }), 'VALIDATION_FAILED');
     expectCode(() => parseUpdateVariantRequest({ onHandQuantity: 2 }), 'VALIDATION_FAILED');
     expectCode(
       () =>
         parseCreateProductRequest({
           name: 'Product',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
-          variants: [{ sku: 'CLIENT-SKU', priceRial: 1000, onHandQuantity: 1 }],
+          variants: [{ sku: 'CLIENT-SKU', onHandQuantity: 1 }],
         }),
       'VALIDATION_FAILED',
     );
@@ -151,8 +185,10 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           name: 'Product',
+          originalPriceRial: 1000,
+          discountPercent: 0,
           categoryId,
-          variants: [{ priceRial: 1000, onHandQuantity: 0 }],
+          variants: [{ onHandQuantity: 0 }],
         }),
       'VALIDATION_FAILED',
     );

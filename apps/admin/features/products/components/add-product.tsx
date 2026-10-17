@@ -25,10 +25,12 @@ import { formatPriceInput, normalizePriceInput } from '../../../utils/price-inpu
 const DEFAULT_VALUES: DefaultValues<CreateProductFormValues> = {
   name: '',
   description: '',
+  tag: '',
   categoryId: '',
   size: '',
   color: '',
-  priceRial: '',
+  originalPriceRial: '',
+  discountPercent: '0',
   onHandQuantity: '',
 };
 
@@ -82,12 +84,14 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
       const response = await createProduct.mutateAsync({
         name: values.name,
         description: values.description || null,
+        tag: values.tag || null,
+        originalPriceRial: Number(values.originalPriceRial),
+        discountPercent: Number(values.discountPercent),
         categoryId: values.categoryId,
         variants: [
           {
             size: values.size,
             color: values.color,
-            priceRial: Number(values.priceRial),
             isActive: true,
             onHandQuantity: Number(values.onHandQuantity),
           },
@@ -133,7 +137,7 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
   }));
 
   return (
-    <div className="absolute left-0 top-0 flex justify-end">
+    <div className="absolute top-0 left-0 flex justify-end">
       <UiButton ref={triggerRef} variant="primary" onClick={() => setOpen(true)}>
         افزودن محصول
       </UiButton>
@@ -253,7 +257,7 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
               }
               {...register('description')}
             />
-            <p id="product-description-help" className="m-0 text-xs leading-6 text-muted">
+            <p id="product-description-help" className="text-muted m-0 text-xs leading-6">
               حداکثر ۲۰۰ کاراکتر.
             </p>
             {errors.description ? (
@@ -263,13 +267,36 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
             ) : null}
           </UiForm.Field>
 
-          <fieldset className="grid gap-5 rounded-xl border border-border p-4">
-            <legend className="px-2 text-sm font-bold text-foreground">تنوع اولیه</legend>
+          <UiForm.Field>
+            <UiForm.Label htmlFor="product-tag">تگ انگلیسی (اختیاری)</UiForm.Label>
+            <UiForm.TextInput
+              id="product-tag"
+              dir="ltr"
+              autoComplete="off"
+              maxLength={80}
+              placeholder="my_amazing"
+              disabled={submitting}
+              aria-invalid={errors.tag ? 'true' : 'false'}
+              aria-describedby={
+                errors.tag ? 'product-tag-help product-tag-error' : 'product-tag-help'
+              }
+              {...register('tag')}
+            />
+            <p id="product-tag-help" className="text-muted m-0 text-xs leading-6">
+              فقط حروف انگلیسی؛ برای چند کلمه از _ استفاده کنید.
+            </p>
+            {errors.tag ? (
+              <UiForm.Error id="product-tag-error">{errors.tag.message}</UiForm.Error>
+            ) : null}
+          </UiForm.Field>
+
+          <fieldset className="border-border grid gap-5 rounded-xl border p-4">
+            <legend className="text-foreground px-2 text-sm font-bold">قیمت و تنوع اولیه</legend>
             <div className="grid gap-5 md:grid-cols-2">
               <UiForm.Field>
-                <UiForm.Label htmlFor="product-price">قیمت (ریال)</UiForm.Label>
+                <UiForm.Label htmlFor="product-price">قیمت اصلی (ریال)</UiForm.Label>
                 <Controller
-                  name="priceRial"
+                  name="originalPriceRial"
                   control={control}
                   render={({ field }) => (
                     <UiForm.TextInput
@@ -281,15 +308,50 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
                       inputMode="numeric"
                       dir="ltr"
                       disabled={submitting}
-                      aria-invalid={errors.priceRial ? 'true' : 'false'}
-                      aria-describedby={errors.priceRial ? 'product-price-error' : undefined}
+                      aria-invalid={errors.originalPriceRial ? 'true' : 'false'}
+                      aria-describedby={
+                        errors.originalPriceRial ? 'product-price-error' : undefined
+                      }
                       onBlur={field.onBlur}
                       onChange={(event) => field.onChange(normalizePriceInput(event.target.value))}
                     />
                   )}
                 />
-                {errors.priceRial ? (
-                  <UiForm.Error id="product-price-error">{errors.priceRial.message}</UiForm.Error>
+                {errors.originalPriceRial ? (
+                  <UiForm.Error id="product-price-error">
+                    {errors.originalPriceRial.message}
+                  </UiForm.Error>
+                ) : null}
+              </UiForm.Field>
+
+              <UiForm.Field>
+                <UiForm.Label htmlFor="product-discount">درصد تخفیف</UiForm.Label>
+                <Controller
+                  name="discountPercent"
+                  control={control}
+                  render={({ field }) => (
+                    <UiForm.TextInput
+                      id="product-discount"
+                      ref={field.ref}
+                      name={field.name}
+                      className="h-14"
+                      value={field.value}
+                      inputMode="numeric"
+                      dir="ltr"
+                      disabled={submitting}
+                      aria-invalid={errors.discountPercent ? 'true' : 'false'}
+                      aria-describedby={
+                        errors.discountPercent ? 'product-discount-error' : undefined
+                      }
+                      onBlur={field.onBlur}
+                      onChange={(event) => field.onChange(normalizePriceInput(event.target.value))}
+                    />
+                  )}
+                />
+                {errors.discountPercent ? (
+                  <UiForm.Error id="product-discount-error">
+                    {errors.discountPercent.message}
+                  </UiForm.Error>
                 ) : null}
               </UiForm.Field>
 
@@ -350,7 +412,7 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
                         <div className="flex min-h-6 items-center gap-3">
                           <span
                             aria-hidden="true"
-                            className="size-4 shrink-0 rounded-full border border-border"
+                            className="border-border size-4 shrink-0 rounded-full border"
                             style={{ backgroundColor: String(option.data.hexCode) }}
                           />
                           <span className="min-w-0 truncate text-sm font-semibold text-inherit">

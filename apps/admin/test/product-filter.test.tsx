@@ -22,14 +22,19 @@ void test('parses only supported Product filters from URL search parameters', ()
     availability: 'IN_STOCK',
     createdFrom: '2026-09-01T08:15:20.000Z',
     minimumPriceRial: '120000',
+    maximumDiscountPercent: '15',
     ignored: 'value',
   });
+  params.append('tags', ' Featured_Product ');
+  params.append('tags', 'seasonal_sale');
   assert.deepEqual(parseProductFilters(params), {
     name: 'Cotton',
+    tags: ['featured_product', 'seasonal_sale'],
     status: 'ACTIVE',
     availability: 'IN_STOCK',
     createdFrom: '2026-09-01T08:15:20.000Z',
     minimumPriceRial: '120000',
+    maximumDiscountPercent: '15',
   });
 });
 
@@ -134,28 +139,34 @@ void test('loads filter options only after expansion and applies or clears the c
     await view.findByRole('option', { name: 'medium' });
 
     await user.type(view.getByLabelText('نام محصول'), 'Cotton');
+    await user.type(view.getByLabelText('تگ'), 'Featured_Product{enter}seasonal_sale{enter}');
     await user.selectOptions(view.getByLabelText('سایز'), 'medium');
     await user.selectOptions(view.getByLabelText('رنگ'), 'black');
     await user.selectOptions(view.getByLabelText('وضعیت محصول'), 'ACTIVE');
     await user.selectOptions(view.getByLabelText('موجودی'), 'IN_STOCK');
     const minimumPrice = view.getByLabelText('حداقل قیمت (ریال)') as HTMLInputElement;
     const maximumPrice = view.getByLabelText('حداکثر قیمت (ریال)') as HTMLInputElement;
+    const maximumDiscount = view.getByLabelText('تخفیف تا (درصد)') as HTMLInputElement;
     await user.type(minimumPrice, '1200000');
     await user.type(maximumPrice, '2500000');
+    await user.type(maximumDiscount, '15');
     assert.equal(minimumPrice.value, '1,200,000');
     assert.equal(maximumPrice.value, '2,500,000');
     await user.click(view.getByRole('button', { name: 'اعمال فیلترها' }));
     await waitFor(() => assert.equal(applied?.name, 'Cotton'));
+    assert.deepEqual(applied?.tags, ['featured_product', 'seasonal_sale']);
     assert.equal(applied?.size, 'medium');
     assert.equal(applied?.color, 'black');
     assert.equal(applied?.status, 'ACTIVE');
     assert.equal(applied?.availability, 'IN_STOCK');
     assert.equal(applied?.minimumPriceRial, '1200000');
     assert.equal(applied?.maximumPriceRial, '2500000');
+    assert.equal(applied?.maximumDiscountPercent, '15');
 
     await user.click(view.getByRole('button', { name: 'حذف همه فیلترها' }));
     assert.equal(cleared, true);
     assert.equal((view.getByLabelText('نام محصول') as HTMLInputElement).value, '');
+    assert.equal((view.getByLabelText('تگ') as HTMLInputElement).value, '');
   } finally {
     releaseOptions?.();
     if (originalAdapter === undefined) delete httpClient.defaults.adapter;

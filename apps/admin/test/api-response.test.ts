@@ -26,6 +26,19 @@ void test('parses only the exact canonical ApiResponse fields', () => {
   assert.equal(parseApiResponse({ ...base, statusCode: '200' }), null);
   assert.equal(parseApiResponse({ ...base, code: 'free text' }), null);
   assert.equal(parseApiResponse({ ...base, message: '   ' }), null);
+  assert.notEqual(
+    parseApiResponse({
+      ...base,
+      count: 21,
+      result: [{ id: 'one' }],
+      page: 2,
+      pageSize: 20,
+      totalItems: 21,
+      totalPages: 2,
+    }),
+    null,
+  );
+  assert.equal(parseApiResponse({ ...base, page: 1 }), null);
 });
 
 void test('extracts collection, single, and no-payload successes safely', () => {

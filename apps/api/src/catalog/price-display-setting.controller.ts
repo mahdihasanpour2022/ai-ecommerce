@@ -23,7 +23,7 @@ import {
 import { PriceDisplaySettingService } from './price-display-setting.service.js';
 import { ApiSuccess } from '../http/api-response.js';
 
-@ApiTags('Admin Catalog Settings')
+@ApiTags('panel / settings')
 @ApiCookieAuth('adminAccess')
 @UseGuards(CatalogAccessGuard)
 @Controller('admin/catalog/settings/price-display-unit')
@@ -62,7 +62,7 @@ export class AdminPriceDisplaySettingController {
   @ApiOperation({
     summary: 'Replace the global catalog price display/input unit',
     description:
-      'Requires settings.price.display.unit.update. This preference never changes canonical priceRial values.',
+      'Requires settings.price.display.unit.update. This preference never changes canonical Product rial prices.',
   })
   @ApiBody({ type: UpdatePriceDisplaySettingRequestDto })
   @ApiResponse({ status: 200, type: PriceDisplaySettingResponseDto })
@@ -90,7 +90,7 @@ export class AdminPriceDisplaySettingController {
   }
 }
 
-@ApiTags('Public Catalog Settings')
+@ApiTags('site / settings')
 @Controller('catalog/settings/price-display-unit')
 export class PublicPriceDisplaySettingController {
   constructor(private readonly settings: PriceDisplaySettingService) {}

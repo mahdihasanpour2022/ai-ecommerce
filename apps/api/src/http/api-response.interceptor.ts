@@ -7,6 +7,7 @@ import {
   API_SUCCESS_METADATA,
   RAW_API_RESPONSE_METADATA,
   type ApiResponse,
+  type PaginatedApiResponse,
   type ApiSuccessMetadata,
 } from './api-response.js';
 
@@ -46,7 +47,24 @@ export function buildSuccessResponse(
   statusCode: number,
   metadata: ApiSuccessMetadata,
   payload: unknown,
-): ApiResponse<unknown, unknown, null> {
+): ApiResponse<unknown, unknown, null> | PaginatedApiResponse<readonly unknown[]> {
+  if (metadata.kind === 'page') {
+    const page = pageFrom(payload);
+    return {
+      statusCode,
+      hasError: false,
+      message: metadata.message,
+      code: metadata.code,
+      count: page.totalItems,
+      result: page.items,
+      singleResult: null,
+      page: page.page,
+      pageSize: page.pageSize,
+      totalItems: page.totalItems,
+      totalPages: page.totalPages,
+      details: null,
+    };
+  }
   const collection = metadata.kind === 'collection';
   const single = metadata.kind === 'single';
   const count = collection
@@ -67,6 +85,41 @@ export function buildSuccessResponse(
     singleResult: single ? payload : null,
     details: null,
   };
+}
+
+function pageFrom(payload: unknown): {
+  readonly items: readonly unknown[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalItems: number;
+  readonly totalPages: number;
+} {
+  if (typeof payload !== 'object' || payload === null) throw new Error('Invalid page payload.');
+  const record = payload as Record<string, unknown>;
+  if (
+    !Array.isArray(record.items) ||
+    !positiveInteger(record.page) ||
+    !positiveInteger(record.pageSize) ||
+    !nonNegativeInteger(record.totalItems) ||
+    !nonNegativeInteger(record.totalPages)
+  ) {
+    throw new Error('Invalid page payload.');
+  }
+  return {
+    items: record.items,
+    page: record.page,
+    pageSize: record.pageSize,
+    totalItems: record.totalItems,
+    totalPages: record.totalPages,
+  };
+}
+
+function positiveInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) > 0;
+}
+
+function nonNegativeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) >= 0;
 }
 
 function countFrom(payload: unknown, property?: string): number {

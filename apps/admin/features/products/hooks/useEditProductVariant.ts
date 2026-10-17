@@ -12,10 +12,9 @@ export function useEditProductVariant() {
     request: {
       method: 'patch',
       url: ({ variantId }) => `/admin/catalog/variants/${encodeURIComponent(variantId)}`,
-      body: ({ size, color, priceRial }) => ({
+      body: ({ size, color }) => ({
         ...(size === undefined ? {} : { size }),
         ...(color === undefined ? {} : { color }),
-        ...(priceRial === undefined ? {} : { priceRial }),
       }),
     },
   });

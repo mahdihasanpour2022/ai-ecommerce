@@ -6,7 +6,7 @@ import { useGetCategories } from '@/features/home/hooks/useGetCategories';
 import { useMemo } from 'react';
 
 export const Categories = () => {
-  const { data, isLoading } = useGetCategories();
+  const { data, isPending, isLoading } = useGetCategories();
 
   const categories = useMemo(() => {
     return data?.result ?? [];
@@ -14,14 +14,13 @@ export const Categories = () => {
 
   return (
     <div className="flex w-full flex-wrap items-center justify-center gap-0! px-6 sm:gap-3 sm:px-12 sm:pt-2 lg:px-24 2xl:px-36">
-      {isLoading ||
-        (categories.length === 0 && (
-          <div className="flex items-center justify-center gap-4">
-            <Skeleton className="h-16! w-16! rounded-full sm:h-24! sm:w-24!" />
-            <Skeleton className="h-16! w-16! rounded-full sm:h-24! sm:w-24!" />
-            <Skeleton className="h-16! w-16! rounded-full sm:h-24! sm:w-24!" />
-          </div>
-        ))}
+      {(isPending || isLoading || categories.length === 0) && (
+        <div className="flex items-center justify-center gap-4">
+          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
+          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
+          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
+        </div>
+      )}
 
       {categories.map((category) => (
         <UiButton
@@ -31,7 +30,7 @@ export const Categories = () => {
           <UiImage
             alt={category.name}
             src={category.src}
-            className="h-16! w-16! bg-contain bg-center sm:h-24! sm:w-24!"
+            className="h-16! w-16! rounded-lg bg-contain bg-center sm:h-24! sm:w-24!"
             width={350}
             height={350}
           />

@@ -48,14 +48,13 @@ void describe(
       });
       await primary.$transaction(async (transaction) => {
         await transaction.product.create({
-          data: { id: productId, name: 'Concurrency Product', categoryId },
+          data: { id: productId, name: 'Concurrency Product', originalPriceRial: 1000n, categoryId },
         });
         await transaction.productVariant.create({
           data: {
             id: variantId,
             productId,
             sku: `BASE-${variantId}`.toUpperCase(),
-            priceRial: 1000n,
           },
         });
         await transaction.inventory.create({ data: { variantId } });
@@ -140,7 +139,6 @@ void describe(
               sku: sharedSku,
               size,
               sizeKey: size.toLowerCase(),
-              priceRial: 1000n,
               isActive: false,
             },
           });
@@ -171,7 +169,6 @@ void describe(
               sizeKey: 'medium',
               color: null,
               colorKey: null,
-              priceRial: 1000n,
               isActive: false,
             },
           });

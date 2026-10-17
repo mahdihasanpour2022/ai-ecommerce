@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const asciiInteger = /^\d+$/u;
 const maximumInventory = 2_147_483_647;
+const productTag = /^[a-z]+(?:_[a-z]+)*$/u;
 
 function isFileLike(value: unknown): value is File {
   return (
@@ -38,11 +39,20 @@ export const editProductSchema = z.object({
     .trim()
     .max(200, 'توضیحات نمی‌تواند بیشتر از ۲۰۰ کاراکتر باشد.')
     .refine((value) => !/[<>]/u.test(value), 'توضیحات معتبر نیست.'),
+  tag: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(80, 'تگ نمی‌تواند بیشتر از ۸۰ کاراکتر باشد.')
+    .refine(
+      (value) => value === '' || productTag.test(value),
+      'تگ فقط باید شامل حروف انگلیسی کوچک باشد و کلمات با _ جدا شوند.',
+    ),
   categoryId: z.uuid('یک دسته‌بندی معتبر انتخاب کنید.'),
   variantId: z.uuid('یک تنوع معتبر انتخاب کنید.'),
   size: optionalSingleLine('سایز'),
   color: optionalSingleLine('رنگ'),
-  priceRial: z
+  originalPriceRial: z
     .string()
     .trim()
     .regex(asciiInteger, 'قیمت را وارد کنید.')
@@ -50,6 +60,14 @@ export const editProductSchema = z.object({
       const price = Number(value);
       return Number.isSafeInteger(price) && price >= 10 && price % 10 === 0;
     }, 'قیمت باید عددی مثبت و مضرب ۱۰ ریال باشد.'),
+  discountPercent: z
+    .string()
+    .trim()
+    .regex(asciiInteger, 'درصد تخفیف را وارد کنید.')
+    .refine((value) => {
+      const discount = Number(value);
+      return Number.isInteger(discount) && discount >= 0 && discount <= 100;
+    }, 'درصد تخفیف باید عددی بین صفر تا صد باشد.'),
   onHandQuantity: z
     .string()
     .trim()

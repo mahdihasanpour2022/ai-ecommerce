@@ -1,6 +1,6 @@
 import { UiImage, UiSpan } from '@/components/shared/ui';
 import { Product } from '@/interfaces/product';
-// import rial from '@/public/assets/currency/rial.svg';
+import rial from '@/public/assets/currency/rial.svg';
 import toman from '@/public/assets/currency/toman.svg';
 
 export const ProductPrice = ({ product }: { product: Product }) => {
@@ -23,7 +23,7 @@ export const ProductPrice = ({ product }: { product: Product }) => {
         </UiSpan>
         <div className="opacity-90">
           <UiImage
-            src={toman}
+            src={currency === 'IRR' ? rial : toman}
             alt={currency}
             width={300}
             height={300}
