@@ -1757,6 +1757,13 @@
   dependencies:
     tslib "^2.8.0"
 
+"@szhsin/react-accordion@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.npmjs.org/@szhsin/react-accordion/-/react-accordion-1.4.3.tgz#51780f84f46cf22def8ade44a9d8af443138eab1"
+  integrity sha512-uYO0j85o3ZhAtTYHmY9FqaysS655vFB9kgsdYlD7MWUNuVcXGNaLFF0QIBuCR+vzppc89yFc8eoTyRlUcOrCeA==
+  dependencies:
+    react-transition-state "^2.4.0"
+
 "@tailwindcss/node@4.3.3":
   version "4.3.3"
   resolved "https://registry.npmjs.org/@tailwindcss/node/-/node-4.3.3.tgz#38ff04309ff036ea3589a7bad9069c44ec9d3883"
@@ -5775,6 +5782,11 @@ react-multi-date-picker@4.5.2:
   dependencies:
     react-date-object "^2.1.8"
     react-element-popper "^2.1.6"
+
+react-transition-state@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.npmjs.org/react-transition-state/-/react-transition-state-2.4.0.tgz#5123eb8bbd194669c258d82fff4216e852595b37"
+  integrity sha512-d86g/nv4vsDBLBum8KSeb9S3aWDlptDQ4ydFvfCHk98ePFNILXq5Wu3tVgPXJrItxvMLtJ+XPjmGw0RmMyYMBg==
 
 react@19.2.8:
   version "19.2.8"

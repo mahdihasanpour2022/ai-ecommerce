@@ -14,9 +14,6 @@
   --font-sans: var(--font-iran-sans), Tahoma, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 
-}
-
-@theme {
   --text-2xs: 0.625rem;
   --breakpoint-3xs: 21.25rem;
   --breakpoint-2xs: 24rem;

@@ -2,11 +2,11 @@ import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
 import { ProductPrice } from '@/features/components/shared/productPrice';
 import { Product } from '@/interfaces/product';
 
-export const SuggestedProductCard = ({ product }: { product: Product }) => {
+export const CollectionProductCard = ({ product }: { product: Product }) => {
   const { name, description, image, alt } = product;
 
   return (
-    <UiButton variant="style_4" className="border-foreground/5 border">
+    <UiButton variant="style_4" className="border-foreground/5 px-2! border">
       <UiImage
         alt={alt}
         src={image}

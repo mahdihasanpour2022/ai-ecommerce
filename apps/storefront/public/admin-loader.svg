@@ -1,0 +1,27 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loader-gradient" x1="18" y1="12" x2="58" y2="61" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <g class="loader-dots" fill="url(#loader-gradient)">
+    <circle cx="36" cy="10" r="3.8" opacity="1"/>
+    <circle cx="49" cy="13.5" r="3.6" opacity=".9"/>
+    <circle cx="58.5" cy="23" r="3.4" opacity=".8"/>
+    <circle cx="62" cy="36" r="3.2" opacity=".68"/>
+    <circle cx="58.5" cy="49" r="3" opacity=".56"/>
+    <circle cx="49" cy="58.5" r="2.8" opacity=".44"/>
+    <circle cx="36" cy="62" r="2.6" opacity=".34"/>
+    <circle cx="23" cy="58.5" r="2.4" opacity=".26"/>
+    <circle cx="13.5" cy="49" r="2.2" opacity=".2"/>
+    <circle cx="10" cy="36" r="2" opacity=".15"/>
+    <circle cx="13.5" cy="23" r="1.8" opacity=".1"/>
+    <circle cx="23" cy="13.5" r="1.6" opacity=".06"/>
+  </g>
+  <style>
+    .loader-dots { transform-origin: 36px 36px; animation: loader-spin .9s linear infinite; }
+    @keyframes loader-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .loader-dots { animation-duration: 2.8s; } }
+  </style>
+</svg>

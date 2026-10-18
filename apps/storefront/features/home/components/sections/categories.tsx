@@ -16,9 +16,9 @@ export const Categories = () => {
     <div className="flex w-full flex-wrap items-center justify-center gap-0! px-6 sm:gap-3 sm:px-12 sm:pt-2 lg:px-24 2xl:px-36">
       {(isPending || isLoading || categories.length === 0) && (
         <div className="flex items-center justify-center gap-4">
-          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
-          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
-          <Skeleton className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} className="h-16! w-16! rounded-lg sm:h-24! sm:w-24!" />
+          ))}
         </div>
       )}
 

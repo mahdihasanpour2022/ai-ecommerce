@@ -4,7 +4,7 @@ import {
 } from '@/constants/productCollections';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { ProductsCollection } from '../../../../features/products/components/products-collection';
+import { ProductsCollection } from '../../../../features/products/collections/components/collections';
 
 type ProductsPageProps = PageProps<'/products/[collection]'>;
 

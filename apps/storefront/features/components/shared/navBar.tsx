@@ -1,3 +1,5 @@
+'use client';
+
 import { UiSpan } from '@/components/shared/ui';
 import clsx from 'clsx';
 import { nanoid } from 'nanoid';

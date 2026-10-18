@@ -22,10 +22,9 @@ export const DiscountedProduct = () => {
       </div>
       {isLoading ? (
         <div className="grid h-auto w-full grid-cols-2 gap-4">
-          <Skeleton className="h-64 w-full rounded-2xl bg-gray-200" />
-          <Skeleton className="h-64 w-full rounded-2xl bg-gray-200" />
-          <Skeleton className="h-64 w-full rounded-2xl bg-gray-200" />
-          <Skeleton className="h-64 w-full rounded-2xl bg-gray-200" />
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton key={index} className="h-64 w-full rounded-2xl bg-gray-200" />
+          ))}
         </div>
       ) : (
         <div className="grid h-auto w-full grid-cols-2 gap-4">

@@ -13,7 +13,7 @@ interface UiHeadingProps extends ComponentPropsWithoutRef<'h1'> {
   type?: HeadingType;
 }
 
-export const UiH1 = ({
+export const UiHeading = ({
   children,
   type: Tag = 'h1',
   className,

@@ -1,8 +1,7 @@
-import { SuggestedProductCard } from './subsets/suggestedProductCard';
-
 import { Skeleton } from '@/components/shared';
 import { UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
+import { CollectionProductCard } from '@/features/components/shared';
 import { useGetProducts } from '@/features/home/hooks/useGetProducts';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
@@ -29,7 +28,7 @@ export const OurSuggestion = () => {
       ) : (
         <div className="grid h-fit w-full grid-cols-5 gap-0">
           {ourSuggestProducts.map((product) => (
-            <SuggestedProductCard key={nanoid()} product={product} />
+            <CollectionProductCard key={nanoid()} product={product} />
           ))}
         </div>
       )}

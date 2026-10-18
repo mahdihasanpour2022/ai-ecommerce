@@ -28,6 +28,7 @@ export const UiImage = ({
       width={width}
       height={height}
       alt={alt}
+      loading="lazy"
     />
   );
 };
