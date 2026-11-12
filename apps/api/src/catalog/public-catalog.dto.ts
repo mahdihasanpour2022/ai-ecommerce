@@ -156,11 +156,12 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   }
   const page = positiveInteger(record.page, 1);
   const pageSize = positiveInteger(record.pageSize, 24, 60);
+  const name = 'name' in record ? publicProductNameSearch(record.name) : undefined;
   if ((page - 1) * pageSize > MAX_DATABASE_INTEGER) fail(['page']);
   return {
     page,
     pageSize,
-    ...('name' in record ? { name: normalizeSingleLine(record.name, 'name', 200) } : {}),
+    ...(name === undefined ? {} : { name }),
     ...('categories' in record
       ? {
           categories: parseFilterArray(record.categories, 'categories', (value) =>
@@ -170,6 +171,12 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
       : {}),
     ...('tags' in record ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) } : {}),
   };
+}
+
+function publicProductNameSearch(value: unknown): string {
+  if (typeof value !== 'string') fail(['name']);
+  const normalized = value.normalize('NFKC').trim().replace(/\s+/gu, ' ');
+  return normalized === '' ? '' : normalizeSingleLine(normalized, 'name', 200);
 }
 
 function parseFilterArray(

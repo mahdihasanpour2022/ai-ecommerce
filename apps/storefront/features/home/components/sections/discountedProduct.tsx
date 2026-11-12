@@ -1,12 +1,15 @@
 import { Skeleton } from '@/components/shared';
 import { UiImage, UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
-import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useGetProducts } from '@/hooks/shared/useGetProducts';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const DiscountedProduct = () => {
-  const { data, isLoading } = useGetProducts({ tags: PRODUCT_COLLECTIONS.discounted.tags });
+  const { data, isLoading } = useGetProducts({
+    tags: PRODUCT_COLLECTIONS.discounted.tags,
+    enabled: true,
+  });
 
   const discountedProducts = useMemo(() => {
     return data?.result ?? [];

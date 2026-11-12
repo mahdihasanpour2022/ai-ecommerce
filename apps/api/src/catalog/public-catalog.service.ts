@@ -26,6 +26,15 @@ export class PublicCatalogService {
   }
 
   async products(query: PublicProductListQuery): Promise<PublicProductListResponseDto> {
+    if (query.name === '') {
+      return {
+        items: [],
+        page: query.page,
+        pageSize: query.pageSize,
+        totalItems: 0,
+        totalPages: 0,
+      };
+    }
     const result = await this.repository.products(query);
     if (!result.categoryExists) throw new ProductError('CATEGORY_NOT_FOUND');
     return {

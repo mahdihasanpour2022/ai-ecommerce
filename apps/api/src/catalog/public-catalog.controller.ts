@@ -55,9 +55,9 @@ export class PublicCatalogController {
     name: 'name',
     required: false,
     type: String,
-    minLength: 1,
+    minLength: 0,
     maxLength: 200,
-    description: 'Case-insensitive partial Product-name search.',
+    description: 'Case-insensitive partial Product-name search; a blank value returns an empty page.',
   })
   @ApiQuery({
     name: 'categories',

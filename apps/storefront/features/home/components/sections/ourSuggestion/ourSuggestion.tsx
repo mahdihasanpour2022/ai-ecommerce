@@ -2,12 +2,15 @@ import { Skeleton } from '@/components/shared';
 import { UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { CollectionProductCard } from '@/features/components/shared';
-import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useGetProducts } from '@/hooks/shared/useGetProducts';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const OurSuggestion = () => {
-  const { data, isLoading } = useGetProducts({ tags: PRODUCT_COLLECTIONS.ourSuggest.tags });
+  const { data, isLoading } = useGetProducts({
+    tags: PRODUCT_COLLECTIONS.ourSuggest.tags,
+    enabled: true,
+  });
 
   const ourSuggestProducts = useMemo(() => {
     return data?.result ?? [];

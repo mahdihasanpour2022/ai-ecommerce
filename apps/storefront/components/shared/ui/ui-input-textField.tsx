@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import Image from 'next/image';
 import type { ComponentPropsWithRef } from 'react';
 
 const INPUT_VARIANT = {
@@ -16,6 +17,7 @@ const LABEL_VARIANT = {
 type InputType = 'text' | 'number';
 
 type UiInputProps = Omit<ComponentPropsWithRef<'input'>, 'aria-invalid' | 'id' | 'type'> & {
+  loading?: boolean;
   description?: string;
   errorMessage?: string | undefined;
   id: string;
@@ -29,6 +31,7 @@ type UiInputProps = Omit<ComponentPropsWithRef<'input'>, 'aria-invalid' | 'id' |
 };
 
 export const UiInputTextField = ({
+  loading = false,
   'aria-describedby': ariaDescribedBy,
   className,
   labelClassName,
@@ -73,6 +76,17 @@ export const UiInputTextField = ({
         aria-invalid={errorMessage ? true : undefined}
         className={clsx('w-full', INPUT_VARIANT[variant], className)}
       />
+
+      {loading && (
+        <Image
+          className="absolute top-2 left-2 h-6! w-6!"
+          src="/admin-loader.svg"
+          width={72}
+          height={72}
+          alt=""
+          priority={true}
+        />
+      )}
 
       {errorMessage ? (
         <p id={errorId} role="alert" className="text-nice-red text-xs leading-5">

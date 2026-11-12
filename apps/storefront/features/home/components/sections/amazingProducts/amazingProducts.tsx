@@ -3,11 +3,11 @@ import { UiCarousel, UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 
 import { ProductCard } from '@/features/components/shared/productCard';
-import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useGetProducts } from '@/hooks/shared/useGetProducts';
 import { useMemo } from 'react';
 
 export const AmazingProducts = () => {
-  const { data, isLoading } = useGetProducts({ tags: ['amazing'] });
+  const { data, isLoading } = useGetProducts({ tags: ['amazing'], enabled: true });
 
   const amazingProducts = useMemo(() => {
     return data?.result ?? [];
@@ -20,7 +20,9 @@ export const AmazingProducts = () => {
           <UiP variant="style_2" className="mx-auto">
             شگفت انگیز
           </UiP>
-          <UiLink href={PRODUCT_COLLECTIONS.amazing.href} variant='style_2'>مشاهده بیشتر</UiLink>
+          <UiLink href={PRODUCT_COLLECTIONS.amazing.href} variant="style_2">
+            مشاهده بیشتر
+          </UiLink>
         </div>
         <div className="bg-nice-red h-auto w-full min-w-0 flex-1 overflow-hidden!">
           {isLoading ? (

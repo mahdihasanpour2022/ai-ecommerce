@@ -1,11 +1,11 @@
 import { UiCarousel, UiLink, UiP, UiSpan } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { ProductCard } from '@/features/components/shared/productCard';
-import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useGetProducts } from '@/hooks/shared/useGetProducts';
 import { useMemo } from 'react';
 
 export const CapProducts = () => {
-  const { data } = useGetProducts({}); // {tags :PRODUCT_COLLECTIONS.cap.tags}
+  const { data } = useGetProducts({ enabled: true }); // {tags :PRODUCT_COLLECTIONS.cap.tags}
 
   const products = useMemo(() => {
     return data?.result ?? [];

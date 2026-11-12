@@ -292,7 +292,7 @@ Implementation status: the bounded public Category tree, Active Product summary 
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `GET /api/v1/catalog/categories`                        | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
 | `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes.                                                                |
-| `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional partial `name` search and repeated `categories`/`tags` filters. |
+| `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional partial `name` search (an explicitly blank value returns an empty page) and repeated `categories`/`tags` filters. |
 | `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID.                                                                                   |
 | `GET /api/v1/catalog/product-images/{imageId}/content`  | Controlled immutable ready image bytes only when owning Product is Active.                                       |
 | `GET /api/v1/catalog/settings/price-display-unit`       | Current global `RIAL`/`TOMAN` unit.                                                                              |

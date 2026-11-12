@@ -3,7 +3,7 @@
 import { Skeleton } from '@/components/shared';
 import { UiHeading, UiP } from '@/components/shared/ui';
 import { CollectionProductCard } from '@/features/components/shared';
-import { useGetProducts } from '@/features/home/hooks/useGetProducts';
+import { useGetProducts } from '@/hooks/shared/useGetProducts';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 import { CollectionFiltersSidebar } from './subsets/collectionFiltersSidebar';
@@ -17,6 +17,7 @@ interface ProductsCollectionProps {
 
 export const ProductsCollection = ({ title, description, name, tags }: ProductsCollectionProps) => {
   const { data, isLoading } = useGetProducts({
+    enabled: true,
     ...(name ? { name } : {}),
     ...(tags ? { tags } : {}),
   });
