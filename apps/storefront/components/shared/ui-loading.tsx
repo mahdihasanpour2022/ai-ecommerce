@@ -18,7 +18,7 @@ export function UiLoading({
       {...attributes}
       className={clsx(
         'flex min-h-60 flex-col items-center justify-center gap-2 p-5 text-center sm:p-10',
-        fullscreen && 'min-h-screen bg-admin-background',
+        fullscreen && 'min-h-dvh bg-background',
         className,
       )}
       role="status"

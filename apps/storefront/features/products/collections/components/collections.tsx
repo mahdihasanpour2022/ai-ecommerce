@@ -11,11 +11,15 @@ import { CollectionFiltersSidebar } from './subsets/collectionFiltersSidebar';
 interface ProductsCollectionProps {
   readonly title: string;
   readonly description: string;
-  readonly tags: string[];
+  readonly name?: string;
+  readonly tags?: readonly string[];
 }
 
-export const ProductsCollection = ({ title, description, tags }: ProductsCollectionProps) => {
-  const { data, isLoading } = useGetProducts({ tags });
+export const ProductsCollection = ({ title, description, name, tags }: ProductsCollectionProps) => {
+  const { data, isLoading } = useGetProducts({
+    ...(name ? { name } : {}),
+    ...(tags ? { tags } : {}),
+  });
 
   const products = useMemo(() => {
     return data?.result ?? [];
@@ -41,7 +45,7 @@ export const ProductsCollection = ({ title, description, tags }: ProductsCollect
           </div>
         ) : products.length === 0 ? (
           <UiP className="text-foreground-10 w-full animate-pulse p-10! text-center">
-            محصولی در این مجموعه پیدا نشد.
+            {name ? 'محصولی مطابق عبارت جستجو پیدا نشد.' : 'محصولی در این مجموعه پیدا نشد.'}
           </UiP>
         ) : (
           <div className="mx-auto grid grid-cols-1 gap-0 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

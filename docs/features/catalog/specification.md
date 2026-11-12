@@ -292,12 +292,12 @@ Implementation status: the bounded public Category tree, Active Product summary 
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `GET /api/v1/catalog/categories`                        | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
 | `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes.                                                                |
-| `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional repeated `categories` and `tags` filters.          |
+| `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional partial `name` search and repeated `categories`/`tags` filters. |
 | `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID.                                                                                   |
 | `GET /api/v1/catalog/product-images/{imageId}/content`  | Controlled immutable ready image bytes only when owning Product is Active.                                       |
 | `GET /api/v1/catalog/settings/price-display-unit`       | Current global `RIAL`/`TOMAN` unit.                                                                              |
 
-Public Product list uses `page` default 1 and `pageSize` default 24, maximum 60, ordered by `createdAt DESC, id DESC`. Optional repeated `categories` UUID values and normalized exact `tags` may each contain at most 50 unique values. Values within one filter use OR semantics; when both filters are present they combine with AND semantics. Every supplied Category must exist. Descendant-inclusive filtering, selectable sorting, search, and other advanced filters are deferred.
+Public Product list uses `page` default 1 and `pageSize` default 24, maximum 60, ordered by `createdAt DESC, id DESC`. Optional `name` performs a normalized case-insensitive partial match with a maximum length of 200 characters. Optional repeated `categories` UUID values and normalized exact `tags` may each contain at most 50 unique values. Values within one repeated filter use OR semantics; supplied filters combine with AND semantics. Every supplied Category must exist. Descendant-inclusive filtering, selectable sorting, and other advanced filters are deferred.
 
 Each Product has one optional normalized merchandising `tag`, limited to 80 lowercase ASCII letters with words separated by a single underscore (`^[a-z]+(?:_[a-z]+)*$`). Protected create/update responses expose it for Admin editing; public Product projections use it only as a filter and do not expose it.
 
@@ -440,6 +440,6 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ## Explicit deferrals
 
-This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, independent Variant deletion, deletion recovery, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, public search, public advanced filters, image transformations, video, CDN/DAM, production object storage, multiple persisted currencies, tax or pricing history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, Redis, microservices, or unrelated legacy identifier renaming.
+This specification does not approve Brand, multi-category membership, generic attributes/EAV, Variant images, independent Variant deletion, deletion recovery, final public slugs/URLs, SEO, selectable sorting, descendant-inclusive browsing, specialized search infrastructure, public advanced filters, image transformations, video, CDN/DAM, production object storage, multiple persisted currencies, tax or pricing history, multi-location/reservations/history, Cart, Checkout, Order, Payment, additional Roles, generalized audit/job infrastructure, Redis, microservices, or unrelated legacy identifier renaming.
 
 Adding these requires a new explicit owner decision and an approved route or feature plan. Additive refactoring caused by genuinely new requirements is acceptable; new work must avoid breaking rework caused by contradicting the accepted semantics above.

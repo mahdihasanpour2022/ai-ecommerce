@@ -79,6 +79,9 @@ export class PublicCatalogRepository {
   }> {
     const where: Prisma.ProductWhereInput = {
       status: 'ACTIVE',
+      ...(query.name === undefined
+        ? {}
+        : { name: { contains: query.name, mode: 'insensitive' as const } }),
       ...(query.categories === undefined ? {} : { categoryId: { in: [...query.categories] } }),
       ...(query.tags === undefined ? {} : { tag: { in: [...query.tags] } }),
     };

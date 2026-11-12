@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { ProductImageMediaType } from '../generated/prisma/enums.js';
+import { normalizeSingleLine } from './product.dto.js';
 import { ProductError } from './product.errors.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
@@ -11,6 +12,7 @@ const MAX_FILTER_VALUES = 50;
 export interface PublicProductListQuery {
   readonly page: number;
   readonly pageSize: number;
+  readonly name?: string;
   readonly categories?: readonly string[];
   readonly tags?: readonly string[];
 }
@@ -146,7 +148,9 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   if (query === null || Array.isArray(query) || typeof query !== 'object') fail();
   const record = query as Record<string, unknown>;
   if (
-    !Object.keys(record).every((key) => ['page', 'pageSize', 'categories', 'tags'].includes(key))
+    !Object.keys(record).every((key) =>
+      ['page', 'pageSize', 'name', 'categories', 'tags'].includes(key),
+    )
   ) {
     fail();
   }
@@ -156,6 +160,7 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   return {
     page,
     pageSize,
+    ...('name' in record ? { name: normalizeSingleLine(record.name, 'name', 200) } : {}),
     ...('categories' in record
       ? {
           categories: parseFilterArray(record.categories, 'categories', (value) =>

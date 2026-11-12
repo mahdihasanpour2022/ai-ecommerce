@@ -390,7 +390,7 @@ function containsDisallowedControl(value: string, allowMultiline: boolean): bool
   });
 }
 
-function normalizeSingleLine(value: unknown, field: string, maximum: number): string {
+export function normalizeSingleLine(value: unknown, field: string, maximum: number): string {
   if (typeof value !== 'string') fail([field]);
   const normalized = value.normalize('NFKC').trim().replace(/\s+/gu, ' ');
   const length = Array.from(normalized).length;

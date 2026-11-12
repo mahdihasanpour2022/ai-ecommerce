@@ -1,4 +1,5 @@
 import { Footer, Header, NavBar } from '@/features/components/shared';
+import { StorefrontConnectivityGuard } from '@/components/shared';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import { Toaster } from 'sonner';
@@ -37,11 +38,13 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="fa-IR" dir="rtl" className={`${iranSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col" cz-shortcut-listen="true">
         <ReactQueryProvider>
-          <Toaster position="top-center" richColors dir="rtl" />
-          <Header />
-          <NavBar />
-          {children}
-          <Footer />
+          <StorefrontConnectivityGuard>
+            <Toaster position="top-center" richColors dir="rtl" />
+            <Header />
+            <NavBar />
+            {children}
+            <Footer />
+          </StorefrontConnectivityGuard>
         </ReactQueryProvider>
       </body>
     </html>

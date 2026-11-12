@@ -380,6 +380,15 @@ void describe(
         tagged.items.map(({ id }) => id),
         [first.id],
       );
+      const searched = body<PublicListBody>(
+        await request(server(app))
+          .get('/api/v1/catalog/products?name=oOt%20AcT&tags=featured_product')
+          .expect(200),
+      );
+      assert.deepEqual(
+        searched.items.map(({ id }) => id),
+        [first.id],
+      );
       await request(server(app)).get('/api/v1/catalog/products?pageSize=61').expect(400);
       await request(server(app)).get('/api/v1/catalog/products?status=ACTIVE').expect(400);
     });
@@ -499,6 +508,7 @@ void describe(
       assert.deepEqual(Object.keys(detail.responses ?? {}).sort(), ['200', '400', '404', '500']);
       assert.deepEqual(products.parameters?.map(({ name }) => name).sort(), [
         'categories',
+        'name',
         'page',
         'pageSize',
         'tags',

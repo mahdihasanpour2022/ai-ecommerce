@@ -52,6 +52,14 @@ export class PublicCatalogController {
     example: 24,
   })
   @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    minLength: 1,
+    maxLength: 200,
+    description: 'Case-insensitive partial Product-name search.',
+  })
+  @ApiQuery({
     name: 'categories',
     required: false,
     type: String,
