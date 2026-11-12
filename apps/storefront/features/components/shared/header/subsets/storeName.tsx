@@ -18,13 +18,13 @@ const StoreName = () => {
           src={siteLogo}
           width={300}
           height={300}
-          className="size-14 h-12 w-16 shrink-0 rounded-full"
+          className="size-14 min-h-14 min-w-14 shrink-0 rounded-full"
           variant="style_2"
         />
       </UiButton>
       <div className="flex min-w-0 flex-col items-start">
         <UiHeading type="h1">فروشگاه عمو محسن</UiHeading>
-        <UiSpan className='whitespace-nowrap'>فروش محصولات مختلف</UiSpan>
+        <UiSpan className="whitespace-nowrap">فروش محصولات مختلف</UiSpan>
       </div>
     </div>
   );

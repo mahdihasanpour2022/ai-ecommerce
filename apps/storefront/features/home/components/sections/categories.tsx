@@ -3,14 +3,21 @@ import { nanoid } from 'nanoid';
 
 import { Skeleton } from '@/components/shared';
 import { useGetCategories } from '@/features/home/hooks/useGetCategories';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export const Categories = () => {
+  const router = useRouter();
   const { data, isPending, isLoading } = useGetCategories();
 
   const categories = useMemo(() => {
     return data?.result ?? [];
   }, [data?.result]);
+
+  const handler = (categoryId: string) => {
+    const nextSearchParams = new URLSearchParams({ categories: categoryId });
+    router.replace(`/products?${nextSearchParams.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="flex w-full flex-wrap items-center justify-center gap-0! px-6 sm:gap-3 sm:px-12 sm:pt-2 lg:px-24 2xl:px-36">
@@ -26,6 +33,7 @@ export const Categories = () => {
         <UiButton
           key={nanoid()}
           className="flex h-fit w-fit! flex-col items-center justify-center gap-0 px-2! sm:gap-1 sm:px-4!"
+          onClick={() => handler(category.id)}
         >
           <UiImage
             alt={category.name}

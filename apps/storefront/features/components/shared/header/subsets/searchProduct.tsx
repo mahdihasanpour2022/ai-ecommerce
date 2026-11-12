@@ -40,7 +40,7 @@ const SearchProduct = () => {
   const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
     name: submittedQuery,
     pageSize: 10,
-    enabled: debouncedQuery !== null,
+    enabled: debouncedQuery !== null && debouncedQuery.trim().length > 0,
   });
 
   const searchedReslt: readonly Product[] | [] = useMemo(() => {

@@ -2,14 +2,11 @@ import { UiCarousel, UiLink, UiP, UiSpan } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { ProductCard } from '@/features/components/shared/productCard';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { useMemo } from 'react';
 
 export const CapProducts = () => {
-  const { data } = useGetProducts({ enabled: true }); // {tags :PRODUCT_COLLECTIONS.cap.tags}
+  const { data } = useGetProducts({ tags: PRODUCT_COLLECTIONS.cap.tags, enabled: true });
 
-  const products = useMemo(() => {
-    return data?.result ?? [];
-  }, [data?.result]);
+  const products = data?.result ?? [];
 
   return (
     <section className="px w-full sm:px-12 sm:py-8 lg:px-24 2xl:px-36">

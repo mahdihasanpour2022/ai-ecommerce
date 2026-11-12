@@ -11,6 +11,7 @@ type ProductsResponse = ApiResponse<readonly Product[], null, null>;
 
 interface GetProductsParams {
   readonly name?: string;
+  readonly categories?: readonly string[];
   readonly tags?: readonly string[];
   readonly page?: number;
   readonly pageSize?: number;
@@ -21,17 +22,22 @@ export const useGetProducts = ({
   page,
   pageSize,
   name,
+  categories,
   tags,
   enabled = false,
 }: GetProductsParams) => {
   const response = useRQFetcher<ProductsResponse>({
-    queryKey: ['products', 'list', { page: page ?? 1, pageSize: pageSize ?? 30, name, tags }],
+    queryKey: [
+      'products',
+      'list',
+      { page: page ?? 1, pageSize: pageSize ?? 30, name, categories, tags },
+    ],
     url: ApiRoutes.products,
     staleTime: 30_000,
     gcTime: 30_000,
     enabled,
     axiosConfig: {
-      params: { page: page ?? 1, pageSize: pageSize ?? 30, name, tags },
+      params: { page: page ?? 1, pageSize: pageSize ?? 30, name, categories, tags },
     },
   });
 
