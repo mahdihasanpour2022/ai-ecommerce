@@ -116,7 +116,7 @@ export function ProductFilterPanel({ filters, onApply, onClear }: ProductFilterP
                 <Controller name="size" control={control} render={({ field }) => (
                   <UiForm.Select id="product-filter-size" disabled={sizes.isPending} className='pl-10!' {...field}>
                     <UiForm.Option value="">{sizes.isPending ? 'در حال دریافت سایزها…' : 'همه سایزها'}</UiForm.Option>
-                    {sizes.data?.result.map((size) => <UiForm.Option key={size} value={size}>{size}</UiForm.Option>)}
+                    {sizes.data?.result.map((size) => <UiForm.Option key={size['english-size-name']} value={size['english-size-name']}>{size['persian-size-name']}</UiForm.Option>)}
                   </UiForm.Select>
                 )} />
                 {sizes.isError ? <UiForm.Error>دریافت سایزها ناموفق بود.</UiForm.Error> : null}
@@ -127,7 +127,7 @@ export function ProductFilterPanel({ filters, onApply, onClear }: ProductFilterP
                 <Controller name="color" control={control} render={({ field }) => (
                   <UiForm.Select id="product-filter-color" disabled={colors.isPending} {...field}>
                     <UiForm.Option value="">{colors.isPending ? 'در حال دریافت رنگ‌ها…' : 'همه رنگ‌ها'}</UiForm.Option>
-                    {colors.data?.result.map((color) => <UiForm.Option key={color['color-name']} value={color['color-name']}>{color['color-name']}</UiForm.Option>)}
+                    {colors.data?.result.map((color) => <UiForm.Option key={color['english-color-name']} value={color['english-color-name']}>{color['persian-color-name']}</UiForm.Option>)}
                   </UiForm.Select>
                 )} />
                 {colors.isError ? <UiForm.Error>دریافت رنگ‌ها ناموفق بود.</UiForm.Error> : null}

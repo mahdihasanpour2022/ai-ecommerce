@@ -1,9 +1,13 @@
 import type { ApiResponse } from '../../../app/http/api-response';
 
-export type ProductSizeOption = 'small' | 'medium' | 'large' | 'x-large' | '2x-large' | '3x-large';
+export interface ProductSizeOption {
+  readonly 'persian-size-name': string;
+  readonly 'english-size-name': string;
+}
 
 export interface ProductColorOption {
-  readonly 'color-name': 'blue' | 'red' | 'green' | 'white' | 'black';
+  readonly 'persian-color-name': string;
+  readonly 'english-color-name': string;
   readonly 'hex-code': string;
 }
 

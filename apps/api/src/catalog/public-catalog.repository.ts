@@ -72,6 +72,21 @@ export class PublicCatalogRepository {
     });
   }
 
+  async priceRange(): Promise<{
+    readonly minimumPriceRial: bigint | null;
+    readonly maximumPriceRial: bigint | null;
+  }> {
+    const result = await this.prisma.product.aggregate({
+      where: { status: 'ACTIVE' },
+      _min: { originalPriceRial: true },
+      _max: { originalPriceRial: true },
+    });
+    return {
+      minimumPriceRial: result._min.originalPriceRial,
+      maximumPriceRial: result._max.originalPriceRial,
+    };
+  }
+
   async products(query: PublicProductListQuery): Promise<{
     readonly categoryExists: boolean;
     readonly rows: PublicProductSummaryRecord[];
@@ -85,6 +100,18 @@ export class PublicCatalogRepository {
         : { name: { contains: query.name, mode: 'insensitive' as const } }),
       ...(query.categories === undefined ? {} : { categoryId: { in: [...query.categories] } }),
       ...(query.tags === undefined ? {} : { tag: { in: [...query.tags] } }),
+      ...(query.minimumPriceRial === undefined && query.maximumPriceRial === undefined
+        ? {}
+        : {
+            originalPriceRial: {
+              ...(query.minimumPriceRial === undefined
+                ? {}
+                : { gte: query.minimumPriceRial }),
+              ...(query.maximumPriceRial === undefined
+                ? {}
+                : { lte: query.maximumPriceRial }),
+            },
+          }),
       ...(hasVariantFilter
         ? {
             variants: {

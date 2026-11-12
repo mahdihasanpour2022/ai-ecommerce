@@ -129,10 +129,13 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
   });
 
   const options = categories.data ? categoryOptions(categories.data.result) : [];
-  const sizeOptions = (sizes.data?.result ?? []).map((size) => ({ value: size, label: size }));
+  const sizeOptions = (sizes.data?.result ?? []).map((size) => ({
+    value: size['english-size-name'],
+    label: size['persian-size-name'],
+  }));
   const colorOptions = (colors.data?.result ?? []).map((color) => ({
-    value: color['color-name'],
-    label: color['color-name'],
+    value: color['english-color-name'],
+    label: color['persian-color-name'],
     hexCode: color['hex-code'],
   }));
 
@@ -145,6 +148,10 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
         open={open}
         title="ایجاد محصول"
         width={720}
+        styles={{
+          container: { display: 'flex', height: '50vh', flexDirection: 'column' },
+          body: { minHeight: 0, flex: 1, overflowY: 'auto' },
+        }}
         closable={!submitting}
         keyboard={!submitting}
         mask={{ closable: !submitting }}

@@ -5,10 +5,11 @@ import { ApiErrorDto } from '../authentication/login.dto.js';
 import { ApiSuccess } from '../http/api-response.js';
 import { CatalogAccessGuard, CatalogPermission } from './catalog-access.guard.js';
 import {
-  PRODUCT_SIZE_OPTIONS,
-  ProductColorOptionDto,
+  PublicProductColorOptionDto,
+  type PublicProductColorOption,
+  PublicProductSizeOptionDto,
+  type PublicProductSizeOption,
   ProductStatusOptionDto,
-  type ProductSizeOption,
 } from './product-option.dto.js';
 import { ProductOptionService } from './product-option.service.js';
 
@@ -27,13 +28,10 @@ export class ProductOptionController {
   })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return the server-owned Product size options' })
-  @ApiResponse({
-    status: 200,
-    schema: { type: 'array', items: { type: 'string', enum: [...PRODUCT_SIZE_OPTIONS] } },
-  })
+  @ApiResponse({ status: 200, type: PublicProductSizeOptionDto, isArray: true })
   @ApiResponse({ status: 401, type: ApiErrorDto })
   @ApiResponse({ status: 403, type: ApiErrorDto })
-  sizes(): readonly ProductSizeOption[] {
+  sizes(): readonly PublicProductSizeOption[] {
     return this.options.sizes();
   }
 
@@ -45,10 +43,10 @@ export class ProductOptionController {
   })
   @CatalogPermission('catalog.read')
   @ApiOperation({ summary: 'Return the server-owned Product color options and hex codes' })
-  @ApiResponse({ status: 200, type: ProductColorOptionDto, isArray: true })
+  @ApiResponse({ status: 200, type: PublicProductColorOptionDto, isArray: true })
   @ApiResponse({ status: 401, type: ApiErrorDto })
   @ApiResponse({ status: 403, type: ApiErrorDto })
-  colors(): readonly ProductColorOptionDto[] {
+  colors(): readonly PublicProductColorOption[] {
     return this.options.colors();
   }
 

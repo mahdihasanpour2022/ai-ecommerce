@@ -54,14 +54,6 @@ export const PUBLIC_PRODUCT_SIZE_OPTIONS = PRODUCT_SIZE_OPTIONS.map((size) => ({
 export type PublicProductColorOption = (typeof PUBLIC_PRODUCT_COLOR_OPTIONS)[number];
 export type PublicProductSizeOption = (typeof PUBLIC_PRODUCT_SIZE_OPTIONS)[number];
 
-export class ProductColorOptionDto {
-  @ApiProperty({ enum: PRODUCT_COLOR_OPTIONS.map((option) => option['color-name']) })
-  'color-name'!: ProductColorName;
-
-  @ApiProperty({ pattern: '^#[0-9A-F]{6}$', example: '#2563EB' })
-  'hex-code'!: ProductColorHexCode;
-}
-
 export class PublicProductColorOptionDto {
   @ApiProperty({ enum: Object.values(PRODUCT_COLOR_PERSIAN_NAMES) })
   'persian-color-name'!: PublicProductColorOption['persian-color-name'];

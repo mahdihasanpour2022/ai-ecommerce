@@ -11,6 +11,7 @@ import {
   publicCatalogUuid,
   PublicProductDetailDto,
   PublicProductListResponseDto,
+  PublicProductPriceRangeDto,
 } from './public-catalog.dto.js';
 import { PublicCatalogService } from './public-catalog.service.js';
 import {
@@ -62,6 +63,19 @@ export class PublicCatalogController {
   @ApiResponse({ status: 200, type: PublicProductSizeOptionDto, isArray: true })
   sizes(): readonly PublicProductSizeOption[] {
     return this.catalog.sizes();
+  }
+
+  @Get('product-options/price-range')
+  @ApiTags('site / products')
+  @ApiSuccess({
+    code: 'PRODUCT_PRICE_RANGE_FETCHED',
+    message: 'بازه قیمت محصولات با موفقیت دریافت شد.',
+    kind: 'single',
+  })
+  @ApiOperation({ summary: 'Return the public Active Product price bounds in rial' })
+  @ApiResponse({ status: 200, type: PublicProductPriceRangeDto })
+  priceRange(): Promise<PublicProductPriceRangeDto> {
+    return this.handle(() => this.catalog.priceRange());
   }
 
   @Get('products')
@@ -122,6 +136,20 @@ export class PublicCatalogController {
     minLength: 1,
     maxLength: 80,
     description: 'Match Products having an Active Variant with this normalized size.',
+  })
+  @ApiQuery({
+    name: 'minimumPriceRial',
+    required: false,
+    type: Number,
+    minimum: 0,
+    maximum: Number.MAX_SAFE_INTEGER,
+  })
+  @ApiQuery({
+    name: 'maximumPriceRial',
+    required: false,
+    type: Number,
+    minimum: 0,
+    maximum: Number.MAX_SAFE_INTEGER,
   })
   @ApiResponse({ status: 200, type: PublicProductListResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto, description: 'VALIDATION_FAILED.' })

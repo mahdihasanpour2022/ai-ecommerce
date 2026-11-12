@@ -15,6 +15,8 @@ interface GetProductsParams {
   readonly tags?: readonly string[];
   readonly color?: string;
   readonly size?: string;
+  readonly minimumPriceRial?: number;
+  readonly maximumPriceRial?: number;
   readonly page?: number;
   readonly pageSize?: number;
   readonly enabled?: boolean;
@@ -28,20 +30,42 @@ export const useGetProducts = ({
   tags,
   color,
   size,
+  minimumPriceRial,
+  maximumPriceRial,
   enabled = false,
 }: GetProductsParams) => {
   const response = useRQFetcher<ProductsResponse>({
     queryKey: [
       'products',
       'list',
-      { page: page ?? 1, pageSize: pageSize ?? 30, name, categories, tags, color, size },
+      {
+        page: page ?? 1,
+        pageSize: pageSize ?? 30,
+        name,
+        categories,
+        tags,
+        color,
+        size,
+        minimumPriceRial,
+        maximumPriceRial,
+      },
     ],
     url: ApiRoutes.products,
     staleTime: 30_000,
     gcTime: 30_000,
     enabled,
     axiosConfig: {
-      params: { page: page ?? 1, pageSize: pageSize ?? 30, name, categories, tags, color, size },
+      params: {
+        page: page ?? 1,
+        pageSize: pageSize ?? 30,
+        name,
+        categories,
+        tags,
+        color,
+        size,
+        minimumPriceRial,
+        maximumPriceRial,
+      },
     },
   });
 

@@ -7,6 +7,7 @@ import type {
   PublicProductImageDto,
   PublicProductListQuery,
   PublicProductListResponseDto,
+  PublicProductPriceRangeDto,
   PublicProductSummaryDto,
   PublicProductVariantDto,
 } from './public-catalog.dto.js';
@@ -30,11 +31,19 @@ export class PublicCatalogService {
   ) {}
 
   colors(): readonly PublicProductColorOption[] {
-    return this.options.publicColors();
+    return this.options.colors();
   }
 
   sizes(): readonly PublicProductSizeOption[] {
-    return this.options.publicSizes();
+    return this.options.sizes();
+  }
+
+  async priceRange(): Promise<PublicProductPriceRangeDto> {
+    const range = await this.repository.priceRange();
+    return {
+      minimumPriceRial: range.minimumPriceRial === null ? 0 : safeRial(range.minimumPriceRial),
+      maximumPriceRial: range.maximumPriceRial === null ? 0 : safeRial(range.maximumPriceRial),
+    };
   }
 
   async categories(): Promise<PublicCategoryDto[]> {

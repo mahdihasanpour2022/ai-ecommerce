@@ -87,10 +87,13 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
   });
 
   const categoryItems = categories.data ? categoryOptions(categories.data.result) : [];
-  const sizeOptions = (sizes.data?.result ?? []).map((size) => ({ value: size, label: size }));
+  const sizeOptions = (sizes.data?.result ?? []).map((size) => ({
+    value: size['english-size-name'],
+    label: size['persian-size-name'],
+  }));
   const colorOptions = (colors.data?.result ?? []).map((color) => ({
-    value: color['color-name'],
-    label: color['color-name'],
+    value: color['english-color-name'],
+    label: color['persian-color-name'],
     hexCode: color['hex-code'],
   }));
   const detailPending = detailQuery.isFetching;

@@ -2,13 +2,14 @@
 
 import type { TableColumnsType } from 'antd';
 import { App, Table } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { normalizeHttpFailure } from '../../../app/http/http-client';
 import { formatPersianDateTime } from '../../../utils/date-time';
 import { formatPersianInteger } from '../../../utils/number';
 import { useChangeProductStatus } from '../hooks/useChangeProductStatus';
 import { useDeleteProduct } from '../hooks/useDeleteProduct';
 import { useEditProductWorkflow } from '../hooks/useEditProductWorkflow';
+import { useGetProductColors, useGetProductSizes } from '../hooks/useGetProductOptions';
 import type {
   ChangeProductStatusVariables,
   EditProductWorkflowVariables,
@@ -83,12 +84,34 @@ export function ProductTable({
   const editProduct = useEditProductWorkflow();
   const changeProductStatus = useChangeProductStatus();
   const deleteProduct = useDeleteProduct();
+  const sizeOptions = useGetProductSizes();
+  const colorOptions = useGetProductColors();
   const [editing, setEditing] = useState<Product | null>(null);
   const [changingStatus, setChangingStatus] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
 
   const mutationPending =
     editProduct.isPending || changeProductStatus.isPending || deleteProduct.isPending;
+  const sizeLabels = useMemo(
+    () =>
+      new Map(
+        (sizeOptions.data?.result ?? []).map((size) => [
+          size['english-size-name'],
+          size['persian-size-name'],
+        ]),
+      ),
+    [sizeOptions.data?.result],
+  );
+  const colorLabels = useMemo(
+    () =>
+      new Map(
+        (colorOptions.data?.result ?? []).map((color) => [
+          color['english-color-name'],
+          color['persian-color-name'],
+        ]),
+      ),
+    [colorOptions.data?.result],
+  );
   async function submitEdit(variables: EditProductWorkflowVariables) {
     try {
       const changed = await editProduct.save(variables);
@@ -193,14 +216,22 @@ export function ProductTable({
       title: 'سایز',
       dataIndex: 'sizes',
       key: 'sizes',
-      render: (sizes: readonly string[]) => <ProductLabels labels={sizes} emptyLabel="بدون سایز" />,
+      render: (sizes: readonly string[]) => (
+        <ProductLabels
+          labels={sizes.map((size) => sizeLabels.get(size) ?? size)}
+          emptyLabel="بدون سایز"
+        />
+      ),
     },
     {
       title: 'رنگ',
       dataIndex: 'colors',
       key: 'colors',
       render: (colors: readonly string[]) => (
-        <ProductLabels labels={colors} emptyLabel="بدون رنگ" />
+        <ProductLabels
+          labels={colors.map((color) => colorLabels.get(color) ?? color)}
+          emptyLabel="بدون رنگ"
+        />
       ),
     },
     {

@@ -4,8 +4,8 @@ import { Skeleton } from '@/components/shared';
 import { UiHeading, UiP } from '@/components/shared/ui';
 import { CollectionProductCard } from '@/features/components/shared';
 import { useInfiniteProducts } from '@/hooks/shared/useInfiniteProducts';
-import { useCallback, useMemo } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
+import { useProductFilters } from '../hooks/useProductFilters';
 import { CollectionFiltersSidebar } from './subsets/collectionFiltersSidebar';
 
 interface ProductsCollectionProps {
@@ -23,9 +23,7 @@ export const ProductsCollection = ({
   categories,
   tags,
 }: ProductsCollectionProps) => {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const selectedColor = searchParams.get('color')?.normalize('NFKC').trim() || undefined;
+  const { selectedColor, selectedSize, minimumPriceRial, maximumPriceRial } = useProductFilters();
 
   const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
     pageSize: 12,
@@ -34,18 +32,10 @@ export const ProductsCollection = ({
     ...(categories ? { categories } : {}),
     ...(tags ? { tags } : {}),
     ...(selectedColor ? { color: selectedColor } : {}),
+    ...(selectedSize ? { size: selectedSize } : {}),
+    ...(minimumPriceRial !== undefined ? { minimumPriceRial } : {}),
+    ...(maximumPriceRial !== undefined ? { maximumPriceRial } : {}),
   });
-
-  const updateColor = useCallback(
-    (color?: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (color) params.set('color', color);
-      else params.delete('color');
-      const query = params.toString();
-      window.history.pushState(null, '', query ? `${pathname}?${query}` : pathname);
-    },
-    [pathname, searchParams],
-  );
 
   const products = useMemo(() => {
     return data?.pages.flatMap((page) => page.result) ?? [];
@@ -75,11 +65,7 @@ export const ProductsCollection = ({
       </header>
 
       <section className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row">
-        <CollectionFiltersSidebar
-          selectedColor={selectedColor}
-          onColorSelect={updateColor}
-          onClear={() => updateColor()}
-        />
+        <CollectionFiltersSidebar />
 
         {isLoading ? (
           <div className="grid w-full! grid-cols-2 gap-1 sm:grid-cols-2 lg:grid-cols-2">

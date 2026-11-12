@@ -17,6 +17,16 @@ export interface PublicProductListQuery {
   readonly tags?: readonly string[];
   readonly colorKey?: string;
   readonly sizeKey?: string;
+  readonly minimumPriceRial?: bigint;
+  readonly maximumPriceRial?: bigint;
+}
+
+export class PublicProductPriceRangeDto {
+  @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
+  minimumPriceRial!: number;
+
+  @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
+  maximumPriceRial!: number;
 }
 
 export class PublicCategoryDto {
@@ -151,7 +161,17 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   const record = query as Record<string, unknown>;
   if (
     !Object.keys(record).every((key) =>
-      ['page', 'pageSize', 'name', 'categories', 'tags', 'color', 'size'].includes(key),
+      [
+        'page',
+        'pageSize',
+        'name',
+        'categories',
+        'tags',
+        'color',
+        'size',
+        'minimumPriceRial',
+        'maximumPriceRial',
+      ].includes(key),
     )
   ) {
     fail();
@@ -161,6 +181,15 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   const name = 'name' in record ? publicProductNameSearch(record.name) : undefined;
   const colorKey = 'color' in record ? publicProductColorKey(record.color) : undefined;
   const sizeKey = 'size' in record ? publicProductOptionKey(record.size, 'size') : undefined;
+  const minimumPriceRial = publicProductPrice(record.minimumPriceRial, 'minimumPriceRial');
+  const maximumPriceRial = publicProductPrice(record.maximumPriceRial, 'maximumPriceRial');
+  if (
+    minimumPriceRial !== undefined &&
+    maximumPriceRial !== undefined &&
+    minimumPriceRial > maximumPriceRial
+  ) {
+    fail(['minimumPriceRial', 'maximumPriceRial']);
+  }
   if ((page - 1) * pageSize > MAX_DATABASE_INTEGER) fail(['page']);
   return {
     page,
@@ -168,6 +197,8 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
     ...(name === undefined ? {} : { name }),
     ...(colorKey === undefined ? {} : { colorKey }),
     ...(sizeKey === undefined ? {} : { sizeKey }),
+    ...(minimumPriceRial === undefined ? {} : { minimumPriceRial }),
+    ...(maximumPriceRial === undefined ? {} : { maximumPriceRial }),
     ...('categories' in record
       ? {
           categories: parseFilterArray(record.categories, 'categories', (value) =>
@@ -177,6 +208,14 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
       : {}),
     ...('tags' in record ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) } : {}),
   };
+}
+
+function publicProductPrice(value: unknown, field: string): bigint | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^(?:0|[1-9][0-9]*)$/u.test(value)) fail([field]);
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed)) fail([field]);
+  return BigInt(parsed);
 }
 
 function publicProductColorKey(value: unknown): string {

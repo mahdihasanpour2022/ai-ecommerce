@@ -15,6 +15,8 @@ interface InfiniteProductsParams {
   readonly tags?: readonly string[];
   readonly color?: string;
   readonly size?: string;
+  readonly minimumPriceRial?: number;
+  readonly maximumPriceRial?: number;
   readonly pageSize?: number;
   readonly enabled?: boolean;
 }
@@ -25,17 +27,25 @@ export function useInfiniteProducts({
   tags,
   color,
   size,
+  minimumPriceRial,
+  maximumPriceRial,
   pageSize = 10,
   enabled = false,
 }: InfiniteProductsParams) {
   const response = useRQInfiniteFetcher<ProductsPage>({
-    queryKey: ['products', 'infinite-list', { pageSize, name, categories, tags, color, size }],
+    queryKey: [
+      'products',
+      'infinite-list',
+      { pageSize, name, categories, tags, color, size, minimumPriceRial, maximumPriceRial },
+    ],
     url: ApiRoutes.products,
     pageSize,
     enabled,
     staleTime: 30_000,
     gcTime: 30_000,
-    axiosConfig: { params: { name, categories, tags, color, size } },
+    axiosConfig: {
+      params: { name, categories, tags, color, size, minimumPriceRial, maximumPriceRial },
+    },
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
   });
