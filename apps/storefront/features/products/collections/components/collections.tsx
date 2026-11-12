@@ -3,8 +3,7 @@
 import { Skeleton } from '@/components/shared';
 import { UiHeading, UiP } from '@/components/shared/ui';
 import { CollectionProductCard } from '@/features/components/shared';
-import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { nanoid } from 'nanoid';
+import { useInfiniteProducts } from '@/hooks/shared/useInfiniteProducts';
 import { useMemo } from 'react';
 import { CollectionFiltersSidebar } from './subsets/collectionFiltersSidebar';
 
@@ -23,7 +22,8 @@ export const ProductsCollection = ({
   categories,
   tags,
 }: ProductsCollectionProps) => {
-  const { data, isLoading } = useGetProducts({
+  const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
+    pageSize: 12,
     enabled: true,
     ...(name ? { name } : {}),
     ...(categories ? { categories } : {}),
@@ -31,8 +31,8 @@ export const ProductsCollection = ({
   });
 
   const products = useMemo(() => {
-    return data?.result ?? [];
-  }, [data?.result]);
+    return data?.pages.flatMap((page) => page.result) ?? [];
+  }, [data?.pages]);
 
   const categoryNames = useMemo(() => {
     if (!categories) return [];
@@ -72,10 +72,30 @@ export const ProductsCollection = ({
             محصولی در این مجموعه پیدا نشد.
           </UiP>
         ) : (
-          <div className="mx-auto grid grid-cols-1 gap-0 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
-              <CollectionProductCard key={nanoid()} product={product} />
-            ))}
+          <div className="w-full min-w-0">
+            <div className="mx-auto grid w-full auto-rows-fr grid-cols-1 gap-0 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <CollectionProductCard key={product.id} product={product} />
+              ))}
+            </div>
+            {(hasNextPage || isFetchingNextPage) && (
+              <div
+                ref={loadMoreRef}
+                className="flex min-h-12 w-full items-center justify-center py-2"
+                role="status"
+                aria-live="polite"
+              >
+                {isFetchingNextPage && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="border-foreground/20 border-t-nice-red size-6 animate-spin rounded-full border-2"
+                    />
+                    <span className="sr-only">در حال دریافت محصولات بیشتر...</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </section>

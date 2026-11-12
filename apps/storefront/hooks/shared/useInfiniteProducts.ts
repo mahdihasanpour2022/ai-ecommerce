@@ -11,6 +11,7 @@ type ProductsPage = PaginatedApiResponse<readonly Product[]>;
 
 interface InfiniteProductsParams {
   readonly name?: string;
+  readonly categories?: readonly string[];
   readonly tags?: readonly string[];
   readonly pageSize?: number;
   readonly enabled?: boolean;
@@ -18,18 +19,19 @@ interface InfiniteProductsParams {
 
 export function useInfiniteProducts({
   name,
+  categories,
   tags,
   pageSize = 10,
   enabled = false,
 }: InfiniteProductsParams) {
   const response = useRQInfiniteFetcher<ProductsPage>({
-    queryKey: ['products', 'infinite-list', { pageSize, name, tags }],
+    queryKey: ['products', 'infinite-list', { pageSize, name, categories, tags }],
     url: ApiRoutes.products,
     pageSize,
     enabled,
     staleTime: 30_000,
     gcTime: 30_000,
-    axiosConfig: { params: { name, tags } },
+    axiosConfig: { params: { name, categories, tags } },
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
   });
