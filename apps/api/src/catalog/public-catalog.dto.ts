@@ -15,6 +15,8 @@ export interface PublicProductListQuery {
   readonly name?: string;
   readonly categories?: readonly string[];
   readonly tags?: readonly string[];
+  readonly colorKey?: string;
+  readonly sizeKey?: string;
 }
 
 export class PublicCategoryDto {
@@ -149,7 +151,7 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   const record = query as Record<string, unknown>;
   if (
     !Object.keys(record).every((key) =>
-      ['page', 'pageSize', 'name', 'categories', 'tags'].includes(key),
+      ['page', 'pageSize', 'name', 'categories', 'tags', 'color', 'size'].includes(key),
     )
   ) {
     fail();
@@ -157,11 +159,15 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
   const page = positiveInteger(record.page, 1);
   const pageSize = positiveInteger(record.pageSize, 24, 60);
   const name = 'name' in record ? publicProductNameSearch(record.name) : undefined;
+  const colorKey = 'color' in record ? publicProductColorKey(record.color) : undefined;
+  const sizeKey = 'size' in record ? publicProductOptionKey(record.size, 'size') : undefined;
   if ((page - 1) * pageSize > MAX_DATABASE_INTEGER) fail(['page']);
   return {
     page,
     pageSize,
     ...(name === undefined ? {} : { name }),
+    ...(colorKey === undefined ? {} : { colorKey }),
+    ...(sizeKey === undefined ? {} : { sizeKey }),
     ...('categories' in record
       ? {
           categories: parseFilterArray(record.categories, 'categories', (value) =>
@@ -171,6 +177,14 @@ export function parsePublicProductListQuery(query: unknown): PublicProductListQu
       : {}),
     ...('tags' in record ? { tags: parseFilterArray(record.tags, 'tags', publicProductTag) } : {}),
   };
+}
+
+function publicProductColorKey(value: unknown): string {
+  return publicProductOptionKey(value, 'color');
+}
+
+function publicProductOptionKey(value: unknown, field: 'color' | 'size'): string {
+  return normalizeSingleLine(value, field, 80).toUpperCase().toLowerCase();
 }
 
 function publicProductNameSearch(value: unknown): string {

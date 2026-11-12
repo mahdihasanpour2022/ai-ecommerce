@@ -16,10 +16,26 @@ import type {
   PublicProductSummaryRecord,
 } from './public-catalog.repository.js';
 import { PublicCatalogRepository } from './public-catalog.repository.js';
+import type {
+  PublicProductColorOption,
+  PublicProductSizeOption,
+} from './product-option.dto.js';
+import { ProductOptionService } from './product-option.service.js';
 
 @Injectable()
 export class PublicCatalogService {
-  constructor(private readonly repository: PublicCatalogRepository) {}
+  constructor(
+    private readonly repository: PublicCatalogRepository,
+    private readonly options: ProductOptionService,
+  ) {}
+
+  colors(): readonly PublicProductColorOption[] {
+    return this.options.publicColors();
+  }
+
+  sizes(): readonly PublicProductSizeOption[] {
+    return this.options.publicSizes();
+  }
 
   async categories(): Promise<PublicCategoryDto[]> {
     return publicCategoryTree(await this.repository.categories());

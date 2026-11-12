@@ -12,9 +12,7 @@ const normalizedName = (value: string | string[] | undefined): string | undefine
   return name.length > 0 && Array.from(name).length <= 200 ? name : undefined;
 };
 
-const normalizedFilters = (
-  value: string | string[] | undefined,
-): readonly string[] | undefined => {
+const normalizedFilters = (value: string | string[] | undefined): readonly string[] | undefined => {
   const values = Array.isArray(value) ? value : value === undefined ? [] : [value];
   const filters = [
     ...new Set(values.map(normalizedName).filter((item): item is string => item !== undefined)),

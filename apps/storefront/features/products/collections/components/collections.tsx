@@ -4,7 +4,8 @@ import { Skeleton } from '@/components/shared';
 import { UiHeading, UiP } from '@/components/shared/ui';
 import { CollectionProductCard } from '@/features/components/shared';
 import { useInfiniteProducts } from '@/hooks/shared/useInfiniteProducts';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { CollectionFiltersSidebar } from './subsets/collectionFiltersSidebar';
 
 interface ProductsCollectionProps {
@@ -22,13 +23,29 @@ export const ProductsCollection = ({
   categories,
   tags,
 }: ProductsCollectionProps) => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const selectedColor = searchParams.get('color')?.normalize('NFKC').trim() || undefined;
+
   const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
     pageSize: 12,
     enabled: true,
     ...(name ? { name } : {}),
     ...(categories ? { categories } : {}),
     ...(tags ? { tags } : {}),
+    ...(selectedColor ? { color: selectedColor } : {}),
   });
+
+  const updateColor = useCallback(
+    (color?: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (color) params.set('color', color);
+      else params.delete('color');
+      const query = params.toString();
+      window.history.pushState(null, '', query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, searchParams],
+  );
 
   const products = useMemo(() => {
     return data?.pages.flatMap((page) => page.result) ?? [];
@@ -46,8 +63,7 @@ export const ProductsCollection = ({
     ];
   }, [categories, products]);
 
-  const displayTitle =
-    categoryNames.length > 0 ? `نتیجه جستجوی «${categoryNames.join('، ')}»` : title;
+  const displayTitle = categoryNames.length > 0 ? `محصولات «${categoryNames.join('، ')}»` : title;
 
   return (
     <main className="w-full px-4 py-8">
@@ -58,8 +74,12 @@ export const ProductsCollection = ({
         <UiP className="text-foreground/60! w-full text-center text-xs">{description}</UiP>
       </header>
 
-      <section className="flex w-full items-start justify-between gap-4">
-        <CollectionFiltersSidebar />
+      <section className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row">
+        <CollectionFiltersSidebar
+          selectedColor={selectedColor}
+          onColorSelect={updateColor}
+          onClear={() => updateColor()}
+        />
 
         {isLoading ? (
           <div className="grid w-full! grid-cols-2 gap-1 sm:grid-cols-2 lg:grid-cols-2">

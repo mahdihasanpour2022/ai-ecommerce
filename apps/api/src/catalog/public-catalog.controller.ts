@@ -13,6 +13,12 @@ import {
   PublicProductListResponseDto,
 } from './public-catalog.dto.js';
 import { PublicCatalogService } from './public-catalog.service.js';
+import {
+  PublicProductColorOptionDto,
+  type PublicProductColorOption,
+  PublicProductSizeOptionDto,
+  type PublicProductSizeOption,
+} from './product-option.dto.js';
 
 @Controller('catalog')
 export class PublicCatalogController {
@@ -30,6 +36,32 @@ export class PublicCatalogController {
   @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
   categories(): Promise<PublicCategoryDto[]> {
     return this.handle(() => this.catalog.categories());
+  }
+
+  @Get('product-options/colors')
+  @ApiTags('site / products')
+  @ApiSuccess({
+    code: 'PRODUCT_COLOR_OPTIONS_FETCHED',
+    message: 'گزینه‌های رنگ محصول با موفقیت دریافت شدند.',
+    kind: 'collection',
+  })
+  @ApiOperation({ summary: 'Return supported public Product color options' })
+  @ApiResponse({ status: 200, type: PublicProductColorOptionDto, isArray: true })
+  colors(): readonly PublicProductColorOption[] {
+    return this.catalog.colors();
+  }
+
+  @Get('product-options/sizes')
+  @ApiTags('site / products')
+  @ApiSuccess({
+    code: 'PRODUCT_SIZE_OPTIONS_FETCHED',
+    message: 'گزینه‌های سایز محصول با موفقیت دریافت شدند.',
+    kind: 'collection',
+  })
+  @ApiOperation({ summary: 'Return supported public Product size options' })
+  @ApiResponse({ status: 200, type: PublicProductSizeOptionDto, isArray: true })
+  sizes(): readonly PublicProductSizeOption[] {
+    return this.catalog.sizes();
   }
 
   @Get('products')
@@ -74,6 +106,22 @@ export class PublicCatalogController {
     isArray: true,
     pattern: '^[a-z]+(?:_[a-z]+)*$',
     description: 'Repeat the query parameter to match Products having any supplied tag.',
+  })
+  @ApiQuery({
+    name: 'color',
+    required: false,
+    type: String,
+    minLength: 1,
+    maxLength: 80,
+    description: 'Match Products having an Active Variant with this normalized color.',
+  })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    type: String,
+    minLength: 1,
+    maxLength: 80,
+    description: 'Match Products having an Active Variant with this normalized size.',
   })
   @ApiResponse({ status: 200, type: PublicProductListResponseDto })
   @ApiResponse({ status: 400, type: ApiErrorDto, description: 'VALIDATION_FAILED.' })
