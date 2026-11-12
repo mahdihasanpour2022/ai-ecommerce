@@ -1,11 +1,10 @@
 'use client';
 
 import { UiInputTextField } from '@/components/shared/ui';
-import { useGetProducts } from '@/hooks/shared/useGetProducts';
+import { useInfiniteProducts } from '@/hooks/shared/useInfiniteProducts';
 import { Product } from '@/interfaces/product';
 import productIcon from '@/public/assets/product/product-icon.png';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { nanoid } from 'nanoid';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -38,16 +37,16 @@ const SearchProduct = () => {
   const query = useWatch({ control, name: 'query' });
   const previousQueryRef = useRef(query);
 
-  const { data, isSuccess, isLoading } = useGetProducts({
+  const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
     name: submittedQuery,
     pageSize: 10,
     enabled: debouncedQuery !== null,
   });
 
   const searchedReslt: readonly Product[] | [] = useMemo(() => {
-    if (!data || !isSuccess) return [];
-    return data?.result;
-  }, [isSuccess, data]);
+    if (!data) return [];
+    return data.pages.flatMap((page) => page.result);
+  }, [data]);
 
   console.log('searchedReslt ::', searchedReslt);
 
@@ -122,7 +121,7 @@ const SearchProduct = () => {
               <Link
                 href={`/products?name=${encodeURIComponent(product.name)}`}
                 className="ml-4 flex list-none items-center justify-start gap-2 border-b border-white/50 py-2"
-                key={nanoid()}
+                key={product.id}
               >
                 <Image
                   className="h-3! w-3! opacity-100"
@@ -135,6 +134,21 @@ const SearchProduct = () => {
                 <span className="text-xs text-white">{product.name}</span>
               </Link>
             ))}
+            {hasNextPage || isFetchingNextPage ? (
+              <div
+                ref={loadMoreRef}
+                className="flex min-h-8 items-center justify-center"
+                role="status"
+                aria-live="polite"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Image src="/admin-loader.svg" width={28} height={28} alt="" />
+                    <span className="sr-only">در حال دریافت محصولات بیشتر...</span>
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
