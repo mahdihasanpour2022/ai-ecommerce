@@ -84,7 +84,7 @@ const SearchProduct = () => {
   }, [query, runSearch]);
 
   return (
-    <div className="relative w-full sm:max-w-md">
+    <div className="group relative w-full sm:max-w-md">
       <form
         role="search"
         aria-label="جستجوی محصولات"
@@ -108,30 +108,35 @@ const SearchProduct = () => {
               required={false}
               hasLabel={false}
               loading={isLoading}
+              maxLength={30}
             />
           )}
         />
       </form>
-      <div className="bg-nice-red shadow-product-card absolute -inset-x-3 -top-4 z-10 min-h-44 rounded-xl px-4 pt-18">
-        <p className="pb-4 text-xs text-white">{`نتیجه جستجو برای " ${urlQuery} "`}</p>
-        {searchedReslt.length > 0 &&
-          searchedReslt.map((product) => (
-            <Link
-              href={`/products?name=${encodeURIComponent(product.name)}`}
-              className="flex list-none items-center justify-start gap-2 border-b border-white/50 py-2"
-              key={nanoid()}
-            >
-              <Image
-                className="h-3! w-3! opacity-100"
-                src={productIcon}
-                width={200}
-                height={200}
-                alt=""
-                priority={false}
-              />
-              <span className="text-xs text-white">{product.name}</span>
-            </Link>
-          ))}
+      <div className="bg-nice-red shadow-product-card pointer-events-none invisible absolute -inset-x-3 -top-4 z-10 h-fit max-h-48 rounded-xl px-4 pt-18 opacity-0 transition-opacity group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:opacity-100">
+        <p className="pb-2 text-xs text-white">{`نتیجه جستجو برای " ${urlQuery} "`}</p>
+
+        {searchedReslt.length > 0 && (
+          <div className="scrollbar-white h-24 overflow-y-auto">
+            {searchedReslt.map((product) => (
+              <Link
+                href={`/products?name=${encodeURIComponent(product.name)}`}
+                className="ml-4 flex list-none items-center justify-start gap-2 border-b border-white/50 py-2"
+                key={nanoid()}
+              >
+                <Image
+                  className="h-3! w-3! opacity-100"
+                  src={productIcon}
+                  width={200}
+                  height={200}
+                  alt=""
+                  priority={false}
+                />
+                <span className="text-xs text-white">{product.name}</span>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

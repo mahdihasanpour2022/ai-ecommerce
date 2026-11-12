@@ -46,3 +46,50 @@ input[type='number']::-webkit-outer-spin-button {
   margin: 0;
   appearance: none;
 }
+
+.scrollbar-white {
+  scrollbar-color: rgba(255, 255, 255, 0.9) transparent;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+}
+
+.scrollbar-white::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-white::-webkit-scrollbar-button {
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  display: none;
+  width: 0;
+  height: 0;
+  appearance: none;
+}
+
+.scrollbar-white::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-white::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  background-clip: content-box;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  .scrollbar-white {
+    scrollbar-color: auto;
+    scrollbar-width: auto;
+  }
+
+  .scrollbar-white::-webkit-scrollbar-button:single-button,
+  .scrollbar-white::-webkit-scrollbar-button:vertical:decrement,
+  .scrollbar-white::-webkit-scrollbar-button:vertical:increment {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}
