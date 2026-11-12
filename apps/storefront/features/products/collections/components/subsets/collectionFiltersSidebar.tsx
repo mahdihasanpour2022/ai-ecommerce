@@ -1,16 +1,21 @@
 import { UiButton, UiP } from '@/components/shared/ui';
 import { useProductFilters } from '../../hooks/useProductFilters';
 import { ColorFilter } from './filters/colorFilter';
+import { PriceFilter } from './filters/priceFilter';
 import SizeFilter from './filters/sizeFilter';
 
 export const CollectionFiltersSidebar = () => {
   const {
     selectedColor,
     selectedSize,
+    minimumPriceRial,
+    maximumPriceRial,
     setColor,
     setSize,
+    setPriceRange,
     clearColor,
     clearSize,
+    clearPriceRange,
     clearAll,
   } = useProductFilters();
 
@@ -23,7 +28,12 @@ export const CollectionFiltersSidebar = () => {
         <UiButton
           className="text-sm!"
           variant="style_6"
-          disabled={!selectedColor && !selectedSize}
+          disabled={
+            !selectedColor &&
+            !selectedSize &&
+            minimumPriceRial === undefined &&
+            maximumPriceRial === undefined
+          }
           onClick={clearAll}
         >
           حذف فیلترها
@@ -36,6 +46,12 @@ export const CollectionFiltersSidebar = () => {
         onClear={clearColor}
       />
       <SizeFilter selectedSize={selectedSize} onSelect={setSize} onClear={clearSize} />
+      <PriceFilter
+        minimumPriceRial={minimumPriceRial}
+        maximumPriceRial={maximumPriceRial}
+        onChange={setPriceRange}
+        onClear={clearPriceRange}
+      />
     </aside>
   );
 };

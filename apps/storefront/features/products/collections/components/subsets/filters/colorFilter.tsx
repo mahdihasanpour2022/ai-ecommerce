@@ -80,7 +80,7 @@ export const ColorFilter = ({ selectedColor, onSelect, onClear }: ColorFilterPro
           aria-label={`حذف فیلتر رنگ ${selectedColorOption['persian-color-name']}`}
           onClick={onClear}
           className={clsx(
-            'absolute top-2.5 right-14 z-10 flex w-fit! items-center justify-center gap-3 rounded-full px-2! py-1! text-xs! opacity-75',
+            'absolute top-4.5 sm:top-3.5 right-10 z-10 flex w-fit! items-center justify-center gap-3 rounded-full px-2! py-1! text-xs! opacity-75',
             selectedColorOption['english-color-name'] === 'white'
               ? 'border-foreground/10 text-foreground/60 border'
               : 'border-transparent text-white',

@@ -74,7 +74,7 @@ const SizeFilter = ({ selectedSize, onSelect, onClear }: SizeFilterProps) => {
           variant="style_7"
           aria-label={`حذف فیلتر سایز ${selectedSizeOption['persian-size-name']}`}
           onClick={onClear}
-          className="border-foreground/10 text-foreground/70 absolute top-2.5 right-14 z-10 flex w-fit! items-center justify-center gap-3 rounded-full border px-2! py-1! text-xs!"
+          className="border-foreground/10 text-foreground/70 absolute top-4.5 sm:top-3.5 right-10 z-10 flex w-fit! items-center justify-center gap-3 rounded-full border px-2! py-1! text-xs!"
         >
           <span>{selectedSizeOption['persian-size-name']}</span>
           <span aria-hidden="true" className="text-base leading-none">
