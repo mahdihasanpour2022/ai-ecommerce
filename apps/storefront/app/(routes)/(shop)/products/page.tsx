@@ -1,10 +1,8 @@
+import { getProductCollectionByTags } from '@/constants/productCollections';
 import { ProductsCollection } from '@/features/products/collections/components/collections';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'محصولات',
-  description: 'محصولات',
-};
+type ProductsPageProps = PageProps<'/products'>;
 
 const normalizedName = (value: string | string[] | undefined): string | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -20,11 +18,25 @@ const normalizedFilters = (value: string | string[] | undefined): readonly strin
   return filters.length > 0 ? filters : undefined;
 };
 
-const ProductsPage = async ({ searchParams }: PageProps<'/products'>) => {
+export const generateMetadata = async ({ searchParams }: ProductsPageProps): Promise<Metadata> => {
   const resolvedSearchParams = await searchParams;
   const name = normalizedName(resolvedSearchParams.name);
   const categories = normalizedFilters(resolvedSearchParams.categories);
   const tags = normalizedFilters(resolvedSearchParams.tags);
+  const collection = !name && !categories && tags ? getProductCollectionByTags(tags) : undefined;
+
+  return {
+    title: collection?.title ?? 'محصولات',
+    description: collection?.description ?? 'محصولات',
+  };
+};
+
+const ProductsPage = async ({ searchParams }: ProductsPageProps) => {
+  const resolvedSearchParams = await searchParams;
+  const name = normalizedName(resolvedSearchParams.name);
+  const categories = normalizedFilters(resolvedSearchParams.categories);
+  const tags = normalizedFilters(resolvedSearchParams.tags);
+  const collection = !name && !categories && tags ? getProductCollectionByTags(tags) : undefined;
 
   return (
     <ProductsCollection
@@ -33,11 +45,13 @@ const ProductsPage = async ({ searchParams }: PageProps<'/products'>) => {
           ? `نتیجه جستجوی «${name}»`
           : categories
             ? 'محصولات دسته‌بندی'
-            : tags
+            : collection
+              ? collection.title
+              : tags
               ? `نتیجه جستجوی «${tags.join('، ')}»`
               : 'همه محصولات'
       }
-      description=""
+      description={collection?.description ?? ''}
       {...(name ? { name } : categories ? { categories } : tags ? { tags } : {})}
     />
   );

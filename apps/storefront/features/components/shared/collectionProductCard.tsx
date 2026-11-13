@@ -1,14 +1,25 @@
+'use client';
+
 import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
 import { ProductPrice } from '@/features/components/shared/productPrice';
 import { Product } from '@/interfaces/product';
+import { useRouter } from 'next/navigation';
 
 export const CollectionProductCard = ({ product }: { product: Product }) => {
+const router = useRouter();
   const { name, description, image, alt } = product;
+
+  console.log('product', product);
+
+const navigateToSingleProduct = ()=>{
+router.push( `/`, {scroll : false})
+}
 
   return (
     <UiButton
       variant="style_4"
       className="border-foreground/5 flex h-full! flex-col items-stretch border px-2!"
+      onClick={navigateToSingleProduct}
     >
       <UiImage
         alt={alt}

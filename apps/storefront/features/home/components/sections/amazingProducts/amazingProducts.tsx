@@ -20,7 +20,10 @@ export const AmazingProducts = () => {
           <UiP variant="style_2" className="mx-auto">
             شگفت انگیز
           </UiP>
-          <UiLink href={PRODUCT_COLLECTIONS.amazing.href} variant="style_2">
+          <UiLink
+             href={PRODUCT_COLLECTIONS.amazing.href}
+            variant="style_2"
+          >
             مشاهده بیشتر
           </UiLink>
         </div>
