@@ -1,4 +1,3 @@
-import { Footer, Header, NavBar } from '@/features/components/shared';
 import { StorefrontConnectivityGuard } from '@/components/shared';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
@@ -40,10 +39,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <ReactQueryProvider>
           <StorefrontConnectivityGuard>
             <Toaster position="top-center" richColors dir="rtl" />
-            <Header />
-            <NavBar />
             {children}
-            <Footer />
           </StorefrontConnectivityGuard>
         </ReactQueryProvider>
       </body>

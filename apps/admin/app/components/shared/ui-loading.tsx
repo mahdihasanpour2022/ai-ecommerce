@@ -30,7 +30,7 @@ export function UiLoading({
         src="/admin-loader.svg"
         width={72}
         height={72}
-        alt=""
+        alt="loader-image"
         priority={fullscreen}
       />
       <p className="m-0 max-w-lg text-sm font-semibold leading-8 text-muted opacity-50 sm:text-xs">
