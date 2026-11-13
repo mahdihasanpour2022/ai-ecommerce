@@ -2,6 +2,7 @@
 
 import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
 import { ProductPrice } from '@/features/components/shared/productPrice';
+import { getProductHref } from '@/features/products/product/product-route';
 import { Product } from '@/interfaces/product';
 import { useRouter } from 'nextjs-toploader/app';
 
@@ -12,7 +13,7 @@ export const CollectionProductCard = ({ product }: { product: Product }) => {
   console.log('product', product);
 
   const navigateToSingleProduct = () => {
-    router.push(`/products/${product.id}`, { scroll: false });
+    router.push(getProductHref(product.id, product.name), { scroll: false });
   };
 
   return (
