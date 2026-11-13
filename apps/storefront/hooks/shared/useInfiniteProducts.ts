@@ -1,7 +1,7 @@
 'use client';
 
 import type { PaginatedApiResponse } from '@/app/http/api-response';
-import { ApiRoutes } from '@/features/home/constants/apiRoues';
+import { ApiRoutes } from '@/constants/apiRoues';
 import { useRQInfiniteFetcher } from '@/hooks/rq_hooks/useRQInfiniteFetcher';
 import type { Product } from '@/interfaces/product';
 import { useEffect } from 'react';

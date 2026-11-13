@@ -6,14 +6,14 @@ import { Product } from '@/interfaces/product';
 import { useRouter } from 'next/navigation';
 
 export const CollectionProductCard = ({ product }: { product: Product }) => {
-const router = useRouter();
+  const router = useRouter();
   const { name, description, image, alt } = product;
 
   console.log('product', product);
 
-const navigateToSingleProduct = ()=>{
-router.push( `/`, {scroll : false})
-}
+  const navigateToSingleProduct = () => {
+    router.push(`/products/${product.id}`, { scroll: false });
+  };
 
   return (
     <UiButton

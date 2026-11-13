@@ -6,46 +6,41 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { CatalogAccessGuard } from '../src/catalog/catalog-access.guard.js';
 import { ProductOptionController } from '../src/catalog/product-option.controller.js';
-import {
-  PRODUCT_COLOR_OPTIONS,
-  PRODUCT_SIZE_OPTIONS,
-  PRODUCT_STATUS_OPTIONS,
-} from '../src/catalog/product-option.dto.js';
+import { PRODUCT_STATUS_OPTIONS } from '../src/catalog/product-option.dto.js';
+import { ProductOptionRepository } from '../src/catalog/product-option.repository.js';
 import { ProductOptionService } from '../src/catalog/product-option.service.js';
 
-void test('returns the exact server-owned Product size, color, and status option contracts', () => {
-  const service = new ProductOptionService();
+void test('returns repository-backed Product size and color options plus server-owned statuses', async () => {
+  const sizes = [
+    { 'persian-size-name': 'بزرگ', 'english-size-name': 'large' },
+  ] as const;
+  const colors = [
+    { 'persian-color-name': 'آبی', 'english-color-name': 'blue', 'hex-code': '#2563EB' },
+  ] as const;
+  const repository = {
+    sizes: () => Promise.resolve(sizes),
+    colors: () => Promise.resolve(colors),
+  } as unknown as ProductOptionRepository;
+  const service = new ProductOptionService(repository);
   const controller = new ProductOptionController(service);
 
-  assert.deepEqual(controller.sizes(), [
-    'small',
-    'medium',
-    'large',
-    'x-large',
-    '2x-large',
-    '3x-large',
-  ]);
-  assert.deepEqual(controller.colors(), [
-    { 'color-name': 'blue', 'hex-code': '#2563EB' },
-    { 'color-name': 'red', 'hex-code': '#DC2626' },
-    { 'color-name': 'green', 'hex-code': '#16A34A' },
-    { 'color-name': 'white', 'hex-code': '#FFFFFF' },
-    { 'color-name': 'black', 'hex-code': '#111827' },
-  ]);
+  assert.equal(await controller.sizes(), sizes);
+  assert.equal(await controller.colors(), colors);
   assert.deepEqual(controller.statuses(), [
     { status_persian_name: 'پیش‌نویس', status_english_name: 'DRAFT' },
     { status_persian_name: 'فعال', status_english_name: 'ACTIVE' },
     { status_persian_name: 'بایگانی‌شده', status_english_name: 'ARCHIVED' },
   ]);
-  assert.equal(controller.sizes(), PRODUCT_SIZE_OPTIONS);
-  assert.equal(controller.colors(), PRODUCT_COLOR_OPTIONS);
   assert.equal(controller.statuses(), PRODUCT_STATUS_OPTIONS);
 });
 
 void test('documents the Product status option endpoint and response fields in OpenAPI', async () => {
   const moduleRef = await Test.createTestingModule({
     controllers: [ProductOptionController],
-    providers: [ProductOptionService],
+    providers: [
+      ProductOptionService,
+      { provide: ProductOptionRepository, useValue: {} },
+    ],
   })
     .overrideGuard(CatalogAccessGuard)
     .useValue({ canActivate: () => true } satisfies CanActivate)

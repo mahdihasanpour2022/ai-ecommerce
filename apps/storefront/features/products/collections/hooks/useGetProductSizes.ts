@@ -1,7 +1,7 @@
 'use client';
 
 import type { ApiResponse } from '@/app/http/api-response';
-import { ApiRoutes } from '@/features/home/constants/apiRoues';
+import { ApiRoutes } from '@/constants/apiRoues';
 import { useRQFetcher } from '@/hooks/rq_hooks/useRQFetcher';
 import { useEffect } from 'react';
 import { toast } from 'sonner';

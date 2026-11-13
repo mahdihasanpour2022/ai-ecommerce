@@ -1,4 +1,4 @@
-export type Currency = 'IRR' | 'IRT';
+import { Currency } from './currency';
 
 export interface Product {
   readonly id: string;
@@ -13,7 +13,7 @@ export interface Product {
   readonly original_price: number;
   readonly final_price: number;
   readonly discount: number;
-  readonly currency: string;
+  readonly currency: Currency;
   readonly quantity: number;
   readonly isAvailable: boolean;
 }

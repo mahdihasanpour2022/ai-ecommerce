@@ -4,7 +4,7 @@ import { ApiResponse } from '@/app/http/api-response';
 import { useRQFetcher } from '@/hooks/rq_hooks/useRQFetcher';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import { ApiRoutes } from '../constants/apiRoues';
+import { ApiRoutes } from '../../../constants/apiRoues';
 
 interface Category {
   readonly id: string;
