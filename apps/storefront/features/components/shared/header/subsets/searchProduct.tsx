@@ -7,7 +7,7 @@ import productIcon from '@/public/assets/product/product-icon.png';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import z from 'zod';
@@ -22,6 +22,7 @@ type FormSchemaType = z.infer<typeof searchInputSchema>;
 
 const SearchProduct = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const [debouncedQuery, setDebouncedQuery] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const urlQuery = searchParams.get('name') ?? '';
@@ -53,12 +54,18 @@ const SearchProduct = () => {
   const handleValidSearch = useCallback(
     ({ query: validQuery }: FormSchemaType) => {
       const nextSearchParams = new URLSearchParams(searchParams.toString());
-      nextSearchParams.set('name', validQuery);
-      router.replace(`?${nextSearchParams.toString()}`, { scroll: false });
+      if (validQuery) {
+        nextSearchParams.set('name', validQuery);
+      } else {
+        nextSearchParams.delete('name');
+      }
+
+      const queryString = nextSearchParams.toString();
+      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
       setSubmittedQuery(validQuery);
       setDebouncedQuery(validQuery);
     },
-    [router, searchParams],
+    [pathname, router, searchParams],
   );
 
   const runSearch = useMemo(
@@ -72,6 +79,11 @@ const SearchProduct = () => {
   }, [reset, urlQuery]);
 
   useEffect(() => {
+    if (query === urlQuery) {
+      previousQueryRef.current = query;
+      return;
+    }
+
     if (query === previousQueryRef.current) return;
 
     previousQueryRef.current = query;
@@ -80,7 +92,7 @@ const SearchProduct = () => {
     }, SEARCH_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [query, runSearch]);
+  }, [query, runSearch, urlQuery]);
 
   return (
     <div className="group relative w-full sm:max-w-md">
