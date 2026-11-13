@@ -3,7 +3,7 @@
 import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
 import { ProductPrice } from '@/features/components/shared/productPrice';
 import { Product } from '@/interfaces/product';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 export const CollectionProductCard = ({ product }: { product: Product }) => {
   const router = useRouter();

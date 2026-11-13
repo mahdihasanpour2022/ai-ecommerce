@@ -1,7 +1,7 @@
 import { UiButton, UiHeading, UiImage, UiSpan } from '@/components/shared/ui';
 import { AppRoutes } from '@/constants/appRoues';
 import siteLogo from '@/public/assets/header/site_logo.webp';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 const StoreName = () => {
   const { push } = useRouter();

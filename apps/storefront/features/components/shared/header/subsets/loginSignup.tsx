@@ -3,7 +3,7 @@
 import { UiButton, UiSpan } from '@/components/shared/ui';
 import loginIcon from '@/public/assets/login/login-icon.png';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'nextjs-toploader/app';
 
 const LoginSignup = () => {
   const router = useRouter();

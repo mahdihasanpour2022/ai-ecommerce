@@ -3,8 +3,8 @@ import { nanoid } from 'nanoid';
 
 import { Skeleton } from '@/components/shared';
 import { useGetCategories } from '@/features/home/hooks/useGetCategories';
-import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
+import { useRouter } from 'nextjs-toploader/app';
 
 export const Categories = () => {
   const router = useRouter();

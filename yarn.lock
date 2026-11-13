@@ -5235,6 +5235,14 @@ next@16.3.2:
     "@next/swc-win32-x64-msvc" "16.3.2"
     sharp "^0.35.3"
 
+nextjs-toploader@3.9.17:
+  version "3.9.17"
+  resolved "https://registry.npmjs.org/nextjs-toploader/-/nextjs-toploader-3.9.17.tgz#3bb54918738c31ac1efbaf6a01518dbee27ebf99"
+  integrity sha512-9OF0KSSLtoSAuNg2LZ3aTl4hR9mBDj5L9s9DZiFCbMlXehyICGjkIz5dVGzuATU2bheJZoBdFgq9w07AKSuQQw==
+  dependencies:
+    nprogress "^0.2.0"
+    prop-types "^15.8.1"
+
 node-addon-api@^8.9.0:
   version "8.9.2"
   resolved "https://registry.npmjs.org/node-addon-api/-/node-addon-api-8.9.2.tgz#db7ac94a13ffd9b55e6cb04584bd5ef8e1d74b18"
@@ -5269,6 +5277,11 @@ node-releases@^2.0.53:
   version "2.0.53"
   resolved "https://registry.npmjs.org/node-releases/-/node-releases-2.0.53.tgz#0fe5ad8a7935e075172f574e56f0c20f07fa41af"
   integrity sha512-D9UOmYG3UH1V+ENW56t5QXBwJw1YEY18ruVeus89Rw+SyIgjPkCO84bRzO3uNIYosJbNwiabWVn48o3uJLjxFQ==
+
+nprogress@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.npmjs.org/nprogress/-/nprogress-0.2.0.tgz#cb8f34c53213d895723fcbab907e9422adbcafb1"
+  integrity sha512-I19aIingLgR1fmhftnbWWO3dXc0hSxqHQHQb3H8m+K3TnEn/iSeTZZOyvKXWqQESMwuUVnatlCnZdLBZZt2VSA==
 
 object-assign@^4, object-assign@^4.1.1:
   version "4.1.1"
