@@ -7,7 +7,7 @@ import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
-import { useGetProductStatuses } from '../hooks/useGetProductOptions';
+import { useGetProductStatuses } from '@/hooks/shared/useGetProductStatuses';
 import type { ChangeProductStatusVariables, Product } from '../interfaces/product-contract';
 import type { ChangeProductStatusFormValues } from '../schemas/change-product-status-schema';
 import { changeProductStatusSchema } from '../schemas/change-product-status-schema';

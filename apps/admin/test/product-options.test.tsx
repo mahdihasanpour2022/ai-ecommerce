@@ -5,11 +5,9 @@ import assert from 'node:assert/strict';
 import { afterEach, test } from 'node:test';
 import type { ReactNode } from 'react';
 import { httpClient } from '../app/http/http-client';
-import {
-  useGetProductColors,
-  useGetProductSizes,
-  useGetProductStatuses,
-} from '../features/products/hooks/useGetProductOptions';
+import { useGetProductColors } from '../hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '../hooks/shared/useGetProductSizes';
+import { useGetProductStatuses } from '../hooks/shared/useGetProductStatuses';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 

@@ -61,7 +61,7 @@ export class PublicCatalogController {
   })
   @ApiOperation({ summary: 'Return supported public Product size options' })
   @ApiResponse({ status: 200, type: PublicProductSizeOptionDto, isArray: true })
-  sizes(): readonly PublicProductSizeOption[] {
+  sizes(): Promise<readonly PublicProductSizeOption[]> {
     return this.catalog.sizes();
   }
 

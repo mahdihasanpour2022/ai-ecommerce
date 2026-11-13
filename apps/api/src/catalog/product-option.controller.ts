@@ -1,6 +1,7 @@
-import { Controller, Delete, Get, HttpCode, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import {
   ApiCookieAuth,
+  ApiBody,
   ApiHeader,
   ApiOperation,
   ApiParam,
@@ -15,6 +16,11 @@ import { CatalogAccessGuard, CatalogPermission } from './catalog-access.guard.js
 import {
   PublicProductColorOptionDto,
   parseProductColorName,
+  parseProductColorRequest,
+  parseProductSizeName,
+  parseProductSizeRequest,
+  ProductColorRequestDto,
+  ProductSizeRequestDto,
   type PublicProductColorOption,
   PublicProductSizeOptionDto,
   type PublicProductSizeOption,
@@ -48,8 +54,78 @@ export class ProductOptionController {
   @ApiResponse({ status: 200, type: PublicProductSizeOptionDto, isArray: true })
   @ApiResponse({ status: 401, type: ApiErrorDto })
   @ApiResponse({ status: 403, type: ApiErrorDto })
-  sizes(): readonly PublicProductSizeOption[] {
-    return this.options.sizes();
+  sizes(): Promise<readonly PublicProductSizeOption[]> {
+    return this.handle(() => this.options.sizes());
+  }
+
+  @Post('sizes')
+  @ApiSuccess({
+    code: 'PRODUCT_SIZE_CREATED',
+    message: 'سایز محصول با موفقیت ایجاد شد.',
+    kind: 'single',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Create a shared Product size option' })
+  @ApiBody({ type: ProductSizeRequestDto })
+  @ApiResponse({ status: 201, type: PublicProductSizeOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  createSize(@Body() body: unknown): Promise<PublicProductSizeOption> {
+    return this.handle(() => this.options.createSize(parseProductSizeRequest(body)));
+  }
+
+  @Patch('sizes/:englishSizeName')
+  @ApiSuccess({
+    code: 'PRODUCT_SIZE_UPDATED',
+    message: 'سایز محصول با موفقیت ویرایش شد.',
+    kind: 'single',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Update a shared Product size option' })
+  @ApiParam({ name: 'englishSizeName', example: 'x-large' })
+  @ApiBody({ type: ProductSizeRequestDto })
+  @ApiResponse({ status: 200, type: PublicProductSizeOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  updateSize(
+    @Param('englishSizeName') englishSizeName: string,
+    @Body() body: unknown,
+  ): Promise<PublicProductSizeOption> {
+    return this.handle(() =>
+      this.options.updateSize(
+        parseProductSizeName(englishSizeName),
+        parseProductSizeRequest(body),
+      ),
+    );
+  }
+
+  @Delete('sizes/:englishSizeName')
+  @HttpCode(200)
+  @ApiSuccess({
+    code: 'PRODUCT_SIZE_DELETED',
+    message: 'سایز محصول با موفقیت حذف شد.',
+    kind: 'none',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Delete a Product size option from the shared catalog' })
+  @ApiParam({ name: 'englishSizeName', example: 'x-large' })
+  @ApiResponse({ status: 200, description: 'Product size deleted successfully.' })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  async deleteSize(@Param('englishSizeName') englishSizeName: string): Promise<void> {
+    await this.handle(() => this.options.deleteSize(parseProductSizeName(englishSizeName)));
   }
 
   @Get('colors')
@@ -65,6 +141,56 @@ export class ProductOptionController {
   @ApiResponse({ status: 403, type: ApiErrorDto })
   colors(): Promise<readonly PublicProductColorOption[]> {
     return this.handle(() => this.options.colors());
+  }
+
+  @Post('colors')
+  @ApiSuccess({
+    code: 'PRODUCT_COLOR_CREATED',
+    message: 'رنگ محصول با موفقیت ایجاد شد.',
+    kind: 'single',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Create a shared Product color option' })
+  @ApiBody({ type: ProductColorRequestDto })
+  @ApiResponse({ status: 201, type: PublicProductColorOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  createColor(@Body() body: unknown): Promise<PublicProductColorOption> {
+    return this.handle(() => this.options.createColor(parseProductColorRequest(body)));
+  }
+
+  @Patch('colors/:englishColorName')
+  @ApiSuccess({
+    code: 'PRODUCT_COLOR_UPDATED',
+    message: 'رنگ محصول با موفقیت ویرایش شد.',
+    kind: 'single',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Update a shared Product color option' })
+  @ApiParam({ name: 'englishColorName', example: 'blue' })
+  @ApiBody({ type: ProductColorRequestDto })
+  @ApiResponse({ status: 200, type: PublicProductColorOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  @ApiResponse({ status: 500, type: ApiErrorDto })
+  updateColor(
+    @Param('englishColorName') englishColorName: string,
+    @Body() body: unknown,
+  ): Promise<PublicProductColorOption> {
+    return this.handle(() =>
+      this.options.updateColor(
+        parseProductColorName(englishColorName),
+        parseProductColorRequest(body),
+      ),
+    );
   }
 
   @Delete('colors/:englishColorName')

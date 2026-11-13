@@ -2,8 +2,9 @@
 
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiLoading } from '../../../app/components/shared/ui-loading';
-import { useGetProductColors } from '../../products/hooks/useGetProductOptions';
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
 import { ProductColorTable } from './product-color-table';
+import { AddProductColor } from './add-product-color';
 
 export default function ProductColors() {
   const colors = useGetProductColors();
@@ -14,13 +15,16 @@ export default function ProductColors() {
 
   return (
     <section aria-labelledby="product-colors-title">
-      <div className="mb-4">
-        <h2 id="product-colors-title" className="mb-2 text-xl font-bold text-foreground">
-          مدیریت رنگ‌ها
-        </h2>
-        <p className="mb-0 mt-1 text-sm text-muted">
-          رنگ‌های قابل انتخاب برای محصولات پنل و فروشگاه
-        </p>
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 id="product-colors-title" className="mb-2 text-xl font-bold text-foreground">
+            مدیریت رنگ‌ها
+          </h2>
+          <p className="mb-0 mt-1 text-sm text-muted">
+            رنگ‌های قابل انتخاب برای محصولات پنل و فروشگاه
+          </p>
+        </div>
+        <AddProductColor />
       </div>
 
       {colors.isError ? (

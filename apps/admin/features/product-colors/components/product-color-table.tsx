@@ -6,14 +6,16 @@ import { useState } from 'react';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { normalizeHttpFailure } from '../../../app/http/http-client';
 import { formatPersianInteger } from '../../../utils/number';
-import type { ProductColorOption } from '../../products/interfaces/product-option-contract';
+import type { ProductColorOption } from '../../../hooks/shared/useGetProductColors';
 import { useDeleteProductColor } from '../hooks/useDeleteProductColor';
 import { DeleteProductColorModal } from './delete-product-color-modal';
+import { ProductColorFormModal } from './product-color-form-modal';
 
 export function ProductColorTable({ colors }: Readonly<{ colors: readonly ProductColorOption[] }>) {
   const { message } = App.useApp();
   const deleteColor = useDeleteProductColor();
   const [deleting, setDeleting] = useState<ProductColorOption | null>(null);
+  const [editing, setEditing] = useState<ProductColorOption | null>(null);
 
   async function confirmDelete() {
     if (!deleting) return;
@@ -74,15 +76,26 @@ export function ProductColorTable({ colors }: Readonly<{ colors: readonly Produc
       key: 'actions',
       align: 'center',
       render: (_value, color) => (
-        <UiButton
-          size="small"
-          variant="dangerSubtle"
-          disabled={deleteColor.isPending}
-          aria-label={`حذف رنگ ${color['persian-color-name']}`}
-          onClick={() => setDeleting(color)}
-        >
-          حذف
-        </UiButton>
+        <div className="flex items-center justify-center gap-2">
+          <UiButton
+            size="small"
+            variant="secondary"
+            disabled={deleteColor.isPending}
+            aria-label={`ویرایش رنگ ${color['persian-color-name']}`}
+            onClick={() => setEditing(color)}
+          >
+            ویرایش
+          </UiButton>
+          <UiButton
+            size="small"
+            variant="dangerSubtle"
+            disabled={deleteColor.isPending}
+            aria-label={`حذف رنگ ${color['persian-color-name']}`}
+            onClick={() => setDeleting(color)}
+          >
+            حذف
+          </UiButton>
+        </div>
       ),
     },
   ];
@@ -112,6 +125,12 @@ export function ProductColorTable({ colors }: Readonly<{ colors: readonly Produc
           if (!deleteColor.isPending) setDeleting(null);
         }}
         onConfirm={() => void confirmDelete()}
+      />
+      <ProductColorFormModal
+        mode="edit"
+        open={editing !== null}
+        color={editing}
+        onClose={() => setEditing(null)}
       />
     </>
   );

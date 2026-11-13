@@ -283,6 +283,15 @@ model ProductColorOption {
   @@map("product_color_options")
 }
 
+model ProductSizeOption {
+  englishName String   @id(map: "product_size_options_pkey") @map("english_name") @db.VarChar(80)
+  persianName String   @unique(map: "product_size_options_persian_name_key") @map("persian_name") @db.VarChar(80)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("product_size_options")
+}
+
 model Inventory {
   variantId      String         @id(map: "inventories_pkey") @map("variant_id") @db.Uuid
   onHandQuantity Int            @default(0) @map("on_hand_quantity")

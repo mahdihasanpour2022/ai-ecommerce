@@ -10,7 +10,9 @@ import { formatPriceInput, normalizePriceInput } from '../../../utils/price-inpu
 import { CATEGORY_OPTIONS_PAGE_SIZE } from '../../categories/constants/pagination';
 import { useGetCategories } from '../../categories/hooks/useGetCategories';
 import { categoryOptions } from '../../categories/utils/category-options';
-import { useGetProductColors, useGetProductSizes, useGetProductStatuses } from '../hooks/useGetProductOptions';
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
+import { useGetProductStatuses } from '@/hooks/shared/useGetProductStatuses';
 import { productFilterFormValues } from '../hooks/use-product-filters';
 import type { ProductFilters } from '../interfaces/product-filter';
 import { productFilterCount } from '../interfaces/product-filter';

@@ -34,7 +34,7 @@ export class PublicCatalogService {
     return this.options.colors();
   }
 
-  sizes(): readonly PublicProductSizeOption[] {
+  sizes(): Promise<readonly PublicProductSizeOption[]> {
     return this.options.sizes();
   }
 

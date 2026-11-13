@@ -19,7 +19,7 @@ import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
 import { EditProductModal } from '../features/products/components/edit-product-modal';
 import { useEditProductWorkflow } from '../features/products/hooks/useEditProductWorkflow';
-import { productOptionKeys } from '../features/products/hooks/useGetProductOptions';
+import { productOptionKeys } from '../hooks/shared/productOptionKeys';
 import { productKeys } from '../features/products/hooks/useGetProducts';
 import type {
   EditProductWorkflowVariables,
@@ -29,8 +29,8 @@ import type {
 } from '../features/products/interfaces/product-contract';
 import type {
   ProductColorsResponse,
-  ProductSizesResponse,
-} from '../features/products/interfaces/product-option-contract';
+} from '../hooks/shared/useGetProductColors';
+import type { ProductSizesResponse } from '../hooks/shared/useGetProductSizes';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 

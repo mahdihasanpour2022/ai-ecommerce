@@ -15,7 +15,8 @@ import { CATEGORY_OPTIONS_PAGE_SIZE } from '../../categories/constants/paginatio
 import { useGetCategories } from '../../categories/hooks/useGetCategories';
 import { categoryOptions } from '../../categories/utils/category-options';
 import { useCreateProduct } from '../hooks/useCreateProduct';
-import { useGetProductColors, useGetProductSizes } from '../hooks/useGetProductOptions';
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import { useUploadProductImage } from '../hooks/useUploadProductImage';
 import type { ProductDetail } from '../interfaces/product-contract';
 import type { CreateProductFormValues } from '../schemas/create-product-schema';

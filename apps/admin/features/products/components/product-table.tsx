@@ -9,7 +9,8 @@ import { formatPersianInteger } from '../../../utils/number';
 import { useChangeProductStatus } from '../hooks/useChangeProductStatus';
 import { useDeleteProduct } from '../hooks/useDeleteProduct';
 import { useEditProductWorkflow } from '../hooks/useEditProductWorkflow';
-import { useGetProductColors, useGetProductSizes } from '../hooks/useGetProductOptions';
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import type {
   ChangeProductStatusVariables,
   EditProductWorkflowVariables,

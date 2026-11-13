@@ -2,7 +2,7 @@
 
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiModal } from '../../../app/components/shared/ui-modal';
-import type { ProductColorOption } from '../../products/interfaces/product-option-contract';
+import type { ProductColorOption } from '../../../hooks/shared/useGetProductColors';
 
 interface DeleteProductColorModalProps {
   readonly color: ProductColorOption | null;

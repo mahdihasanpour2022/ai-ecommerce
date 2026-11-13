@@ -2,37 +2,21 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ProductStatus } from '../generated/prisma/enums.js';
 import { ProductOptionError } from './product-option.errors.js';
 
-export const PRODUCT_SIZE_OPTIONS = [
-  'small',
-  'medium',
-  'large',
-  'x-large',
-  '2x-large',
-  '3x-large',
-] as const;
-
-export type ProductSizeOption = (typeof PRODUCT_SIZE_OPTIONS)[number];
-
-const PRODUCT_SIZE_PERSIAN_NAMES = {
-  small: 'کوچک',
-  medium: 'متوسط',
-  large: 'بزرگ',
-  'x-large': 'خیلی بزرگ',
-  '2x-large': 'دو ایکس بزرگ',
-  '3x-large': 'سه ایکس بزرگ',
-} as const satisfies Readonly<Record<ProductSizeOption, string>>;
-
-export const PUBLIC_PRODUCT_SIZE_OPTIONS = PRODUCT_SIZE_OPTIONS.map((size) => ({
-  'persian-size-name': PRODUCT_SIZE_PERSIAN_NAMES[size],
-  'english-size-name': size,
-}));
+const PERSIAN_COLOR_NAME_PATTERN =
+  /^[\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u06A9\u06AF\u06CC]+(?:[ \u200C][\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u06A9\u06AF\u06CC]+)*$/u;
+const ENGLISH_COLOR_NAME_PATTERN = /^[A-Za-z]+$/u;
+const ENGLISH_SIZE_NAME_PATTERN = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/u;
+const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/u;
 
 export interface PublicProductColorOption {
   readonly 'persian-color-name': string;
   readonly 'english-color-name': string;
   readonly 'hex-code': string;
 }
-export type PublicProductSizeOption = (typeof PUBLIC_PRODUCT_SIZE_OPTIONS)[number];
+export interface PublicProductSizeOption {
+  readonly 'persian-size-name': string;
+  readonly 'english-size-name': string;
+}
 
 export class PublicProductColorOptionDto {
   @ApiProperty({ minLength: 1, maxLength: 80, example: 'آبی' })
@@ -45,6 +29,77 @@ export class PublicProductColorOptionDto {
   'hex-code'!: string;
 }
 
+export class ProductColorRequestDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: PERSIAN_COLOR_NAME_PATTERN.source, example: 'آبی' })
+  persianName!: string;
+
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: ENGLISH_COLOR_NAME_PATTERN.source, example: 'blue' })
+  englishName!: string;
+
+  @ApiProperty({ pattern: '^#[0-9A-Fa-f]{6}$', example: '#2563EB' })
+  hexCode!: string;
+}
+
+export interface ProductColorInput {
+  readonly persianName: string;
+  readonly englishName: string;
+  readonly hexCode: string;
+}
+
+export class ProductSizeRequestDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: PERSIAN_COLOR_NAME_PATTERN.source, example: 'بزرگ' })
+  persianName!: string;
+
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: ENGLISH_SIZE_NAME_PATTERN.source, example: 'x-large' })
+  englishName!: string;
+}
+
+export interface ProductSizeInput {
+  readonly persianName: string;
+  readonly englishName: string;
+}
+
+export function parseProductColorRequest(value: unknown): ProductColorInput {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) validationFailed();
+  const record = value as Record<string, unknown>;
+  if (
+    Object.keys(record).length !== 3 ||
+    !['persianName', 'englishName', 'hexCode'].every((key) => key in record)
+  ) {
+    validationFailed();
+  }
+  const persianName = normalizedRequiredString(record.persianName, 80);
+  const englishName = normalizedRequiredString(record.englishName, 80);
+  const hexCode = normalizedRequiredString(record.hexCode, 7);
+  if (
+    !PERSIAN_COLOR_NAME_PATTERN.test(persianName) ||
+    !ENGLISH_COLOR_NAME_PATTERN.test(englishName) ||
+    !HEX_COLOR_PATTERN.test(hexCode)
+  ) {
+    validationFailed();
+  }
+  return {
+    persianName,
+    englishName: englishName.toLowerCase(),
+    hexCode: hexCode.toUpperCase(),
+  };
+}
+
+function normalizedRequiredString(
+  value: unknown,
+  maximumLength: number,
+  fail: () => never = validationFailed,
+): string {
+  if (typeof value !== 'string') fail();
+  const normalized = value.normalize('NFKC').trim().replace(/ +/gu, ' ');
+  if (normalized.length === 0 || normalized.length > maximumLength) fail();
+  return normalized;
+}
+
+function validationFailed(): never {
+  throw new ProductOptionError('VALIDATION_FAILED');
+}
+
 export function parseProductColorName(value: string): string {
   const normalized = value.normalize('NFKC').trim().toLowerCase();
   if (!/^[a-z][a-z0-9-]{0,79}$/u.test(normalized)) {
@@ -53,12 +108,41 @@ export function parseProductColorName(value: string): string {
   return normalized;
 }
 
-export class PublicProductSizeOptionDto {
-  @ApiProperty({ enum: Object.values(PRODUCT_SIZE_PERSIAN_NAMES) })
-  'persian-size-name'!: PublicProductSizeOption['persian-size-name'];
+export function parseProductSizeRequest(value: unknown): ProductSizeInput {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) sizeValidationFailed();
+  const record = value as Record<string, unknown>;
+  if (
+    Object.keys(record).length !== 2 ||
+    !['persianName', 'englishName'].every((key) => key in record)
+  ) {
+    sizeValidationFailed();
+  }
+  const persianName = normalizedRequiredString(record.persianName, 80, sizeValidationFailed);
+  const englishName = normalizedRequiredString(record.englishName, 80, sizeValidationFailed);
+  if (!PERSIAN_COLOR_NAME_PATTERN.test(persianName) || !ENGLISH_SIZE_NAME_PATTERN.test(englishName)) {
+    sizeValidationFailed();
+  }
+  return { persianName, englishName: englishName.toLowerCase() };
+}
 
-  @ApiProperty({ enum: PRODUCT_SIZE_OPTIONS })
-  'english-size-name'!: ProductSizeOption;
+function sizeValidationFailed(): never {
+  throw new ProductOptionError('PRODUCT_SIZE_VALIDATION_FAILED');
+}
+
+export function parseProductSizeName(value: string): string {
+  const normalized = value.normalize('NFKC').trim().toLowerCase();
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(normalized) || normalized.length > 80) {
+    throw new ProductOptionError('PRODUCT_SIZE_NOT_FOUND');
+  }
+  return normalized;
+}
+
+export class PublicProductSizeOptionDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'بزرگ' })
+  'persian-size-name'!: string;
+
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'large' })
+  'english-size-name'!: string;
 }
 
 export const PRODUCT_STATUS_OPTIONS = [

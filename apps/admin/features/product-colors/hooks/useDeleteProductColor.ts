@@ -1,8 +1,10 @@
 'use client';
 
 import { useRQDeleter } from '../../../hooks/rq_hooks/useRQDeleter';
-import { productOptionKeys } from '../../products/hooks/useGetProductOptions';
-import type { DeleteProductColorResponse } from '../../products/interfaces/product-option-contract';
+import { productOptionKeys } from '../../../hooks/shared/productOptionKeys';
+import type { ApiResponse } from '../../../app/http/api-response';
+
+export type DeleteProductColorResponse = ApiResponse<null, null, null>;
 
 export function useDeleteProductColor() {
   return useRQDeleter<DeleteProductColorResponse, string>({

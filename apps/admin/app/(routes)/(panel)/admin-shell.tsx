@@ -13,10 +13,11 @@ import { ThemeToggle } from '../../components/theme-toggle';
 
 const routes = [
   { name: 'صفحه اصلی', href: '/' },
-  { name: 'دسته‌بندی‌ها', href: '/categories' },
-  { name: 'محصولات', href: '/products' },
+  { name: 'مدیریت دسته‌بندی‌ها', href: '/categories' },
+  { name: 'مدیریت محصولات', href: '/products' },
   { name: 'مدیریت بنرها', href: '/banners' },
   { name: 'مدیریت رنگ‌ها', href: '/colors' },
+  { name: 'مدیریت سایزها', href: '/sizes' },
 ] as const;
 
 export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode }>) {

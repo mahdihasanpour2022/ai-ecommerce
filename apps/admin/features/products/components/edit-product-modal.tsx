@@ -14,7 +14,8 @@ import { CATEGORY_OPTIONS_PAGE_SIZE } from '../../categories/constants/paginatio
 import { useGetCategories } from '../../categories/hooks/useGetCategories';
 import { categoryOptions } from '../../categories/utils/category-options';
 import { useGetProductDetail } from '../hooks/useGetProductDetail';
-import { useGetProductColors, useGetProductSizes } from '../hooks/useGetProductOptions';
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import type {
   EditProductWorkflowVariables,
   Product,

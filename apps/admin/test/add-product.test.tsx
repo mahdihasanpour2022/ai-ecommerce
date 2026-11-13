@@ -10,11 +10,11 @@ import { CATEGORY_OPTIONS_PAGE_SIZE } from '../features/categories/constants/pag
 import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
 import AddProduct from '../features/products/components/add-product';
-import { productOptionKeys } from '../features/products/hooks/useGetProductOptions';
+import { productOptionKeys } from '../hooks/shared/productOptionKeys';
 import type {
   ProductColorsResponse,
-  ProductSizesResponse,
-} from '../features/products/interfaces/product-option-contract';
+} from '../hooks/shared/useGetProductColors';
+import type { ProductSizesResponse } from '../hooks/shared/useGetProductSizes';
 import { createProductSchema } from '../features/products/schemas/create-product-schema';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { formatPriceInput, normalizePriceInput } from '../utils/price-input';

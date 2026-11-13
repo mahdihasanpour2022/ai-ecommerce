@@ -9,7 +9,7 @@ import { ProductTable } from '../features/products/components/product-table';
 import Products from '../features/products/components/products';
 import { productKeys } from '../features/products/hooks/useGetProducts';
 import type { Product } from '../features/products/interfaces/product-contract';
-import type { ProductStatusesResponse } from '../features/products/interfaces/product-option-contract';
+import type { ProductStatusesResponse } from '../hooks/shared/useGetProductStatuses';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
 
