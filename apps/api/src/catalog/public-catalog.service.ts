@@ -30,7 +30,7 @@ export class PublicCatalogService {
     private readonly options: ProductOptionService,
   ) {}
 
-  colors(): readonly PublicProductColorOption[] {
+  colors(): Promise<readonly PublicProductColorOption[]> {
     return this.options.colors();
   }
 

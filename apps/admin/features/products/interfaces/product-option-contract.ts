@@ -18,4 +18,5 @@ export interface ProductStatusOption {
 
 export type ProductSizesResponse = ApiResponse<readonly ProductSizeOption[], null, null>;
 export type ProductColorsResponse = ApiResponse<readonly ProductColorOption[], null, null>;
+export type DeleteProductColorResponse = ApiResponse<null, null, null>;
 export type ProductStatusesResponse = ApiResponse<readonly ProductStatusOption[], null, null>;

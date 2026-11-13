@@ -48,8 +48,8 @@ export class PublicCatalogController {
   })
   @ApiOperation({ summary: 'Return supported public Product color options' })
   @ApiResponse({ status: 200, type: PublicProductColorOptionDto, isArray: true })
-  colors(): readonly PublicProductColorOption[] {
-    return this.catalog.colors();
+  colors(): Promise<readonly PublicProductColorOption[]> {
+    return this.handle(() => this.catalog.colors());
   }
 
   @Get('product-options/sizes')

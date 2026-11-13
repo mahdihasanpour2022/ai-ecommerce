@@ -113,6 +113,7 @@ An Active Product cannot be mutated into an invalid Active state. Removing/repla
 ### Fields and ownership
 
 - Product Variant has immutable UUID `id`, required `productId`, globally unique normalized `sku`, nullable normalized `size`, nullable normalized `color`, boolean `isActive`, and implementation timestamps.
+- Product Color Option has normalized English name identity, unique Persian display name, uppercase hexadecimal swatch, and implementation timestamps. Admin and public color-option reads share this database source; deleting an option removes it from future selections without rewriting retained Variant snapshots.
 - Variant owns the exact sellable identity, active state, and its one-to-one Inventory record; pricing is shared by every Variant of its Product.
 - SKU remains globally unique across active and inactive Variants. Reusing an inactive Variant's SKU for another row is forbidden.
 - Product `originalPriceRial` is an integer greater than zero and exactly divisible by 10. Product `discountPercent` is a required integer from 0 through 100. Invalid values are rejected and `finalPriceRial` is derived by integer rial arithmetic.
@@ -242,7 +243,8 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/products`                               | `catalog.read`                       | No   | Page-bounded protected Product summaries.                                                                                                           |
 | `GET /api/v1/admin/catalog/products/{productId}`                   | `catalog.read`                       | No   | Full protected Product, Variant, exact Inventory, and ready Image metadata.                                                                         |
 | `GET /api/v1/admin/catalog/product-options/sizes`                  | `catalog.read`                       | No   | Server-owned Persian/English Product size names for Admin forms.                                                                                     |
-| `GET /api/v1/admin/catalog/product-options/colors`                 | `catalog.read`                       | No   | Server-owned Persian/English Product color names and hexadecimal swatches for Admin forms.                                                           |
+| `GET /api/v1/admin/catalog/product-options/colors`                 | `catalog.read`                       | No   | Database-owned Persian/English Product color names and hexadecimal swatches for Admin forms and color management.                                    |
+| `DELETE /api/v1/admin/catalog/product-options/colors/{englishName}` | `catalog.manage`                    | Yes  | Permanently delete a shared Product color option; `200`.                                                                                             |
 | `GET /api/v1/admin/catalog/product-options/statuses`               | `catalog.read`                       | No   | Server-owned Product lifecycle English identifiers and Persian display names.                                                                       |
 | `POST /api/v1/admin/catalog/products`                              | `catalog.manage`                     | Yes  | Atomically create Draft Product, initial Variants, and Inventory; `201`.                                                                            |
 | `PATCH /api/v1/admin/catalog/products/{productId}`                 | `catalog.manage`                     | Yes  | Update Product fields and/or perform one allowed lifecycle transition; `200`.                                                                       |
@@ -293,7 +295,7 @@ Implementation status: the bounded public Category tree, Active Product summary 
 | `GET /api/v1/catalog/categories`                        | Complete six-level Category tree of at most 1,000 Categories; every node includes a nullable public Image `src`. |
 | `GET /api/v1/catalog/category-images/{imageId}/content` | Controlled immutable public Category Image bytes.                                                                |
 | `GET /api/v1/catalog/products`                          | Page-bounded deterministic Active Product summaries; optional partial `name` search, repeated `categories`/`tags` filters, exact normalized active-Variant `color`/`size` filters, and inclusive Product price bounds. |
-| `GET /api/v1/catalog/product-options/colors`            | Supported public Product Persian/English color names and swatch hex values.                                       |
+| `GET /api/v1/catalog/product-options/colors`            | Database-owned public Product Persian/English color names and swatch hex values.                                  |
 | `GET /api/v1/catalog/product-options/sizes`             | Supported public Product Persian/English size names.                                                              |
 | `GET /api/v1/catalog/product-options/price-range`       | Minimum and maximum original rial prices across Active Products for Storefront filter controls.                  |
 | `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID.                                                                                   |

@@ -23,6 +23,7 @@ import { InventoryService } from './inventory.service.js';
 import { ProductController } from './product.controller.js';
 import { ProductOptionController } from './product-option.controller.js';
 import { ProductOptionService } from './product-option.service.js';
+import { ProductOptionRepository } from './product-option.repository.js';
 import { ProductRepository } from './product.repository.js';
 import { ProductService } from './product.service.js';
 import {
@@ -72,6 +73,7 @@ import { PublicCatalogService } from './public-catalog.service.js';
     InventoryService,
     ProductRepository,
     ProductService,
+    ProductOptionRepository,
     ProductOptionService,
     PriceDisplaySettingRepository,
     PriceDisplaySettingService,

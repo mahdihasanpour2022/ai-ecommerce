@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ProductStatus } from '../generated/prisma/enums.js';
+import { ProductOptionError } from './product-option.errors.js';
 
 export const PRODUCT_SIZE_OPTIONS = [
   'small',
@@ -12,25 +13,6 @@ export const PRODUCT_SIZE_OPTIONS = [
 
 export type ProductSizeOption = (typeof PRODUCT_SIZE_OPTIONS)[number];
 
-export const PRODUCT_COLOR_OPTIONS = [
-  { 'color-name': 'blue', 'hex-code': '#2563EB' },
-  { 'color-name': 'red', 'hex-code': '#DC2626' },
-  { 'color-name': 'green', 'hex-code': '#16A34A' },
-  { 'color-name': 'white', 'hex-code': '#FFFFFF' },
-  { 'color-name': 'black', 'hex-code': '#111827' },
-] as const;
-
-export type ProductColorName = (typeof PRODUCT_COLOR_OPTIONS)[number]['color-name'];
-export type ProductColorHexCode = (typeof PRODUCT_COLOR_OPTIONS)[number]['hex-code'];
-
-const PRODUCT_COLOR_PERSIAN_NAMES = {
-  blue: 'آبی',
-  red: 'قرمز',
-  green: 'سبز',
-  white: 'سفید',
-  black: 'مشکی',
-} as const satisfies Readonly<Record<ProductColorName, string>>;
-
 const PRODUCT_SIZE_PERSIAN_NAMES = {
   small: 'کوچک',
   medium: 'متوسط',
@@ -40,29 +22,35 @@ const PRODUCT_SIZE_PERSIAN_NAMES = {
   '3x-large': 'سه ایکس بزرگ',
 } as const satisfies Readonly<Record<ProductSizeOption, string>>;
 
-export const PUBLIC_PRODUCT_COLOR_OPTIONS = PRODUCT_COLOR_OPTIONS.map((option) => ({
-  'persian-color-name': PRODUCT_COLOR_PERSIAN_NAMES[option['color-name']],
-  'english-color-name': option['color-name'],
-  'hex-code': option['hex-code'],
-}));
-
 export const PUBLIC_PRODUCT_SIZE_OPTIONS = PRODUCT_SIZE_OPTIONS.map((size) => ({
   'persian-size-name': PRODUCT_SIZE_PERSIAN_NAMES[size],
   'english-size-name': size,
 }));
 
-export type PublicProductColorOption = (typeof PUBLIC_PRODUCT_COLOR_OPTIONS)[number];
+export interface PublicProductColorOption {
+  readonly 'persian-color-name': string;
+  readonly 'english-color-name': string;
+  readonly 'hex-code': string;
+}
 export type PublicProductSizeOption = (typeof PUBLIC_PRODUCT_SIZE_OPTIONS)[number];
 
 export class PublicProductColorOptionDto {
-  @ApiProperty({ enum: Object.values(PRODUCT_COLOR_PERSIAN_NAMES) })
-  'persian-color-name'!: PublicProductColorOption['persian-color-name'];
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'آبی' })
+  'persian-color-name'!: string;
 
-  @ApiProperty({ enum: PRODUCT_COLOR_OPTIONS.map((option) => option['color-name']) })
-  'english-color-name'!: ProductColorName;
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: '^[a-z][a-z0-9-]{0,79}$', example: 'blue' })
+  'english-color-name'!: string;
 
   @ApiProperty({ pattern: '^#[0-9A-F]{6}$', example: '#2563EB' })
-  'hex-code'!: ProductColorHexCode;
+  'hex-code'!: string;
+}
+
+export function parseProductColorName(value: string): string {
+  const normalized = value.normalize('NFKC').trim().toLowerCase();
+  if (!/^[a-z][a-z0-9-]{0,79}$/u.test(normalized)) {
+    throw new ProductOptionError('PRODUCT_COLOR_NOT_FOUND');
+  }
+  return normalized;
 }
 
 export class PublicProductSizeOptionDto {
