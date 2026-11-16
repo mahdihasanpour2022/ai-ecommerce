@@ -293,6 +293,14 @@ model ProductSizeOption {
   @@map("product_size_options")
 }
 
+model ProductTagOption {
+  englishName String   @id(map: "product_tag_options_pkey") @map("english_name") @db.VarChar(80)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("product_tag_options")
+}
+
 model Inventory {
   variantId      String         @id(map: "inventories_pkey") @map("variant_id") @db.Uuid
   onHandQuantity Int            @default(0) @map("on_hand_quantity")

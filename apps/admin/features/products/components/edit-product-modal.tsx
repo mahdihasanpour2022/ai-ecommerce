@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useGetProductTags } from '@/hooks/shared/useGetProductTags';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
@@ -33,6 +34,7 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     pageSize: CATEGORY_OPTIONS_PAGE_SIZE,
     enabled: product !== null,
   });
+  const tags = useGetProductTags(product !== null);
   const {
     control,
     register,
@@ -63,6 +65,11 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     await onSubmit(changes ? { product: changes } : {});
   });
   const categoryItems = categories.data ? categoryOptions(categories.data.result) : [];
+  // گزینه‌های تگ فرم ویرایش از منبع مدیریت تگ‌ها خوانده می‌شوند.
+  const tagItems = (tags.data?.result ?? []).map((tag) => ({
+    value: tag['english-tag-name'],
+    label: tag['english-tag-name'],
+  }));
   const submitting = pending || isSubmitting;
 
   return (
@@ -152,21 +159,34 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
         </UiForm.Field>
 
         <UiForm.Field>
-          <UiForm.Label htmlFor="edit-product-tag">تگ انگلیسی (اختیاری)</UiForm.Label>
-          <UiForm.TextInput
-            id="edit-product-tag"
-            dir="ltr"
-            autoComplete="off"
-            maxLength={80}
-            placeholder="my_amazing"
-            disabled={submitting}
-            aria-invalid={errors.tag ? 'true' : 'false'}
-            aria-describedby={errors.tag ? 'edit-product-tag-error' : undefined}
-            {...register('tag')}
+          <UiForm.Label htmlFor="edit-product-tag">تگ (اختیاری)</UiForm.Label>
+          <Controller
+            name="tag"
+            control={control}
+            render={({ field }) => (
+              <UiSelect.Root
+                id="edit-product-tag"
+                ref={field.ref}
+                value={field.value || null}
+                options={tagItems}
+                placeholder="انتخاب تگ"
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                loading={tags.isFetching}
+                disabled={submitting || tags.isFetching || tags.isError}
+                status={errors.tag ? 'error' : ''}
+                aria-invalid={errors.tag ? 'true' : 'false'}
+                aria-describedby={errors.tag ? 'edit-product-tag-error' : undefined}
+                onBlur={field.onBlur}
+                onChange={(value) => field.onChange(value ?? '')}
+              />
+            )}
           />
           {errors.tag ? (
             <UiForm.Error id="edit-product-tag-error">{errors.tag.message}</UiForm.Error>
           ) : null}
+          {tags.isError ? <UiForm.Error>دریافت تگ‌ها ناموفق بود.</UiForm.Error> : null}
         </UiForm.Field>
 
         <fieldset className="border-border grid gap-5 rounded-xl border p-4">

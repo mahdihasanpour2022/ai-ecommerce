@@ -7,6 +7,9 @@ export type ProductOptionErrorCode =
   | 'PRODUCT_SIZE_CONFLICT'
   | 'PRODUCT_SIZE_NOT_FOUND'
   | 'PRODUCT_SIZE_VALIDATION_FAILED'
+  | 'PRODUCT_TAG_CONFLICT'
+  | 'PRODUCT_TAG_NOT_FOUND'
+  | 'PRODUCT_TAG_VALIDATION_FAILED'
   | 'VALIDATION_FAILED';
 
 const STATUS: Readonly<Record<ProductOptionErrorCode, number>> = {
@@ -15,6 +18,9 @@ const STATUS: Readonly<Record<ProductOptionErrorCode, number>> = {
   PRODUCT_SIZE_CONFLICT: 409,
   PRODUCT_SIZE_NOT_FOUND: 404,
   PRODUCT_SIZE_VALIDATION_FAILED: 400,
+  PRODUCT_TAG_CONFLICT: 409,
+  PRODUCT_TAG_NOT_FOUND: 404,
+  PRODUCT_TAG_VALIDATION_FAILED: 400,
   VALIDATION_FAILED: 400,
 };
 
@@ -24,6 +30,9 @@ const MESSAGE: Readonly<Record<ProductOptionErrorCode, string>> = {
   PRODUCT_SIZE_CONFLICT: 'نام فارسی یا انگلیسی سایز قبلاً ثبت شده است.',
   PRODUCT_SIZE_NOT_FOUND: 'سایز موردنظر یافت نشد.',
   PRODUCT_SIZE_VALIDATION_FAILED: 'اطلاعات سایز معتبر نیست.',
+  PRODUCT_TAG_CONFLICT: 'نام برچسب قبلاً ثبت شده است.',
+  PRODUCT_TAG_NOT_FOUND: 'برچسب موردنظر یافت نشد.',
+  PRODUCT_TAG_VALIDATION_FAILED: 'اطلاعات برچسب معتبر نیست.',
   VALIDATION_FAILED: 'اطلاعات رنگ معتبر نیست.',
 };
 
@@ -49,5 +58,12 @@ export function mapProductSizeOptionPersistenceError(error: unknown): ProductOpt
   if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return undefined;
   if (error.code === 'P2002') return new ProductOptionError('PRODUCT_SIZE_CONFLICT');
   if (error.code === 'P2025') return new ProductOptionError('PRODUCT_SIZE_NOT_FOUND');
+  return undefined;
+}
+
+export function mapProductTagOptionPersistenceError(error: unknown): ProductOptionError | undefined {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return undefined;
+  if (error.code === 'P2002') return new ProductOptionError('PRODUCT_TAG_CONFLICT');
+  if (error.code === 'P2025') return new ProductOptionError('PRODUCT_TAG_NOT_FOUND');
   return undefined;
 }

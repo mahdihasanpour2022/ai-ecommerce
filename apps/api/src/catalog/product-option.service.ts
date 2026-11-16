@@ -5,12 +5,15 @@ import {
   type ProductStatusOptionDto,
   type ProductColorInput,
   type ProductSizeInput,
+  type ProductTagInput,
+  type ProductTagOption,
   type PublicProductColorOption,
   type PublicProductSizeOption,
 } from './product-option.dto.js';
 import {
   mapProductOptionPersistenceError,
   mapProductSizeOptionPersistenceError,
+  mapProductTagOptionPersistenceError,
   ProductOptionError,
 } from './product-option.errors.js';
 import { ProductOptionRepository } from './product-option.repository.js';
@@ -21,6 +24,32 @@ export class ProductOptionService {
 
   sizes(): Promise<readonly PublicProductSizeOption[]> {
     return this.repository.sizes();
+  }
+
+  tags(): Promise<readonly ProductTagOption[]> {
+    return this.repository.tags();
+  }
+
+  async createTag(input: ProductTagInput): Promise<ProductTagOption> {
+    try {
+      return await this.repository.createTag(input);
+    } catch (error) {
+      throw mapProductTagOptionPersistenceError(error) ?? error;
+    }
+  }
+
+  async updateTag(currentEnglishName: string, input: ProductTagInput): Promise<ProductTagOption> {
+    try {
+      return await this.repository.updateTag(currentEnglishName, input);
+    } catch (error) {
+      throw mapProductTagOptionPersistenceError(error) ?? error;
+    }
+  }
+
+  async deleteTag(englishName: string): Promise<void> {
+    if (!(await this.repository.deleteTag(englishName))) {
+      throw new ProductOptionError('PRODUCT_TAG_NOT_FOUND');
+    }
   }
 
   colors(): Promise<readonly PublicProductColorOption[]> {

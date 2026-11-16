@@ -5,7 +5,6 @@ import type {
   UploadProductImageResponse,
   UploadProductImageVariables,
 } from '../interfaces/product-contract';
-import { productKeys } from './useGetProducts';
 
 export function useUploadProductImage() {
   return useRQSender<UploadProductImageResponse, UploadProductImageVariables>({
@@ -21,6 +20,5 @@ export function useUploadProductImage() {
         return body;
       },
     },
-    invalidateQueryKeys: [productKeys.all],
   });
 }

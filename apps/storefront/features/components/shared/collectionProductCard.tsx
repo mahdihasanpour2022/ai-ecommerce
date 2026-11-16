@@ -25,11 +25,8 @@ export const CollectionProductCard = ({ product, className }: Props) => {
   return (
     <UiButton
       variant="style_4"
-      size='small'
-      className={clsx(
-        '',
-        className?.wrapper,
-      )}
+      size="small"
+      className={clsx('', className?.wrapper)}
       onClick={navigateToSingleProduct}
     >
       <UiImage
@@ -49,7 +46,11 @@ export const CollectionProductCard = ({ product, className }: Props) => {
           >
             {name}
           </UiP>
-          <UiSpan variant="style_6" className="line-clamp-2 text-start">
+          <UiSpan
+            title={description}
+            variant="style_6"
+            className="line-clamp-2 truncate text-start whitespace-nowrap"
+          >
             {description}
           </UiSpan>
         </div>

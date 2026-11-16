@@ -5,7 +5,6 @@ import type {
   EditProductVariantResponse,
   EditProductVariantVariables,
 } from '../interfaces/product-contract';
-import { productKeys } from './useGetProducts';
 
 export function useEditProductVariant() {
   return useRQSender<EditProductVariantResponse, EditProductVariantVariables>({
@@ -19,6 +18,5 @@ export function useEditProductVariant() {
         ...(isActive === undefined ? {} : { isActive }),
       }),
     },
-    invalidateQueryKeys: [productKeys.all],
   });
 }

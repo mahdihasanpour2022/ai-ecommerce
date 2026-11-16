@@ -18,6 +18,7 @@ const routes = [
   { name: 'مدیریت بنرها', href: '/banners' },
   { name: 'مدیریت رنگ‌ها', href: '/colors' },
   { name: 'مدیریت سایزها', href: '/sizes' },
+  { name: 'مدیریت تگ‌ها', href: '/tags' },
 ] as const;
 
 export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode }>) {

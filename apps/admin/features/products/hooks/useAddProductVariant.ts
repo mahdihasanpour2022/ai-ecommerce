@@ -5,7 +5,6 @@ import type {
   AddProductVariantResponse,
   AddProductVariantVariables,
 } from '../interfaces/product-contract';
-import { productKeys } from './useGetProducts';
 
 export function useAddProductVariant() {
   return useRQSender<AddProductVariantResponse, AddProductVariantVariables>({
@@ -16,6 +15,5 @@ export function useAddProductVariant() {
         `/admin/catalog/products/${encodeURIComponent(productId)}/variants`,
       body: ({ productId: _productId, ...variant }) => variant,
     },
-    invalidateQueryKeys: [productKeys.all],
   });
 }

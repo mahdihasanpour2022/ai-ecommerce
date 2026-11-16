@@ -5,7 +5,6 @@ import type {
   CreateProductResponse,
   CreateProductVariables,
 } from '../interfaces/product-contract';
-import { productKeys } from './useGetProducts';
 
 export function useCreateProduct() {
   return useRQSender<CreateProductResponse, CreateProductVariables>({
@@ -15,6 +14,5 @@ export function useCreateProduct() {
       url: '/admin/catalog/products',
       body: (variables) => variables,
     },
-    invalidateQueryKeys: [productKeys.all],
   });
 }

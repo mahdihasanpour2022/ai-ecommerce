@@ -11,6 +11,7 @@ type GetProductsParams = GetPageParams & { readonly filters?: ProductFilters };
 
 export const productKeys = {
   all: ['products'] as const,
+  lists: ['products', 'list'] as const,
   list: ({ page, pageSize, filters = {} }: GetProductsParams) =>
     ['products', 'list', { page, pageSize, filters }] as const,
   detail: (productId: string) => ['products', 'detail', productId] as const,

@@ -1,5 +1,7 @@
 'use client';
 
+import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import type { TableColumnsType } from 'antd';
 import { App, Table } from 'antd';
 import { useMemo, useState } from 'react';
@@ -9,8 +11,6 @@ import { formatPersianInteger } from '../../../utils/number';
 import { useChangeProductStatus } from '../hooks/useChangeProductStatus';
 import { useDeleteProduct } from '../hooks/useDeleteProduct';
 import { useEditProductWorkflow } from '../hooks/useEditProductWorkflow';
-import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
-import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import type {
   ChangeProductStatusVariables,
   EditProductWorkflowVariables,
@@ -21,8 +21,8 @@ import { ChangeProductStatusModal } from './change-product-status-modal';
 import { DeleteProductModal } from './delete-product-modal';
 import { EditProductModal } from './edit-product-modal';
 import { ProductActionMenu } from './product-action-menu';
-import { ProductThumbnail } from './productThumbnail';
 import { ProductVariantsExpandedRow } from './product-variants-expanded-row';
+import { ProductThumbnail } from './productThumbnail';
 
 const rialFormatter = new Intl.NumberFormat('fa-IR', {
   maximumFractionDigits: 0,
@@ -58,9 +58,36 @@ function ProductLabels({
       {labels.map((label) => (
         <span
           key={label}
-          className="bg-surface-muted text-foreground inline-flex rounded-full px-2 py-1 text-xs font-semibold"
+          className="bg-surface-muted text-foreground inline-flex rounded-full border border-gray-200 px-2 py-1 text-xs font-semibold"
         >
           {label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+interface ProductColorBadge {
+  readonly key: string;
+  readonly label: string;
+  readonly hexCode: string | null;
+}
+
+function ProductColorLabels({ colors }: Readonly<{ colors: readonly ProductColorBadge[] }>) {
+  if (colors.length === 0) {
+    return <span className="text-foreground-muted">بدون رنگ</span>;
+  }
+
+  return (
+    <div className="flex max-w-56 flex-wrap gap-1">
+      {colors.map((color) => (
+        <span
+          key={color.key}
+          className="bg-surface-muted text-foreground/50 border-foreground/20 inline-flex h-4 w-4 rounded-full border text-xs font-semibold"
+
+          style={color.hexCode ? { backgroundColor: color.hexCode } : undefined}
+        >
+          {/* {color.label} */}
         </span>
       ))}
     </div>
@@ -104,12 +131,15 @@ export function ProductTable({
       ),
     [sizeOptions.data?.result],
   );
-  const colorLabels = useMemo(
+  const colorBadges = useMemo(
     () =>
       new Map(
         (colorOptions.data?.result ?? []).map((color) => [
           color['english-color-name'],
-          color['persian-color-name'],
+          {
+            label: color['persian-color-name'],
+            hexCode: color['hex-code'],
+          },
         ]),
       ),
     [colorOptions.data?.result],
@@ -230,9 +260,12 @@ export function ProductTable({
       dataIndex: 'colors',
       key: 'colors',
       render: (colors: readonly string[]) => (
-        <ProductLabels
-          labels={colors.map((color) => colorLabels.get(color) ?? color)}
-          emptyLabel="بدون رنگ"
+        <ProductColorLabels
+          colors={colors.map((color) => ({
+            key: color,
+            label: colorBadges.get(color)?.label ?? color,
+            hexCode: colorBadges.get(color)?.hexCode ?? null,
+          }))}
         />
       ),
     },
@@ -329,9 +362,7 @@ export function ProductTable({
           dataSource={[...products]}
           rowKey="id"
           expandable={{
-            expandedRowRender: (product) => (
-              <ProductVariantsExpandedRow productId={product.id} />
-            ),
+            expandedRowRender: (product) => <ProductVariantsExpandedRow productId={product.id} />,
             rowExpandable: (product) => product.variantCount > 0,
           }}
           scroll={{ x: 'max-content' }}

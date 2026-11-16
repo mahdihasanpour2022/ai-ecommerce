@@ -19,8 +19,13 @@ import {
   parseProductColorRequest,
   parseProductSizeName,
   parseProductSizeRequest,
+  parseProductTagName,
+  parseProductTagRequest,
   ProductColorRequestDto,
   ProductSizeRequestDto,
+  ProductTagOptionDto,
+  ProductTagRequestDto,
+  type ProductTagOption,
   type PublicProductColorOption,
   PublicProductSizeOptionDto,
   type PublicProductSizeOption,
@@ -42,6 +47,73 @@ const CSRF_HEADER = {
 @Controller('admin/catalog/product-options')
 export class ProductOptionController {
   constructor(private readonly options: ProductOptionService) {}
+
+  @Get('tags')
+  @ApiSuccess({
+    code: 'PRODUCT_TAG_OPTIONS_FETCHED',
+    message: 'برچسب‌های محصول با موفقیت دریافت شدند.',
+    kind: 'collection',
+  })
+  @CatalogPermission('catalog.read')
+  @ApiOperation({ summary: 'Return the managed Product tags' })
+  @ApiResponse({ status: 200, type: ProductTagOptionDto, isArray: true })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  tags(): Promise<readonly ProductTagOption[]> {
+    return this.handle(() => this.options.tags());
+  }
+
+  @Post('tags')
+  @ApiSuccess({ code: 'PRODUCT_TAG_CREATED', message: 'برچسب با موفقیت ایجاد شد.', kind: 'single' })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Create a managed Product tag' })
+  @ApiBody({ type: ProductTagRequestDto })
+  @ApiResponse({ status: 201, type: ProductTagOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  createTag(@Body() body: unknown): Promise<ProductTagOption> {
+    return this.handle(() => this.options.createTag(parseProductTagRequest(body)));
+  }
+
+  @Patch('tags/:englishTagName')
+  @ApiSuccess({ code: 'PRODUCT_TAG_UPDATED', message: 'برچسب با موفقیت ویرایش شد.', kind: 'single' })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Update a managed Product tag' })
+  @ApiParam({ name: 'englishTagName', example: 'red_cap' })
+  @ApiBody({ type: ProductTagRequestDto })
+  @ApiResponse({ status: 200, type: ProductTagOptionDto })
+  @ApiResponse({ status: 400, type: ApiErrorDto })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  updateTag(
+    @Param('englishTagName') englishTagName: string,
+    @Body() body: unknown,
+  ): Promise<ProductTagOption> {
+    return this.handle(() =>
+      this.options.updateTag(parseProductTagName(englishTagName), parseProductTagRequest(body)),
+    );
+  }
+
+  @Delete('tags/:englishTagName')
+  @HttpCode(200)
+  @ApiSuccess({ code: 'PRODUCT_TAG_DELETED', message: 'برچسب با موفقیت حذف شد.', kind: 'none' })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Delete a managed Product tag' })
+  @ApiParam({ name: 'englishTagName', example: 'red_cap' })
+  @ApiResponse({ status: 200, description: 'Product tag deleted successfully.' })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  async deleteTag(@Param('englishTagName') englishTagName: string): Promise<void> {
+    await this.handle(() => this.options.deleteTag(parseProductTagName(englishTagName)));
+  }
 
   @Get('sizes')
   @ApiSuccess({

@@ -6,6 +6,7 @@ const PERSIAN_COLOR_NAME_PATTERN =
   /^[\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u06A9\u06AF\u06CC]+(?:[ \u200C][\u0621-\u063A\u0641-\u064A\u067E\u0686\u0698\u06A9\u06AF\u06CC]+)*$/u;
 const ENGLISH_COLOR_NAME_PATTERN = /^[A-Za-z]+$/u;
 const ENGLISH_SIZE_NAME_PATTERN = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/u;
+const ENGLISH_TAG_NAME_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/u;
 
 export interface PublicProductColorOption {
@@ -15,6 +16,9 @@ export interface PublicProductColorOption {
 }
 export interface PublicProductSizeOption {
   readonly 'english-size-name': string;
+}
+export interface ProductTagOption {
+  readonly 'english-tag-name': string;
 }
 
 export class PublicProductColorOptionDto {
@@ -51,6 +55,15 @@ export class ProductSizeRequestDto {
 }
 
 export interface ProductSizeInput {
+  readonly englishName: string;
+}
+
+export class ProductTagRequestDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: ENGLISH_TAG_NAME_PATTERN.source, example: 'red_cap' })
+  englishName!: string;
+}
+
+export interface ProductTagInput {
   readonly englishName: string;
 }
 
@@ -131,9 +144,36 @@ export function parseProductSizeName(value: string): string {
   return normalized;
 }
 
+// نام برچسب را با قرارداد حروف کوچک انگلیسی و جداکننده زیرخط اعتبارسنجی می‌کند.
+export function parseProductTagRequest(value: unknown): ProductTagInput {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) tagValidationFailed();
+  const record = value as Record<string, unknown>;
+  if (Object.keys(record).length !== 1 || !('englishName' in record)) tagValidationFailed();
+  const englishName = normalizedRequiredString(record.englishName, 80, tagValidationFailed);
+  if (!ENGLISH_TAG_NAME_PATTERN.test(englishName)) tagValidationFailed();
+  return { englishName };
+}
+
+function tagValidationFailed(): never {
+  throw new ProductOptionError('PRODUCT_TAG_VALIDATION_FAILED');
+}
+
+export function parseProductTagName(value: string): string {
+  const normalized = value.normalize('NFKC').trim();
+  if (!ENGLISH_TAG_NAME_PATTERN.test(normalized) || normalized.length > 80) {
+    throw new ProductOptionError('PRODUCT_TAG_NOT_FOUND');
+  }
+  return normalized;
+}
+
 export class PublicProductSizeOptionDto {
   @ApiProperty({ minLength: 1, maxLength: 80, example: 'large' })
   'english-size-name'!: string;
+}
+
+export class ProductTagOptionDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, pattern: ENGLISH_TAG_NAME_PATTERN.source, example: 'red_cap' })
+  'english-tag-name'!: string;
 }
 
 export const PRODUCT_STATUS_OPTIONS = [

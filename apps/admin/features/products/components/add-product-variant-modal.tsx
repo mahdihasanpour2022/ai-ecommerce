@@ -53,7 +53,7 @@ export function AddProductVariantModal({
     formState: { errors, isSubmitting, isValid },
   } = useForm<AddProductVariantFormValues>({
     resolver: zodResolver(addProductVariantSchema),
-    defaultValues: { image: undefined, size: '', color: '', onHandQuantity: '' },
+    defaultValues: { size: '', color: '', onHandQuantity: '' },
     mode: 'onChange',
   });
   const submitting =
@@ -65,6 +65,13 @@ export function AddProductVariantModal({
     setImageKey((current) => current + 1);
     onClose();
   };
+
+  // فقط queryهای متاثر از افزودن واریانت را پس از پایان workflow تازه می‌کند.
+  const refreshProductQueries = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: productKeys.lists }),
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId), exact: true }),
+    ]);
 
   // واریانت ابتدا ایجاد و سپس تصویر اجباری آن با شناسهٔ همان واریانت ذخیره می‌شود.
   const submit = handleSubmit(async (values) => {
@@ -83,12 +90,13 @@ export function AddProductVariantModal({
         file: values.image,
       });
       await activateVariant.mutateAsync({ variantId: created.singleResult.id, isActive: true });
-      await queryClient.invalidateQueries({ queryKey: productKeys.all });
+      await refreshProductQueries();
       reset();
       setImageKey((current) => current + 1);
       onClose();
       await message.success('واریانت جدید با موفقیت اضافه شد.');
     } catch (error) {
+      await refreshProductQueries();
       await message.error(normalizeHttpFailure(error).message);
     }
   });
@@ -122,6 +130,7 @@ export function AddProductVariantModal({
               ref={field.ref}
               name={field.name}
               label="تصویر واریانت"
+              help="فرمت‌های مجاز: JPG، JPEG، PNG و WebP — حجم حداکثر ۴۰۰ کیلوبایت است."
               error={errors.image?.message}
               disabled={submitting}
               toastKey="new-variant-image-error"

@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import type { DefaultValues } from 'react-hook-form';
@@ -15,8 +16,10 @@ import { CATEGORY_OPTIONS_PAGE_SIZE } from '../../categories/constants/paginatio
 import { useGetCategories } from '../../categories/hooks/useGetCategories';
 import { categoryOptions } from '../../categories/utils/category-options';
 import { useCreateProduct } from '../hooks/useCreateProduct';
+import { productKeys } from '../hooks/useGetProducts';
 import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
 import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
+import { useGetProductTags } from '@/hooks/shared/useGetProductTags';
 import { useUploadProductImage } from '../hooks/useUploadProductImage';
 import type { RawProductDetail } from '../interfaces/product-contract';
 import type { CreateProductFormValues } from '../schemas/create-product-schema';
@@ -34,6 +37,7 @@ const DEFAULT_VALUES: DefaultValues<CreateProductFormValues> = {
 };
 
 export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => void }>) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [imageInputKey, setImageInputKey] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -46,6 +50,7 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
   });
   const sizes = useGetProductSizes(open);
   const colors = useGetProductColors(open);
+  const tags = useGetProductTags(open);
   const createProduct = useCreateProduct();
   const uploadProductImage = useUploadProductImage();
   const {
@@ -115,6 +120,8 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
         });
         imageVersion = uploadResponse.singleResult.imageVersion;
       }
+      // لیست محصولات تنها پس از ذخیرهٔ کامل تصاویر واریانت‌ها دوباره دریافت می‌شود.
+      await queryClient.invalidateQueries({ queryKey: productKeys.lists });
       reset(DEFAULT_VALUES);
       setImageInputKey((current) => current + 1);
       setOpen(false);
@@ -123,6 +130,7 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
     } catch (error) {
       const failure = normalizeHttpFailure(error);
       if (createdProduct) {
+        await queryClient.invalidateQueries({ queryKey: productKeys.lists });
         reset(DEFAULT_VALUES);
         setImageInputKey((current) => current + 1);
         setOpen(false);
@@ -149,6 +157,11 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
     value: color['english-color-name'],
     label: color['persian-color-name'],
     hexCode: color['hex-code'],
+  }));
+  // گزینه‌های تگ فقط از فهرست مدیریت‌شدهٔ سرور ساخته می‌شوند.
+  const tagOptions = (tags.data?.result ?? []).map((tag) => ({
+    value: tag['english-tag-name'],
+    label: tag['english-tag-name'],
   }));
 
   return (
@@ -261,25 +274,35 @@ export default function AddProduct({ onCreated }: Readonly<{ onCreated?: () => v
           </UiForm.Field>
 
           <UiForm.Field>
-            <UiForm.Label htmlFor="product-tag">تگ انگلیسی (اختیاری)</UiForm.Label>
-            <UiForm.TextInput
-              id="product-tag"
-              dir="ltr"
-              autoComplete="off"
-              maxLength={80}
-              placeholder="my_amazing"
-              disabled={submitting}
-              aria-invalid={errors.tag ? 'true' : 'false'}
-              aria-describedby={
-                errors.tag ? 'product-tag-help product-tag-error' : 'product-tag-help'
-              }
-              {...register('tag')}
+            <UiForm.Label htmlFor="product-tag">تگ (اختیاری)</UiForm.Label>
+            <Controller
+              name="tag"
+              control={control}
+              render={({ field }) => (
+                <UiSelect.Root
+                  id="product-tag"
+                  ref={field.ref}
+                  value={field.value || null}
+                  options={tagOptions}
+                  placeholder="انتخاب تگ"
+                  allowClear
+                  showSearch
+                  optionFilterProp="label"
+                  loading={tags.isFetching}
+                  disabled={submitting || tags.isFetching || tags.isError}
+                  status={errors.tag ? 'error' : ''}
+                  aria-invalid={errors.tag ? 'true' : 'false'}
+                  aria-describedby={errors.tag ? 'product-tag-error' : undefined}
+                  onBlur={field.onBlur}
+                  onChange={(value) => field.onChange(value ?? '')}
+                />
+              )}
             />
-            <p id="product-tag-help" className="text-muted m-0 text-xs leading-6">
-              فقط حروف انگلیسی؛ برای چند کلمه از _ استفاده کنید.
-            </p>
             {errors.tag ? (
               <UiForm.Error id="product-tag-error">{errors.tag.message}</UiForm.Error>
+            ) : null}
+            {tags.isError ? (
+              <UiForm.Error>دریافت تگ‌ها ناموفق بود. فرم را ببندید و دوباره تلاش کنید.</UiForm.Error>
             ) : null}
           </UiForm.Field>
 
