@@ -1,9 +1,10 @@
 import { Skeleton } from '@/components/shared';
 import { UiCarousel, UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
+import { CollectionProductCard } from '@/features/components/shared';
 
-import { ProductCard } from '@/features/components/shared/productCard';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
+import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const AmazingProducts = () => {
@@ -20,10 +21,7 @@ export const AmazingProducts = () => {
           <UiP variant="style_2" className="mx-auto">
             شگفت انگیز
           </UiP>
-          <UiLink
-             href={PRODUCT_COLLECTIONS.amazing.href}
-            variant="style_2"
-          >
+          <UiLink href={PRODUCT_COLLECTIONS.amazing.href} variant="style_2">
             مشاهده بیشتر
           </UiLink>
         </div>
@@ -43,7 +41,14 @@ export const AmazingProducts = () => {
               slideClassName="h-64 basis-32 px-1 sm:basis-44"
             >
               {amazingProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <CollectionProductCard
+                  key={nanoid()}
+                  product={product}
+                  className={{
+                    wrapper:
+                      'border-foreground/10 flex h-64 w-full! flex-col items-center justify-start overflow-hidden rounded-t-lg! rounded-b-xl border bg-white px-1 py-1 sm:px-1! sm:py-1!',
+                  }}
+                />
               ))}
             </UiCarousel>
           )}

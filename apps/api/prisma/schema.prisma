@@ -267,6 +267,7 @@ model ProductVariant {
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
   product   Product    @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_variants_product_id_fkey")
   inventory Inventory?
+  image     ProductImage?
 
   @@unique([productId, sizeKey, colorKey], map: "product_variants_product_size_color_key")
   @@index([productId, isActive, id], map: "product_variants_product_active_id_idx")
@@ -306,6 +307,7 @@ model Inventory {
 model ProductImage {
   id         String                @id(map: "product_images_pkey") @default(uuid()) @db.Uuid
   productId  String                @map("product_id") @db.Uuid
+  variantId  String?               @unique(map: "product_images_variant_id_key") @map("variant_id") @db.Uuid
   storageKey String                @unique(map: "product_images_storage_key_key") @map("storage_key") @db.VarChar(512)
   mediaType  ProductImageMediaType @map("media_type")
   byteSize   Int                   @map("byte_size")
@@ -315,6 +317,7 @@ model ProductImage {
   createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
   product    Product               @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_images_product_id_fkey")
+  variant    ProductVariant?       @relation(fields: [variantId], references: [id], onDelete: SetNull, onUpdate: NoAction, map: "product_images_variant_id_fkey")
 
   @@unique([productId, position], map: "product_images_product_id_position_key")
   @@map("product_images")

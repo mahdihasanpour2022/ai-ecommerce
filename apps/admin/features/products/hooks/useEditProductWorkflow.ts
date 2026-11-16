@@ -6,14 +6,12 @@ import { useEditProduct } from './useEditProduct';
 import { useEditProductInventory } from './useEditProductInventory';
 import { useEditProductVariant } from './useEditProductVariant';
 import { productKeys } from './useGetProducts';
-import { useSaveProductImage } from './useSaveProductImage';
 
 export function useEditProductWorkflow() {
   const queryClient = useQueryClient();
   const product = useEditProduct();
   const variant = useEditProductVariant();
   const inventory = useEditProductInventory();
-  const image = useSaveProductImage();
 
   async function save(changes: EditProductWorkflowVariables): Promise<boolean> {
     let attempted = false;
@@ -30,18 +28,15 @@ export function useEditProductWorkflow() {
         attempted = true;
         await inventory.mutateAsync(changes.inventory);
       }
-      if (changes.image) {
-        attempted = true;
-        await image.mutateAsync(changes.image);
-      }
       return attempted;
     } finally {
-      if (attempted) await queryClient.invalidateQueries({ queryKey: productKeys.all });
+      // ذخیرهٔ فرم همیشه جدول و جزئیات را با آخرین واریانت‌های سرور همگام می‌کند.
+      await queryClient.invalidateQueries({ queryKey: productKeys.all });
     }
   }
 
   return {
     save,
-    isPending: product.isPending || variant.isPending || inventory.isPending || image.isPending,
+    isPending: product.isPending || variant.isPending || inventory.isPending,
   } as const;
 }

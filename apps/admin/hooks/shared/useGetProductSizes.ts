@@ -7,7 +7,6 @@ import { useRQFetcher } from '../rq_hooks/useRQFetcher';
 import { productOptionKeys } from './productOptionKeys';
 
 export interface ProductSizeOption {
-  readonly 'persian-size-name': string;
   readonly 'english-size-name': string;
 }
 

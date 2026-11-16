@@ -4,13 +4,19 @@ import { UiButton, UiImage, UiP, UiSpan } from '@/components/shared/ui';
 import { ProductPrice } from '@/features/components/shared/productPrice';
 import { getProductHref } from '@/features/products/product/product-route';
 import { Product } from '@/interfaces/product';
+import clsx from 'clsx';
 import { useRouter } from 'nextjs-toploader/app';
 
-export const CollectionProductCard = ({ product }: { product: Product }) => {
+interface Props {
+  product: Product;
+  className?: {
+    wrapper?: string;
+  };
+}
+
+export const CollectionProductCard = ({ product, className }: Props) => {
   const router = useRouter();
   const { name, description, image, alt } = product;
-
-  console.log('product', product);
 
   const navigateToSingleProduct = () => {
     router.push(getProductHref(product.id, product.name), { scroll: false });
@@ -19,7 +25,11 @@ export const CollectionProductCard = ({ product }: { product: Product }) => {
   return (
     <UiButton
       variant="style_4"
-      className="border-foreground/5 flex h-full! flex-col items-stretch border px-2!"
+      size='small'
+      className={clsx(
+        '',
+        className?.wrapper,
+      )}
       onClick={navigateToSingleProduct}
     >
       <UiImage

@@ -114,26 +114,34 @@ export class PublicProductSummaryDto {
   isAvailable!: boolean;
 }
 
+export class PublicProductColorNameDto {
+  @ApiProperty({ minLength: 1, maxLength: 80, nullable: true, example: 'آبی' })
+  persianColorName!: string | null;
+
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'blue' })
+  englishColorName!: string;
+}
+
 export class PublicProductVariantDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
-  @ApiProperty({ minLength: 1, maxLength: 80, nullable: true })
+  @ApiProperty({ minLength: 1, maxLength: 80, nullable: true, example: 'lg' })
   size!: string | null;
 
-  @ApiProperty({ minLength: 1, maxLength: 80, nullable: true })
-  color!: string | null;
+  @ApiProperty({ type: () => PublicProductColorNameDto, nullable: true })
+  color!: PublicProductColorNameDto | null;
 
   @ApiProperty()
   isAvailable!: boolean;
+
+  @ApiProperty({ type: () => PublicProductImageDto, nullable: true })
+  image!: PublicProductImageDto | null;
 }
 
 export class PublicProductDetailDto extends PublicProductSummaryDto {
   @ApiProperty({ type: () => PublicProductCategoryDto, isArray: true, maxItems: 6 })
   categoryPath!: PublicProductCategoryDto[];
-
-  @ApiProperty({ type: () => PublicProductImageDto, isArray: true, minItems: 1, maxItems: 9 })
-  images!: PublicProductImageDto[];
 
   @ApiProperty({ type: () => PublicProductVariantDto, isArray: true, minItems: 1 })
   variants!: PublicProductVariantDto[];

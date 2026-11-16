@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import type { ProductImageMediaType } from '../generated/prisma/enums.js';
 import { ProductImageMetadataDto } from './product.dto.js';
@@ -16,6 +16,7 @@ export interface ProductImageUploadFile {
 
 export interface ProductImageUploadInput {
   readonly imageVersion: number;
+  readonly variantId?: string;
   readonly file: ProductImageUploadFile;
 }
 
@@ -39,6 +40,9 @@ export class ProductImageMultipartRequestDto {
 
   @ApiProperty({ type: 'integer', minimum: 1, maximum: MAX_DATABASE_INTEGER })
   imageVersion!: number;
+
+  @ApiPropertyOptional({ type: 'string', format: 'uuid' })
+  variantId?: string;
 }
 
 export class ProductImageOrderRequestDto {
@@ -79,8 +83,18 @@ export function parseProductImageUpload(
     fail();
   }
   const record = body as Record<string, unknown>;
-  if (Object.keys(record).length !== 1 || !('imageVersion' in record)) fail();
-  return { file: files[0], imageVersion: parseCanonicalInteger(record.imageVersion) };
+  const keys = Object.keys(record);
+  if (keys.length < 1 || keys.length > 2 || !('imageVersion' in record)) fail();
+  if (keys.some((key) => key !== 'imageVersion' && key !== 'variantId')) fail();
+  const variantId = record.variantId;
+  if (variantId !== undefined && (typeof variantId !== 'string' || !UUID_PATTERN.test(variantId))) {
+    fail();
+  }
+  return {
+    file: files[0],
+    imageVersion: parseCanonicalInteger(record.imageVersion),
+    ...(variantId === undefined ? {} : { variantId }),
+  };
 }
 
 export function parseProductImageOrder(body: unknown): ProductImageOrderInput {

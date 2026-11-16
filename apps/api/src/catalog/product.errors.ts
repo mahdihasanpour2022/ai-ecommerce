@@ -8,6 +8,7 @@ export type ProductErrorCode =
   | 'PRODUCT_LIFECYCLE_CONFLICT'
   | 'PRODUCT_NOT_FOUND'
   | 'PRODUCT_VARIANT_NOT_FOUND'
+  | 'PRODUCT_VARIANT_REQUIRED'
   | 'SKU_CONFLICT'
   | 'VALIDATION_FAILED'
   | 'VARIANT_COMBINATION_CONFLICT'
@@ -19,6 +20,7 @@ const MESSAGES: Readonly<Record<ProductErrorCode, string>> = {
   PRODUCT_LIFECYCLE_CONFLICT: 'عملیات با وضعیت فعلی محصول سازگار نیست.',
   PRODUCT_NOT_FOUND: 'محصول مورد نظر یافت نشد.',
   PRODUCT_VARIANT_NOT_FOUND: 'تنوع محصول مورد نظر یافت نشد.',
+  PRODUCT_VARIANT_REQUIRED: 'حداقل یک واریانت باید برای محصول باقی بماند.',
   SKU_CONFLICT: 'کد کالای واردشده قبلاً استفاده شده است.',
   VALIDATION_FAILED: 'اطلاعات درخواست معتبر نیست.',
   VARIANT_COMBINATION_CONFLICT: 'ترکیب اندازه و رنگ قبلاً برای این محصول ثبت شده است.',
@@ -31,6 +33,7 @@ const STATUS: Readonly<Record<ProductErrorCode, number>> = {
   PRODUCT_LIFECYCLE_CONFLICT: 409,
   PRODUCT_NOT_FOUND: 404,
   PRODUCT_VARIANT_NOT_FOUND: 404,
+  PRODUCT_VARIANT_REQUIRED: 409,
   SKU_CONFLICT: 409,
   VALIDATION_FAILED: 400,
   VARIANT_COMBINATION_CONFLICT: 409,
@@ -65,6 +68,7 @@ export function toProductHttpException(error: ProductError): HttpException {
 export type ProductPersistenceOperation =
   | 'create-product'
   | 'create-variant'
+  | 'delete-variant'
   | 'delete-product'
   | 'update-product'
   | 'update-variant';
@@ -93,7 +97,9 @@ export function mapProductPersistenceError(
   if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return undefined;
   if (error.code === 'P2025') {
     return new ProductError(
-      operation === 'update-variant' ? 'PRODUCT_VARIANT_NOT_FOUND' : 'PRODUCT_NOT_FOUND',
+      operation === 'update-variant' || operation === 'delete-variant'
+        ? 'PRODUCT_VARIANT_NOT_FOUND'
+        : 'PRODUCT_NOT_FOUND',
     );
   }
   if (error.code === 'P2003') {

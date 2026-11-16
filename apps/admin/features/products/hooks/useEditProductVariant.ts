@@ -5,6 +5,7 @@ import type {
   EditProductVariantResponse,
   EditProductVariantVariables,
 } from '../interfaces/product-contract';
+import { productKeys } from './useGetProducts';
 
 export function useEditProductVariant() {
   return useRQSender<EditProductVariantResponse, EditProductVariantVariables>({
@@ -12,10 +13,12 @@ export function useEditProductVariant() {
     request: {
       method: 'patch',
       url: ({ variantId }) => `/admin/catalog/variants/${encodeURIComponent(variantId)}`,
-      body: ({ size, color }) => ({
+      body: ({ size, color, isActive }) => ({
         ...(size === undefined ? {} : { size }),
         ...(color === undefined ? {} : { color }),
+        ...(isActive === undefined ? {} : { isActive }),
       }),
     },
+    invalidateQueryKeys: [productKeys.all],
   });
 }

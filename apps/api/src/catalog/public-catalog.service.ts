@@ -74,14 +74,21 @@ export class PublicCatalogService {
   async product(id: string): Promise<PublicProductDetailDto> {
     const product = await this.repository.product(id);
     if (product === null) throw new ProductError('PRODUCT_NOT_FOUND');
-    const categoryPath = await this.repository.categoryPath(product.categoryId);
+    const [categoryPath, colors] = await Promise.all([
+      this.repository.categoryPath(product.categoryId),
+      this.options.colors(),
+    ]);
     if (categoryPath.length === 0) throw new Error('Persisted Product Category is missing.');
+    const colorOptions = new Map(
+      colors.map((color) => [color['english-color-name'], color]),
+    );
     return {
       ...publicDetailSummary(product),
       description: product.description ?? failPersistedProduct(),
       categoryPath,
-      images: product.images.map(publicImage),
-      variants: product.variants.map(publicVariant),
+      variants: product.variants.map((variant, index) =>
+        publicVariant(variant, colorOptions, index === 0 ? product.images[0] : undefined),
+      ),
     };
   }
 }
@@ -113,12 +120,11 @@ export function publicCategoryTree(rows: readonly PublicCategoryRecord[]): Publi
 }
 
 function publicListSummary(product: PublicProductSummaryRecord): PublicProductSummaryDto {
-  if (product.images[0] === undefined) failPersistedProduct();
   return publicSummaryFields(product, safeQuantity(product.quantity), product.isAvailable);
 }
 
 function publicDetailSummary(product: PublicProductDetailRecord): PublicProductSummaryDto {
-  if (product.variants.length === 0 || product.images[0] === undefined) failPersistedProduct();
+  if (product.variants.length === 0) failPersistedProduct();
   return publicSummaryFields(
     product,
     safeQuantity(
@@ -137,13 +143,23 @@ function publicDetailSummary(product: PublicProductDetailRecord): PublicProductS
 function publicSummaryFields(
   product: Pick<
     PublicProductSummaryRecord,
-    'category' | 'description' | 'discountPercent' | 'id' | 'images' | 'name' | 'originalPriceRial'
+    | 'category'
+    | 'description'
+    | 'discountPercent'
+    | 'id'
+    | 'images'
+    | 'name'
+    | 'originalPriceRial'
+    | 'variants'
   >,
   quantity: number,
   isAvailable: boolean,
 ): PublicProductSummaryDto {
-  const mainImage = product.images[0];
-  if (mainImage === undefined || product.description === null) failPersistedProduct();
+  // تصویر واریانت اول اولویت دارد و تصویر قدیمی محصول فقط برای داده‌های قبل از migration استفاده می‌شود.
+  const mainImage = product.variants[0]?.image ?? product.images[0];
+  if (mainImage === null || mainImage === undefined || product.description === null) {
+    failPersistedProduct();
+  }
   const originalPriceRial = safeRial(product.originalPriceRial);
   return {
     id: product.id,
@@ -163,17 +179,33 @@ function publicSummaryFields(
 
 function publicVariant(
   variant: PublicProductDetailRecord['variants'][number],
+  colorOptions: ReadonlyMap<string, PublicProductColorOption>,
+  legacyImage: PublicProductDetailRecord['images'][number] | undefined,
 ): PublicProductVariantDto {
   if (variant.inventory === null) failPersistedProduct();
+  const colorOption =
+    variant.color === null ? undefined : colorOptions.get(variant.color.toLowerCase());
   return {
     id: variant.id,
     size: variant.size,
-    color: variant.color,
+    color:
+      variant.color === null
+        ? null
+        : {
+            persianColorName: colorOption?.['persian-color-name'] ?? null,
+            englishColorName: colorOption?.['english-color-name'] ?? variant.color,
+          },
     isAvailable: variant.inventory.onHandQuantity > 0,
+    image:
+      variant.image === null && legacyImage === undefined
+        ? null
+        : publicImage(variant.image ?? legacyImage ?? failPersistedProduct()),
   };
 }
 
-function publicImage(image: PublicProductSummaryRecord['images'][number]): PublicProductImageDto {
+function publicImage(
+  image: NonNullable<PublicProductDetailRecord['variants'][number]['image']>,
+): PublicProductImageDto {
   return {
     id: image.id,
     url: `/api/v1/catalog/product-images/${image.id}/content`,

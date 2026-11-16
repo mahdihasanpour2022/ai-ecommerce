@@ -14,7 +14,6 @@ export interface PublicProductColorOption {
   readonly 'hex-code': string;
 }
 export interface PublicProductSizeOption {
-  readonly 'persian-size-name': string;
   readonly 'english-size-name': string;
 }
 
@@ -47,15 +46,11 @@ export interface ProductColorInput {
 }
 
 export class ProductSizeRequestDto {
-  @ApiProperty({ minLength: 1, maxLength: 80, pattern: PERSIAN_COLOR_NAME_PATTERN.source, example: 'بزرگ' })
-  persianName!: string;
-
   @ApiProperty({ minLength: 1, maxLength: 80, pattern: ENGLISH_SIZE_NAME_PATTERN.source, example: 'x-large' })
   englishName!: string;
 }
 
 export interface ProductSizeInput {
-  readonly persianName: string;
   readonly englishName: string;
 }
 
@@ -112,17 +107,16 @@ export function parseProductSizeRequest(value: unknown): ProductSizeInput {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) sizeValidationFailed();
   const record = value as Record<string, unknown>;
   if (
-    Object.keys(record).length !== 2 ||
-    !['persianName', 'englishName'].every((key) => key in record)
+    Object.keys(record).length !== 1 ||
+    !('englishName' in record)
   ) {
     sizeValidationFailed();
   }
-  const persianName = normalizedRequiredString(record.persianName, 80, sizeValidationFailed);
   const englishName = normalizedRequiredString(record.englishName, 80, sizeValidationFailed);
-  if (!PERSIAN_COLOR_NAME_PATTERN.test(persianName) || !ENGLISH_SIZE_NAME_PATTERN.test(englishName)) {
+  if (!ENGLISH_SIZE_NAME_PATTERN.test(englishName)) {
     sizeValidationFailed();
   }
-  return { persianName, englishName: englishName.toLowerCase() };
+  return { englishName: englishName.toLowerCase() };
 }
 
 function sizeValidationFailed(): never {
@@ -138,9 +132,6 @@ export function parseProductSizeName(value: string): string {
 }
 
 export class PublicProductSizeOptionDto {
-  @ApiProperty({ minLength: 1, maxLength: 80, example: 'بزرگ' })
-  'persian-size-name'!: string;
-
   @ApiProperty({ minLength: 1, maxLength: 80, example: 'large' })
   'english-size-name'!: string;
 }

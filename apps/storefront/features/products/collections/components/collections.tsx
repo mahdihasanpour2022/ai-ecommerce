@@ -81,7 +81,14 @@ export const ProductsCollection = ({
           <div className="w-full min-w-0">
             <div className="mx-auto grid w-full auto-rows-fr grid-cols-1 gap-0 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((product) => (
-                <CollectionProductCard key={product.id} product={product} />
+                <CollectionProductCard
+                  key={product.id}
+                  product={product}
+                  className={{
+                    wrapper:
+                      'border-foreground/5 hover:shadow-product-card flex h-full! flex-col items-stretch border px-2!',
+                  }}
+                />
               ))}
             </div>
             {(hasNextPage || isFetchingNextPage) && (

@@ -9,7 +9,7 @@ const StoreName = () => {
   return (
     <div className="flex items-center justify-start gap-2">
       <UiButton
-        variant="style_8"
+        variant="style_2"
         className="h-full w-fit cursor-pointer p-0!"
         onClick={() => push(AppRoutes.home)}
       >

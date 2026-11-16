@@ -27,7 +27,7 @@ export function DeleteProductSizeModal({
       onCancel={onCancel}
     >
       <p className="text-foreground m-0 leading-8">
-        آیا از حذف سایز «{size?.['persian-size-name']}» مطمئن هستید؟
+        آیا از حذف سایز «{size?.['english-size-name']}» مطمئن هستید؟
       </p>
       <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <UiButton variant="secondary" disabled={pending} onClick={onCancel}>

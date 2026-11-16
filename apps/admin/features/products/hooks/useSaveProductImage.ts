@@ -15,10 +15,11 @@ export function useSaveProductImage() {
         currentImageId
           ? `/admin/catalog/product-images/${encodeURIComponent(currentImageId)}/replacements`
           : `/admin/catalog/products/${encodeURIComponent(productId)}/images`,
-      body: ({ file, imageVersion }) => {
+      body: ({ file, imageVersion, variantId, currentImageId }) => {
         const body = new FormData();
         body.append('file', file);
         body.append('imageVersion', String(imageVersion));
+        if (!currentImageId) body.append('variantId', variantId);
         return body;
       },
     },

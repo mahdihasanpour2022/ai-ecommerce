@@ -62,7 +62,7 @@ const SizeFilter = ({ selectedSize, onSelect, onClear }: SizeFilterProps) => {
                       index !== sizeOptions.length - 1 && 'border-foreground/10 border-b',
                     )}
                   >
-                    {size['persian-size-name']}
+                    {size['english-size-name']}
                   </UiButton>
                 );
               })
@@ -72,11 +72,11 @@ const SizeFilter = ({ selectedSize, onSelect, onClear }: SizeFilterProps) => {
       {selectedSizeOption ? (
         <UiButton
           variant="style_7"
-          aria-label={`حذف فیلتر سایز ${selectedSizeOption['persian-size-name']}`}
+          aria-label={`حذف فیلتر سایز ${selectedSizeOption['english-size-name']}`}
           onClick={onClear}
           className="border-foreground/10 text-foreground/70 absolute top-4.5 sm:top-3.5 right-10 z-10 flex w-fit! items-center justify-center gap-3 rounded-full border px-2! py-1! text-xs!"
         >
-          <span>{selectedSizeOption['persian-size-name']}</span>
+          <span>{selectedSizeOption['english-size-name']}</span>
           <span aria-hidden="true" className="text-base leading-none">
             ×
           </span>

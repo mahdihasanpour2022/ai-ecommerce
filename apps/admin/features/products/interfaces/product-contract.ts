@@ -9,6 +9,7 @@ export interface ProductCategory {
 
 export interface ProductImage {
   readonly id: string;
+  readonly variantId: string | null;
   readonly mediaType: 'WEBP' | 'JPEG' | 'PNG';
   readonly byteSize: number;
   readonly width: number;
@@ -42,8 +43,8 @@ export interface Product {
 export type ProductsResponse = PaginatedApiResponse<readonly Product[]>;
 
 export interface CreateProductVariantVariables {
-  readonly size: string | null;
-  readonly color: string | null;
+  readonly size: string;
+  readonly color: string;
   readonly isActive: boolean;
   readonly onHandQuantity: number;
 }
@@ -63,16 +64,26 @@ export interface ProductInventory {
   readonly version: number;
 }
 
+export interface ProductVariantColor {
+  readonly persianColorName: string;
+  readonly englishColorName: string;
+}
+
 export interface ProductVariant {
   readonly id: string;
   readonly productId: string;
   readonly sku: string;
   readonly size: string | null;
-  readonly color: string | null;
+  readonly color: ProductVariantColor | null;
   readonly isActive: boolean;
   readonly inventory: ProductInventory;
+  readonly image: ProductImage | null;
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+export interface RawProductVariant extends Omit<ProductVariant, 'color'> {
+  readonly color: string | null;
 }
 
 export interface ProductDetail {
@@ -93,11 +104,17 @@ export interface ProductDetail {
   readonly updatedAt: string;
 }
 
-export type CreateProductResponse = ApiResponse<null, ProductDetail, null>;
+export interface RawProductDetail extends Omit<ProductDetail, 'variants'> {
+  readonly variants: readonly RawProductVariant[];
+}
+
+export type RawProductDetailResponse = ApiResponse<null, RawProductDetail, null>;
+export type CreateProductResponse = RawProductDetailResponse;
 export type ProductDetailResponse = ApiResponse<null, ProductDetail, null>;
 
 export interface UploadProductImageVariables {
   readonly productId: string;
+  readonly variantId?: string;
   readonly imageVersion: number;
   readonly file: File;
 }
@@ -119,15 +136,26 @@ export interface EditProductVariables {
   readonly categoryId?: string;
 }
 
-export type EditProductResponse = ApiResponse<null, ProductDetail, null>;
+export type EditProductResponse = RawProductDetailResponse;
 
 export interface EditProductVariantVariables {
   readonly variantId: string;
-  readonly size?: string | null;
-  readonly color?: string | null;
+  readonly size?: string;
+  readonly color?: string;
+  readonly isActive?: boolean;
 }
 
-export type EditProductVariantResponse = ApiResponse<null, ProductVariant, null>;
+export type EditProductVariantResponse = ApiResponse<null, RawProductVariant, null>;
+
+export interface AddProductVariantVariables {
+  readonly productId: string;
+  readonly size: string;
+  readonly color: string;
+  readonly isActive: boolean;
+  readonly onHandQuantity: number;
+}
+
+export type AddProductVariantResponse = ApiResponse<null, RawProductVariant, null>;
 
 export interface EditProductInventoryVariables {
   readonly variantId: string;
@@ -144,6 +172,7 @@ export type EditProductInventoryResponse = ApiResponse<null, ProductInventoryUpd
 
 export interface SaveProductImageVariables {
   readonly productId: string;
+  readonly variantId: string;
   readonly currentImageId: string | null;
   readonly imageVersion: number;
   readonly file: File;
@@ -153,7 +182,6 @@ export interface EditProductWorkflowVariables {
   readonly product?: EditProductVariables;
   readonly variant?: EditProductVariantVariables;
   readonly inventory?: EditProductInventoryVariables;
-  readonly image?: SaveProductImageVariables;
 }
 
 export interface ChangeProductStatusVariables {
@@ -161,5 +189,6 @@ export interface ChangeProductStatusVariables {
   readonly status: ProductStatus;
 }
 
-export type ChangeProductStatusResponse = ApiResponse<null, ProductDetail, null>;
+export type ChangeProductStatusResponse = RawProductDetailResponse;
 export type DeleteProductResponse = ApiResponse<null, null, null>;
+export type DeleteProductVariantResponse = ApiResponse<null, null, null>;

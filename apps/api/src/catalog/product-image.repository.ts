@@ -6,6 +6,7 @@ import type { ProductStatus } from '../generated/prisma/enums.js';
 
 const IMAGE_SELECT = {
   id: true,
+  variantId: true,
   productId: true,
   storageKey: true,
   mediaType: true,
@@ -70,6 +71,7 @@ export class ProductImageRepository {
     transaction: ProductImageTransaction,
     data: {
       readonly productId: string;
+      readonly variantId?: string;
       readonly storageKey: string;
       readonly mediaType: 'JPEG' | 'PNG' | 'WEBP';
       readonly byteSize: number;

@@ -6,7 +6,9 @@ const VARIANT_CLASSES = {
   style_2: 'text-white font-bold text-base sm:text-2xl leading-4 whitespace-nowrap',
   style_3: 'text-foreground/80! font-bold text-xl leading-10 whitespace-nowrap',
   style_4:'text-xl text-foreground/60 font-medium pb-3',
-  style_5:'text-lg text-foreground/80 font-medium pb-0'
+  style_5:'text-lg text-foreground/80 font-medium pb-0',
+  style_6:'text-xl text-foreground/90 font-medium',
+  style_7:'text-base text-foreground/70 font-medium'
 } as const;
 
 interface UiP_Props extends ComponentPropsWithoutRef<'p'> {

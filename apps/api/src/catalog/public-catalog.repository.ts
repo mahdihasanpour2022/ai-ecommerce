@@ -4,6 +4,10 @@ import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { PublicProductListQuery } from './public-catalog.dto.js';
 
+const VARIANT_ORDER_BY: Prisma.ProductVariantOrderByWithRelationInput[] = [
+  { createdAt: 'asc' },
+  { id: 'asc' },
+];
 const PUBLIC_CATEGORY_SELECT = {
   id: true,
   name: true,
@@ -21,6 +25,7 @@ const PUBLIC_VARIANT_SELECT = {
   size: true,
   color: true,
   inventory: { select: { onHandQuantity: true } },
+  image: { select: PUBLIC_IMAGE_SELECT },
 } as const;
 const PUBLIC_LIST_SELECT = {
   id: true,
@@ -29,9 +34,15 @@ const PUBLIC_LIST_SELECT = {
   originalPriceRial: true,
   discountPercent: true,
   category: { select: { id: true, name: true } },
+  variants: {
+    where: { isActive: true },
+    select: { image: { select: PUBLIC_IMAGE_SELECT } },
+    orderBy: VARIANT_ORDER_BY,
+    take: 1,
+  },
   images: {
-    where: { position: 0 },
     select: PUBLIC_IMAGE_SELECT,
+    orderBy: { position: 'asc' as const },
     take: 1,
   },
 } as const;
@@ -41,11 +52,7 @@ const PUBLIC_DETAIL_SELECT = {
   variants: {
     where: { isActive: true },
     select: PUBLIC_VARIANT_SELECT,
-    orderBy: { id: 'asc' as const },
-  },
-  images: {
-    select: PUBLIC_IMAGE_SELECT,
-    orderBy: { position: 'asc' as const },
+    orderBy: VARIANT_ORDER_BY,
   },
 } as const;
 

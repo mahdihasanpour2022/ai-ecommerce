@@ -6,7 +6,6 @@ import { productOptionKeys } from '../../../hooks/shared/productOptionKeys';
 import type { ProductSizeOption } from '../../../hooks/shared/useGetProductSizes';
 
 export interface ProductSizePayload {
-  readonly persianName: string;
   readonly englishName: string;
 }
 

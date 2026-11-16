@@ -26,8 +26,22 @@ const optionalSingleLine = (label: string) =>
     .max(80, `${label} نمی‌تواند بیشتر از ۸۰ کاراکتر باشد.`)
     .refine((value) => !/[\n\r<>]/u.test(value), `${label} معتبر نیست.`);
 
+// هر ردیف واریانت باید ترکیب کامل رنگ، سایز و موجودی مستقل داشته باشد.
+const variantSchema = z.object({
+  image: z.custom<File>(isFileLike, { message: 'تصویر واریانت را انتخاب کنید.' }),
+  size: optionalSingleLine('سایز').min(1, 'یک سایز انتخاب کنید.'),
+  color: optionalSingleLine('رنگ').min(1, 'یک رنگ انتخاب کنید.'),
+  onHandQuantity: z
+    .string()
+    .trim()
+    .regex(asciiInteger, 'موجودی را وارد کنید.')
+    .refine((value) => {
+      const quantity = Number(value);
+      return Number.isInteger(quantity) && quantity >= 1 && quantity <= maximumInventory;
+    }, 'موجودی اولیه باید حداقل ۱ باشد.'),
+});
+
 export const createProductSchema = z.object({
-  image: z.custom<File>(isFileLike, { message: 'تصویر محصول را انتخاب کنید.' }),
   name: z
     .string()
     .trim()
@@ -49,8 +63,10 @@ export const createProductSchema = z.object({
       'تگ فقط باید شامل حروف انگلیسی کوچک باشد و کلمات با _ جدا شوند.',
     ),
   categoryId: z.uuid('یک دسته‌بندی انتخاب کنید.'),
-  size: optionalSingleLine('سایز').min(1, 'یک سایز انتخاب کنید.'),
-  color: optionalSingleLine('رنگ').min(1, 'یک رنگ انتخاب کنید.'),
+  variants: z
+    .array(variantSchema)
+    .min(1, 'حداقل یک واریانت محصول تعریف کنید.')
+    .max(9, 'حداکثر ۹ واریانت می‌توانید تعریف کنید.'),
   originalPriceRial: z
     .string()
     .trim()
@@ -67,14 +83,6 @@ export const createProductSchema = z.object({
       const discount = Number(value);
       return Number.isInteger(discount) && discount >= 0 && discount <= 100;
     }, 'درصد تخفیف باید عددی بین صفر تا صد باشد.'),
-  onHandQuantity: z
-    .string()
-    .trim()
-    .regex(asciiInteger, 'موجودی را وارد کنید.')
-    .refine((value) => {
-      const quantity = Number(value);
-      return Number.isInteger(quantity) && quantity >= 1 && quantity <= maximumInventory;
-    }, 'موجودی اولیه باید حداقل ۱ باشد.'),
 });
 
 export type CreateProductFormValues = z.infer<typeof createProductSchema>;

@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 export interface ProductSizeOption {
-  readonly 'persian-size-name': string;
   readonly 'english-size-name': string;
 }
 

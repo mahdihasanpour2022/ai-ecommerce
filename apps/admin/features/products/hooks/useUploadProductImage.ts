@@ -13,10 +13,11 @@ export function useUploadProductImage() {
     request: {
       method: 'post',
       url: ({ productId }) => `/admin/catalog/products/${productId}/images`,
-      body: ({ file, imageVersion }) => {
+      body: ({ file, imageVersion, variantId }) => {
         const body = new FormData();
         body.append('file', file);
         body.append('imageVersion', String(imageVersion));
+        if (variantId) body.append('variantId', variantId);
         return body;
       },
     },

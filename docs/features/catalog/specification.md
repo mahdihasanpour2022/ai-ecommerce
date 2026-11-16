@@ -26,7 +26,7 @@ Category (parent -> children, maximum six levels)
   -> Product (exactly one Category; DRAFT | ACTIVE | ARCHIVED)
        -> ProductVariant (one or more; sellable SKU and active state)
             -> Inventory (exactly one; on-hand quantity and version)
-       -> ProductImage (zero to nine; ordered, Product-owned)
+       -> ProductImage (zero to nine; ordered, Product-owned and optionally assigned one-to-one to a Variant)
 
 PriceDisplaySetting (one global RIAL | TOMAN value)
 ```
@@ -89,7 +89,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 ### Fields and lifecycle
 
 - Product has immutable UUID `id`, normalized `name`, nullable normalized plain-text `description`, one nullable normalized merchandising `tag`, required `categoryId`, lifecycle `status`, and implementation timestamps.
-- Product creation requires name, Category, and at least one Variant in one atomic operation. New Products always begin `DRAFT`; clients cannot create them directly as Active or Archived.
+- Product creation requires name, Category, and at least one Variant with both a required color and required size in one atomic operation. New Products always begin `DRAFT`; clients cannot create them directly as Active or Archived.
 - `DRAFT` is editable and neither public nor purchasable.
 - `ACTIVE` is publicly retrievable. Only its active Variants are returned publicly.
 - `ARCHIVED` is the reversible temporarily unavailable state: it is retained, immutable except for transition back to Draft, and neither public nor purchasable. Permanent deletion is a separate explicit operation.
@@ -102,36 +102,35 @@ Activation is atomic and requires:
 
 - non-empty valid name and description;
 - an existing Category;
-- exactly one ready main Product Image at position 0;
+- one ready assigned Image for every active Variant;
 - at least one active valid Variant; and
 - every active Variant to satisfy SKU, mode, price, and Inventory invariants.
 
-An Active Product cannot be mutated into an invalid Active state. Removing/replacing its main image, deactivating its last active Variant, changing Variant mode, or otherwise breaking activation completeness requires an atomic valid replacement or a prior/same-transaction transition to Draft. Zero Inventory is valid and changes only availability, not Product lifecycle.
+An Active Product cannot be mutated into an invalid Active state. Removing an active Variant Image, deactivating its last active Variant, changing Variant mode, or otherwise breaking activation completeness requires an atomic valid replacement or a prior/same-transaction transition to Draft. Zero Inventory is valid and changes only availability, not Product lifecycle.
 
 ## Product Variant
 
 ### Fields and ownership
 
-- Product Variant has immutable UUID `id`, required `productId`, globally unique normalized `sku`, nullable normalized `size`, nullable normalized `color`, boolean `isActive`, and implementation timestamps.
-- Product Color Option has normalized English name identity, unique Persian display name, uppercase hexadecimal swatch, and implementation timestamps. Product Size Option has normalized English name identity, unique Persian display name, and implementation timestamps. Admin and public option reads share these database sources; deleting an option removes it from future selections without rewriting retained Variant snapshots.
-- Variant owns the exact sellable identity, active state, and its one-to-one Inventory record; pricing is shared by every Variant of its Product.
+- Product Variant has immutable UUID `id`, required `productId`, globally unique normalized `sku`, required normalized `size`, required normalized `color`, boolean `isActive`, and implementation timestamps. Persistence remains nullable only for retained historical rows created under the former unnamed-Variant contract; new Variants cannot omit either dimension.
+- Product Color Option has normalized English name identity, unique Persian display name, uppercase hexadecimal swatch, and implementation timestamps. Product Size Option exposes only its normalized English name identity. Admin and public option reads share these database sources; deleting an option removes it from future selections without rewriting retained Variant snapshots.
+- Variant owns the exact sellable identity, active state, its one-to-one Inventory record, and its assigned Image; pricing is shared by every Variant of its Product.
 - SKU remains globally unique across active and inactive Variants. Reusing an inactive Variant's SKU for another row is forbidden.
 - Product `originalPriceRial` is an integer greater than zero and exactly divisible by 10. Product `discountPercent` is a required integer from 0 through 100. Invalid values are rejected and `finalPriceRial` is derived by integer rial arithmetic.
-- Size/color combination uniqueness is case-insensitive within one Product after normalization. Two null labels represent the default unnamed combination.
+- Size/color combination uniqueness is case-insensitive within one Product after normalization.
 
-### Default and named modes
+### Required dimensions
 
-- A default unnamed Variant has `size = null` and `color = null`.
-- A named/selectable Variant has at least one non-null size or color label.
-- Active Variants of one Product operate in exactly one mode: either one active default unnamed Variant or one or more active named Variants, never both.
-- Inactive retained Variants do not participate in the Product's current selectable mode, but their SKU and normalized size/color combination remain reserved. Reusing the retained row through update/reactivation is required instead of creating a duplicate identity.
+- Every newly created Variant requires both a non-null size and a non-null color. An active Variant missing either dimension is invalid and cannot be created, updated into that state, reactivated, or used to activate its Product.
+- A retained inactive historical Variant with a missing dimension remains readable for compatibility, but must receive both dimensions before it can become active.
+- Inactive retained Variants keep their SKU and normalized size/color combination reserved. Reusing the retained row through update/reactivation is required instead of creating a duplicate identity.
 - Every Product retains at least one Variant row. An Active Product retains at least one active Variant.
 - The current contract exposes no Variant hard-delete operation. Variants are deactivated and retained, preserving a stable future reference boundary without adding Variant history/audit models.
 
 ### Mutation behavior
 
 - Product creation creates all initial Variants and their Inventory rows atomically.
-- Adding/updating/reactivating a Variant rejects global SKU conflicts, within-Product combination conflicts, mixed active default/named mode, and any operation that leaves an Active Product without an active Variant.
+- Adding/updating/reactivating a Variant rejects missing color/size dimensions, global SKU conflicts, within-Product combination conflicts, and any operation that leaves an Active Product without an active Variant.
 - An Archived Product must first return to Draft before Product, Variant, Inventory, or Image mutation.
 - Variant SKU, labels, price, and active state may be updated while preserving its immutable UUID. Future Order Item snapshots, not mutable catalog fields, will own historical purchase facts.
 
@@ -242,9 +241,9 @@ All routes use the `/api/v1` prefix, explicit DTOs, the standard error envelope,
 | `GET /api/v1/admin/catalog/category-images/{imageId}/content`      | `catalog.read`                       | No   | Controlled Category Image bytes for authorized Admins.                                                                                              |
 | `GET /api/v1/admin/catalog/products`                               | `catalog.read`                       | No   | Page-bounded protected Product summaries.                                                                                                           |
 | `GET /api/v1/admin/catalog/products/{productId}`                   | `catalog.read`                       | No   | Full protected Product, Variant, exact Inventory, and ready Image metadata.                                                                         |
-| `GET /api/v1/admin/catalog/product-options/sizes`                  | `catalog.read`                       | No   | Database-owned Persian/English Product size names for Admin forms and size management.                                                              |
-| `POST /api/v1/admin/catalog/product-options/sizes`                 | `catalog.manage`                     | Yes  | Create a shared Product size option with required Persian and English names; `201`.                                                                 |
-| `PATCH /api/v1/admin/catalog/product-options/sizes/{englishName}`  | `catalog.manage`                     | Yes  | Replace both required fields of a shared Product size option; updates matching retained Variant size labels; `200`.                                 |
+| `GET /api/v1/admin/catalog/product-options/sizes`                  | `catalog.read`                       | No   | Database-owned English Product size names for Admin forms and size management.                                                                      |
+| `POST /api/v1/admin/catalog/product-options/sizes`                 | `catalog.manage`                     | Yes  | Create a shared Product size option with its required English name; `201`.                                                                           |
+| `PATCH /api/v1/admin/catalog/product-options/sizes/{englishName}`  | `catalog.manage`                     | Yes  | Replace the English name of a shared Product size option; updates matching retained Variant size labels; `200`.                                     |
 | `DELETE /api/v1/admin/catalog/product-options/sizes/{englishName}` | `catalog.manage`                     | Yes  | Permanently delete a shared Product size option; `200`.                                                                                             |
 | `GET /api/v1/admin/catalog/product-options/colors`                 | `catalog.read`                       | No   | Database-owned Persian/English Product color names and hexadecimal swatches for Admin forms and color management.                                    |
 | `POST /api/v1/admin/catalog/product-options/colors`                | `catalog.manage`                     | Yes  | Create a shared Product color option with required Persian name, English name, and hexadecimal swatch; `201`.                                        |
@@ -272,12 +271,12 @@ Protected Product list uses `page` default 1 and `pageSize` default 25, maximum 
 - Create Category multipart: exactly one required `file`, required `name`, and optional empty/UUID `parentId`. The image follows the same content, size, dimension, and storage-safety boundary as Product Images.
 - Patch Category multipart: optional replacement `file`, optional `name`, and optional empty/UUID `parentId`; at least one field/file must be present. Omitting the file preserves an existing image, while a legacy Category without an image requires one.
 - Create Product JSON: required `name`, `categoryId`, and non-empty `variants`; optional nullable `description` and `tag`. Product status is server-owned `DRAFT`.
-- Create Product JSON requires Product-level `originalPriceRial` and `discountPercent`. Its initial Variant requires positive `onHandQuantity` (`1..2147483647`); nullable `size`/`color` and `isActive` are optional, with `isActive` defaulting to `true`. Backend generates the globally unique normalized `sku`.
-- Create Variant JSON requires `sku`; optional nullable `size`/`color`; optional `isActive`, default `true`; optional `onHandQuantity`, default `0`. It inherits Product pricing.
+- Create Product JSON requires Product-level `originalPriceRial` and `discountPercent`. Every initial Variant requires `size`, `color`, and positive `onHandQuantity` (`1..2147483647`), with `isActive` defaulting to `true`. Backend generates the globally unique normalized `sku`; each created Variant receives its required Image through the protected multipart upload with `variantId`.
+- Create Variant JSON requires `size`, `color`, and positive `onHandQuantity`; `isActive` defaults to `true`, while Backend generates the globally unique SKU. It inherits Product pricing.
 - Patch Product JSON: optional `name`, nullable `description`, nullable `tag`, `categoryId`, and `status`; at least one field must be present. A lifecycle transition and completeness-restoring field updates may be submitted together for one atomic validation. Archived Product requests may contain only `status: "DRAFT"`.
 - Patch Variant JSON accepts optional `sku`, nullable `size`/`color`, and `isActive`; at least one field must be present. Product pricing is patched through the Product endpoint.
 - Put Inventory JSON: exactly `{ "onHandQuantity": <non-negative safe integer>, "version": <positive integer> }`.
-- Product Image upload/replacement multipart: exactly one `file` plus required positive integer `imageVersion`; no caller position, filename, path, key, Product ownership, or media metadata is trusted.
+- Product Image upload multipart: exactly one `file`, required positive integer `imageVersion`, and optional same-Product `variantId`; one Image may be assigned to each Variant. Replacement preserves the existing assignment. No caller position, filename, path, key, Product ownership, or media metadata is trusted.
 - Product Image reorder JSON: exactly `{ "imageIds": [<UUID>], "imageVersion": <positive integer> }`; the array contains every current ready Image once and may be empty only for a Draft Product.
 - Product Image delete uses required positive integer `imageVersion` as an explicit query parameter because a DELETE request body is not accepted.
 - Put display setting JSON: exactly `{ "unit": "RIAL" | "TOMAN" }`.
@@ -287,7 +286,7 @@ Normalized values returned by successful mutations are authoritative. Validation
 ### Minimum protected DTO boundaries
 
 - Category: `id`, `name`, `parentId`, `level`, nullable Image metadata, `children`; protected responses may include `createdAt`/`updatedAt`.
-- Product summary: `id`, `name`, nullable plain-text `description`, nullable `tag`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, main Image metadata if present, `originalPriceRial`, derived `finalPriceRial`, `discountPercent`, `currency`, exact aggregate on-hand quantity, `createdAt`, and `updatedAt`.
+- Product summary: `id`, `name`, nullable plain-text `description`, nullable `tag`, `category`, `status`, Variant count, active Variant count, unique non-null `sizes` and `colors` across retained Variants, the first retained Variant Image as `mainImage` when present, `originalPriceRial`, derived `finalPriceRial`, `discountPercent`, `currency`, exact aggregate on-hand quantity, `createdAt`, and `updatedAt`.
 - Product detail: Product fields plus all retained Variants with `id`, `sku`, `size`, `color`, `isActive`, Inventory `{ onHandQuantity, version }`; ordered ready Images; `imageVersion`; timestamps.
 - Mutations return the smallest complete affected DTO needed for the Admin to update state without guessing. They never return persistence-only normalized keys, cleanup state, or storage paths/keys.
 
@@ -342,7 +341,7 @@ Public Product summary contains:
 - `minimumPriceRial`, `maximumPriceRial` across active Variants; and
 - aggregate `isAvailable`, true when any active Variant has positive on-hand quantity.
 
-Public Product summary contains the Storefront card fields `id`, `name`, `description`, `image`, `alt`, `original_price`, derived `final_price`, `discount`, `currency`, aggregate `quantity`, and `isAvailable`, plus Category identity. Public Product detail adds the Category path, all ordered ready Images, and all active Variants with `id`, nullable `size`/`color`, and boolean `isAvailable`. It omits SKU, exact per-Variant Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
+Public Product summary contains the Storefront card fields `id`, `name`, `description`, the first active Variant Image as `image`, `alt`, `original_price`, derived `final_price`, `discount`, `currency`, aggregate `quantity`, and `isAvailable`, plus Category identity. Public Product detail adds the Category path and all active Variants with `id`, boolean `isAvailable`, required Variant Image, nullable English `size` string, and nullable `color` as `{ persianColorName, englishColorName }`. The Persian Color name is nullable only when a retained Variant snapshot refers to an Option that was subsequently deleted. It omits SKU, exact per-Variant Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
 
 Public requests for Draft/Archived Products, inactive/foreign Images, or unknown IDs return the same `404` resource-not-found boundary so lifecycle/existence is not disclosed. Public Category filtering by a valid but empty Category returns an empty page; unknown Category returns `404 CATEGORY_NOT_FOUND`.
 
@@ -369,7 +368,7 @@ All failures use the accepted top-level error envelope with safe Persian display
 | `409`  | `PRODUCT_ACTIVATION_INCOMPLETE`     | Activation or Active-state mutation violates completeness.                                                                            |
 | `409`  | `SKU_CONFLICT`                      | Normalized SKU is already owned by another Variant.                                                                                   |
 | `409`  | `VARIANT_COMBINATION_CONFLICT`      | Normalized size/color combination already exists in the Product.                                                                      |
-| `409`  | `VARIANT_MODE_CONFLICT`             | Active default/named exclusivity or last-active-Variant invariant would fail.                                                         |
+| `409`  | `VARIANT_MODE_CONFLICT`             | An active Variant would lack a required color/size dimension or the last-active-Variant invariant would fail.                         |
 | `409`  | `INVENTORY_VERSION_CONFLICT`        | Expected optimistic version is stale.                                                                                                 |
 | `409`  | `PRODUCT_IMAGE_LIMIT_REACHED`       | Product already has nine ready images.                                                                                                |
 | `409`  | `PRODUCT_IMAGE_ORDER_CONFLICT`      | Image collection version is stale or submitted membership/order is invalid.                                                           |
@@ -428,7 +427,7 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ### Product and Variant
 
-- Unit/integration/API coverage for atomic create, required/default/named Variants, normalized SKU/combination conflicts, price rules, lifecycle transitions, activation completeness, last active Variant, Archived immutability, zero-stock visibility semantics, authorization, CSRF, stable errors, and OpenAPI.
+- Unit/integration/API coverage for atomic create, required Variant color/size dimensions, normalized SKU/combination conflicts, price rules, lifecycle transitions, activation completeness, last active Variant, Archived immutability, zero-stock visibility semantics, authorization, CSRF, stable errors, and OpenAPI.
 
 ### Inventory
 

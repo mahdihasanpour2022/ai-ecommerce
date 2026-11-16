@@ -36,8 +36,19 @@ export class ProductImageService {
         assertVersion(product.imageVersion, input.imageVersion);
         const images = await this.repository.images(transaction, productId);
         if (images.length >= 9) throw new ProductImageError('PRODUCT_IMAGE_LIMIT_REACHED');
+        // هر واریانت فقط یک تصویر متعلق به همان محصول دریافت می‌کند.
+        if (input.variantId !== undefined) {
+          const variant = await transaction.productVariant.findFirst({
+            where: { id: input.variantId, productId },
+            select: { id: true },
+          });
+          if (variant === null || images.some((image) => image.variantId === input.variantId)) {
+            throw new ProductImageError('VALIDATION_FAILED');
+          }
+        }
         await this.repository.createImage(transaction, {
           productId,
+          ...(input.variantId === undefined ? {} : { variantId: input.variantId }),
           storageKey: prepared.storageKey,
           mediaType: validated.mediaType,
           byteSize: validated.byteSize,
@@ -106,6 +117,7 @@ export class ProductImageService {
         await this.repository.deleteImage(transaction, imageId);
         await this.repository.createImage(transaction, {
           productId,
+          ...(existing.variantId === null ? {} : { variantId: existing.variantId }),
           storageKey: prepared.storageKey,
           mediaType: validated.mediaType,
           byteSize: validated.byteSize,
@@ -138,8 +150,8 @@ export class ProductImageService {
       const images = await this.repository.images(transaction, productId);
       const existing = images.find((image) => image.id === imageId);
       if (existing === undefined) throw new ProductImageError('PRODUCT_IMAGE_NOT_FOUND');
-      if (product.status === 'ACTIVE' && existing.position === 0) {
-        throw new ProductImageError('PRODUCT_MAIN_IMAGE_REQUIRED');
+      if (product.status === 'ACTIVE' && existing.variantId !== null) {
+        throw new ProductImageError('PRODUCT_VARIANT_IMAGE_REQUIRED');
       }
       await this.repository.deferOrderConstraint(transaction);
       const cleanupRow = await this.repository.createCleanup(transaction, existing.storageKey);
@@ -245,6 +257,7 @@ function collection(
     imageVersion,
     images: images.map((image) => ({
       id: image.id,
+      variantId: image.variantId,
       mediaType: image.mediaType,
       byteSize: image.byteSize,
       width: image.width,

@@ -1,33 +1,9 @@
 import { z } from 'zod';
 
 const asciiInteger = /^\d+$/u;
-const maximumInventory = 2_147_483_647;
 const productTag = /^[a-z]+(?:_[a-z]+)*$/u;
 
-function isFileLike(value: unknown): value is File {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'name' in value &&
-    typeof value.name === 'string' &&
-    'size' in value &&
-    typeof value.size === 'number' &&
-    'type' in value &&
-    typeof value.type === 'string' &&
-    'arrayBuffer' in value &&
-    typeof value.arrayBuffer === 'function'
-  );
-}
-
-const optionalSingleLine = (label: string) =>
-  z
-    .string()
-    .trim()
-    .max(80, `${label} نمی‌تواند بیشتر از ۸۰ کاراکتر باشد.`)
-    .refine((value) => !/[\n\r<>]/u.test(value), `${label} معتبر نیست.`);
-
 export const editProductSchema = z.object({
-  image: z.custom<File>(isFileLike, { message: 'فایل تصویر معتبر نیست.' }).optional(),
   name: z
     .string()
     .trim()
@@ -49,9 +25,6 @@ export const editProductSchema = z.object({
       'تگ فقط باید شامل حروف انگلیسی کوچک باشد و کلمات با _ جدا شوند.',
     ),
   categoryId: z.uuid('یک دسته‌بندی معتبر انتخاب کنید.'),
-  variantId: z.uuid('یک تنوع معتبر انتخاب کنید.'),
-  size: optionalSingleLine('سایز'),
-  color: optionalSingleLine('رنگ'),
   originalPriceRial: z
     .string()
     .trim()
@@ -68,14 +41,6 @@ export const editProductSchema = z.object({
       const discount = Number(value);
       return Number.isInteger(discount) && discount >= 0 && discount <= 100;
     }, 'درصد تخفیف باید عددی بین صفر تا صد باشد.'),
-  onHandQuantity: z
-    .string()
-    .trim()
-    .regex(asciiInteger, 'موجودی را وارد کنید.')
-    .refine((value) => {
-      const quantity = Number(value);
-      return Number.isInteger(quantity) && quantity >= 0 && quantity <= maximumInventory;
-    }, 'موجودی باید عددی بین صفر و حداکثر مجاز باشد.'),
 });
 
 export type EditProductFormValues = z.infer<typeof editProductSchema>;

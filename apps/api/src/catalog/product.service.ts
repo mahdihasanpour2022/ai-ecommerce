@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 
 import type {
   CreateProductInput,
+  InitialVariantInput,
   ProductDetailDto,
   ProductImageMetadataDto,
   ProductListQuery,
@@ -154,7 +155,11 @@ export class ProductService {
     for (const cleanup of cleanups) await this.finishImageCleanup(cleanup);
   }
 
-  async createVariant(productId: string, input: VariantInput): Promise<ProductVariantResponseDto> {
+  async createVariant(
+    productId: string,
+    input: InitialVariantInput,
+  ): Promise<ProductVariantResponseDto> {
+    const variant: VariantInput = { ...input, sku: generateVariantSku() };
     return this.runMutation('create-variant', () =>
       this.repository.transaction(async (transaction) => {
         if (!(await this.repository.lockProduct(transaction, productId))) {
@@ -164,11 +169,11 @@ export class ProductService {
         if (existing.status === 'ARCHIVED') {
           throw new ProductError('PRODUCT_LIFECYCLE_CONFLICT');
         }
-        await this.insertVariant(transaction, productId, input);
+        await this.insertVariant(transaction, productId, variant);
         const updated = await this.requiredAggregate(transaction, productId);
         assertVariantMode(updated);
         if (updated.status === 'ACTIVE') assertActiveProductComplete(updated);
-        return requiredVariant(updated, undefined, input.sku);
+        return requiredVariant(updated, undefined, variant.sku);
       }),
     );
   }
@@ -214,6 +219,73 @@ export class ProductService {
         return requiredVariant(updated, variantId);
       }),
     );
+  }
+
+  async deleteVariant(variantId: string): Promise<void> {
+    await this.retryImageCleanup();
+    const cleanup = await this.runMutation('delete-variant', () =>
+      this.repository.transaction(async (transaction) => {
+        const candidate = await transaction.productVariant.findUnique({
+          where: { id: variantId },
+          select: {
+            productId: true,
+            isActive: true,
+            image: { select: { id: true, storageKey: true, position: true } },
+          },
+        });
+        if (candidate === null) throw new ProductError('PRODUCT_VARIANT_NOT_FOUND');
+        if (!(await this.repository.lockProduct(transaction, candidate.productId))) {
+          throw new ProductError('PRODUCT_NOT_FOUND');
+        }
+        const existing = await this.requiredAggregate(transaction, candidate.productId);
+        if (existing.status === 'ARCHIVED') {
+          throw new ProductError('PRODUCT_LIFECYCLE_CONFLICT');
+        }
+        if (existing.variants.length <= 1) throw new ProductError('PRODUCT_VARIANT_REQUIRED');
+        if (
+          existing.status === 'ACTIVE' &&
+          candidate.isActive &&
+          existing.variants.filter((variant) => variant.isActive).length <= 1
+        ) {
+          throw new ProductError('PRODUCT_VARIANT_REQUIRED');
+        }
+
+        // تصویر و موجودی وابسته پیش از حذف واریانت پاک و ترتیب تصاویر فشرده می‌شود.
+        let pendingCleanup: { readonly id: string; readonly storageKey: string } | undefined;
+        if (candidate.image !== null) {
+          const row = await transaction.productImageCleanup.create({
+            data: { storageKey: candidate.image.storageKey },
+            select: { id: true },
+          });
+          pendingCleanup = { id: row.id, storageKey: candidate.image.storageKey };
+          await transaction.$executeRawUnsafe(
+            'SET CONSTRAINTS product_images_product_id_position_key DEFERRED',
+          );
+          await transaction.productImage.delete({ where: { id: candidate.image.id } });
+          const laterImages = await transaction.productImage.findMany({
+            where: { productId: candidate.productId, position: { gt: candidate.image.position } },
+            select: { id: true, position: true },
+            orderBy: { position: 'asc' },
+          });
+          for (const image of laterImages) {
+            await transaction.productImage.update({
+              where: { id: image.id },
+              data: { position: image.position - 1 },
+            });
+          }
+          await transaction.product.update({
+            where: { id: candidate.productId },
+            data: { imageVersion: { increment: 1 } },
+          });
+        }
+        await transaction.inventory.deleteMany({ where: { variantId } });
+        await transaction.productVariant.delete({ where: { id: variantId } });
+        const updated = await this.requiredAggregate(transaction, candidate.productId);
+        if (updated.status === 'ACTIVE') assertActiveProductComplete(updated);
+        return pendingCleanup;
+      }),
+    );
+    if (cleanup !== undefined) await this.finishImageCleanup(cleanup);
   }
 
   private async insertVariant(
@@ -325,8 +397,7 @@ function assertVariantMode(product: ProductDetailRecord): void {
 function assertActiveVariantMode(
   variants: ReadonlyArray<{ readonly size: string | null; readonly color: string | null }>,
 ): void {
-  const defaults = variants.filter((variant) => variant.size === null && variant.color === null);
-  if (defaults.length > 1 || (defaults.length > 0 && defaults.length !== variants.length)) {
+  if (variants.some((variant) => variant.size === null || variant.color === null)) {
     throw new ProductError('VARIANT_MODE_CONFLICT');
   }
 }
@@ -336,8 +407,7 @@ function assertActiveProductComplete(product: ProductDetailRecord): void {
   if (
     product.description === null ||
     active.length === 0 ||
-    active.some((variant) => variant.inventory === null) ||
-    !product.images.some((image) => image.position === 0)
+    active.some((variant) => variant.inventory === null || variant.image === null)
   ) {
     throw new ProductError('PRODUCT_ACTIVATION_INCOMPLETE');
   }
@@ -362,6 +432,7 @@ function safeTotal(values: readonly number[]): number {
 function toImageDto(image: ProductDetailRecord['images'][number]): ProductImageMetadataDto {
   return {
     id: image.id,
+    variantId: image.variantId,
     mediaType: image.mediaType,
     byteSize: image.byteSize,
     width: image.width,
@@ -382,6 +453,7 @@ function toVariantDto(variant: ProductDetailRecord['variants'][number]): Product
     color: variant.color,
     isActive: variant.isActive,
     inventory: variant.inventory,
+    image: variant.image === null ? null : toImageDto(variant.image),
     createdAt: variant.createdAt.toISOString(),
     updatedAt: variant.updatedAt.toISOString(),
   };
@@ -432,7 +504,10 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
     activeVariantCount: product.variants.filter((variant) => variant.isActive).length,
     sizes: uniqueLabels(product.variants.map((variant) => variant.size)),
     colors: uniqueLabels(product.variants.map((variant) => variant.color)),
-    mainImage: product.images[0] === undefined ? null : toImageDto(product.images[0]),
+    mainImage:
+      product.variants[0]?.image === null || product.variants[0]?.image === undefined
+        ? null
+        : toImageDto(product.variants[0].image),
     originalPriceRial: safeRial(product.originalPriceRial),
     finalPriceRial: finalPriceRial(product.originalPriceRial, product.discountPercent),
     discountPercent: product.discountPercent,

@@ -43,8 +43,11 @@ const ProductPage = async ({ params }: ProductPageProps) => {
     .catch(noop);
 
   const product = response?.singleResult;
-  if (product && productName !== product.name) {
-    permanentRedirect(getProductHref(productId, product.name));
+  if (product) {
+    const currentHref = `/products/${productId}/${productName}`;
+    const productHref = getProductHref(productId, product.name);
+
+    if (currentHref !== productHref) permanentRedirect(productHref);
   }
 
   return (

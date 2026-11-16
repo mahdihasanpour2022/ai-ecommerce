@@ -22,6 +22,7 @@ import { DeleteProductModal } from './delete-product-modal';
 import { EditProductModal } from './edit-product-modal';
 import { ProductActionMenu } from './product-action-menu';
 import { ProductThumbnail } from './productThumbnail';
+import { ProductVariantsExpandedRow } from './product-variants-expanded-row';
 
 const rialFormatter = new Intl.NumberFormat('fa-IR', {
   maximumFractionDigits: 0,
@@ -98,7 +99,7 @@ export function ProductTable({
       new Map(
         (sizeOptions.data?.result ?? []).map((size) => [
           size['english-size-name'],
-          size['persian-size-name'],
+          size['english-size-name'],
         ]),
       ),
     [sizeOptions.data?.result],
@@ -242,7 +243,7 @@ export function ProductTable({
       render: (status: ProductStatus) => <ProductStatusBadge status={status} />,
     },
     {
-      title: 'تنوع‌ها',
+      title: 'واریانت‌ها',
       key: 'variants',
       align: 'center',
       render: (_value, product) => (
@@ -327,6 +328,12 @@ export function ProductTable({
           columns={columns}
           dataSource={[...products]}
           rowKey="id"
+          expandable={{
+            expandedRowRender: (product) => (
+              <ProductVariantsExpandedRow productId={product.id} />
+            ),
+            rowExpandable: (product) => product.variantCount > 0,
+          }}
           scroll={{ x: 'max-content' }}
           size="small"
           pagination={{

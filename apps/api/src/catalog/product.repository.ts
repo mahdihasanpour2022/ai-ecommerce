@@ -4,10 +4,15 @@ import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { ProductListQuery } from './product.dto.js';
 
+const VARIANT_ORDER_BY: Prisma.ProductVariantOrderByWithRelationInput[] = [
+  { createdAt: 'asc' },
+  { id: 'asc' },
+];
 const CATEGORY_SELECT = { id: true, name: true } as const;
 const INVENTORY_SELECT = { onHandQuantity: true, version: true } as const;
 const IMAGE_SELECT = {
   id: true,
+  variantId: true,
   mediaType: true,
   byteSize: true,
   width: true,
@@ -31,6 +36,7 @@ const VARIANT_SCALAR_SELECT = {
 const VARIANT_SELECT = {
   ...VARIANT_SCALAR_SELECT,
   inventory: { select: INVENTORY_SELECT },
+  image: { select: IMAGE_SELECT },
 } as const;
 const PRODUCT_BASE_SELECT = {
   id: true,
@@ -57,7 +63,10 @@ export const PRODUCT_DETAIL_SELECT = {
   category: { select: CATEGORY_SELECT },
   status: true,
   imageVersion: true,
-  variants: { select: VARIANT_SELECT, orderBy: { id: 'asc' as const } },
+  variants: {
+    select: VARIANT_SELECT,
+    orderBy: VARIANT_ORDER_BY,
+  },
   images: { select: IMAGE_SELECT, orderBy: { position: 'asc' as const } },
   createdAt: true,
   updatedAt: true,
@@ -74,17 +83,14 @@ const PRODUCT_SUMMARY_SELECT = {
   status: true,
   variants: {
     select: {
+      id: true,
       size: true,
       color: true,
       isActive: true,
       inventory: { select: { onHandQuantity: true } },
+      image: { select: IMAGE_SELECT },
     },
-    orderBy: { id: 'asc' as const },
-  },
-  images: {
-    where: { position: 0 },
-    select: IMAGE_SELECT,
-    take: 1,
+    orderBy: VARIANT_ORDER_BY,
   },
   createdAt: true,
   updatedAt: true,
@@ -200,7 +206,7 @@ export class ProductRepository {
 
   pendingImageCleanups(): Promise<Array<{ readonly id: string; readonly storageKey: string }>> {
     return this.prisma.productImageCleanup.findMany({
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: VARIANT_ORDER_BY,
       take: 10,
       select: { id: true, storageKey: true },
     });
@@ -238,7 +244,7 @@ export class ProductRepository {
     const variantRows = await transaction.productVariant.findMany({
       where: { productId },
       select: VARIANT_SCALAR_SELECT,
-      orderBy: { id: 'asc' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     const inventoryRows = await transaction.inventory.findMany({
       where: { variantId: { in: variantRows.map(({ id }) => id) } },
@@ -255,12 +261,17 @@ export class ProductRepository {
       select: IMAGE_SELECT,
       orderBy: { position: 'asc' },
     });
+    // تصویر متصل به هر واریانت در aggregate محصول قرار می‌گیرد.
+    const imagesByVariant = new Map(
+      images.flatMap((image) => (image.variantId === null ? [] : [[image.variantId, image] as const])),
+    );
     return {
       ...product,
       category,
       variants: variantRows.map((variant) => ({
         ...variant,
         inventory: inventories.get(variant.id) ?? null,
+        image: imagesByVariant.get(variant.id) ?? null,
       })),
       images,
     };

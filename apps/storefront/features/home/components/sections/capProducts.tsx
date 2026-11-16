@@ -1,7 +1,8 @@
 import { UiCarousel, UiLink, UiP, UiSpan } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
-import { ProductCard } from '@/features/components/shared/productCard';
+import { CollectionProductCard } from '@/features/components/shared';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
+import { nanoid } from 'nanoid';
 
 export const CapProducts = () => {
   const { data } = useGetProducts({ tags: PRODUCT_COLLECTIONS.cap.tags, enabled: true });
@@ -29,13 +30,16 @@ export const CapProducts = () => {
           controls="none"
           labels={{ carousel: 'محصولات' }}
           containerClassName="h-full"
-          slideClassName="h-64 basis-32 px-1 sm:basis-44"
+          slideClassName="h-72 basis-32 px-1 sm:basis-44"
         >
           {products.map((product) => (
-            <ProductCard
-              key={product.id}
+            <CollectionProductCard
+              key={nanoid()}
               product={product}
-              containerClassName="border border-foreground/10 rounded-b-xl"
+              className={{
+                wrapper:
+                  'border-foreground/10 flex h-64 w-full! flex-col items-center justify-start overflow-hidden rounded-t-lg! rounded-b-xl border bg-white px-1 py-1 sm:px-1! sm:py-1!',
+              }}
             />
           ))}
         </UiCarousel>

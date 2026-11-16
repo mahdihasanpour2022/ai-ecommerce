@@ -8,7 +8,7 @@ import type {
 } from './product-option.dto.js';
 
 const colorSelect = { englishName: true, persianName: true, hexCode: true } as const;
-const sizeSelect = { englishName: true, persianName: true } as const;
+const sizeSelect = { englishName: true } as const;
 
 function toColorOption(row: {
   readonly englishName: string;
@@ -22,9 +22,8 @@ function toColorOption(row: {
   };
 }
 
-function toSizeOption(row: { readonly englishName: string; readonly persianName: string }): PublicProductSizeOption {
+function toSizeOption(row: { readonly englishName: string }): PublicProductSizeOption {
   return {
-    'persian-size-name': row.persianName,
     'english-size-name': row.englishName,
   };
 }
@@ -51,7 +50,10 @@ export class ProductOptionRepository {
 
   async createSize(input: ProductSizeInput): Promise<PublicProductSizeOption> {
     return toSizeOption(
-      await this.prisma.productSizeOption.create({ data: input, select: sizeSelect }),
+      await this.prisma.productSizeOption.create({
+        data: { englishName: input.englishName, persianName: input.englishName },
+        select: sizeSelect,
+      }),
     );
   }
 
@@ -62,7 +64,7 @@ export class ProductOptionRepository {
     return this.prisma.$transaction(async (transaction) => {
       const updated = await transaction.productSizeOption.update({
         where: { englishName: currentEnglishName },
-        data: input,
+        data: { englishName: input.englishName, persianName: input.englishName },
         select: sizeSelect,
       });
       if (currentEnglishName !== input.englishName) {

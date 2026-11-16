@@ -21,7 +21,6 @@ interface ProductSizeFormModalProps {
 }
 
 const emptyValues: ProductSizeFormValues = {
-  persianName: '',
   englishName: '',
 };
 
@@ -54,7 +53,6 @@ export function ProductSizeFormModal({
     reset(
       size
         ? {
-            persianName: size['persian-size-name'],
             englishName: size['english-size-name'],
           }
         : emptyValues,
@@ -100,30 +98,12 @@ export function ProductSizeFormModal({
     >
       <UiForm.Root onSubmit={(event) => void submit(event)}>
         <UiForm.Field>
-          <UiForm.Label htmlFor={`${mode}-size-persian-name`}>نام فارسی</UiForm.Label>
-          <UiForm.TextInput
-            id={`${mode}-size-persian-name`}
-            autoComplete="off"
-            autoFocus
-            maxLength={80}
-            disabled={submitting}
-            aria-invalid={errors.persianName ? 'true' : 'false'}
-            aria-describedby={errors.persianName ? `${mode}-size-persian-name-error` : undefined}
-            {...register('persianName')}
-          />
-          {errors.persianName ? (
-            <UiForm.Error id={`${mode}-size-persian-name-error`}>
-              {errors.persianName.message}
-            </UiForm.Error>
-          ) : null}
-        </UiForm.Field>
-
-        <UiForm.Field>
           <UiForm.Label htmlFor={`${mode}-size-english-name`}>نام انگلیسی</UiForm.Label>
           <UiForm.TextInput
             id={`${mode}-size-english-name`}
             dir="ltr"
             autoComplete="off"
+            autoFocus
             maxLength={80}
             disabled={submitting}
             aria-invalid={errors.englishName ? 'true' : 'false'}

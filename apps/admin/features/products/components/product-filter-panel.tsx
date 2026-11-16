@@ -181,7 +181,7 @@ export function ProductFilterPanel({ filters, onApply, onClear }: ProductFilterP
                           key={size['english-size-name']}
                           value={size['english-size-name']}
                         >
-                          {size['persian-size-name']}
+                          {size['english-size-name']}
                         </UiForm.Option>
                       ))}
                     </UiForm.Select>

@@ -25,6 +25,7 @@ const SearchProduct = () => {
   const pathname = usePathname();
   const [debouncedQuery, setDebouncedQuery] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const currentQueryString = searchParams.toString();
   const urlQuery = searchParams.get('name') ?? '';
   const [submittedQuery, setSubmittedQuery] = useState(urlQuery);
   const { control, handleSubmit, reset } = useForm<FormSchemaType>({
@@ -35,7 +36,7 @@ const SearchProduct = () => {
     mode: 'onChange',
   });
 
-  const query = useWatch({ control, name: 'query' });
+  const query = useWatch({ control, name: 'query', defaultValue: urlQuery });
   const previousQueryRef = useRef(query);
 
   const { data, hasNextPage, isLoading, isFetchingNextPage, loadMoreRef } = useInfiniteProducts({
@@ -49,11 +50,9 @@ const SearchProduct = () => {
     return data.pages.flatMap((page) => page.result);
   }, [data]);
 
-  console.log('searchedReslt ::', searchedReslt);
-
   const handleValidSearch = useCallback(
     ({ query: validQuery }: FormSchemaType) => {
-      const nextSearchParams = new URLSearchParams(searchParams.toString());
+      const nextSearchParams = new URLSearchParams(currentQueryString);
       if (validQuery) {
         nextSearchParams.set('name', validQuery);
       } else {
@@ -61,11 +60,13 @@ const SearchProduct = () => {
       }
 
       const queryString = nextSearchParams.toString();
-      router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+      if (queryString !== currentQueryString) {
+        router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+      }
       setSubmittedQuery(validQuery);
       setDebouncedQuery(validQuery);
     },
-    [pathname, router, searchParams],
+    [currentQueryString, pathname, router],
   );
 
   const runSearch = useMemo(

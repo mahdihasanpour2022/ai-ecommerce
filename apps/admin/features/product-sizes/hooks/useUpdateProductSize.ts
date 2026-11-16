@@ -7,7 +7,6 @@ import type { ProductSizeOption } from '../../../hooks/shared/useGetProductSizes
 
 export interface UpdateProductSizeVariables {
   readonly currentEnglishName: string;
-  readonly persianName: string;
   readonly englishName: string;
 }
 

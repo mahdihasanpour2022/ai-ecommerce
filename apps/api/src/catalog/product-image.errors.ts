@@ -11,6 +11,7 @@ export type ProductImageErrorCode =
   | 'PRODUCT_IMAGE_TYPE_UNSUPPORTED'
   | 'PRODUCT_LIFECYCLE_CONFLICT'
   | 'PRODUCT_MAIN_IMAGE_REQUIRED'
+  | 'PRODUCT_VARIANT_IMAGE_REQUIRED'
   | 'PRODUCT_NOT_FOUND'
   | 'VALIDATION_FAILED';
 
@@ -25,6 +26,7 @@ const MESSAGES: Readonly<Record<ProductImageErrorCode, string>> = {
   PRODUCT_IMAGE_TYPE_UNSUPPORTED: 'نوع تصویر پشتیبانی نمی‌شود.',
   PRODUCT_LIFECYCLE_CONFLICT: 'عملیات با وضعیت فعلی محصول سازگار نیست.',
   PRODUCT_MAIN_IMAGE_REQUIRED: 'محصول فعال باید تصویر اصلی معتبر داشته باشد.',
+  PRODUCT_VARIANT_IMAGE_REQUIRED: 'واریانت فعال باید تصویر معتبر داشته باشد.',
   PRODUCT_NOT_FOUND: 'محصول مورد نظر یافت نشد.',
   VALIDATION_FAILED: 'اطلاعات درخواست معتبر نیست.',
 };
@@ -40,6 +42,7 @@ const STATUS: Readonly<Record<ProductImageErrorCode, number>> = {
   PRODUCT_IMAGE_TYPE_UNSUPPORTED: 415,
   PRODUCT_LIFECYCLE_CONFLICT: 409,
   PRODUCT_MAIN_IMAGE_REQUIRED: 409,
+  PRODUCT_VARIANT_IMAGE_REQUIRED: 409,
   PRODUCT_NOT_FOUND: 404,
   VALIDATION_FAILED: 400,
 };

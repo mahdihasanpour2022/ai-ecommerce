@@ -38,12 +38,6 @@ export function ProductSizeTable({ sizes }: Readonly<{ sizes: readonly ProductSi
       render: (_value, _size, index) => formatPersianInteger(index + 1),
     },
     {
-      title: 'نام فارسی',
-      dataIndex: 'persian-size-name',
-      key: 'persianName',
-      render: (name: string) => <span className="text-foreground font-semibold">{name}</span>,
-    },
-    {
       title: 'نام انگلیسی',
       dataIndex: 'english-size-name',
       key: 'englishName',
@@ -59,7 +53,7 @@ export function ProductSizeTable({ sizes }: Readonly<{ sizes: readonly ProductSi
             size="small"
             variant="secondary"
             disabled={deleteSize.isPending}
-            aria-label={`ویرایش سایز ${size['persian-size-name']}`}
+            aria-label={`ویرایش سایز ${size['english-size-name']}`}
             onClick={() => setEditing(size)}
           >
             ویرایش
@@ -68,7 +62,7 @@ export function ProductSizeTable({ sizes }: Readonly<{ sizes: readonly ProductSi
             size="small"
             variant="dangerSubtle"
             disabled={deleteSize.isPending}
-            aria-label={`حذف سایز ${size['persian-size-name']}`}
+            aria-label={`حذف سایز ${size['english-size-name']}`}
             onClick={() => setDeleting(size)}
           >
             حذف

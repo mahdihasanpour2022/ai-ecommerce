@@ -31,7 +31,14 @@ export const OurSuggestion = () => {
       ) : (
         <div className="grid h-fit w-full grid-cols-5 gap-0">
           {ourSuggestProducts.map((product) => (
-            <CollectionProductCard key={nanoid()} product={product} />
+            <CollectionProductCard
+              key={nanoid()}
+              product={product}
+              className={{
+                wrapper:
+                  'border-foreground/5 hover:shadow-product-card flex h-full! flex-col items-stretch border px-2!',
+              }}
+            />
           ))}
         </div>
       )}

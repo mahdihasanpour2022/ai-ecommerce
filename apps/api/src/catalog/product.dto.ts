@@ -32,10 +32,10 @@ export interface ProductListQuery {
 
 export interface VariantInput {
   readonly sku: string;
-  readonly size: string | null;
-  readonly sizeKey: string | null;
-  readonly color: string | null;
-  readonly colorKey: string | null;
+  readonly size: string;
+  readonly sizeKey: string;
+  readonly color: string;
+  readonly colorKey: string;
   readonly isActive: boolean;
   readonly onHandQuantity: number;
 }
@@ -44,10 +44,10 @@ export type InitialVariantInput = Omit<VariantInput, 'sku'>;
 
 export interface VariantUpdateInput {
   readonly sku?: string;
-  readonly size?: string | null;
-  readonly sizeKey?: string | null;
-  readonly color?: string | null;
-  readonly colorKey?: string | null;
+  readonly size?: string;
+  readonly sizeKey?: string;
+  readonly color?: string;
+  readonly colorKey?: string;
   readonly isActive?: boolean;
 }
 
@@ -72,11 +72,11 @@ export interface UpdateProductInput {
 }
 
 class VariantValuesRequestDto {
-  @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true, default: null })
-  size?: string | null;
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'medium' })
+  size!: string;
 
-  @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true, default: null })
-  color?: string | null;
+  @ApiProperty({ minLength: 1, maxLength: 80, example: 'yellow' })
+  color!: string;
 
   @ApiPropertyOptional({ default: true })
   isActive?: boolean;
@@ -88,27 +88,19 @@ export class InitialVariantRequestDto extends VariantValuesRequestDto {
 }
 
 export class CreateVariantRequestDto extends VariantValuesRequestDto {
-  @ApiProperty({
-    minLength: 1,
-    maxLength: 64,
-    pattern: SKU_PATTERN.source,
-    example: 'TSHIRT-BLK-M',
-  })
-  sku!: string;
-
-  @ApiPropertyOptional({ minimum: 0, maximum: MAX_DATABASE_INTEGER, default: 0 })
-  onHandQuantity?: number;
+  @ApiProperty({ minimum: 1, maximum: MAX_DATABASE_INTEGER })
+  onHandQuantity!: number;
 }
 
 export class UpdateVariantRequestDto {
   @ApiPropertyOptional({ minLength: 1, maxLength: 64, pattern: SKU_PATTERN.source })
   sku?: string;
 
-  @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true })
-  size?: string | null;
+  @ApiPropertyOptional({ minLength: 1, maxLength: 80 })
+  size?: string;
 
-  @ApiPropertyOptional({ minLength: 1, maxLength: 80, nullable: true })
-  color?: string | null;
+  @ApiPropertyOptional({ minLength: 1, maxLength: 80 })
+  color?: string;
 
   @ApiPropertyOptional()
   isActive?: boolean;
@@ -140,7 +132,7 @@ export class CreateProductRequestDto {
   @ApiProperty({ format: 'uuid' })
   categoryId!: string;
 
-  @ApiProperty({ type: () => InitialVariantRequestDto, isArray: true, minItems: 1 })
+  @ApiProperty({ type: () => InitialVariantRequestDto, isArray: true, minItems: 1, maxItems: 9 })
   variants!: InitialVariantRequestDto[];
 }
 
@@ -211,6 +203,9 @@ export class ProductVariantResponseDto {
   @ApiProperty({ type: () => InventoryResponseDto })
   inventory!: InventoryResponseDto;
 
+  @ApiProperty({ type: () => ProductImageMetadataDto, nullable: true })
+  image!: ProductImageMetadataDto | null;
+
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
 
@@ -221,6 +216,9 @@ export class ProductVariantResponseDto {
 export class ProductImageMetadataDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
+
+  @ApiProperty({ format: 'uuid', nullable: true })
+  variantId!: string | null;
 
   @ApiProperty({ enum: ProductImageMediaType })
   mediaType!: ProductImageMediaType;
@@ -475,9 +473,19 @@ function parseNullableOption(
   return { value: normalized, key: comparisonKey(normalized, field, 160) };
 }
 
+function parseRequiredOption(
+  value: unknown,
+  field: 'color' | 'size',
+): { value: string; key: string } {
+  if (value === null || value === undefined) fail([field]);
+  const normalized = normalizeSingleLine(value, field, 80);
+  return { value: normalized, key: comparisonKey(normalized, field, 160) };
+}
+
 function parseVariantValues(record: Record<string, unknown>): InitialVariantInput {
-  const size = parseNullableOption('size' in record ? record.size : null, 'size');
-  const color = parseNullableOption('color' in record ? record.color : null, 'color');
+  if (!('size' in record) || !('color' in record)) fail(['size', 'color']);
+  const size = parseRequiredOption(record.size, 'size');
+  const color = parseRequiredOption(record.color, 'color');
   return {
     size: size.value,
     sizeKey: size.key,
@@ -500,16 +508,6 @@ function parseInitialVariant(record: Record<string, unknown>): InitialVariantInp
   return parsed;
 }
 
-function parseVariant(record: Record<string, unknown>): VariantInput {
-  if (
-    !hasOnlyKeys(record, ['sku', 'size', 'color', 'isActive', 'onHandQuantity']) ||
-    !('sku' in record)
-  ) {
-    fail();
-  }
-  return { sku: parseSku(record.sku), ...parseVariantValues(record) };
-}
-
 export function parseCreateProductRequest(body: unknown): CreateProductInput {
   if (
     !isRecord(body) ||
@@ -527,7 +525,8 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
     !('discountPercent' in body) ||
     !('categoryId' in body) ||
     !Array.isArray(body.variants) ||
-    body.variants.length === 0
+    body.variants.length === 0 ||
+    body.variants.length > 9
   ) {
     fail();
   }
@@ -546,9 +545,9 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
   };
 }
 
-export function parseCreateVariantRequest(body: unknown): VariantInput {
+export function parseCreateVariantRequest(body: unknown): InitialVariantInput {
   if (!isRecord(body)) fail();
-  return parseVariant(body);
+  return parseInitialVariant(body);
 }
 
 export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
@@ -597,8 +596,8 @@ export function parseUpdateVariantRequest(body: unknown): VariantUpdateInput {
   ) {
     fail();
   }
-  const size = 'size' in body ? parseNullableOption(body.size, 'size') : undefined;
-  const color = 'color' in body ? parseNullableOption(body.color, 'color') : undefined;
+  const size = 'size' in body ? parseRequiredOption(body.size, 'size') : undefined;
+  const color = 'color' in body ? parseRequiredOption(body.color, 'color') : undefined;
   return {
     ...('sku' in body ? { sku: parseSku(body.sku) } : {}),
     ...(size === undefined ? {} : { size: size.value, sizeKey: size.key }),

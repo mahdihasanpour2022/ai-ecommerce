@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBody,
   ApiCookieAuth,
@@ -241,6 +253,26 @@ export class ProductController {
         parseUpdateVariantRequest(body),
       ),
     );
+  }
+
+  @Delete('variants/:variantId')
+  @HttpCode(HttpStatus.OK)
+  @ApiSuccess({
+    code: 'PRODUCT_VARIANT_DELETED',
+    message: 'واریانت محصول با موفقیت حذف شد.',
+    kind: 'none',
+  })
+  @CatalogPermission('catalog.manage')
+  @ApiHeader(CSRF_HEADER)
+  @ApiOperation({ summary: 'Permanently delete an eligible Product Variant' })
+  @ApiParam({ name: 'variantId', format: 'uuid' })
+  @ApiResponse({ status: 200 })
+  @ApiResponse({ status: 401, type: ApiErrorDto })
+  @ApiResponse({ status: 403, type: ApiErrorDto })
+  @ApiResponse({ status: 404, type: ApiErrorDto })
+  @ApiResponse({ status: 409, type: ApiErrorDto })
+  async deleteVariant(@Param('variantId') variantId: string): Promise<void> {
+    await this.handle(() => this.products.deleteVariant(parseCatalogUuid(variantId, 'variantId')));
   }
 
   private async handle<T>(work: () => Promise<T>): Promise<T> {

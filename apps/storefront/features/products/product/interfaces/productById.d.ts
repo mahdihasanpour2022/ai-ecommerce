@@ -1,5 +1,9 @@
-import { Currency } from '@/interfaces/currency';
+import type { Currency } from '@/interfaces/currency';
 
+export interface Colors {
+  readonly englishColorName: string;
+  readonly persianColorName: string | null;
+}
 export interface ProductByID {
   readonly id: string;
   readonly name: string;
@@ -20,17 +24,17 @@ export interface ProductByID {
     readonly id: string;
     readonly name: string;
   }[];
-  readonly images: readonly {
-    readonly id: string;
-    readonly url: string;
-    readonly width: number;
-    readonly height: number;
-    readonly mediaType: string;
-  }[];
   readonly variants: readonly {
     readonly id: string;
-    readonly size: string;
-    readonly color: string;
+    readonly size: string | null;
+    readonly color: Colors | null;
     readonly isAvailable: boolean;
+    readonly image: {
+      readonly id: string;
+      readonly url: string;
+      readonly width: number;
+      readonly height: number;
+      readonly mediaType: string;
+    } | null;
   }[];
 }
