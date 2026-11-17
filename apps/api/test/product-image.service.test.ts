@@ -35,6 +35,7 @@ function image(id: string, storageKey: string): ProductImageRecord {
   return {
     id,
     productId,
+    variantId: null,
     storageKey,
     mediaType: 'PNG',
     byteSize: 3,

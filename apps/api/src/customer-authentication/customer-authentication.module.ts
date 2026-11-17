@@ -5,7 +5,12 @@ import type { ApiEnvironment } from '../config/environment.js';
 import { API_ENVIRONMENT } from '../config/tokens.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { CustomerAuthenticationController } from './customer-authentication.controller.js';
+import { CustomerRegistrationRepository } from './customer-registration.repository.js';
+import { CustomerRegistrationService } from './customer-registration.service.js';
 import { CustomerSessionCrypto } from './customer-session.crypto.js';
+import { CustomerSessionRepository } from './customer-session.repository.js';
+import { CustomerSessionSecurity } from './customer-session.security.js';
+import { CustomerSessionService } from './customer-session.service.js';
 import { GhasedakOtpSender } from './ghasedak-otp.sender.js';
 import { OtpRequestCrypto } from './otp-request.crypto.js';
 import { OtpRequestRepository } from './otp-request.repository.js';
@@ -29,7 +34,12 @@ const otpSenderProvider = {
   controllers: [CustomerAuthenticationController],
   providers: [
     otpSenderProvider,
+    CustomerRegistrationRepository,
+    CustomerRegistrationService,
     CustomerSessionCrypto,
+    CustomerSessionRepository,
+    CustomerSessionSecurity,
+    CustomerSessionService,
     OtpRequestCrypto,
     OtpRequestRepository,
     OtpRequestSecurity,

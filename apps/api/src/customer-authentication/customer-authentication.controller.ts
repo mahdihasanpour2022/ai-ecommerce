@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpException,
   Inject,
@@ -12,7 +13,9 @@ import {
 } from '@nestjs/common';
 import {
   ApiBody,
+  ApiCookieAuth,
   ApiExtraModels,
+  ApiHeader,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -33,12 +36,32 @@ import {
   CUSTOMER_CSRF_COOKIE_NAME,
   CUSTOMER_REFRESH_COOKIE_NAME,
   AUTH_FLOW_INVALID_MESSAGE,
+  CUSTOMER_AUTH_BOOTSTRAPPED_MESSAGE,
+  CUSTOMER_FLOW_FETCHED_MESSAGE,
+  CUSTOMER_LOGOUT_MESSAGE,
+  CUSTOMER_REGISTERED_MESSAGE,
+  CUSTOMER_SESSION_REFRESHED_MESSAGE,
   INTERNAL_SERVER_ERROR_MESSAGE,
   OTP_REQUESTED_MESSAGE,
   OTP_SEND_UNAVAILABLE_MESSAGE,
   OTP_VERIFIED_MESSAGE,
 } from './customer-authentication.constants.js';
 import { CustomerAuthenticationError } from './customer-authentication.errors.js';
+import {
+  CustomerRegistrationRequestDto,
+  CustomerRegistrationResponseDto,
+  parseCustomerRegistration,
+} from './customer-registration.dto.js';
+import { CustomerRegistrationService } from './customer-registration.service.js';
+import {
+  CustomerAuthenticatedFlowDto,
+  type CustomerFlowResponse,
+  CustomerMobileRequiredFlowDto,
+  CustomerOtpPendingFlowDto,
+  CustomerRegistrationRequiredFlowDto,
+  CustomerSessionBootstrapResponseDto,
+} from './customer-session.dto.js';
+import { CustomerSessionService } from './customer-session.service.js';
 import {
   maskMobile,
   OtpRequestDto,
@@ -65,17 +88,292 @@ interface ErrorEnvelope {
 }
 
 @ApiTags('Customer authentication')
-@ApiExtraModels(OtpAuthenticatedResponseDto, OtpRegistrationRequiredResponseDto)
+@ApiExtraModels(
+  CustomerRegistrationResponseDto,
+  CustomerAuthenticatedFlowDto,
+  CustomerMobileRequiredFlowDto,
+  CustomerOtpPendingFlowDto,
+  CustomerRegistrationRequiredFlowDto,
+  OtpAuthenticatedResponseDto,
+  OtpRegistrationRequiredResponseDto,
+)
 @Controller('customer-auth')
 export class CustomerAuthenticationController {
   constructor(
     private readonly requestService: OtpRequestService,
     private readonly requestSecurity: OtpRequestSecurity,
+    private readonly registrationService: CustomerRegistrationService,
+    private readonly sessionService: CustomerSessionService,
     private readonly verificationService: OtpVerificationService,
     private readonly verificationSecurity: OtpVerificationSecurity,
     private readonly loginSecurity: LoginSecurity,
     @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment,
   ) {}
+
+  @Post('bootstrap')
+  @HttpCode(200)
+  @ApiSuccess({
+    code: 'CUSTOMER_AUTH_BOOTSTRAPPED',
+    message: CUSTOMER_AUTH_BOOTSTRAPPED_MESSAGE,
+    kind: 'single',
+  })
+  @ApiCookieAuth('customerRefresh')
+  @ApiOperation({ summary: 'Validate or recover the current Storefront customer session' })
+  @ApiResponse({
+    status: 200,
+    type: CustomerSessionBootstrapResponseDto,
+    description: 'Returns the current customer and session-bound CSRF state.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Readable CSRF cookie and replacement credentials when refresh was required.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': { schema: { type: 'string', example: 'no-store' } },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Authentication/session failure.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Untrusted request boundary.' })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Refresh throttle response.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure.' })
+  // نشست فعلی را بازیابی و در صورت نیاز credentialهای چرخیده را فقط در cookie قرار می‌دهد.
+  async bootstrap(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<CustomerSessionBootstrapResponseDto> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const result = await this.sessionService.bootstrap(request);
+      const cookies = [
+        this.csrfCookie(result.csrfToken, result.authentication.sessionExpiresAt),
+      ];
+      if (result.credentials !== null) {
+        cookies.unshift(
+          this.sessionCookie(
+            CUSTOMER_ACCESS_COOKIE_NAME,
+            result.credentials.accessToken,
+            result.credentials.accessExpiresAt,
+          ),
+          this.sessionCookie(
+            CUSTOMER_REFRESH_COOKIE_NAME,
+            result.credentials.refreshToken,
+            result.credentials.sessionExpiresAt,
+          ),
+        );
+      }
+      response.setHeader('Set-Cookie', cookies);
+      return { customer: result.authentication.customer, csrfToken: result.csrfToken };
+    } catch (error) {
+      return this.sessionFailure(error, response);
+    }
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  @ApiSuccess({ code: 'CUSTOMER_SESSION_REFRESHED', message: CUSTOMER_SESSION_REFRESHED_MESSAGE, kind: 'none' })
+  @ApiCookieAuth('customerRefresh')
+  @ApiHeader({
+    name: 'X-CSRF-Token',
+    required: true,
+    description: 'Current customer session CSRF credential.',
+    schema: { type: 'string' },
+  })
+  @ApiOperation({ summary: 'Rotate or narrowly recover the current customer Refresh credential' })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer credentials rotated or safely recovered within the grace window.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Replacement Access and Refresh HttpOnly cookies.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': { schema: { type: 'string', example: 'no-store' } },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Refresh/session failure or reuse.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'CSRF validation failure.' })
+  @ApiResponse({ status: 429, type: ApiErrorDto, description: 'Refresh throttle response.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure.' })
+  // Refresh موفق فقط credentialهای HttpOnly را جایگزین و بدنه حساس را خالی نگه می‌دارد.
+  async refresh(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const result = await this.sessionService.refresh(request);
+      response.setHeader('Set-Cookie', [
+        this.sessionCookie(
+          CUSTOMER_ACCESS_COOKIE_NAME,
+          result.accessToken,
+          result.accessExpiresAt,
+        ),
+        this.sessionCookie(
+          CUSTOMER_REFRESH_COOKIE_NAME,
+          result.refreshToken,
+          result.sessionExpiresAt,
+        ),
+      ]);
+    } catch (error) {
+      return this.sessionFailure(error, response);
+    }
+  }
+
+  @Post('logout')
+  @HttpCode(200)
+  @ApiSuccess({ code: 'CUSTOMER_LOGOUT', message: CUSTOMER_LOGOUT_MESSAGE, kind: 'none' })
+  @ApiCookieAuth('customerRefresh')
+  @ApiHeader({
+    name: 'X-CSRF-Token',
+    required: true,
+    description: 'Current customer session CSRF credential.',
+    schema: { type: 'string' },
+  })
+  @ApiOperation({ summary: 'Revoke and clear only the current Storefront customer session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current customer session revoked and all customer cookies expired.',
+    headers: {
+      'Set-Cookie': { schema: { type: 'string' } },
+      'Cache-Control': { schema: { type: 'string', example: 'no-store' } },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Unknown customer session.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'CSRF validation failure.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure.' })
+  // خروج موفق نشست جاری را باطل و فقط cookieهای حوزه مشتری را منقضی می‌کند.
+  async logout(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<void> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      await this.sessionService.logout(request);
+      response.setHeader('Set-Cookie', this.expiredSessionCookies());
+    } catch (error) {
+      return this.sessionFailure(error, response);
+    }
+  }
+
+  @Get('flow')
+  @ApiSuccess({ code: 'CUSTOMER_FLOW_FETCHED', message: CUSTOMER_FLOW_FETCHED_MESSAGE, kind: 'single' })
+  @ApiOperation({ summary: 'Return the authoritative non-enumerating customer auth flow stage' })
+  @ApiResponse({
+    status: 200,
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(CustomerMobileRequiredFlowDto) },
+        { $ref: getSchemaPath(CustomerOtpPendingFlowDto) },
+        { $ref: getSchemaPath(CustomerRegistrationRequiredFlowDto) },
+        { $ref: getSchemaPath(CustomerAuthenticatedFlowDto) },
+      ],
+    },
+    headers: {
+      'Set-Cookie': { description: 'Expires invalid flow or session cookies.', schema: { type: 'string' } },
+      'Cache-Control': { schema: { type: 'string', example: 'no-store' } },
+    },
+  })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Untrusted request boundary.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure.' })
+  // مرحله قابل نمایش را فقط از cookieهای HttpOnly و رکوردهای معتبر سرور تعیین می‌کند.
+  async flow(
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<CustomerFlowResponse> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const result = await this.sessionService.flow(request);
+      const cookies = [
+        ...(result.clearFlow ? [this.expiredFlowCookie()] : []),
+        ...(result.clearSession ? this.expiredSessionCookies() : []),
+      ];
+      if (cookies.length > 0) response.setHeader('Set-Cookie', cookies);
+      return result.response;
+    } catch (error) {
+      return this.sessionFailure(error, response);
+    }
+  }
+
+  @Post('register')
+  @HttpCode(200)
+  @ApiSuccess({ code: 'CUSTOMER_REGISTERED', message: CUSTOMER_REGISTERED_MESSAGE, kind: 'single' })
+  @ApiOperation({ summary: 'Complete Storefront customer registration from verified flow state' })
+  @ApiBody({ type: CustomerRegistrationRequestDto })
+  @ApiResponse({
+    status: 200,
+    type: CustomerRegistrationResponseDto,
+    description: 'Creates the customer once and establishes an authenticated customer session.',
+    headers: {
+      'Set-Cookie': {
+        description: 'Expires registration flow state and issues customer session cookies.',
+        schema: { type: 'string' },
+      },
+      'Cache-Control': {
+        description: 'Always no-store.',
+        schema: { type: 'string', example: 'no-store' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, type: ApiErrorDto, description: 'Invalid or consumed flow.' })
+  @ApiResponse({ status: 403, type: ApiErrorDto, description: 'Untrusted request or disabled account.' })
+  @ApiResponse({ status: 410, type: ApiErrorDto, description: 'Expired registration flow.' })
+  @ApiResponse({ status: 422, type: ApiErrorDto, description: 'Invalid customer names.' })
+  @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure.' })
+  // ثبت‌نام را فقط از grant کوکی‌شده تکمیل و در همان پاسخ نشست مستقل مشتری را صادر می‌کند.
+  async register(
+    @Body() body: unknown,
+    @Req() request: IncomingMessage,
+    @Res({ passthrough: true }) response: ServerResponse,
+  ): Promise<CustomerRegistrationResponseDto> {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      this.loginSecurity.assertRequestBoundary(request);
+      const flowCookie = readCookie(request, CUSTOMER_AUTH_FLOW_COOKIE_NAME);
+      if (flowCookie.kind !== 'present' || !/^[A-Za-z0-9_-]{43}$/u.test(flowCookie.value)) {
+        response.setHeader('Set-Cookie', this.expiredFlowCookie());
+        throw new CustomerAuthenticationError(401, 'AUTH_FLOW_INVALID', AUTH_FLOW_INVALID_MESSAGE);
+      }
+      const result = await this.registrationService.register(
+        flowCookie.value,
+        parseCustomerRegistration(body),
+      );
+      response.setHeader('Set-Cookie', [
+        this.expiredFlowCookie(),
+        this.sessionCookie(
+          CUSTOMER_ACCESS_COOKIE_NAME,
+          result.credentials.accessToken,
+          result.credentials.accessExpiresAt,
+        ),
+        this.sessionCookie(
+          CUSTOMER_REFRESH_COOKIE_NAME,
+          result.credentials.refreshToken,
+          result.credentials.sessionExpiresAt,
+        ),
+        this.csrfCookie(result.credentials.csrfToken, result.credentials.sessionExpiresAt),
+      ]);
+      return { nextStep: 'AUTHENTICATED', redirectTo: '/', customer: result.customer };
+    } catch (error) {
+      if (error instanceof AuthenticationError || error instanceof CustomerAuthenticationError) {
+        if (
+          error instanceof CustomerAuthenticationError &&
+          ['AUTH_FLOW_INVALID', 'REGISTRATION_GRANT_EXPIRED', 'CUSTOMER_ACCOUNT_DISABLED'].includes(
+            error.code,
+          )
+        ) {
+          response.setHeader('Set-Cookie', this.expiredFlowCookie());
+        }
+        throw new HttpException(this.errorEnvelope(error), error.statusCode);
+      }
+      throw new HttpException(
+        {
+          statusCode: 500,
+          code: 'INTERNAL_SERVER_ERROR',
+          message: INTERNAL_SERVER_ERROR_MESSAGE,
+          details: [],
+        } satisfies ErrorEnvelope,
+        500,
+      );
+    }
+  }
 
   @Post('otp/verify')
   @HttpCode(200)
@@ -174,7 +472,6 @@ export class CustomerAuthenticationController {
         } else {
           this.verificationSecurity.release(reservation);
         }
-        reservationSettled = true;
       }
       if (error instanceof AuthenticationError || error instanceof CustomerAuthenticationError) {
         if (
@@ -345,6 +642,68 @@ export class CustomerAuthenticationController {
       'SameSite=Strict',
       ...(this.environment.nodeEnv === 'production' ? ['Secure'] : []),
     ].join('; ');
+  }
+
+  private expiredSessionCookies(): string[] {
+    return [
+      this.expiredSessionCookie(CUSTOMER_ACCESS_COOKIE_NAME),
+      this.expiredSessionCookie(CUSTOMER_REFRESH_COOKIE_NAME),
+      this.expiredCsrfCookie(),
+    ];
+  }
+
+  private expiredSessionCookie(name: string): string {
+    return [
+      `${name}=`,
+      'Path=/',
+      'Max-Age=0',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'HttpOnly',
+      'SameSite=Lax',
+      ...(this.environment.nodeEnv === 'production' ? ['Secure'] : []),
+    ].join('; ');
+  }
+
+  private expiredCsrfCookie(): string {
+    return [
+      `${CUSTOMER_CSRF_COOKIE_NAME}=`,
+      'Path=/',
+      'Max-Age=0',
+      'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
+      'SameSite=Strict',
+      ...(this.environment.nodeEnv === 'production' ? ['Secure'] : []),
+    ].join('; ');
+  }
+
+  // خطاهای قطعی نشست را به پاسخ امن تبدیل و authority منقضی را از مرورگر پاک می‌کند.
+  private sessionFailure(error: unknown, response: ServerResponse): never {
+    if (error instanceof AuthenticationError || error instanceof CustomerAuthenticationError) {
+      if (error.retryAfterSeconds !== undefined) {
+        response.setHeader('Retry-After', String(error.retryAfterSeconds));
+      }
+      if (
+        error instanceof CustomerAuthenticationError &&
+        [
+          'AUTHENTICATION_REQUIRED',
+          'CUSTOMER_ACCOUNT_DISABLED',
+          'REFRESH_TOKEN_EXPIRED',
+          'REFRESH_TOKEN_INVALID',
+          'REFRESH_TOKEN_REUSED',
+        ].includes(error.code)
+      ) {
+        response.setHeader('Set-Cookie', this.expiredSessionCookies());
+      }
+      throw new HttpException(this.errorEnvelope(error), error.statusCode);
+    }
+    throw new HttpException(
+      {
+        statusCode: 500,
+        code: 'INTERNAL_SERVER_ERROR',
+        message: INTERNAL_SERVER_ERROR_MESSAGE,
+        details: [],
+      } satisfies ErrorEnvelope,
+      500,
+    );
   }
 
   private errorEnvelope(error: AuthenticationError | CustomerAuthenticationError): ErrorEnvelope {

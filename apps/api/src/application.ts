@@ -4,6 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import type { ApiEnvironment, RuntimeEnvironment } from './config/environment';
 import { ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } from './authentication/authentication.constants';
+import {
+  CUSTOMER_ACCESS_COOKIE_NAME,
+  CUSTOMER_REFRESH_COOKIE_NAME,
+} from './customer-authentication/customer-authentication.constants';
 import { ApiExceptionFilter } from './http/api-exception.filter';
 import { ApiResponseInterceptor } from './http/api-response.interceptor';
 import { applyApiResponseContract } from './http/openapi-response';
@@ -43,6 +47,8 @@ export function configureApplication(app: INestApplication, environment: ApiEnvi
     .setVersion('1.0')
     .addCookieAuth(ACCESS_COOKIE_NAME, { type: 'apiKey' }, 'adminAccess')
     .addCookieAuth(REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'adminRefresh')
+    .addCookieAuth(CUSTOMER_ACCESS_COOKIE_NAME, { type: 'apiKey' }, 'customerAccess')
+    .addCookieAuth(CUSTOMER_REFRESH_COOKIE_NAME, { type: 'apiKey' }, 'customerRefresh')
     .build();
   const documentFactory = () =>
     applyApiResponseContract(
