@@ -9,6 +9,7 @@ import {
   type MobileEntryFormInput,
   type MobileEntryFormValues,
 } from '@/features/customer-auth/mobile-entry';
+import { rememberRequestedOtpMobile } from '@/features/customer-auth/otp-verification';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
@@ -42,6 +43,7 @@ export default function AuthPage() {
 
     try {
       await requestOtp.mutateAsync({ mobile });
+      rememberRequestedOtpMobile(mobile);
       router.push(verifyDestination);
     } catch {
       // پیام امن خطا از state استاندارد mutation در خود فرم نمایش داده می‌شود.

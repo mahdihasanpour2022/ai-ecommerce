@@ -1,5 +1,6 @@
 'use client';
 
+import { UiButton, UiP } from '@/components/shared/ui';
 import { AppRoutes } from '@/constants/appRoues';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
@@ -31,6 +32,30 @@ export function AuthFlowGuard({ children }: Readonly<{ children: ReactNode }>) {
   useEffect(() => {
     if (destination !== null && destinationPath !== pathname) router.replace(destination);
   }, [destination, destinationPath, pathname, router]);
+
+  if (flowQuery.isError) {
+    return (
+      <main
+        dir="rtl"
+        className="flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6"
+      >
+        <section className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+          <UiP role="alert" className="text-danger">
+            {flowQuery.error.message}
+          </UiP>
+          <UiButton
+            type="button"
+            size="medium"
+            className="mt-6 bg-nice-red text-white"
+            loading={flowQuery.isFetching}
+            onClick={() => void flowQuery.refetch()}
+          >
+            تلاش مجدد
+          </UiButton>
+        </section>
+      </main>
+    );
+  }
 
   return destinationPath === pathname ? children : null;
 }

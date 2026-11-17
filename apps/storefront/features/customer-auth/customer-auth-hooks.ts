@@ -15,6 +15,13 @@ import type {
 } from './customer-auth';
 import { customerQueryKeys } from './customer-auth';
 
+const TERMINAL_OTP_FLOW_ERRORS = new Set([
+  'AUTH_FLOW_INVALID',
+  'CUSTOMER_ACCOUNT_DISABLED',
+  'OTP_ATTEMPTS_EXCEEDED',
+  'OTP_EXPIRED',
+]);
+
 // مرحله جریان را با پاسخ no-store سرور به‌عنوان مرجع مسیر دریافت می‌کند.
 export function useCustomerAuthFlow() {
   return useRQFetcher<CustomerAuthResponse<CustomerAuthFlow>>({
@@ -56,6 +63,12 @@ export function useVerifyCustomerOtp() {
         acceptCustomer(response.singleResult.customer);
       }
       await queryClient.invalidateQueries({ queryKey: customerQueryKeys.flow });
+    },
+    // خطای قطعی OTP را با مرحله جدید سرور همگام می‌کند تا چالش مصرف‌شده قابل تکرار نباشد.
+    async onError(error) {
+      if (TERMINAL_OTP_FLOW_ERRORS.has(error.code)) {
+        await queryClient.invalidateQueries({ queryKey: customerQueryKeys.flow });
+      }
     },
   });
 }
