@@ -36,11 +36,10 @@ export class GhasedakOtpSender implements OtpSender {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sendDate: null,
           receptors: [{ mobile, clientReferenceId: command.clientReferenceId }],
           templateName: this.environment.ghasedakTemplateName,
           inputs: [{ param: 'Code', value: command.code }],
-          isVoice: false,
+          udh: false,
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });

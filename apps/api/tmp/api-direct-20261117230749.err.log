@@ -1,0 +1,17 @@
+E:\------------- my ai proj\e-commerce\apps\api\dist\config\environment.js:12
+    throw new Error(`Invalid ${name}: ${expectation}.`);
+          ^
+
+Error: Invalid AUTH_CSRF_HMAC_KEYS: keys must be unique and independent.
+    at invalid (E:\------------- my ai proj\e-commerce\apps\api\dist\config\environment.js:12:11)
+    at parseCsrfKeyConfiguration (E:\------------- my ai proj\e-commerce\apps\api\dist\config\environment.js:236:13)
+    at parseAuthentication (E:\------------- my ai proj\e-commerce\apps\api\dist\config\environment.js:314:22)
+    at parseEnvironment (E:\------------- my ai proj\e-commerce\apps\api\dist\config\environment.js:348:28)
+    at bootstrap (E:\------------- my ai proj\e-commerce\apps\api\dist\main.js:9:60)
+    at Object.<anonymous> (E:\------------- my ai proj\e-commerce\apps\api\dist\main.js:14:6)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+
+Node.js v24.19.0

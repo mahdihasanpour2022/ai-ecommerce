@@ -42,11 +42,10 @@ void describe('Ghasedak OTP sender', () => {
     assert.equal(capturedInit?.method, 'POST');
     assert.equal(new Headers(capturedInit?.headers).get('ApiKey'), 'private-test-key');
     assert.deepEqual(JSON.parse(String(capturedInit?.body)), {
-      sendDate: null,
       receptors: [{ mobile: '09217101700', clientReferenceId: command.clientReferenceId }],
       templateName: 'Ghasedak',
       inputs: [{ param: 'Code', value: '123456' }],
-      isVoice: false,
+      udh: false,
     });
   });
 

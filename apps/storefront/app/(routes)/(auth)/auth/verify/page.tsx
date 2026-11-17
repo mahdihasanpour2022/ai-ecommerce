@@ -94,19 +94,20 @@ export default function VerifyAuthPage() {
   };
 
   return (
-    <main
-      dir="rtl"
-      className="flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6"
-    >
+    <main dir="rtl" className="bg-background flex min-h-dvh items-center justify-center p-4 sm:p-6">
       <section
         aria-labelledby="verify-heading"
-        className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8"
+        className="border-border bg-surface w-full max-w-md rounded-xl border p-6 shadow-sm sm:p-8"
       >
-        <UiHeading id="verify-heading" className="text-center text-foreground">
+        <UiHeading id="verify-heading" className="text-foreground text-center">
           تأیید شماره موبایل
         </UiHeading>
-        <UiP className="mt-2 text-center text-muted">
-          کد شش‌رقمی ارسال‌شده به {otpFlow.maskedMobile} را وارد کنید.
+        <UiP className="text-muted mt-2 text-center">
+          کد ارسال‌شده به
+          <span dir="ltr" className="inline-block px-1">
+            {otpFlow.maskedMobile}
+          </span>
+          را وارد کنید.
         </UiP>
 
         <form
@@ -119,13 +120,13 @@ export default function VerifyAuthPage() {
             id="otp-code"
             type="text"
             label="کد تأیید"
-            description="کد را می‌توانید تایپ یا paste کنید."
+            // description="کد را می‌توانید تایپ یا paste کنید."
             required
             autoComplete="one-time-code"
             autoFocus
             inputMode="numeric"
             dir="ltr"
-            placeholder="123456"
+            placeholder="0912*******"
             errorMessage={errors.code?.message}
             onChange={(event) => {
               event.currentTarget.value = normalizeOtpInput(event.currentTarget.value);
@@ -133,12 +134,12 @@ export default function VerifyAuthPage() {
             }}
           />
 
-          <div className="space-y-1" aria-live="polite">
-            <UiP className={timing.isExpired ? 'text-danger' : 'text-muted'}>
+          <div className="space-y-0" aria-live="polite">
+            {/* <UiP className={timing.isExpired ? 'text-danger' : 'text-muted'}>
               {timing.isExpired
                 ? 'مهلت این کد به پایان رسیده است.'
                 : `زمان باقی‌مانده: ${formatOtpCountdown(timing.expiresInSeconds)}`}
-            </UiP>
+            </UiP> */}
             {!timing.canResend ? (
               <UiP className="text-muted">
                 ارسال مجدد تا {formatOtpCountdown(timing.resendInSeconds)} دیگر

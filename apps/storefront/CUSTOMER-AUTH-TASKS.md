@@ -42,23 +42,24 @@ On reload or direct navigation, each route asks the Backend for the current no-s
 **Task status:** Approved by owner on 2026-11-17; complete.
 
 <!-- این بخش قرارداد قابل‌مشاهده و مقادیر امنیتی مشترک Backend و Storefront را یک‌جا تثبیت می‌کند. -->
+
 ### Decision package
 
 #### Product and navigation decisions
 
-| Topic | Proposed stable decision |
-| --- | --- |
-| UI steps | Three canonical routes: `/auth`, `/auth/verify`, and `/auth/register`. The route selects the form; server flow state authorizes it. |
-| Missing/expired flow | Redirect to `/auth`. |
-| Valid OTP flow opened on another auth route | Canonicalize to `/auth/verify`. |
-| Valid registration flow opened on another auth route | Canonicalize to `/auth/register`. |
-| Existing authenticated Customer opening an auth route | Redirect to `/`; do not start another flow. |
-| Successful authentication destination | `/` only for the initial slice. No client `returnTo` is accepted yet, so no open-redirect surface is introduced. |
-| Initial registration fields | Verified mobile, required first name, and required last name; no password or optional profile fields. |
-| Multiple devices | Each browser/device has an independent Customer session. Logging in on one device does not revoke another device. |
-| Same-browser reauthentication | A valid authenticated Customer is redirected away from auth routes. A stale/invalid session may start a new flow; successful authentication replaces browser cookies without reviving the stale session. |
-| Back/reload behavior | The no-store flow endpoint is authoritative. A consumed stage cannot be restored by browser history or client state. |
-| Final visual design | Deferred until the UI-team reference arrives; the first slice is a minimal usable form built from existing shared primitives. |
+| Topic                                                 | Proposed stable decision                                                                                                                                                                                 |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI steps                                              | Three canonical routes: `/auth`, `/auth/verify`, and `/auth/register`. The route selects the form; server flow state authorizes it.                                                                      |
+| Missing/expired flow                                  | Redirect to `/auth`.                                                                                                                                                                                     |
+| Valid OTP flow opened on another auth route           | Canonicalize to `/auth/verify`.                                                                                                                                                                          |
+| Valid registration flow opened on another auth route  | Canonicalize to `/auth/register`.                                                                                                                                                                        |
+| Existing authenticated Customer opening an auth route | Redirect to `/`; do not start another flow.                                                                                                                                                              |
+| Successful authentication destination                 | `/` only for the initial slice. No client `returnTo` is accepted yet, so no open-redirect surface is introduced.                                                                                         |
+| Initial registration fields                           | Verified mobile, required first name, and required last name; no password or optional profile fields.                                                                                                    |
+| Multiple devices                                      | Each browser/device has an independent Customer session. Logging in on one device does not revoke another device.                                                                                        |
+| Same-browser reauthentication                         | A valid authenticated Customer is redirected away from auth routes. A stale/invalid session may start a new flow; successful authentication replaces browser cookies without reviving the stale session. |
+| Back/reload behavior                                  | The no-store flow endpoint is authoritative. A consumed stage cannot be restored by browser history or client state.                                                                                     |
+| Final visual design                                   | Deferred until the UI-team reference arrives; the first slice is a minimal usable form built from existing shared primitives.                                                                            |
 
 #### Input decisions
 
@@ -69,29 +70,29 @@ On reload or direct navigation, each route asks the Backend for the current no-s
 
 #### OTP, flow, and throttle decisions
 
-| Control | Exact value |
-| --- | --- |
-| OTP generation | Cryptographically secure random six-digit value generated only by Backend |
-| OTP lifetime | 120 seconds |
-| Resend availability | 120 seconds after the accepted send; resend rotates the challenge and invalidates the prior code |
-| Verification attempts | 5 failed attempts per challenge; the challenge becomes terminal after the fifth failure |
-| Registration grant lifetime | 15 minutes after successful verification |
-| Send limit per mobile | 3 accepted sends per 15 minutes and 10 per rolling 24 hours |
-| Send limit per IP | 20 accepted sends per 15 minutes and 100 per rolling 24 hours |
-| Failed verification limit per IP | 30 failed attempts per 15 minutes, in addition to the per-challenge limit |
-| Throttle response | HTTP `429`, stable `AUTH_RATE_LIMITED` or `OTP_RESEND_NOT_READY`, plus an accurate `Retry-After` header |
-| Provider retry | No automatic SMS resend after an ambiguous provider timeout/failure |
+| Control                          | Exact value                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| OTP generation                   | Cryptographically secure random six-digit value generated only by Backend                               |
+| OTP lifetime                     | 120 seconds                                                                                             |
+| Resend availability              | 120 seconds after the accepted send; resend rotates the challenge and invalidates the prior code        |
+| Verification attempts            | 5 failed attempts per challenge; the challenge becomes terminal after the fifth failure                 |
+| Registration grant lifetime      | 15 minutes after successful verification                                                                |
+| Send limit per mobile            | 3 accepted sends per 15 minutes and 10 per rolling 24 hours                                             |
+| Send limit per IP                | 20 accepted sends per 15 minutes and 100 per rolling 24 hours                                           |
+| Failed verification limit per IP | 30 failed attempts per 15 minutes, in addition to the per-challenge limit                               |
+| Throttle response                | HTTP `429`, stable `AUTH_RATE_LIMITED` or `OTP_RESEND_NOT_READY`, plus an accurate `Retry-After` header |
+| Provider retry                   | No automatic SMS resend after an ambiguous provider timeout/failure                                     |
 
 #### Cookie decisions
 
 All cookies are host-only (`Domain` omitted). `Secure` is always enabled in production and disabled only for approved local HTTP development.
 
-| Cookie | Purpose | HttpOnly | SameSite | Path | Lifetime |
-| --- | --- | --- | --- | --- | --- |
-| `storefront_customer_auth_flow` | Opaque OTP/registration flow reference | Yes | `Strict` | `/api/v1/customer-auth` | 120 seconds in OTP stage; rotated to 15 minutes in registration stage |
-| `storefront_customer_access` | Short-lived Customer Access JWT | Yes | `Lax` | `/` | 15 minutes |
-| `storefront_customer_refresh` | Opaque Customer Refresh credential | Yes | `Lax` | `/` | 7-day absolute session expiry |
-| `storefront_customer_csrf` | Session-bound CSRF value copied to the request header | No | `Strict` | `/` | Remaining absolute Customer-session lifetime |
+| Cookie                          | Purpose                                               | HttpOnly | SameSite | Path                    | Lifetime                                                              |
+| ------------------------------- | ----------------------------------------------------- | -------- | -------- | ----------------------- | --------------------------------------------------------------------- |
+| `storefront_customer_auth_flow` | Opaque OTP/registration flow reference                | Yes      | `Strict` | `/api/v1/customer-auth` | 120 seconds in OTP stage; rotated to 15 minutes in registration stage |
+| `storefront_customer_access`    | Short-lived Customer Access JWT                       | Yes      | `Lax`    | `/`                     | 15 minutes                                                            |
+| `storefront_customer_refresh`   | Opaque Customer Refresh credential                    | Yes      | `Lax`    | `/`                     | 7-day absolute session expiry                                         |
+| `storefront_customer_csrf`      | Session-bound CSRF value copied to the request header | No       | `Strict` | `/`                     | Remaining absolute Customer-session lifetime                          |
 
 The flow cookie is cleared after existing-Customer authentication, completed registration, or terminal flow failure. Access, Refresh, CSRF, and flow cookie names are independent from every Admin cookie.
 
@@ -105,52 +106,52 @@ The flow cookie is cleared after existing-Customer authentication, completed reg
 
 #### Request/response contract matrix
 
-| Endpoint | Request | Successful response (`singleResult`) | Cookie transition |
-| --- | --- | --- | --- |
-| `GET /api/v1/customer-auth/flow` | No body | `{ stage: 'MOBILE_ENTRY', maskedMobile: null, expiresAt: null, resendAvailableAt: null }`, or the matching `OTP_PENDING`/`REGISTRATION_PENDING` state for a valid browser flow | No rotation; clears a terminal/invalid flow cookie |
-| `POST /api/v1/customer-auth/otp/request` | `{ mobile: string }` | `{ stage: 'OTP_PENDING', maskedMobile, expiresAt, resendAvailableAt }` with code `OTP_REQUESTED` and the same shape/timing path for existing and new Customers | Sets or rotates the OTP-stage flow cookie |
-| `POST /api/v1/customer-auth/otp/verify` | `{ code: string }`; challenge comes only from the flow cookie | Existing Customer: `{ nextStep: 'AUTHENTICATED', customer }`; new Customer: `{ nextStep: 'REGISTRATION_REQUIRED' }`. Both use code `OTP_VERIFIED`. | Existing: clears flow and sets session cookies. New: rotates flow to registration stage. |
-| `POST /api/v1/customer-auth/register` | `{ firstName: string, lastName: string }`; mobile/grant come only from the flow cookie | `{ nextStep: 'AUTHENTICATED', customer }` with code `CUSTOMER_REGISTERED` | Atomically consumes/clears flow and sets session cookies |
-| `POST /api/v1/customer-auth/bootstrap` | No body; Refresh cookie required | `{ customer }` with code `CUSTOMER_SESSION_BOOTSTRAPPED` | Restores CSRF and rotates/reissues Customer credentials according to the accepted session policy |
-| `POST /api/v1/customer-auth/refresh` | No body; Refresh cookie and `X-CSRF-Token` required | `{ customer }` with code `CUSTOMER_SESSION_REFRESHED` | Atomically rotates Refresh and reissues Access/CSRF as required |
-| `POST /api/v1/customer-auth/logout` | No body; known Refresh family and `X-CSRF-Token` required | HTTP `204`, no envelope/body | Revokes current Customer session and expires Access, Refresh, and CSRF cookies |
+| Endpoint                                 | Request                                                                                | Successful response (`singleResult`)                                                                                                                                           | Cookie transition                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `GET /api/v1/customer-auth/flow`         | No body                                                                                | `{ stage: 'MOBILE_ENTRY', maskedMobile: null, expiresAt: null, resendAvailableAt: null }`, or the matching `OTP_PENDING`/`REGISTRATION_PENDING` state for a valid browser flow | No rotation; clears a terminal/invalid flow cookie                                               |
+| `POST /api/v1/customer-auth/otp/request` | `{ mobile: string }`                                                                   | `{ stage: 'OTP_PENDING', maskedMobile, expiresAt, resendAvailableAt }` with code `OTP_REQUESTED` and the same shape/timing path for existing and new Customers                 | Sets or rotates the OTP-stage flow cookie                                                        |
+| `POST /api/v1/customer-auth/otp/verify`  | `{ code: string }`; challenge comes only from the flow cookie                          | Existing Customer: `{ nextStep: 'AUTHENTICATED', customer }`; new Customer: `{ nextStep: 'REGISTRATION_REQUIRED' }`. Both use code `OTP_VERIFIED`.                             | Existing: clears flow and sets session cookies. New: rotates flow to registration stage.         |
+| `POST /api/v1/customer-auth/register`    | `{ firstName: string, lastName: string }`; mobile/grant come only from the flow cookie | `{ nextStep: 'AUTHENTICATED', customer }` with code `CUSTOMER_REGISTERED`                                                                                                      | Atomically consumes/clears flow and sets session cookies                                         |
+| `POST /api/v1/customer-auth/bootstrap`   | No body; Refresh cookie required                                                       | `{ customer }` with code `CUSTOMER_SESSION_BOOTSTRAPPED`                                                                                                                       | Restores CSRF and rotates/reissues Customer credentials according to the accepted session policy |
+| `POST /api/v1/customer-auth/refresh`     | No body; Refresh cookie and `X-CSRF-Token` required                                    | `{ customer }` with code `CUSTOMER_SESSION_REFRESHED`                                                                                                                          | Atomically rotates Refresh and reissues Access/CSRF as required                                  |
+| `POST /api/v1/customer-auth/logout`      | No body; known Refresh family and `X-CSRF-Token` required                              | HTTP `204`, no envelope/body                                                                                                                                                   | Revokes current Customer session and expires Access, Refresh, and CSRF cookies                   |
 
 `customer` is exactly `{ id: string, mobile: string, firstName: string, lastName: string }`. A separate `/me` endpoint is not included because bootstrap already returns the minimum authenticated snapshot.
 
 #### Stable success messages
 
-| Code | Persian message |
-| --- | --- |
-| `FLOW_STATE_RETRIEVED` | `مرحله ورود با موفقیت دریافت شد.` |
-| `OTP_REQUESTED` | `کد تأیید ارسال شد.` |
-| `OTP_VERIFIED` | `شماره موبایل با موفقیت تأیید شد.` |
-| `CUSTOMER_REGISTERED` | `ثبت‌نام با موفقیت انجام شد.` |
+| Code                            | Persian message                    |
+| ------------------------------- | ---------------------------------- |
+| `FLOW_STATE_RETRIEVED`          | `مرحله ورود با موفقیت دریافت شد.`  |
+| `OTP_REQUESTED`                 | `کد تأیید ارسال شد.`               |
+| `OTP_VERIFIED`                  | `شماره موبایل با موفقیت تأیید شد.` |
+| `CUSTOMER_REGISTERED`           | `ثبت‌نام با موفقیت انجام شد.`      |
 | `CUSTOMER_SESSION_BOOTSTRAPPED` | `نشست کاربر با موفقیت بازیابی شد.` |
-| `CUSTOMER_SESSION_REFRESHED` | `نشست کاربر با موفقیت تمدید شد.` |
+| `CUSTOMER_SESSION_REFRESHED`    | `نشست کاربر با موفقیت تمدید شد.`   |
 
 #### Stable error matrix
 
-| HTTP | Code | Persian message | Applies to |
-| --- | --- | --- | --- |
-| `401` | `AUTH_FLOW_INVALID` | `فرایند ورود معتبر نیست. لطفاً دوباره شماره موبایل را وارد کنید.` | Missing, tampered, consumed, or terminal flow authority |
-| `401` | `AUTHENTICATION_REQUIRED` | `برای ادامه باید وارد حساب کاربری شوید.` | Missing/definitively invalid Customer session |
-| `401` | `ACCESS_TOKEN_EXPIRED` | `نشست شما نیاز به تمدید دارد.` | Eligible ordinary request; may enter the single-flight Refresh path |
-| `401` | `INVALID_ACCESS_TOKEN` | `نشست شما معتبر نیست. لطفاً دوباره وارد شوید.` | Invalid non-refreshable Access credential |
-| `401` | `REFRESH_TOKEN_INVALID` | `نشست شما معتبر نیست. لطفاً دوباره وارد شوید.` | Invalid Refresh credential |
-| `401` | `REFRESH_TOKEN_EXPIRED` | `نشست شما منقضی شده است. لطفاً دوباره وارد شوید.` | Expired Refresh/session |
-| `401` | `REFRESH_TOKEN_REUSED` | `نشست شما پایان یافته است. لطفاً دوباره وارد شوید.` | Suspicious Refresh reuse; no technical detail exposed |
-| `403` | `ORIGIN_NOT_ALLOWED` | `درخواست معتبر نیست.` | Invalid Origin/Referer/Fetch Metadata |
-| `403` | `CSRF_VALIDATION_FAILED` | `اعتبار درخواست تأیید نشد. لطفاً دوباره تلاش کنید.` | Missing/mismatched Customer CSRF evidence |
-| `403` | `CUSTOMER_ACCOUNT_DISABLED` | `امکان ورود به این حساب وجود ندارد.` | Disabled existing Customer, only after valid OTP proof or authenticated session |
-| `409` | `REGISTRATION_CONFLICT` | `وضعیت ثبت‌نام تغییر کرده است. لطفاً فرایند ورود را دوباره انجام دهید.` | Concurrent Customer creation or consumed registration state |
-| `410` | `OTP_EXPIRED` | `کد تأیید منقضی شده است. کد جدیدی دریافت کنید.` | Expired OTP challenge |
-| `422` | `MOBILE_INVALID` | `شماره موبایل واردشده معتبر نیست.` | Invalid mobile input |
-| `422` | `OTP_INVALID` | `کد تأیید واردشده صحیح نیست.` | Incorrect/malformed OTP while attempts remain |
-| `422` | `VALIDATION_FAILED` | `اطلاعات واردشده معتبر نیست.` | Invalid first/last name; field details remain safe and structured |
-| `429` | `OTP_RESEND_NOT_READY` | `برای ارسال مجدد کد کمی صبر کنید.` | Resend before `resendAvailableAt` |
-| `429` | `OTP_ATTEMPTS_EXCEEDED` | `تعداد تلاش‌ها بیش از حد مجاز است. کد جدیدی دریافت کنید.` | Fifth failed verification terminates the challenge |
-| `429` | `AUTH_RATE_LIMITED` | `تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً دوباره تلاش کنید.` | Mobile/IP send or verification throttle |
-| `503` | `OTP_SEND_UNAVAILABLE` | `ارسال کد تأیید ممکن نشد. لطفاً کمی بعد دوباره تلاش کنید.` | Safe provider rejection, timeout, or unavailable service |
+| HTTP  | Code                        | Persian message                                                         | Applies to                                                                      |
+| ----- | --------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `401` | `AUTH_FLOW_INVALID`         | `فرایند ورود معتبر نیست. لطفاً دوباره شماره موبایل را وارد کنید.`       | Missing, tampered, consumed, or terminal flow authority                         |
+| `401` | `AUTHENTICATION_REQUIRED`   | `برای ادامه باید وارد حساب کاربری شوید.`                                | Missing/definitively invalid Customer session                                   |
+| `401` | `ACCESS_TOKEN_EXPIRED`      | `نشست شما نیاز به تمدید دارد.`                                          | Eligible ordinary request; may enter the single-flight Refresh path             |
+| `401` | `INVALID_ACCESS_TOKEN`      | `نشست شما معتبر نیست. لطفاً دوباره وارد شوید.`                          | Invalid non-refreshable Access credential                                       |
+| `401` | `REFRESH_TOKEN_INVALID`     | `نشست شما معتبر نیست. لطفاً دوباره وارد شوید.`                          | Invalid Refresh credential                                                      |
+| `401` | `REFRESH_TOKEN_EXPIRED`     | `نشست شما منقضی شده است. لطفاً دوباره وارد شوید.`                       | Expired Refresh/session                                                         |
+| `401` | `REFRESH_TOKEN_REUSED`      | `نشست شما پایان یافته است. لطفاً دوباره وارد شوید.`                     | Suspicious Refresh reuse; no technical detail exposed                           |
+| `403` | `ORIGIN_NOT_ALLOWED`        | `درخواست معتبر نیست.`                                                   | Invalid Origin/Referer/Fetch Metadata                                           |
+| `403` | `CSRF_VALIDATION_FAILED`    | `اعتبار درخواست تأیید نشد. لطفاً دوباره تلاش کنید.`                     | Missing/mismatched Customer CSRF evidence                                       |
+| `403` | `CUSTOMER_ACCOUNT_DISABLED` | `امکان ورود به این حساب وجود ندارد.`                                    | Disabled existing Customer, only after valid OTP proof or authenticated session |
+| `409` | `REGISTRATION_CONFLICT`     | `وضعیت ثبت‌نام تغییر کرده است. لطفاً فرایند ورود را دوباره انجام دهید.` | Concurrent Customer creation or consumed registration state                     |
+| `410` | `OTP_EXPIRED`               | `کد تأیید منقضی شده است. کد جدیدی دریافت کنید.`                         | Expired OTP challenge                                                           |
+| `422` | `MOBILE_INVALID`            | `شماره موبایل واردشده معتبر نیست.`                                      | Invalid mobile input                                                            |
+| `422` | `OTP_INVALID`               | `کد تأیید واردشده صحیح نیست.`                                           | Incorrect/malformed OTP while attempts remain                                   |
+| `422` | `VALIDATION_FAILED`         | `اطلاعات واردشده معتبر نیست.`                                           | Invalid first/last name; field details remain safe and structured               |
+| `429` | `OTP_RESEND_NOT_READY`      | `برای ارسال مجدد کد کمی صبر کنید.`                                      | Resend before `resendAvailableAt`                                               |
+| `429` | `OTP_ATTEMPTS_EXCEEDED`     | `تعداد تلاش‌ها بیش از حد مجاز است. کد جدیدی دریافت کنید.`               | Fifth failed verification terminates the challenge                              |
+| `429` | `AUTH_RATE_LIMITED`         | `تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً دوباره تلاش کنید.`    | Mobile/IP send or verification throttle                                         |
+| `503` | `OTP_SEND_UNAVAILABLE`      | `ارسال کد تأیید ممکن نشد. لطفاً کمی بعد دوباره تلاش کنید.`              | Safe provider rejection, timeout, or unavailable service                        |
 
 Network failures with no Backend response use the Storefront's centralized transport message: `ارتباط با سرور برقرار نشد. لطفاً دوباره تلاش کنید.` They do not prove invalid flow/session state and do not clear credentials automatically.
 
@@ -206,21 +207,22 @@ Owner explicitly approves the contract matrix and defaults. Record any changed d
 **Task status:** Complete as an external-prerequisite preflight on 2026-11-17; environment injection and the single sandbox delivery are explicitly deferred to the Provider implementation task.
 
 <!-- این بخش فقط شواهد preflight و ورودی‌های خارجی لازم را ثبت می‌کند و مجوز شروع پیاده‌سازی نیست. -->
+
 ### Preflight record — 2026-11-17
 
-| Gate | Evidence | Status |
-| --- | --- | --- |
-| Task 001 approval | Owner explicitly approved the decision package on 2026-11-17. | Passed |
-| Node.js | Host reports `v24.19.0`, compatible with the API engine range. | Passed |
-| Yarn | Host reports accepted Yarn Classic `1.22.22`. | Passed |
-| NestJS CLI | Local binary exists; `apps/api/package.json` pins `@nestjs/cli` `12.0.0`. | Passed |
-| Prisma CLI/client | Local binaries exist; `apps/api/package.json` pins Prisma and `@prisma/client` `7.10.0`. | Passed |
-| Docker Compose definition | `yarn db:config` completed successfully for `compose.yaml`. | Passed |
-| PostgreSQL dev/test connectivity | PostgreSQL container became healthy; `yarn db:verify` reported `e_commerce_dev` and `e_commerce_test` as reachable and isolated. | Passed |
-| Ghasedak repository configuration | No `GHASEDAK`, `SendOtpSMS`, or `OtpSender` reference exists in API/Storefront source or safe environment examples. | Not configured |
-| Ghasedak process secrets | The unsafe Storefront key file was removed. Owner confirmed an API key is available and will inject it only when the Backend Provider environment contract exists; no secret value was read, stored, or logged. | Passed |
-| Ghasedak template/account contract | Owner confirmed the temporary brand `قاصدک`; template name `Ghasedak`, exact text, and `%Code%` now match that brand. | Passed |
-| Non-production sandbox recipient | Owner supplied a test recipient; only the masked value `0921***1700` is retained as evidence. | Passed |
+| Gate                               | Evidence                                                                                                                                                                                                        | Status         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| Task 001 approval                  | Owner explicitly approved the decision package on 2026-11-17.                                                                                                                                                   | Passed         |
+| Node.js                            | Host reports `v24.19.0`, compatible with the API engine range.                                                                                                                                                  | Passed         |
+| Yarn                               | Host reports accepted Yarn Classic `1.22.22`.                                                                                                                                                                   | Passed         |
+| NestJS CLI                         | Local binary exists; `apps/api/package.json` pins `@nestjs/cli` `12.0.0`.                                                                                                                                       | Passed         |
+| Prisma CLI/client                  | Local binaries exist; `apps/api/package.json` pins Prisma and `@prisma/client` `7.10.0`.                                                                                                                        | Passed         |
+| Docker Compose definition          | `yarn db:config` completed successfully for `compose.yaml`.                                                                                                                                                     | Passed         |
+| PostgreSQL dev/test connectivity   | PostgreSQL container became healthy; `yarn db:verify` reported `e_commerce_dev` and `e_commerce_test` as reachable and isolated.                                                                                | Passed         |
+| Ghasedak repository configuration  | No `GHASEDAK`, `SendOtpSMS`, or `OtpSender` reference exists in API/Storefront source or safe environment examples.                                                                                             | Not configured |
+| Ghasedak process secrets           | The unsafe Storefront key file was removed. Owner confirmed an API key is available and will inject it only when the Backend Provider environment contract exists; no secret value was read, stored, or logged. | Passed         |
+| Ghasedak template/account contract | Owner confirmed the temporary brand `قاصدک`; template name `Ghasedak`, exact text, and `%Code%` now match that brand.                                                                                           | Passed         |
+| Non-production sandbox recipient   | Owner supplied a test recipient; only the masked value `0921***1700` is retained as evidence.                                                                                                                   | Passed         |
 
 ### Supplied Ghasedak template evidence
 
@@ -285,6 +287,7 @@ All external prerequisites are available: isolated dev/test PostgreSQL, required
 **Task status:** Complete on 2026-11-17; schema, additive migration, generated Prisma artifacts, and all 17 targeted schema/persistence assertions passed against the disposable test database.
 
 <!-- این بخش مرز مستقل داده‌های مشتری، قیود امنیتی و اثر migration را پیش از هر تغییر schema تثبیت می‌کند. -->
+
 ### Exact proposed Prisma boundary
 
 ```prisma
@@ -810,6 +813,7 @@ A verified new Customer can complete minimal registration exactly once and enter
 **Priority:** P1  
 **Depends on:** Tasks 001–012  
 **Goal:** Validate the complete approved Customer registration/login slice and update only documentation made true by implementation.
+**Task status:** Durable documentation and static leakage review updated on 2026-11-17. Owner-run formatting, Prisma validation, both application and test typechecks, both builds, Storefront lint, all 49 focused API tests, and all 14 focused Storefront tests passed. API lint is blocked by the pre-existing typed-lint configuration for `scripts/check-ghasedak-template.mjs`. Browser evidence, owner usability review, and reconciliation of the recorded runtime/approved-contract differences remain pending.
 
 ### Execution
 

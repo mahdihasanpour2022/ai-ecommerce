@@ -14,6 +14,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 // فرم ورود موبایل را با اعتبارسنجی محلی و قرارداد موجود درخواست OTP هماهنگ می‌کند.
 export default function AuthPage() {
@@ -45,8 +46,11 @@ export default function AuthPage() {
       await requestOtp.mutateAsync({ mobile });
       rememberRequestedOtpMobile(mobile);
       router.push(verifyDestination);
-    } catch {
-      // پیام امن خطا از state استاندارد mutation در خود فرم نمایش داده می‌شود.
+    } catch (error) {
+      // پیام امن خطای استاندارد را بدون نمایش متن داخل فرم به کاربر اطلاع می‌دهد.
+      toast.error(error instanceof Error ? error.message : 'خطای داخلی سرور رخ داد.', {
+        duration: 2_000,
+      });
     } finally {
       submissionInFlight.current = false;
     }
@@ -55,18 +59,15 @@ export default function AuthPage() {
   const isBusy = isSubmitting || requestOtp.isPending;
 
   return (
-    <main
-      dir="rtl"
-      className="flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6"
-    >
+    <main dir="rtl" className="bg-background flex min-h-dvh items-center justify-center p-4 sm:p-6">
       <section
         aria-labelledby="auth-heading"
-        className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8"
+        className="border-border bg-surface w-full max-w-md rounded-xl border p-6 shadow-sm sm:p-8"
       >
-        <UiHeading id="auth-heading" className="text-center text-foreground">
+        <UiHeading id="auth-heading" className="text-foreground text-center">
           ورود یا ثبت‌نام
         </UiHeading>
-        <UiP className="mt-2 text-center text-muted">
+        <UiP className="text-muted mt-2 text-center">
           برای دریافت کد تأیید، شماره موبایل خود را وارد کنید.
         </UiP>
 
@@ -85,19 +86,14 @@ export default function AuthPage() {
             autoFocus
             inputMode="tel"
             dir="ltr"
-            placeholder="09123456789"
+            placeholder="0912 *******"
             errorMessage={errors.mobile?.message}
           />
-
-          {requestOtp.error ? (
-            <UiP role="alert" className="text-danger">
-              {requestOtp.error.message}
-            </UiP>
-          ) : null}
 
           <UiButton
             type="submit"
             size="medium"
+            disabled={isBusy}
             loading={isBusy}
             className="bg-nice-red text-white"
           >

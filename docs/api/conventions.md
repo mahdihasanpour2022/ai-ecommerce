@@ -12,6 +12,10 @@ Swagger UI is available at `/api/docs` in explicitly configured development and 
 
 Swagger operations use flat audience/resource tags because Swagger UI does not render nested tag groups. Protected Admin operations use `panel / {resource}`, public Storefront operations use `site / {resource}`, and genuinely shared operations use `common / {resource}`.
 
+### Customer authentication API
+
+The implemented Customer authentication contract is isolated under `/api/v1/customer-auth` and generated under the `Customer authentication` Swagger tag. It exposes `GET /flow` plus `POST /otp/request`, `/otp/verify`, `/register`, `/bootstrap`, `/refresh`, and `/logout`. Flow, credential, CSRF, throttling, stable errors, response payloads, and cookie transitions are documented by the generated OpenAPI decorators and the [Customer Authentication specification](../features/customer-auth/specification.md). All responses are `no-store`; successful logout currently uses the canonical `200` no-payload envelope.
+
 Any task that creates, removes, or changes an HTTP API contract updates Swagger/OpenAPI within that same task. Its task context declares **Swagger / OpenAPI Impact** as creating documentation, changing documentation, or having no documentation impact, as applicable; API-changing tasks add contract-specific Acceptance Criteria and Validation. The task is not Done until the generated documentation matches actual behavior and no documentation made stale by the change remains. This includes changes to endpoints, methods, parameters, DTOs, status codes, authentication, authorization, and API-visible errors.
 
 Feature specifications own required observable behavior; this document owns general API/OpenAPI conventions; backend architecture and standards own implementation discipline. Swagger/OpenAPI is the generated interactive representation of the implemented contract. Do not duplicate complete endpoint specifications across unrelated documents, and do not load this context for work with no Backend HTTP API impact.

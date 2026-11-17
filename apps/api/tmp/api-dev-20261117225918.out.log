@@ -1,0 +1,15 @@
+yarn workspace v1.22.22
+yarn run v1.22.22
+$ nest start --watch
+[2J[3J[H[[90m10:59:23 PM[0m] Starting compilation in watch mode...
+
+[[90m10:59:33 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m11:36:38 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m11:36:39 PM[0m] Found 0 errors. Watching for file changes.
+
+[2J[3J[H[[90m11:36:39 PM[0m] File change detected. Starting incremental compilation...
+
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+info Visit https://yarnpkg.com/en/docs/cli/workspace for documentation about this command.

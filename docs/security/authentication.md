@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 
-This document owns how Admin authentication is architecturally intended to work. Observable feature behavior is defined in the [Admin Authentication specification](../features/admin-auth/specification.md).
+This document owns how Admin and Customer authentication are architecturally intended to work. Observable behavior is defined in the [Admin Authentication specification](../features/admin-auth/specification.md) and [Customer Authentication specification](../features/customer-auth/specification.md).
 
 ## Topology and credentials
 
@@ -14,15 +14,30 @@ Admin Browser (admin.example.com)
   -> NestJS API (api.example.com)
 ```
 
-The Storefront remains public. Its future Customer authentication must reuse this pattern with independent Customer credentials/contracts and must never receive Admin cookies.
+Storefront browsing remains public, while the implemented Customer authentication slice uses its own same-origin BFF and `/api/v1/customer-auth/**` Backend namespace. Customer and Admin credentials, cookies, session records, and frontend state are independent and cannot cross-authenticate.
+
+## Customer OTP authentication
+
+The Customer flow has three Persian RTL routes: `/auth`, `/auth/verify`, and `/auth/register`. `GET /customer-auth/flow` derives the authoritative stage from server records plus HttpOnly cookies and canonicalizes direct entry, reload, and Back navigation. The browser never receives the OTP challenge identifier or registration grant. Existing and new mobiles receive the same request response before a valid OTP proves possession.
+
+OTP codes are six digits, stored only as a challenge-bound keyed digest, expire after 120 seconds, and allow five failed attempts. An accepted resend rotates the challenge after the 120-second cooldown. A verified existing Customer receives a session; a verified new mobile receives a single-use 15-minute registration flow and can submit only first and last name. Customer Access lasts 15 minutes and the absolute Refresh/session lifetime is seven days.
+
+| Customer cookie                 | Purpose                                           | HttpOnly | SameSite | Path                    |
+| ------------------------------- | ------------------------------------------------- | -------- | -------- | ----------------------- |
+| `storefront_customer_auth_flow` | Opaque OTP or registration flow authority         | Yes      | `Strict` | `/api/v1/customer-auth` |
+| `storefront_customer_access`    | Short-lived Customer Access JWT                   | Yes      | `Lax`    | `/`                     |
+| `storefront_customer_refresh`   | Opaque rotating Customer Refresh credential       | Yes      | `Lax`    | `/`                     |
+| `storefront_customer_csrf`      | Session-bound CSRF value copied to `X-CSRF-Token` | No       | `Strict` | `/`                     |
+
+All are host-only and gain `Secure` in production. Customer Refresh reuses the accepted atomic rotation, bounded recovery, suspicious-reuse revocation, exact-origin, CSRF, and current-session logout architecture without accepting Admin cookies. The Customer JWT uses audience `e-commerce-storefront`; current Customer/session state remains authoritative.
 
 The API issues three separate host-only cookies. The `Domain` attribute is not set:
 
-| Cookie         | Credential                               | Accepted default TTL   | HttpOnly | Secure            | SameSite | Path |
-| -------------- | ---------------------------------------- | ---------------------- | -------- | ----------------- | -------- | ---- |
-| Access cookie  | Short-lived access JWT                   | `ACCESS_TOKEN_TTL=15m` | Yes      | Yes in production | `Lax`    | `/`  |
-| Refresh cookie | Longer-lived opaque random refresh token | `REFRESH_TOKEN_TTL=7d` | Yes      | Yes in production | `Lax`    | `/`  |
-| CSRF cookie    | Session-bound synchronizer token          | Session absolute expiry | No       | Yes in production | `Strict` | `/`  |
+| Cookie         | Credential                               | Accepted default TTL    | HttpOnly | Secure            | SameSite | Path |
+| -------------- | ---------------------------------------- | ----------------------- | -------- | ----------------- | -------- | ---- |
+| Access cookie  | Short-lived access JWT                   | `ACCESS_TOKEN_TTL=15m`  | Yes      | Yes in production | `Lax`    | `/`  |
+| Refresh cookie | Longer-lived opaque random refresh token | `REFRESH_TOKEN_TTL=7d`  | Yes      | Yes in production | `Lax`    | `/`  |
+| CSRF cookie    | Session-bound synchronizer token         | Session absolute expiry | No       | Yes in production | `Strict` | `/`  |
 
 Runtime lifetimes come from validated environment configuration; 15 minutes and 7 days are the accepted defaults, not values to hard-code throughout the application. Local development configuration may differ where HTTPS is unavailable, but production protections must not be weakened silently. Cookie names and exact development behavior belong to environment-aware implementation planning.
 
@@ -110,7 +125,7 @@ Safe post-login return destinations are application-relative allowlisted paths. 
 
 - The owner-approved Prisma fields, relations, database constraints/indexes, referential actions, fixed expiry, throttle representation, cleanup, 30-day terminal security-history retention, and additive migration design are canonical in the Prisma schema, reviewed migrations, and focused PostgreSQL tests.
 - Production secret-provider integration, long-term security-event retention, distributed throttling, and operational key-rotation runbooks remain release/deployment work; their absence does not permit source-controlled secrets or horizontal deployment with per-process-only limiting.
-- Admin BFF adoption is accepted in ADR 0013. Storefront Customer authentication remains deferred but must reuse the same independent pattern when approved.
+- Admin BFF adoption is accepted in ADR 0013. Storefront Customer authentication now implements the same architectural pattern through an independent BFF, credentials, persistence, and contracts.
 
 These decisions follow [JWT Best Current Practices (RFC 8725)](https://www.rfc-editor.org/rfc/rfc8725), [EdDSA for JOSE (RFC 8037)](https://www.rfc-editor.org/rfc/rfc8037), and OWASP guidance for [CSRF prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html), and [password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
 

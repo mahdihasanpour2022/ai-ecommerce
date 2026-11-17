@@ -1,0 +1,86 @@
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +28ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigurationModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +8ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCustomerAuthenticationModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCatalogModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthenticationModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthenticationController {/api/v1/auth}:[39m[38;5;3m +20ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/logout, POST} route[39m[38;5;3m +7ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/bootstrap, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/refresh, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/csrf, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCustomerAuthenticationController {/api/v1/customer-auth}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/bootstrap, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/refresh, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/logout, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/flow, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/register, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/otp/verify, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/customer-auth/otp/request, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mBannerController {/api/v1/admin/catalog/banners}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/banners, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/banners/:bannerId/content, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/banners, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/banners/:bannerId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/banners/:bannerId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicBannerController {/api/v1/catalog/banners}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/banners, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/banners/:bannerId/content, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCategoryController {/api/v1/admin/catalog/categories}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/categories, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/categories, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/categories/:categoryId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/categories/:categoryId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mCategoryImageController {/api/v1/admin/catalog/category-images}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/category-images/:imageId/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicCategoryImageController {/api/v1/catalog/category-images}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/category-images/:imageId/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProductController {/api/v1/admin/catalog}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId/variants, POST} route[39m[38;5;3m +6ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/variants/:variantId, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/variants/:variantId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mProductOptionController {/api/v1/admin/catalog/product-options}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/tags, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/tags, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/tags/:englishTagName, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/tags/:englishTagName, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/sizes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/sizes, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/sizes/:englishSizeName, PATCH} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/sizes/:englishSizeName, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/colors, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/colors, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/colors/:englishColorName, PATCH} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/colors/:englishColorName, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-options/statuses, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mInventoryController {/api/v1/admin/catalog}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/variants/:variantId/inventory, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminPriceDisplaySettingController {/api/v1/admin/catalog/settings/price-display-unit}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/settings/price-display-unit, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/settings/price-display-unit, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicPriceDisplaySettingController {/api/v1/catalog/settings/price-display-unit}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/settings/price-display-unit, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAdminProductImageController {/api/v1/admin/catalog}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId/images, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/products/:productId/images/order, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-images/:imageId/replacements, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-images/:imageId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/admin/catalog/product-images/:imageId/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicProductImageController {/api/v1/catalog/product-images}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/product-images/:imageId/content, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPublicCatalogController {/api/v1/catalog}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/categories, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/product-options/colors, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/product-options/sizes, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/product-options/price-range, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/products, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/catalog/products/:productId, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 21904  - [39m11/17/2026, 11:41:24 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +2ms[39m

@@ -47,6 +47,16 @@ input[type='number']::-webkit-outer-spin-button {
   appearance: none;
 }
 
+/* رنگ Autofill مرورگر را با سطح ورودی‌های نام هماهنگ نگه می‌دارد. */
+.auth-name-input:-webkit-autofill,
+.auth-name-input:-webkit-autofill:hover,
+.auth-name-input:-webkit-autofill:focus,
+.auth-name-input:-webkit-autofill:active {
+  caret-color: var(--foreground);
+  -webkit-text-fill-color: var(--foreground);
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+}
+
 .scrollbar-white {
   scrollbar-color: rgba(255, 255, 255, 0.9) transparent;
   scrollbar-gutter: stable both-edges;

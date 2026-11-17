@@ -4,6 +4,7 @@ import { UiButton, UiHeading, UiInputTextField, UiP } from '@/components/shared/
 import { useRegisterCustomer } from '@/features/customer-auth/customer-auth-hooks';
 import {
   customerRegistrationSchema,
+  sanitizeCustomerNameInput,
   type CustomerRegistrationFormInput,
   type CustomerRegistrationFormValues,
 } from '@/features/customer-auth/customer-registration';
@@ -23,13 +24,12 @@ export default function RegisterAuthPage() {
     resolver: zodResolver(customerRegistrationSchema),
     defaultValues: { firstName: '', lastName: '' },
   });
+  const firstNameRegistration = register('firstName');
+  const lastNameRegistration = register('lastName');
   const isBusy = isSubmitting || registerCustomer.isPending;
 
   // قفل حافظه‌ای از ثبت دوباره با کلیک یا Enter هم‌زمان جلوگیری می‌کند و مقادیر خطاپذیر را نگه می‌دارد.
-  const submitRegistration = async ({
-    firstName,
-    lastName,
-  }: CustomerRegistrationFormValues) => {
+  const submitRegistration = async ({ firstName, lastName }: CustomerRegistrationFormValues) => {
     if (submissionInFlight.current) return;
     submissionInFlight.current = true;
     try {
@@ -42,20 +42,15 @@ export default function RegisterAuthPage() {
   };
 
   return (
-    <main
-      dir="rtl"
-      className="flex min-h-dvh items-center justify-center bg-background p-4 sm:p-6"
-    >
+    <main dir="rtl" className="bg-background flex min-h-dvh items-center justify-center p-4 sm:p-6">
       <section
         aria-labelledby="registration-heading"
-        className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8"
+        className="border-border bg-surface w-full max-w-md rounded-xl border p-6 shadow-sm sm:p-8"
       >
-        <UiHeading id="registration-heading" className="text-center text-foreground">
-          تکمیل ثبت‌نام
+        <UiHeading id="registration-heading" className="text-foreground text-center">
+           ثبت‌نام
         </UiHeading>
-        <UiP className="mt-2 text-center text-muted">
-          برای ساخت حساب، نام و نام خانوادگی خود را وارد کنید.
-        </UiP>
+        <UiP className="text-muted mt-2 text-center">نام و نام خانوادگی خود را وارد کنید.</UiP>
 
         <form
           className="mt-8 space-y-6"
@@ -63,23 +58,35 @@ export default function RegisterAuthPage() {
           onSubmit={(event) => void handleSubmit(submitRegistration)(event)}
         >
           <UiInputTextField
-            {...register('firstName')}
+            {...firstNameRegistration}
             id="first-name"
             type="text"
             label="نام"
             required
             autoComplete="given-name"
             autoFocus
+            dir="rtl"
+            className="auth-name-input"
             errorMessage={errors.firstName?.message}
+            onChange={(event) => {
+              event.currentTarget.value = sanitizeCustomerNameInput(event.currentTarget.value);
+              void firstNameRegistration.onChange(event);
+            }}
           />
           <UiInputTextField
-            {...register('lastName')}
+            {...lastNameRegistration}
             id="last-name"
             type="text"
             label="نام خانوادگی"
             required
             autoComplete="family-name"
+            dir="rtl"
+            className="auth-name-input"
             errorMessage={errors.lastName?.message}
+            onChange={(event) => {
+              event.currentTarget.value = sanitizeCustomerNameInput(event.currentTarget.value);
+              void lastNameRegistration.onChange(event);
+            }}
           />
 
           {registerCustomer.error ? (
@@ -88,12 +95,7 @@ export default function RegisterAuthPage() {
             </UiP>
           ) : null}
 
-          <UiButton
-            type="submit"
-            size="medium"
-            loading={isBusy}
-            className="bg-nice-red text-white"
-          >
+          <UiButton type="submit" size="medium" loading={isBusy} className="bg-nice-red text-white">
             {isBusy ? 'در حال تکمیل ثبت‌نام' : 'تکمیل ثبت‌نام'}
           </UiButton>
         </form>

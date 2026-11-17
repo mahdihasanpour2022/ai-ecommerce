@@ -22,8 +22,7 @@ export const MOBILE_INVALID_MESSAGE = 'شماره موبایل واردشده م
 export const OTP_RESEND_NOT_READY_MESSAGE = 'برای ارسال مجدد کد کمی صبر کنید.';
 export const AUTH_RATE_LIMITED_MESSAGE =
   'تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً دوباره تلاش کنید.';
-export const OTP_SEND_UNAVAILABLE_MESSAGE =
-  'ارسال کد تأیید ممکن نشد. لطفاً کمی بعد دوباره تلاش کنید.';
+export const OTP_SEND_UNAVAILABLE_MESSAGE = 'ارسال کد ممکن نشد. لطفاً کمی بعد دوباره تلاش کنید.';
 export const OTP_VERIFIED_MESSAGE = 'شماره موبایل با موفقیت تأیید شد.';
 export const CUSTOMER_REGISTERED_MESSAGE = 'ثبت‌نام با موفقیت انجام شد.';
 export const CUSTOMER_AUTH_BOOTSTRAPPED_MESSAGE = 'نشست مشتری با موفقیت بررسی شد.';
@@ -45,10 +44,8 @@ export const CUSTOMER_INVALID_ACCESS_TOKEN_MESSAGE = 'نشست معتبر نیس
 export const CUSTOMER_ACCESS_TOKEN_EXPIRED_MESSAGE = 'نشست نیاز به تمدید دارد.';
 export const CUSTOMER_CSRF_VALIDATION_FAILED_MESSAGE =
   'درخواست معتبر نیست. لطفاً صفحه را تازه‌سازی و دوباره تلاش کنید.';
-export const CUSTOMER_REFRESH_TOKEN_INVALID_MESSAGE =
-  'نشست معتبر نیست. لطفاً دوباره وارد شوید.';
-export const CUSTOMER_REFRESH_TOKEN_EXPIRED_MESSAGE =
-  'نشست منقضی شده است. لطفاً دوباره وارد شوید.';
+export const CUSTOMER_REFRESH_TOKEN_INVALID_MESSAGE = 'نشست معتبر نیست. لطفاً دوباره وارد شوید.';
+export const CUSTOMER_REFRESH_TOKEN_EXPIRED_MESSAGE = 'نشست منقضی شده است. لطفاً دوباره وارد شوید.';
 export const CUSTOMER_REFRESH_TOKEN_REUSED_MESSAGE =
   'نشست به دلایل امنیتی پایان یافت. لطفاً دوباره وارد شوید.';
 export const INTERNAL_SERVER_ERROR_MESSAGE = 'خطای داخلی سرور رخ داد.';

@@ -3,18 +3,16 @@ import test from 'node:test';
 import {
   customerRegistrationSchema,
   normalizeCustomerName,
+  sanitizeCustomerNameInput,
 } from '../features/customer-auth/customer-registration';
 
 test('customer registration normalizes Persian-friendly names before submission', () => {
   assert.equal(normalizeCustomerName('  علی   رضا  '), 'علی رضا');
   assert.deepEqual(
-    customerRegistrationSchema.parse({ firstName: '  علی   رضا ', lastName: 'نیک‌پی' }),
-    { firstName: 'علی رضا', lastName: 'نیک‌پی' },
+    customerRegistrationSchema.parse({ firstName: 'علی   رضا ', lastName: 'نیک پی' }),
+    { firstName: 'علی رضا', lastName: 'نیک پی' },
   );
-  assert.deepEqual(
-    customerRegistrationSchema.parse({ firstName: 'Jean-Pierre', lastName: "O'Connor" }),
-    { firstName: 'Jean-Pierre', lastName: "O'Connor" },
-  );
+  assert.equal(sanitizeCustomerNameInput(' 1مهدی<script>  احمدی'), 'مهدی احمدی');
 });
 
 test('customer registration returns field-specific errors for missing and invalid names', () => {
@@ -28,7 +26,7 @@ test('customer registration returns field-specific errors for missing and invali
     ],
   );
 
-  for (const value of ['ع', 'علی2', 'علی<script>', 'الف'.repeat(51)]) {
+  for (const value of ['ع', ' علی', 'علی2', 'Ali', 'نیک‌پی', 'علی<script>', 'الف'.repeat(51)]) {
     assert.equal(
       customerRegistrationSchema.safeParse({ firstName: value, lastName: 'احمدی' }).success,
       false,
