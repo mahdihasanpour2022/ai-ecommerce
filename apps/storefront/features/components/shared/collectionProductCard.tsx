@@ -19,7 +19,7 @@ export const CollectionProductCard = ({ product, className }: Props) => {
   const { name, description, image, alt } = product;
 
   const navigateToSingleProduct = () => {
-    router.push(getProductHref(product.id, product.name), { scroll: false });
+    router.push(getProductHref(product.id, product.name), { scroll: true });
   };
 
   return (

@@ -31,6 +31,15 @@ enum PriceDisplayUnit {
   @@map("price_display_unit")
 }
 
+enum CustomerOtpDeliveryStatus {
+  PENDING
+  ACCEPTED
+  FAILED
+  UNKNOWN
+
+  @@map("customer_otp_delivery_status")
+}
+
 model AdminUser {
   id           String          @id(map: "admin_users_pkey") @default(uuid()) @db.Uuid
   email        String          @unique(map: "admin_users_email_key") @db.VarChar(254)
@@ -156,6 +165,118 @@ model AuthSessionRefreshThrottle {
   @@map("auth_session_refresh_throttles")
 }
 
+model Customer {
+  id          String                @id(map: "customers_pkey") @default(uuid()) @db.Uuid
+  mobile      String                @unique(map: "customers_mobile_key") @db.VarChar(13)
+  firstName   String                @map("first_name") @db.VarChar(50)
+  lastName    String                @map("last_name") @db.VarChar(50)
+  disabledAt  DateTime?             @map("disabled_at") @db.Timestamptz(3)
+  lastLoginAt DateTime?             @map("last_login_at") @db.Timestamptz(3)
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sessions    CustomerAuthSession[]
+
+  @@map("customers")
+}
+
+model CustomerOtpChallenge {
+  id                 String                     @id(map: "customer_otp_challenges_pkey") @default(uuid()) @db.Uuid
+  flowTokenHash      Bytes                      @unique(map: "customer_otp_challenges_flow_token_hash_key") @map("flow_token_hash") @db.ByteA
+  mobile             String                     @db.VarChar(13)
+  otpDigest          Bytes                      @map("otp_digest") @db.ByteA
+  clientReferenceId  String                     @unique(map: "customer_otp_challenges_client_reference_id_key") @map("client_reference_id") @db.Uuid
+  deliveryStatus     CustomerOtpDeliveryStatus  @default(PENDING) @map("delivery_status")
+  expiresAt          DateTime                   @map("expires_at") @db.Timestamptz(3)
+  resendAvailableAt  DateTime                   @map("resend_available_at") @db.Timestamptz(3)
+  failedAttemptCount Int                        @default(0) @map("failed_attempt_count")
+  verifiedAt         DateTime?                  @map("verified_at") @db.Timestamptz(3)
+  invalidatedAt      DateTime?                  @map("invalidated_at") @db.Timestamptz(3)
+  createdAt          DateTime                   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  registrationGrant  CustomerRegistrationGrant?
+
+  @@index([mobile, createdAt], map: "customer_otp_challenges_mobile_created_at_idx")
+  @@index([expiresAt], map: "customer_otp_challenges_expires_at_idx")
+  @@map("customer_otp_challenges")
+}
+
+model CustomerRegistrationGrant {
+  id            String               @id(map: "customer_registration_grants_pkey") @default(uuid()) @db.Uuid
+  challengeId   String               @unique(map: "customer_registration_grants_challenge_id_key") @map("challenge_id") @db.Uuid
+  flowTokenHash Bytes                @unique(map: "customer_registration_grants_flow_token_hash_key") @map("flow_token_hash") @db.ByteA
+  expiresAt     DateTime             @map("expires_at") @db.Timestamptz(3)
+  consumedAt    DateTime?            @map("consumed_at") @db.Timestamptz(3)
+  invalidatedAt DateTime?            @map("invalidated_at") @db.Timestamptz(3)
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  challenge     CustomerOtpChallenge @relation(fields: [challengeId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "customer_registration_grants_challenge_id_fkey")
+
+  @@index([expiresAt], map: "customer_registration_grants_expires_at_idx")
+  @@map("customer_registration_grants")
+}
+
+model CustomerAuthSession {
+  id              String                              @id(map: "customer_auth_sessions_pkey") @default(uuid()) @db.Uuid
+  customerId      String                              @map("customer_id") @db.Uuid
+  csrfTokenHash   Bytes                               @map("csrf_token_hash") @db.ByteA
+  expiresAt       DateTime                            @map("expires_at") @db.Timestamptz(3)
+  revokedAt       DateTime?                           @map("revoked_at") @db.Timestamptz(3)
+  lastUsedAt      DateTime                            @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  createdAt       DateTime                            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime                            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  customer        Customer                            @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "customer_auth_sessions_customer_id_fkey")
+  refreshTokens   CustomerRefreshToken[]
+  refreshThrottle CustomerAuthSessionRefreshThrottle?
+
+  @@index([customerId, revokedAt, expiresAt], map: "customer_auth_sessions_customer_revoked_expires_idx")
+  @@index([expiresAt], map: "customer_auth_sessions_expires_at_idx")
+  @@map("customer_auth_sessions")
+}
+
+model CustomerRefreshToken {
+  id                 String                 @id(map: "customer_refresh_tokens_pkey") @default(uuid()) @db.Uuid
+  sessionId          String                 @map("session_id") @db.Uuid
+  tokenHash          Bytes                  @unique(map: "customer_refresh_tokens_token_hash_key") @map("token_hash") @db.ByteA
+  expiresAt          DateTime               @map("expires_at") @db.Timestamptz(3)
+  rotatedAt          DateTime?              @map("rotated_at") @db.Timestamptz(3)
+  revokedAt          DateTime?              @map("revoked_at") @db.Timestamptz(3)
+  replacedByTokenId  String?                @map("replaced_by_token_id") @db.Uuid
+  recoveryCiphertext Bytes?                 @map("recovery_ciphertext") @db.ByteA
+  recoveryNonce      Bytes?                 @map("recovery_nonce") @db.ByteA
+  recoveryAuthTag    Bytes?                 @map("recovery_auth_tag") @db.ByteA
+  recoveryKeyId      String?                @map("recovery_key_id") @db.VarChar(128)
+  recoveryExpiresAt  DateTime?              @map("recovery_expires_at") @db.Timestamptz(3)
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  session            CustomerAuthSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_refresh_tokens_session_id_fkey")
+  replacement        CustomerRefreshToken?  @relation("CustomerRefreshReplacement", fields: [replacedByTokenId, sessionId], references: [id, sessionId], onDelete: NoAction, onUpdate: NoAction, map: "customer_refresh_tokens_replacement_fkey")
+  replacedTokens     CustomerRefreshToken[] @relation("CustomerRefreshReplacement")
+
+  @@unique([id, sessionId], map: "customer_refresh_tokens_id_session_id_key")
+  @@unique([replacedByTokenId, sessionId], map: "customer_refresh_tokens_replacement_session_key")
+  @@index([sessionId, createdAt], map: "customer_refresh_tokens_session_created_at_idx")
+  @@index([expiresAt], map: "customer_refresh_tokens_expires_at_idx")
+  @@index([recoveryExpiresAt], map: "customer_refresh_tokens_recovery_expires_at_idx")
+  @@map("customer_refresh_tokens")
+}
+
+model CustomerOtpMobileThrottle {
+  mobileKey Bytes    @id(map: "customer_otp_mobile_throttles_pkey") @map("mobile_key") @db.ByteA
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([updatedAt], map: "customer_otp_mobile_throttles_updated_at_idx")
+  @@map("customer_otp_mobile_throttles")
+}
+
+model CustomerAuthSessionRefreshThrottle {
+  sessionId       String              @id(map: "customer_auth_session_refresh_throttles_pkey") @map("session_id") @db.Uuid
+  windowStartedAt DateTime?           @map("window_started_at") @db.Timestamptz(3)
+  attemptCount    Int                 @default(0) @map("attempt_count")
+  updatedAt       DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  session         CustomerAuthSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "customer_auth_session_refresh_throttles_session_id_fkey")
+
+  @@map("customer_auth_session_refresh_throttles")
+}
+
 model Category {
   id        String         @id(map: "categories_pkey") @default(uuid()) @db.Uuid
   name      String         @db.VarChar(120)
@@ -255,17 +376,17 @@ model Product {
 }
 
 model ProductVariant {
-  id        String     @id(map: "product_variants_pkey") @default(uuid()) @db.Uuid
-  productId String     @map("product_id") @db.Uuid
-  sku       String     @unique(map: "product_variants_sku_key") @db.VarChar(64)
-  size      String?    @db.VarChar(80)
-  sizeKey   String?    @map("size_key") @db.VarChar(160)
-  color     String?    @db.VarChar(80)
-  colorKey  String?    @map("color_key") @db.VarChar(160)
-  isActive  Boolean    @default(true) @map("is_active")
-  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
-  product   Product    @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_variants_product_id_fkey")
+  id        String        @id(map: "product_variants_pkey") @default(uuid()) @db.Uuid
+  productId String        @map("product_id") @db.Uuid
+  sku       String        @unique(map: "product_variants_sku_key") @db.VarChar(64)
+  size      String?       @db.VarChar(80)
+  sizeKey   String?       @map("size_key") @db.VarChar(160)
+  color     String?       @db.VarChar(80)
+  colorKey  String?       @map("color_key") @db.VarChar(160)
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_variants_product_id_fkey")
   inventory Inventory?
   image     ProductImage?
 

@@ -31,6 +31,13 @@ const productPricingMigration = readFileSync(
   resolve(apiRoot, 'prisma/migrations/20261016000000_move_pricing_to_products/migration.sql'),
   'utf8',
 );
+const customerAuthMigration = readFileSync(
+  resolve(
+    apiRoot,
+    'prisma/migrations/20261117180000_add_customer_authentication_foundation/migration.sql',
+  ),
+  'utf8',
+);
 
 const approvedModels = [
   'AdminUser',
@@ -42,11 +49,23 @@ const approvedModels = [
   'RefreshToken',
   'AdminLoginThrottle',
   'AuthSessionRefreshThrottle',
+  'Customer',
+  'CustomerOtpChallenge',
+  'CustomerRegistrationGrant',
+  'CustomerAuthSession',
+  'CustomerRefreshToken',
+  'CustomerOtpMobileThrottle',
+  'CustomerAuthSessionRefreshThrottle',
   'Category',
   'CategoryImage',
   'CategoryImageCleanup',
+  'Banner',
+  'BannerImageCleanup',
   'Product',
   'ProductVariant',
+  'ProductColorOption',
+  'ProductSizeOption',
+  'ProductTagOption',
   'Inventory',
   'ProductImage',
   'ProductImageCleanup',
@@ -75,8 +94,18 @@ const approvedCatalogTables = [
   'price_display_settings',
 ];
 
+const approvedCustomerAuthTables = [
+  'customers',
+  'customer_otp_challenges',
+  'customer_registration_grants',
+  'customer_auth_sessions',
+  'customer_refresh_tokens',
+  'customer_otp_mobile_throttles',
+  'customer_auth_session_refresh_throttles',
+];
+
 void describe('Prisma schema and reviewed migrations', () => {
-  void test('contains exactly the approved Admin and catalog Prisma models', () => {
+  void test('contains exactly the approved Admin, Customer and catalog Prisma models', () => {
     const actualModels = [...schema.matchAll(/^model\s+(\w+)\s+\{/gm)].map((match) => match[1]);
 
     assert.deepEqual(actualModels.sort(), [...approvedModels].sort());
@@ -113,6 +142,54 @@ void describe('Prisma schema and reviewed migrations', () => {
     assert.match(adminMigration, /FOREIGN KEY \("replaced_by_token_id", "session_id"\)/);
     assert.match(adminMigration, /octet_length\("recovery_nonce"\) = 12/);
     assert.match(adminMigration, /octet_length\("recovery_auth_tag"\) = 16/);
+  });
+
+  void test('creates only the seven approved Customer authentication tables additively', () => {
+    const actualTables = [...customerAuthMigration.matchAll(/^CREATE TABLE "([^"]+)"/gm)].map(
+      (match) => match[1],
+    );
+
+    assert.deepEqual(actualTables.sort(), [...approvedCustomerAuthTables].sort());
+    assert.match(customerAuthMigration, /^BEGIN;/u);
+    assert.match(customerAuthMigration, /COMMIT;\s*$/u);
+    assert.doesNotMatch(customerAuthMigration, /\b(?:DROP|TRUNCATE)\b/iu);
+    assert.doesNotMatch(customerAuthMigration, /ALTER\s+(?:COLUMN|TYPE)\b/iu);
+  });
+
+  void test('keeps Customer authentication security invariants in reviewed SQL', () => {
+    const requiredDatabaseObjects = [
+      'customers_mobile_canonical_check',
+      'customers_first_name_check',
+      'customer_otp_challenges_flow_token_hash_length_check',
+      'customer_otp_challenges_otp_digest_length_check',
+      'customer_otp_challenges_delivery_state_check',
+      'customer_otp_challenges_one_open_per_mobile',
+      'customer_registration_grants_flow_token_hash_length_check',
+      'customer_auth_sessions_csrf_hash_length_check',
+      'customer_refresh_tokens_token_hash_length_check',
+      'customer_refresh_tokens_recovery_envelope_check',
+      'customer_refresh_tokens_replacement_fkey',
+      'customer_refresh_tokens_one_current_per_session',
+      'customer_otp_mobile_throttles_mobile_key_length_check',
+    ];
+
+    for (const databaseObject of requiredDatabaseObjects) {
+      assert.match(customerAuthMigration, new RegExp(`"${databaseObject}"`));
+    }
+
+    assert.match(
+      customerAuthMigration,
+      /CREATE TYPE "customer_otp_delivery_status" AS ENUM \('PENDING', 'ACCEPTED', 'FAILED', 'UNKNOWN'\)/u,
+    );
+    assert.match(
+      customerAuthMigration,
+      /WHERE "verified_at" IS NULL AND "invalidated_at" IS NULL;/u,
+    );
+    assert.match(
+      customerAuthMigration,
+      /WHERE "rotated_at" IS NULL AND "revoked_at" IS NULL;/u,
+    );
+    assert.match(customerAuthMigration, /FOREIGN KEY \("replaced_by_token_id", "session_id"\)/u);
   });
 
   void test('adds a required canonical unique Admin username with safe legacy backfill', () => {

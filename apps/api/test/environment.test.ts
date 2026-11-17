@@ -12,6 +12,7 @@ void describe('API environment parsing', () => {
     assert.equal(environment.authentication.refreshReuseGraceSeconds, 10);
     assert.equal(environment.authentication.refreshSessionLimitPerMinute, 10);
     assert.equal(environment.authentication.refreshIpLimitPerMinute, 30);
+    assert.equal(environment.otpProvider.ghasedakTemplateName, 'Ghasedak');
     assert.ok(environment.productImages.localStorageRoot);
   });
 
@@ -118,6 +119,25 @@ void describe('API environment parsing', () => {
     assert.throws(
       () => parseEnvironment(validEnvironmentSource({ PRODUCT_IMAGE_STORAGE_ROOT: '/' })),
       /^Error: Invalid PRODUCT_IMAGE_STORAGE_ROOT:/,
+    );
+  });
+
+  void test('requires safe server-only Ghasedak configuration without exposing values', () => {
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ GHASEDAK_API_KEY: undefined })),
+      /^Error: Invalid GHASEDAK_API_KEY:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ GHASEDAK_API_KEY: ' secret-value ' })),
+      /^Error: Invalid GHASEDAK_API_KEY:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ GHASEDAK_OTP_TEMPLATE_NAME: undefined })),
+      /^Error: Invalid GHASEDAK_OTP_TEMPLATE_NAME:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ GHASEDAK_OTP_TEMPLATE_NAME: 'قاصدک' })),
+      /^Error: Invalid GHASEDAK_OTP_TEMPLATE_NAME:/,
     );
   });
 });

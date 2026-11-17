@@ -41,7 +41,13 @@ export interface ApiEnvironment {
   readonly port: number;
   readonly databaseUrl: string;
   readonly authentication: AuthenticationEnvironment;
+  readonly otpProvider: OtpProviderEnvironment;
   readonly productImages: ProductImageEnvironment;
+}
+
+export interface OtpProviderEnvironment {
+  readonly ghasedakApiKey: string;
+  readonly ghasedakTemplateName: string;
 }
 
 export interface ProductImageEnvironment {
@@ -134,6 +140,32 @@ function parseProductImages(
     invalid('PRODUCT_IMAGE_STORAGE_ROOT', 'must not be a filesystem root');
   }
   return Object.freeze({ localStorageRoot });
+}
+
+// تنظیمات محرمانه ارسال OTP را بدون پذیرش فاصله یا نویسه کنترلی اعتبارسنجی می‌کند.
+function parseOtpProvider(source: EnvironmentSource): OtpProviderEnvironment {
+  const ghasedakApiKey = required(source, 'GHASEDAK_API_KEY');
+  const hasControlCharacter = Array.from(ghasedakApiKey).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f);
+  });
+  if (
+    ghasedakApiKey !== ghasedakApiKey.trim() ||
+    ghasedakApiKey.length > 512 ||
+    hasControlCharacter
+  ) {
+    invalid('GHASEDAK_API_KEY', 'expected a trimmed provider key without control characters');
+  }
+
+  const ghasedakTemplateName = required(source, 'GHASEDAK_OTP_TEMPLATE_NAME');
+  if (!/^[A-Za-z0-9_-]{1,100}$/u.test(ghasedakTemplateName)) {
+    invalid(
+      'GHASEDAK_OTP_TEMPLATE_NAME',
+      'expected 1-100 letters, numbers, underscores, or hyphens',
+    );
+  }
+
+  return Object.freeze({ ghasedakApiKey, ghasedakTemplateName });
 }
 
 function decodePem(value: string): string {
@@ -436,6 +468,7 @@ export function parseEnvironment(source: EnvironmentSource = process.env): ApiEn
     port: parsePort(source.PORT),
     databaseUrl: parseDatabaseUrl(source.DATABASE_URL),
     authentication: parseAuthentication(source),
+    otpProvider: parseOtpProvider(source),
     productImages: parseProductImages(source, nodeEnv),
   });
 }
