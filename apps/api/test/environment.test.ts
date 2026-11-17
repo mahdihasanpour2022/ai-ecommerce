@@ -12,6 +12,8 @@ void describe('API environment parsing', () => {
     assert.equal(environment.authentication.refreshReuseGraceSeconds, 10);
     assert.equal(environment.authentication.refreshSessionLimitPerMinute, 10);
     assert.equal(environment.authentication.refreshIpLimitPerMinute, 30);
+    assert.equal(environment.customerAuthentication.otpHmacKey.length, 32);
+    assert.equal(environment.customerAuthentication.mobileThrottleHmacKey.length, 32);
     assert.equal(environment.otpProvider.ghasedakTemplateName, 'Ghasedak');
     assert.ok(environment.productImages.localStorageRoot);
   });
@@ -73,6 +75,19 @@ void describe('API environment parsing', () => {
     assert.throws(
       () => parseEnvironment(validEnvironmentSource({ AUTH_REFRESH_RECOVERY_KEYRING: undefined })),
       /^Error: Invalid AUTH_REFRESH_RECOVERY_KEYRING:/,
+    );
+    assert.throws(
+      () => parseEnvironment(validEnvironmentSource({ CUSTOMER_AUTH_OTP_HMAC_KEY: undefined })),
+      /^Error: Invalid CUSTOMER_AUTH_OTP_HMAC_KEY:/,
+    );
+    assert.throws(
+      () =>
+        parseEnvironment(
+          validEnvironmentSource({
+            CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY: Buffer.alloc(32, 17).toString('base64'),
+          }),
+        ),
+      /^Error: Invalid CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY:/,
     );
     assert.throws(
       () =>

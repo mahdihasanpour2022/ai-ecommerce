@@ -27,6 +27,8 @@ export function validEnvironmentSource(
     PRODUCT_IMAGE_STORAGE_ROOT: join(tmpdir(), 'e-commerce-test-images'),
     GHASEDAK_API_KEY: 'test-ghasedak-api-key',
     GHASEDAK_OTP_TEMPLATE_NAME: 'Ghasedak',
+    CUSTOMER_AUTH_OTP_HMAC_KEY: Buffer.alloc(32, 17).toString('base64'),
+    CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY: Buffer.alloc(32, 19).toString('base64'),
     AUTH_LOGIN_THROTTLE_HMAC_KEY: Buffer.alloc(32, 7).toString('base64'),
     AUTH_CSRF_ACTIVE_KID: 'test-csrf-key',
     AUTH_CSRF_HMAC_KEYS: JSON.stringify({

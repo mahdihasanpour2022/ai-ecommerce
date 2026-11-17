@@ -41,8 +41,14 @@ export interface ApiEnvironment {
   readonly port: number;
   readonly databaseUrl: string;
   readonly authentication: AuthenticationEnvironment;
+  readonly customerAuthentication: CustomerAuthenticationEnvironment;
   readonly otpProvider: OtpProviderEnvironment;
   readonly productImages: ProductImageEnvironment;
+}
+
+export interface CustomerAuthenticationEnvironment {
+  readonly otpHmacKey: Buffer;
+  readonly mobileThrottleHmacKey: Buffer;
 }
 
 export interface OtpProviderEnvironment {
@@ -271,6 +277,42 @@ function decodeBase64Key(value: unknown, name: string): Buffer {
   return key;
 }
 
+// کلیدهای OTP و محدودسازی موبایل را مستقل از سایر اسرار احراز هویت نگه می‌دارد.
+function parseCustomerAuthentication(
+  source: EnvironmentSource,
+  authentication: AuthenticationEnvironment,
+): CustomerAuthenticationEnvironment {
+  const otpHmacKey = decodeBase64Key(
+    source.CUSTOMER_AUTH_OTP_HMAC_KEY,
+    'CUSTOMER_AUTH_OTP_HMAC_KEY',
+  );
+  const mobileThrottleHmacKey = decodeBase64Key(
+    source.CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY,
+    'CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY',
+  );
+  const existingKeys = [
+    authentication.loginThrottleHmacKey,
+    ...authentication.csrfHmacKeys.values(),
+    ...authentication.refreshRecoveryKeys.values(),
+  ];
+  if (existingKeys.some((key) => key.equals(otpHmacKey))) {
+    invalid(
+      'CUSTOMER_AUTH_OTP_HMAC_KEY',
+      'customer authentication keys must be unique and independent',
+    );
+  }
+  if (
+    otpHmacKey.equals(mobileThrottleHmacKey) ||
+    existingKeys.some((key) => key.equals(mobileThrottleHmacKey))
+  ) {
+    invalid(
+      'CUSTOMER_AUTH_MOBILE_THROTTLE_HMAC_KEY',
+      'customer authentication keys must be unique and independent',
+    );
+  }
+  return Object.freeze({ otpHmacKey, mobileThrottleHmacKey });
+}
+
 function parseCsrfKeyConfiguration(
   source: EnvironmentSource,
   loginThrottleHmacKey: Buffer,
@@ -463,11 +505,13 @@ function parseAuthentication(source: EnvironmentSource): AuthenticationEnvironme
 
 export function parseEnvironment(source: EnvironmentSource = process.env): ApiEnvironment {
   const nodeEnv = parseRuntimeEnvironment(source.NODE_ENV);
+  const authentication = parseAuthentication(source);
   return Object.freeze({
     nodeEnv,
     port: parsePort(source.PORT),
     databaseUrl: parseDatabaseUrl(source.DATABASE_URL),
-    authentication: parseAuthentication(source),
+    authentication,
+    customerAuthentication: parseCustomerAuthentication(source, authentication),
     otpProvider: parseOtpProvider(source),
     productImages: parseProductImages(source, nodeEnv),
   });
