@@ -22,6 +22,13 @@ const TERMINAL_OTP_FLOW_ERRORS = new Set([
   'OTP_EXPIRED',
 ]);
 
+// خطاهایی که grant ثبت‌نام را در Backend قطعی و غیرقابل استفاده می‌کنند.
+const TERMINAL_REGISTRATION_FLOW_ERRORS = new Set([
+  'AUTH_FLOW_INVALID',
+  'CUSTOMER_ACCOUNT_DISABLED',
+  'REGISTRATION_GRANT_EXPIRED',
+]);
+
 // مرحله جریان را با پاسخ no-store سرور به‌عنوان مرجع مسیر دریافت می‌کند.
 export function useCustomerAuthFlow() {
   return useRQFetcher<CustomerAuthResponse<CustomerAuthFlow>>({
@@ -89,6 +96,12 @@ export function useRegisterCustomer() {
     async onSuccess(response) {
       acceptCustomer(response.singleResult.customer);
       await queryClient.invalidateQueries({ queryKey: customerQueryKeys.flow });
+    },
+    // پایان قطعی grant را با مرحله بدون اختیار سرور همگام می‌کند تا فرم دوباره قابل ارسال نباشد.
+    async onError(error) {
+      if (TERMINAL_REGISTRATION_FLOW_ERRORS.has(error.code)) {
+        await queryClient.invalidateQueries({ queryKey: customerQueryKeys.flow });
+      }
     },
   });
 }
