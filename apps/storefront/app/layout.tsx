@@ -4,6 +4,7 @@ import localFont from 'next/font/local';
 import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from 'sonner';
 import { ReactQueryProvider } from '../providers/react-query-provider';
+import { CustomerAuthProvider } from '../features/customer-auth/auth-provider';
 import '../styles/globals.css';
 
 const iranSans = localFont({
@@ -45,10 +46,12 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           zIndex={2000}
         />
         <ReactQueryProvider>
-          <StorefrontConnectivityGuard>
-            <Toaster position="top-center" richColors dir="rtl" />
-            {children}
-          </StorefrontConnectivityGuard>
+          <CustomerAuthProvider>
+            <StorefrontConnectivityGuard>
+              <Toaster position="top-center" richColors dir="rtl" />
+              {children}
+            </StorefrontConnectivityGuard>
+          </CustomerAuthProvider>
         </ReactQueryProvider>
       </body>
     </html>

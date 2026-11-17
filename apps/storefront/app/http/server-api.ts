@@ -1,5 +1,10 @@
 const DEFAULT_BACKEND_API_URL = 'http://localhost:3002/api/v1';
-const FORWARDED_REQUEST_HEADERS = ['accept', 'content-type', 'if-match'] as const;
+const FORWARDED_REQUEST_HEADERS = [
+  'accept',
+  'content-type',
+  'if-match',
+  'x-csrf-token',
+] as const;
 const FORWARDED_RESPONSE_HEADERS = [
   'cache-control',
   'content-disposition',
@@ -8,6 +13,27 @@ const FORWARDED_RESPONSE_HEADERS = [
   'last-modified',
   'retry-after',
 ] as const;
+const CUSTOMER_COOKIE_NAMES = new Set([
+  'storefront_customer_auth_flow',
+  'storefront_customer_access',
+  'storefront_customer_refresh',
+  'storefront_customer_csrf',
+]);
+
+// فقط کوکی‌های متعلق به نشست مشتری را از میان کوکی‌های مرورگر جدا می‌کند.
+function customerCookieHeader(value: string | null): string | null {
+  if (value === null) return null;
+  const cookies = value
+    .split(';')
+    .map((cookie) => cookie.trim())
+    .filter((cookie) => CUSTOMER_COOKIE_NAMES.has(cookie.slice(0, cookie.indexOf('='))));
+  return cookies.length > 0 ? cookies.join('; ') : null;
+}
+
+function setCookieName(value: string): string {
+  const separator = value.indexOf('=');
+  return separator === -1 ? '' : value.slice(0, separator).trim();
+}
 
 // آدرس Backend را فقط از یک URL سروری معتبر و بدون credential می‌پذیرد.
 export function getBackendApiUrl(value = process.env.API_BASE_URL): string {
@@ -31,6 +57,8 @@ export function backendHeaders(request: Request): Headers {
     const value = request.headers.get(name);
     if (value !== null) headers.set(name, value);
   }
+  const cookie = customerCookieHeader(request.headers.get('cookie'));
+  if (cookie !== null) headers.set('cookie', cookie);
   headers.set('origin', new URL(request.url).origin);
   headers.set('sec-fetch-site', 'same-origin');
   return headers;
@@ -41,6 +69,9 @@ export function appendBackendResponseHeaders(target: Headers, source: Headers): 
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = source.get(name);
     if (value !== null) target.set(name, value);
+  }
+  for (const cookie of source.getSetCookie()) {
+    if (CUSTOMER_COOKIE_NAMES.has(setCookieName(cookie))) target.append('set-cookie', cookie);
   }
   target.set('cache-control', 'no-store');
 }

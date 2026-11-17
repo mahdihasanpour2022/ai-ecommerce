@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist-test",
+    "noEmit": false,
+    "incremental": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
+  },
+  "include": [
+    "app/http/api-response.ts",
+    "app/http/http-client.ts",
+    "app/http/server-api.ts",
+    "constants/appRoues.ts",
+    "features/customer-auth/customer-auth.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next", "dist-test"]
+}

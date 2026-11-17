@@ -24,11 +24,13 @@ export type RQFetcherOptions<Data> = Omit<
 > & {
   readonly url: string;
   readonly axiosConfig?: SafeGetConfig;
+  readonly paginate?: boolean;
 };
 
 export function useRQFetcher<Data>({
   url,
   axiosConfig,
+  paginate = true,
   ...queryOptions
 }: RQFetcherOptions<Data>): UseQueryResult<Data, StorefrontHttpError> {
   return useQuery({
@@ -36,11 +38,13 @@ export function useRQFetcher<Data>({
     queryFn: async ({ signal }) => {
       const response = await httpClient.get<Data>(url, {
         ...axiosConfig,
-        params: {
-          ...axiosConfig?.params,
-          page: axiosConfig?.params?.page ?? 1,
-          pageSize: axiosConfig?.params?.pageSize ?? 20,
-        },
+        params: paginate
+          ? {
+              ...axiosConfig?.params,
+              page: axiosConfig?.params?.page ?? 1,
+              pageSize: axiosConfig?.params?.pageSize ?? 20,
+            }
+          : axiosConfig?.params,
         paramsSerializer: { indexes: null },
         signal,
       });
