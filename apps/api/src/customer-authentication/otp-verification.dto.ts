@@ -25,13 +25,22 @@ export class CustomerSnapshotDto {
   lastName!: string;
 }
 
-export class OtpVerificationResponseDto {
-  @ApiProperty({ enum: ['AUTHENTICATED', 'REGISTRATION_REQUIRED'] })
-  nextStep!: 'AUTHENTICATED' | 'REGISTRATION_REQUIRED';
+export class OtpAuthenticatedResponseDto {
+  @ApiProperty({ enum: ['AUTHENTICATED'] })
+  nextStep!: 'AUTHENTICATED';
 
-  @ApiProperty({ type: CustomerSnapshotDto, nullable: true, required: false })
-  customer?: CustomerSnapshotDto;
+  @ApiProperty({ type: CustomerSnapshotDto })
+  customer!: CustomerSnapshotDto;
 }
+
+export class OtpRegistrationRequiredResponseDto {
+  @ApiProperty({ enum: ['REGISTRATION_REQUIRED'] })
+  nextStep!: 'REGISTRATION_REQUIRED';
+}
+
+export type OtpVerificationResponse =
+  | OtpAuthenticatedResponseDto
+  | OtpRegistrationRequiredResponseDto;
 
 export interface ParsedOtpVerification {
   readonly code: string;

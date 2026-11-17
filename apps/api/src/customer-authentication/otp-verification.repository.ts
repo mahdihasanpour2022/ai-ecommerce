@@ -42,7 +42,7 @@ export class OtpVerificationRepository {
 
   // قفل چالش، شمارش خطا، مصرف کد و ایجاد خروجی بعدی را در یک تراکنش انجام می‌دهد.
   async verify(
-    flowTokenHash: Buffer,
+    flowTokenHash: Uint8Array<ArrayBuffer>,
     code: string,
     validFormat: boolean,
     now = new Date(),

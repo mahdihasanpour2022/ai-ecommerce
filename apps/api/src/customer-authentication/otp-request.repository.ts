@@ -13,10 +13,10 @@ import { CustomerAuthenticationError } from './customer-authentication.errors.js
 export interface PrepareOtpChallenge {
   readonly challengeId: string;
   readonly clientReferenceId: string;
-  readonly flowTokenHash: Buffer;
+  readonly flowTokenHash: Uint8Array<ArrayBuffer>;
   readonly mobile: string;
-  readonly mobileKey: Buffer;
-  readonly otpDigest: Buffer;
+  readonly mobileKey: Uint8Array<ArrayBuffer>;
+  readonly otpDigest: Uint8Array<ArrayBuffer>;
   readonly expiresAt: Date;
   readonly resendAvailableAt: Date;
   readonly now: Date;

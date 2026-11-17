@@ -14,9 +14,9 @@ import {
 export interface IssuedCustomerSession {
   readonly sessionId: string;
   readonly csrfToken: string;
-  readonly csrfTokenHash: Buffer;
+  readonly csrfTokenHash: Uint8Array<ArrayBuffer>;
   readonly refreshToken: string;
-  readonly refreshTokenHash: Buffer;
+  readonly refreshTokenHash: Uint8Array<ArrayBuffer>;
   readonly accessToken: string;
   readonly accessExpiresAt: Date;
   readonly sessionExpiresAt: Date;
@@ -58,7 +58,7 @@ export class CustomerSessionCrypto {
     };
   }
 
-  private sha256(value: string): Buffer {
-    return createHash('sha256').update(value, 'utf8').digest();
+  private sha256(value: string): Uint8Array<ArrayBuffer> {
+    return Uint8Array.from(createHash('sha256').update(value, 'utf8').digest());
   }
 }

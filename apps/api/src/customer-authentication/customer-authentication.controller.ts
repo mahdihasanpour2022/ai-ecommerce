@@ -12,9 +12,11 @@ import {
 } from '@nestjs/common';
 import {
   ApiBody,
+  ApiExtraModels,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
 
 import { AuthenticationError } from '../authentication/authentication.errors.js';
@@ -46,8 +48,10 @@ import {
 import { OtpRequestSecurity, type IpSendReservation } from './otp-request.security.js';
 import { OtpRequestService } from './otp-request.service.js';
 import {
+  OtpAuthenticatedResponseDto,
+  OtpRegistrationRequiredResponseDto,
   OtpVerificationRequestDto,
-  OtpVerificationResponseDto,
+  type OtpVerificationResponse,
   parseOtpVerification,
 } from './otp-verification.dto.js';
 import { OtpVerificationSecurity } from './otp-verification.security.js';
@@ -61,6 +65,7 @@ interface ErrorEnvelope {
 }
 
 @ApiTags('Customer authentication')
+@ApiExtraModels(OtpAuthenticatedResponseDto, OtpRegistrationRequiredResponseDto)
 @Controller('customer-auth')
 export class CustomerAuthenticationController {
   constructor(
@@ -79,7 +84,12 @@ export class CustomerAuthenticationController {
   @ApiBody({ type: OtpVerificationRequestDto })
   @ApiResponse({
     status: 200,
-    type: OtpVerificationResponseDto,
+    schema: {
+      oneOf: [
+        { $ref: getSchemaPath(OtpAuthenticatedResponseDto) },
+        { $ref: getSchemaPath(OtpRegistrationRequiredResponseDto) },
+      ],
+    },
     description: 'Authenticates an existing customer or issues registration-only flow state.',
     headers: {
       'Set-Cookie': {
@@ -113,7 +123,7 @@ export class CustomerAuthenticationController {
     @Body() body: unknown,
     @Req() request: IncomingMessage,
     @Res({ passthrough: true }) response: ServerResponse,
-  ): Promise<OtpVerificationResponseDto> {
+  ): Promise<OtpVerificationResponse> {
     response.setHeader('Cache-Control', 'no-store');
     let reservation: { readonly key: string; readonly id: string } | undefined;
     let reservationSettled = false;
