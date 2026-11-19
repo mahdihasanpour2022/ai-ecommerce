@@ -2,6 +2,8 @@ export const ApiRoutes = {
   home_banners: '/catalog/banners',
   categories: '/catalog/categories',
   products: '/catalog/products',
+  favorite: '/favorite',
+  favoriteProduct: (productId: string) => `/favorite/${encodeURIComponent(productId)}`,
   productColors: '/catalog/product-options/colors',
   productSizes: '/catalog/product-options/sizes',
   productPriceRange: '/catalog/product-options/price-range',

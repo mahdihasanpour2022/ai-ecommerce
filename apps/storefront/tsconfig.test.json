@@ -17,6 +17,10 @@
     "features/customer-auth/mobile-entry.ts",
     "features/customer-auth/otp-verification.ts",
     "features/customer-auth/customer-registration.ts",
+    "features/favorite/favorite.ts",
+    "features/products/product/interfaces/productById.d.ts",
+    "interfaces/currency.d.ts",
+    "interfaces/product.d.ts",
     "test/**/*.ts"
   ],
   "exclude": ["node_modules", ".next", "dist-test"]

@@ -7,6 +7,7 @@ import {
   onTerminalCustomerAuthenticationLoss,
 } from '@/app/http/http-client';
 import { ApiRoutes } from '@/constants/apiRoues';
+import { favoriteKeys } from '@/features/favorite/favorite';
 import { productKeys } from '@/features/products/product/queries/product-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
@@ -54,6 +55,7 @@ export function CustomerAuthProvider({ children }: Readonly<{ children: ReactNod
     (nextCustomer: CustomerSnapshot) => {
       if (customerId.current !== null && customerId.current !== nextCustomer.id) {
         queryClient.removeQueries({ queryKey: customerQueryKeys.all });
+        queryClient.removeQueries({ queryKey: favoriteKeys.all });
         queryClient.removeQueries({ queryKey: productKeys.all });
       }
       customerId.current = nextCustomer.id;
@@ -69,6 +71,7 @@ export function CustomerAuthProvider({ children }: Readonly<{ children: ReactNod
     customerId.current = null;
     queryClient.removeQueries({ queryKey: customerQueryKeys.all });
     queryClient.removeQueries({ queryKey: customerQueryKeys.flow });
+    queryClient.removeQueries({ queryKey: favoriteKeys.all });
     queryClient.removeQueries({ queryKey: productKeys.all });
     setCustomer(null);
     setStatus('anonymous');
@@ -106,6 +109,7 @@ export function CustomerAuthProvider({ children }: Readonly<{ children: ReactNod
         ) {
           customerId.current = null;
           queryClient.removeQueries({ queryKey: customerQueryKeys.all });
+          queryClient.removeQueries({ queryKey: favoriteKeys.all });
           queryClient.removeQueries({ queryKey: productKeys.all });
           setCustomer(null);
           setStatus('anonymous');

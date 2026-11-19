@@ -20,6 +20,7 @@ export interface ProductByID {
   readonly currency: Currency;
   readonly quantity: number;
   readonly isAvailable: boolean;
+  readonly isFavorite: boolean;
   readonly categoryPath: readonly {
     readonly id: string;
     readonly name: string;
