@@ -126,7 +126,7 @@ export default function VerifyAuthPage() {
             autoFocus
             inputMode="numeric"
             dir="ltr"
-            placeholder="0912*******"
+            placeholder=""
             errorMessage={errors.code?.message}
             onChange={(event) => {
               event.currentTarget.value = normalizeOtpInput(event.currentTarget.value);
@@ -135,16 +135,22 @@ export default function VerifyAuthPage() {
           />
 
           <div className="space-y-0" aria-live="polite">
-            {/* <UiP className={timing.isExpired ? 'text-danger' : 'text-muted'}>
-              {timing.isExpired
-                ? 'مهلت این کد به پایان رسیده است.'
-                : `زمان باقی‌مانده: ${formatOtpCountdown(timing.expiresInSeconds)}`}
-            </UiP> */}
-            {!timing.canResend ? (
+            {!timing.isExpired ? (
               <UiP className="text-muted">
-                ارسال مجدد تا {formatOtpCountdown(timing.resendInSeconds)} دیگر
+                ارسال مجدد تا {formatOtpCountdown(timing.expiresInSeconds)} دیگر
               </UiP>
-            ) : null}
+            ) : (
+              <UiButton
+                type="button"
+                size="medium"
+                disabled={!timing.canResend}
+                loading={requestOtp.isPending}
+                onClick={() => void resendCode()}
+                className="flex min-h-2! w-full items-start justify-start px-0! py-0!"
+              >
+                ارسال مجدد کد
+              </UiButton>
+            )}
           </div>
 
           {verifyOtp.error ? (
@@ -166,16 +172,6 @@ export default function VerifyAuthPage() {
             className="bg-nice-red text-white"
           >
             {isVerifyBusy ? 'در حال بررسی کد' : 'تأیید و ادامه'}
-          </UiButton>
-
-          <UiButton
-            type="button"
-            size="medium"
-            disabled={!timing.canResend}
-            loading={requestOtp.isPending}
-            onClick={() => void resendCode()}
-          >
-            {readRequestedOtpMobile() ? 'ارسال مجدد کد' : 'درخواست کد جدید'}
           </UiButton>
         </form>
       </section>

@@ -6,3 +6,4 @@ export * from './ui-p';
 export * from './ui-button';
 export * from './ui-carousel';
 export * from './ui-link';
+export * from './ui-select';

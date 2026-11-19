@@ -75,31 +75,36 @@ export function StorefrontConnectivityGuard({ children }: Readonly<{ children: R
   }, [checkConnection]);
 
   if (status === 'checking') {
-    return <UiLoading fullscreen message="در حال بررسی اتصال..." />;
+    return <UiLoading fullscreen message="" />;
   }
 
   if (status === 'offline') {
     return (
       <div
-        className="fixed inset-0 z-50 flex min-h-dvh items-center justify-center bg-background p-5 sm:p-8"
+        className="bg-background fixed inset-0 z-50 flex min-h-dvh items-center justify-center p-5 sm:p-8"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="offline-title"
         aria-describedby="offline-description"
       >
-        <div className="flex w-full max-w-md flex-col items-center rounded-2xl border border-border bg-surface p-6 text-center shadow-lg sm:p-10">
+        <div className="border-border bg-surface flex w-full max-w-md flex-col items-center rounded-2xl border p-6 text-center shadow-lg sm:p-10">
           <div
-            className="mb-5 flex size-16 items-center justify-center rounded-full bg-surface-subtle text-danger"
+            className="bg-surface-subtle text-danger mb-5 flex size-16 items-center justify-center rounded-full"
             aria-hidden="true"
           >
             <svg viewBox="0 0 24 24" className="size-8" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M3 3l18 18M8.5 8.6A8.8 8.8 0 0112 7.9c3.1 0 6 1.3 8 3.4M5.5 11.4c.5-.5 1.1-.9 1.7-1.3M9 15a4.4 4.4 0 015.9-.3M12 19h.01" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.8"
+                d="M3 3l18 18M8.5 8.6A8.8 8.8 0 0112 7.9c3.1 0 6 1.3 8 3.4M5.5 11.4c.5-.5 1.1-.9 1.7-1.3M9 15a4.4 4.4 0 015.9-.3M12 19h.01"
+              />
             </svg>
           </div>
-          <h1 id="offline-title" className="m-0 text-xl font-bold text-foreground sm:text-2xl">
-            شما به اینترنت دسترسی ندارید
+          <h1 id="offline-title" className="text-foreground m-0 text-xl font-bold sm:text-xl">
+            به اینترنت دسترسی ندارید
           </h1>
-          <p id="offline-description" className="mt-3 text-sm leading-7 text-muted sm:text-base">
+          <p id="offline-description" className="text-muted mt-3 text-sm leading-7 sm:text-sm">
             از اتصال خود به اینترنت مطمئن شوید و مجدداً تلاش کنید.
           </p>
           <UiButton

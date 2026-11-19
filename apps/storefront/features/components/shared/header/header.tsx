@@ -17,7 +17,7 @@ export const Header = () => {
       </div>
 
       <div className="absolute top-4 left-4 w-fit sm:relative sm:top-0 sm:left-0">
-        <div className="flex items-center justify-center gap-0 sm:gap-1">
+        <div className="flex items-center justify-center! gap-0 sm:gap-1">
           <LoginSignup />
           <ShoppingCart />
         </div>
