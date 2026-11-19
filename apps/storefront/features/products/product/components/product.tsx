@@ -4,11 +4,14 @@ import { Seperator } from '@/components/shared';
 import { UiButton, UiP, UiSpan } from '@/components/shared/ui';
 import { useCustomerAuth } from '@/features/customer-auth/auth-provider';
 import { showGuestFavoriteModal } from '@/features/favorite/storefront-modal-container';
+import { useAddFavorite, useRemoveFavorite } from '@/features/favorite/use-favorite';
 import emptyHeartIcon from '@/public/assets/product/empty-heart-icon.webp';
 import heartIcon from '@/public/assets/product/heart-icon.webp';
 import yellowStar from '@/public/assets/product/star-yellow.webp';
 import { nanoid } from 'nanoid';
 import Image from 'next/image';
+import { useRef } from 'react';
+import { toast } from 'sonner';
 import { useGetProductById } from '../hooks/useGetProductById';
 interface ProductProps {
   readonly productId: string;
@@ -17,6 +20,9 @@ interface ProductProps {
 export const Product = ({ productId }: ProductProps) => {
   const { data } = useGetProductById({ productId });
   const { status: authStatus } = useCustomerAuth();
+  const addFavorite = useAddFavorite(productId);
+  const removeFavorite = useRemoveFavorite(productId);
+  const favoriteActionPendingRef = useRef(false);
 
   const currentProduct = data?.singleResult ?? undefined;
   const selectedVariant = currentProduct?.variants[0];
@@ -26,9 +32,41 @@ export const Product = ({ productId }: ProductProps) => {
   const colors =
     currentProduct?.variants.flatMap(({ color }) => (color === null ? [] : [color])) ?? [];
 
-  // مهمان را پیش از هر تغییر علاقه‌مندی به جریان ورود هدایت می‌کند.
-  const handleFavoriteClick = () => {
-    if (authStatus === 'anonymous') showGuestFavoriteModal();
+  const isFavoriteMutationPending = addFavorite.isPending || removeFavorite.isPending;
+
+  // مهمان را به ورود هدایت می‌کند و تغییر علاقه‌مندی کاربر معتبر را با بازخورد دقیق انجام می‌دهد.
+  const handleFavoriteClick = async () => {
+    if (authStatus === 'anonymous') {
+      showGuestFavoriteModal();
+      return;
+    }
+    if (
+      authStatus !== 'authenticated' ||
+      !currentProduct ||
+      isFavoriteMutationPending ||
+      favoriteActionPendingRef.current
+    )
+      return;
+
+    favoriteActionPendingRef.current = true;
+    try {
+      if (currentProduct.isFavorite) {
+        await removeFavorite.mutateFavorite();
+        toast.success(`محصول «${currentProduct.name}» از لیست علاقه‌مندی‌های شما حذف شد.`);
+        return;
+      }
+      await addFavorite.mutateFavorite();
+    } catch {
+      if (currentProduct.isFavorite) {
+        toast.error(
+          `حذف محصول «${currentProduct.name}» از لیست علاقه‌مندی‌های شما ناموفق بود.`,
+        );
+      } else {
+        toast.error('افزودن این محصول به لیست علاقه‌مندی‌های شما ناموفق بود.');
+      }
+    } finally {
+      favoriteActionPendingRef.current = false;
+    }
   };
 
   return (
@@ -43,27 +81,22 @@ export const Product = ({ productId }: ProductProps) => {
                   type="button"
                   variant="style_9"
                   size="small"
+                  disabled={
+                    isFavoriteMutationPending ||
+                    (authStatus !== 'authenticated' && authStatus !== 'anonymous')
+                  }
+                  aria-label={
+                    currentProduct.isFavorite
+                      ? 'حذف از لیست علاقه‌مندی‌ها'
+                      : 'افزودن به لیست علاقه‌مندی‌ها'
+                  }
+                  aria-pressed={currentProduct.isFavorite}
                   onClick={handleFavoriteClick}
                 >
                   <Image
                     className="h-auto w-full rounded-xl object-contain"
-                    src={heartIcon}
-                    alt="heart-icon"
-                    width={350}
-                    height={350}
-                    unoptimized={false}
-                  />
-                </UiButton>
-                <UiButton
-                  type="button"
-                  variant="style_9"
-                  size="small"
-                  onClick={handleFavoriteClick}
-                >
-                  <Image
-                    className="h-auto w-full rounded-xl object-contain"
-                    src={emptyHeartIcon}
-                    alt="heart-icon"
+                    src={currentProduct.isFavorite ? heartIcon : emptyHeartIcon}
+                    alt=""
                     width={350}
                     height={350}
                     unoptimized={false}
