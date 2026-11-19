@@ -2,11 +2,12 @@
 
 import { Seperator } from '@/components/shared';
 import { UiButton, UiP, UiSpan } from '@/components/shared/ui';
+import emptyHeartIcon from '@/public/assets/product/empty-heart-icon.webp';
+import heartIcon from '@/public/assets/product/heart-icon.webp';
 import yellowStar from '@/public/assets/product/star-yellow.webp';
 import { nanoid } from 'nanoid';
 import Image from 'next/image';
 import { useGetProductById } from '../hooks/useGetProductById';
-
 interface ProductProps {
   readonly productId: string;
 }
@@ -27,10 +28,32 @@ export const Product = ({ productId }: ProductProps) => {
       {currentProduct && (
         <section className="border-foreground flex h-fit w-full items-stretch justify-between gap-3 px-6 pt-16 pb-5 sm:px-12 sm:pt-8 lg:px-24 2xl:px-36">
           <div className="flex w-4/5 items-stretch justify-between gap-4">
-            {/* product-image */}
-            <div className="w-1/2">
+            {/* product-image and quick action sidebar */}
+            <div className="flex w-1/2! items-start justify-start gap-2">
+              <div className="flex h-full w-1/12! flex-col items-center justify-start gap-1 py-2">
+                <UiButton type="button" variant="style_9" size="small">
+                  <Image
+                    className="h-auto w-full rounded-xl object-contain"
+                    src={heartIcon}
+                    alt="heart-icon"
+                    width={350}
+                    height={350}
+                    unoptimized={false}
+                  />
+                </UiButton>
+                <UiButton type="button" variant="style_9" size="small">
+                  <Image
+                    className="h-auto w-full rounded-xl object-contain"
+                    src={emptyHeartIcon}
+                    alt="heart-icon"
+                    width={350}
+                    height={350}
+                    unoptimized={false}
+                  />
+                </UiButton>
+              </div>
               <Image
-                className="h-auto w-full rounded-xl object-contain"
+                className="h-auto w-11/12! rounded-xl object-contain"
                 src={selectedVariant?.image?.url ?? currentProduct.image}
                 alt={currentProduct.alt ?? ''}
                 width={350}

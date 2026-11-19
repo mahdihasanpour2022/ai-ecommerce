@@ -14,6 +14,8 @@ const VARIANT_CLASSES = {
   style_7: 'w-full h-fit cursor-pointer text-sm! text-foreground/70',
   style_8:
     'bg-foreground/10 text-foreground/70! font-bold rounded-full px-2! py-0! flex items-center justify-start gap-1 whitespace-nowrap text-xs',
+  style_9:
+    'px-0! py-0 w-full min-h-fit! sm:px-0! sm:py-0! w-full! h-fit sm:min-h-fit cursor-pointer',
 } as const;
 
 const SIZE_CLASSES = {
