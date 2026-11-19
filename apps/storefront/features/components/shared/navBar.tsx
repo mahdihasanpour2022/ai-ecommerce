@@ -2,7 +2,6 @@
 
 import { UiSpan } from '@/components/shared/ui';
 import clsx from 'clsx';
-import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -23,7 +22,7 @@ export const NavBar = () => {
     <div className="bg-foreground/4 flex h-16 w-full items-center justify-start gap-8 px-6 sm:px-12 lg:px-24 2xl:px-36">
       {routes.map((route: Route) => (
         <Link
-          key={nanoid()}
+          key={route.en_name}
           href={route.href}
           aria-current={pathname === route.href ? 'page' : undefined}
         >

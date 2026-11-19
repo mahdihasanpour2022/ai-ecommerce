@@ -8,7 +8,6 @@ import { useAddFavorite, useRemoveFavorite } from '@/features/favorite/use-favor
 import emptyHeartIcon from '@/public/assets/product/empty-heart-icon.webp';
 import heartIcon from '@/public/assets/product/heart-icon.webp';
 import yellowStar from '@/public/assets/product/star-yellow.webp';
-import { nanoid } from 'nanoid';
 import Image from 'next/image';
 import { useRef } from 'react';
 import { toast } from 'sonner';
@@ -28,9 +27,17 @@ export const Product = ({ productId }: ProductProps) => {
   const selectedVariant = currentProduct?.variants[0];
 
   console.log('currentProduct :', currentProduct);
+  console.log('selectedVariant :', selectedVariant);
 
-  const colors =
-    currentProduct?.variants.flatMap(({ color }) => (color === null ? [] : [color])) ?? [];
+  const colors = [
+    ...new Set(
+      currentProduct?.variants.flatMap(({ color }) => (color === null ? [] : [color])) ?? [],
+    ),
+  ];
+
+  const sizes = [
+    ...new Set(currentProduct?.variants.flatMap(({ size }) => (size === null ? [] : [size])) ?? []),
+  ];
 
   const isFavoriteMutationPending = addFavorite.isPending || removeFavorite.isPending;
 
@@ -58,9 +65,7 @@ export const Product = ({ productId }: ProductProps) => {
       await addFavorite.mutateFavorite();
     } catch {
       if (currentProduct.isFavorite) {
-        toast.error(
-          `حذف محصول «${currentProduct.name}» از لیست علاقه‌مندی‌های شما ناموفق بود.`,
-        );
+        toast.error(`حذف محصول «${currentProduct.name}» از لیست علاقه‌مندی‌های شما ناموفق بود.`);
       } else {
         toast.error('افزودن این محصول به لیست علاقه‌مندی‌های شما ناموفق بود.');
       }
@@ -68,6 +73,12 @@ export const Product = ({ productId }: ProductProps) => {
       favoriteActionPendingRef.current = false;
     }
   };
+
+  function toEnglishDigits(value: string): string {
+    return value
+      .replace(/[۰-۹]/g, (digit) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
+  }
 
   return (
     <>
@@ -143,28 +154,51 @@ export const Product = ({ productId }: ProductProps) => {
                 </div>
               </div>
               {/* summary - color */}
-              <UiP className="flex items-center justify-start gap-2" variant="style_7">
+              <UiP className="flex items-center justify-start gap-2 pt-3" variant="style_7">
                 <UiSpan className="" variant="style_10">
                   رنگ :
                 </UiSpan>
                 <UiSpan className="" variant="style_10">
-                  {currentProduct.variants[0]?.color?.persianColorName}
+                  {selectedVariant?.color?.persianColorName}
                 </UiSpan>
                 <UiSpan
-                  style={{ background: currentProduct.variants[0]?.color?.englishColorName }}
+                  style={{ background: selectedVariant?.color?.englishColorName }}
                   className="h-3 w-3"
                   variant="style_11"
                 />
               </UiP>
               {/* color bullets  */}
-              <div className="flex items-center justify-start gap-3">
-                {colors?.map((color) => (
+              <div className="flex items-center justify-start gap-3 py-4">
+                {colors?.map((color, index) => (
                   <UiSpan
-                    key={nanoid()}
+                    key={`${color}-${index}`}
                     style={{ background: color.englishColorName }}
                     variant="style_11"
-                    className="h-6 w-6"
-                  />
+                    className={`flex h-6 w-6 items-center justify-center text-white ${selectedVariant?.color === color ? 'outline-foreground/20 outline-4! outline-double' : ''}`}
+                  >
+                    {selectedVariant?.color === color && '✔'}
+                  </UiSpan>
+                ))}
+              </div>
+              {/* summary - size */}
+              <UiP className="flex items-center justify-start gap-2 pt-2" variant="style_7">
+                <UiSpan className="" variant="style_10">
+                  سایز :
+                </UiSpan>
+                <UiSpan variant="style_10" className="font-mono font-normal!">
+                  {selectedVariant?.size ? toEnglishDigits(selectedVariant.size) : null}
+                </UiSpan>
+              </UiP>
+              {/* color bullets  */}
+              <div className="flex items-center justify-start gap-1 py-4">
+                {sizes?.map((size) => (
+                  <UiSpan
+                    key={size}
+                    variant="style_12"
+                    className={`flex w-fit items-center justify-center font-mono ${selectedVariant?.size === size ? 'outline-foreground/20' : ''}`}
+                  >
+                    {size}
+                  </UiSpan>
                 ))}
               </div>
             </div>

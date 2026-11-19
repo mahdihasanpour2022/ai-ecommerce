@@ -1,5 +1,4 @@
 'use client';
-import { nanoid } from 'nanoid';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -75,7 +74,7 @@ export function ProtectedAdminShell({ children }: Readonly<{ children: ReactNode
           <nav aria-label="ناوبری پنل مدیریت">
             {routes.map((route) => (
               <Link
-                key={nanoid()}
+                key={route.name}
                 className={classNames(
                   'flex min-h-11 items-center rounded-xl px-3 py-2.5 font-bold no-underline transition-colors',
                   pathname === route.href ? 'text-brand' : 'text-muted',

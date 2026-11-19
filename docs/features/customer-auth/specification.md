@@ -64,7 +64,7 @@ The Customer snapshot is exactly `{ id, mobile, firstName, lastName }`. Account 
 
 The browser calls only the same-origin Storefront `/api/v1/**` BFF. The BFF forwards only Customer cookies and approved headers, returns only Customer `Set-Cookie` values, and never forwards Admin credentials. Access and Refresh credentials, OTP challenge authority, and registration grant are never available to JavaScript, URLs, or Web Storage. Only the readable Customer CSRF cookie is copied into `X-CSRF-Token` for authenticated unsafe requests.
 
-Customer Refresh rotation is atomic, absolute-expiry bounded, and supports narrow same-session recovery during the configured reuse grace. Suspicious reuse revokes only the affected Customer session family. Eligible client requests share one Refresh within an execution context and replay at most once. Definitive session loss clears Customer state and Customer-scoped query data; transport failure alone does not establish logout.
+Customer Refresh rotation is atomic, absolute-expiry bounded, and supports narrow same-session recovery during the configured reuse grace. Suspicious reuse revokes only the affected Customer session family. Eligible client requests, including protected Favorite reads and mutations, share one Refresh within an execution context and replay at most once. Definitive session loss or logout clears Customer, Favorite, and personalized Product-detail query data; an identity change removes the previous Customer's data before accepting the next identity. Successful bootstrap, login, or Refresh invalidates personalized Product detail so `isFavorite` is refetched for the current Customer. Transport failure alone does not establish logout.
 
 ## Persistence and retention
 
@@ -82,7 +82,7 @@ Customer records are retained; erasure/anonymization is a separate product decis
 
 ## UI status
 
-The three routes are intentionally minimal Persian RTL forms built with the existing shared primitives, React Hook Form, Zod, Tailwind utilities, and current light/dark tokens. They include persistent labels, linked inline errors, busy states, keyboard-compatible controls, and mobile-first layout. Final visual design remains explicitly deferred until UI-team direction is supplied and approved.
+The three routes are intentionally minimal Persian RTL forms built with the existing shared primitives, React Hook Form, Zod, Tailwind utilities, and current light/dark tokens. They include persistent labels, linked inline errors, busy states, keyboard-compatible controls, and mobile-first layout. A guest Favorite action opens an accessible light/dark RTL modal instead of issuing a mutation; its login action encodes the current path, search, and hash into `/auth?returnTo=...`. Both Auth entry and final navigation use the shared same-origin `safeReturnDestination` policy, reject Auth destinations and unsafe URL forms, and complete navigation with `replace`. Final visual design remains explicitly deferred until UI-team direction is supplied and approved.
 
 ## Deployment operations still required
 

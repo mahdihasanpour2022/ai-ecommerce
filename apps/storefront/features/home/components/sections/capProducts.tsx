@@ -2,7 +2,6 @@ import { UiCarousel, UiLink, UiP, UiSpan } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { CollectionProductCard } from '@/features/components/shared';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { nanoid } from 'nanoid';
 
 export const CapProducts = () => {
   const { data } = useGetProducts({ tags: PRODUCT_COLLECTIONS.cap.tags, enabled: true });
@@ -34,7 +33,7 @@ export const CapProducts = () => {
         >
           {products.map((product) => (
             <CollectionProductCard
-              key={nanoid()}
+              key={product.id}
               product={product}
               className={{
                 wrapper:

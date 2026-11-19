@@ -1,10 +1,9 @@
 import { UiButton, UiImage, UiSpan } from '@/components/shared/ui';
-import { nanoid } from 'nanoid';
 
 import { Skeleton } from '@/components/shared';
 import { useGetCategories } from '@/features/home/hooks/useGetCategories';
-import { useMemo } from 'react';
 import { useRouter } from 'nextjs-toploader/app';
+import { useMemo } from 'react';
 
 export const Categories = () => {
   const router = useRouter();
@@ -31,7 +30,7 @@ export const Categories = () => {
 
       {categories.map((category) => (
         <UiButton
-          key={nanoid()}
+          key={category.id}
           className="flex h-fit w-fit! flex-col items-center justify-center gap-0 px-2! sm:gap-1 sm:px-4!"
           onClick={() => handler(category.id)}
         >

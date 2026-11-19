@@ -94,7 +94,7 @@ Product/Variant UUIDs are stable catalog identities. A future Order Item may cop
 - `ACTIVE` is publicly retrievable. Only its active Variants are returned publicly.
 - `ARCHIVED` is the reversible temporarily unavailable state: it is retained, immutable except for transition back to Draft, and neither public nor purchasable. Permanent deletion is a separate explicit operation.
 - Allowed transitions are Draft to/from Active, Draft or Active to Archived, and Archived to Draft. Other transitions return a conflict.
-- A separately confirmed permanent delete removes a Product in any lifecycle state together with its owned Variants, Inventory, and Images; Archive remains the reversible temporarily unavailable state.
+- A separately confirmed permanent delete removes a Product in any lifecycle state together with its owned Variants, Inventory, Images, and Customer Favorite associations; Archive remains the reversible temporarily unavailable state.
 
 ### Activation and continued validity
 
@@ -302,7 +302,7 @@ Implementation status: the bounded public Category tree, Active Product summary 
 | `GET /api/v1/catalog/product-options/colors`            | Database-owned public Product Persian/English color names and swatch hex values.                                  |
 | `GET /api/v1/catalog/product-options/sizes`             | Database-owned public Product Persian/English size names.                                                         |
 | `GET /api/v1/catalog/product-options/price-range`       | Minimum and maximum original rial prices across Active Products for Storefront filter controls.                  |
-| `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID.                                                                                   |
+| `GET /api/v1/catalog/products/{productId}`              | Active Product detail by UUID, including personalized `isFavorite` (`false` for a guest).                        |
 | `GET /api/v1/catalog/product-images/{imageId}/content`  | Controlled immutable ready image bytes only when owning Product is Active.                                       |
 | `GET /api/v1/catalog/settings/price-display-unit`       | Current global `RIAL`/`TOMAN` unit.                                                                              |
 
@@ -341,9 +341,19 @@ Public Product summary contains:
 - `minimumPriceRial`, `maximumPriceRial` across active Variants; and
 - aggregate `isAvailable`, true when any active Variant has positive on-hand quantity.
 
-Public Product summary contains the Storefront card fields `id`, `name`, `description`, the first active Variant Image as `image`, `alt`, `original_price`, derived `final_price`, `discount`, `currency`, aggregate `quantity`, and `isAvailable`, plus Category identity. Public Product detail adds the Category path and all active Variants with `id`, boolean `isAvailable`, required Variant Image, nullable English `size` string, and nullable `color` as `{ persianColorName, englishColorName }`. The Persian Color name is nullable only when a retained Variant snapshot refers to an Option that was subsequently deleted. It omits SKU, exact per-Variant Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
+Public Product summary contains the Storefront card fields `id`, `name`, `description`, the first active Variant Image as `image`, `alt`, `original_price`, derived `final_price`, `discount`, `currency`, aggregate `quantity`, and `isAvailable`, plus Category identity. Public Product detail adds the Category path, required boolean `isFavorite`, and all active Variants with `id`, boolean `isAvailable`, required Variant Image, nullable English `size` string, and nullable `color` as `{ persianColorName, englishColorName }`. `isFavorite` is `false` without a valid Customer Access session and otherwise reflects only the current Customer association. Personalized detail responses are private and non-shareable; invalid or absent optional Customer credentials do not make the public endpoint fail. The Persian Color name is nullable only when a retained Variant snapshot refers to an Option that was subsequently deleted. It omits SKU, exact per-Variant Inventory, optimistic version, lifecycle fields, timestamps, normalized comparison keys, cleanup/storage metadata, and inactive Variants.
 
 Public requests for Draft/Archived Products, inactive/foreign Images, or unknown IDs return the same `404` resource-not-found boundary so lifecycle/existence is not disclosed. Public Category filtering by a valid but empty Category returns an empty page; unknown Category returns `404 CATEGORY_NOT_FOUND`.
+
+### Customer Favorite contracts
+
+| Method and path                              | Success behavior                                                                                         |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GET /api/v1/favorite`                       | Authenticated deterministic page of the current Customer's Active Products.                             |
+| `POST /api/v1/favorite/{productId}`          | CSRF-protected, race-safe, idempotent addition of an Active Product to the current Customer's Favorites. |
+| `DELETE /api/v1/favorite/{productId}`        | CSRF-protected, idempotent removal scoped to the current Customer.                                       |
+
+Favorite list pagination defaults to `page=1` and `pageSize=24`, caps `pageSize` at 60, and orders by Favorite `createdAt DESC, productId DESC`. Customer identity comes only from the validated session; request input cannot select another Customer. Missing and non-Active Products share the safe not-found boundary for addition, repeated addition/removal is successful, and removal never reveals another Customer's association.
 
 ## Stable failure semantics
 
@@ -406,6 +416,7 @@ S2-T04 through S2-T09 must document within the same implementation task:
 - CSRF header requirement for protected unsafe methods;
 - success statuses and every applicable stable failure status/code;
 - public-versus-protected field differences;
+- Favorite cookie authentication, mutation CSRF requirements, deterministic pagination, idempotent outcomes, and personalized Product detail `isFavorite` semantics;
 - canonical Product original/final price and discount semantics plus the display-setting enum;
 - upload byte/type/content/dimension rules; and
 - representative safe examples without credentials, paths, storage keys, or internal fields.
@@ -440,7 +451,12 @@ Each implementation task owns its meaningful tests; S2-T10 verifies integration 
 
 ### Settings and public catalog
 
-- Coverage for default Toman state, protected update, exact unit enum, permission/CSRF, unchanged canonical prices, safe public read, Active-only Product/Variant/Image filtering, exact-Category behavior, page bounds/order/tie-breaker, summary price range/availability, detail field allowlist, not-found equivalence, query behavior, and OpenAPI.
+- Coverage for default Toman state, protected update, exact unit enum, permission/CSRF, unchanged canonical prices, safe public read, Active-only Product/Variant/Image filtering, exact-Category behavior, page bounds/order/tie-breaker, summary price range/availability, detail field allowlist, guest/current/other-Customer `isFavorite` isolation, not-found equivalence, query behavior, and OpenAPI.
+
+### Customer Favorite
+
+- PostgreSQL and HTTP coverage for pair uniqueness, Customer/Product referential actions, deterministic bounded Active-only listing, authentication, CSRF, validation, race-safe idempotent add/remove, Customer isolation, Product deletion cleanup, stable errors, and exact OpenAPI.
+- Storefront coverage for complete query keys, optimistic Product-detail updates, exact rollback, single-flight duplicate clicks, retry after failure, authentication/identity cache reconciliation, guest login return, accessible modal behavior, and exact success/failure feedback.
 
 ### Regression and completion
 

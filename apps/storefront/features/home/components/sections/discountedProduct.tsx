@@ -2,7 +2,6 @@ import { Skeleton } from '@/components/shared';
 import { UiImage, UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const DiscountedProduct = () => {
@@ -33,7 +32,7 @@ export const DiscountedProduct = () => {
         <div className="grid h-auto w-full grid-cols-2 gap-4">
           {discountedProducts.map((product) => (
             <UiImage
-              key={nanoid()}
+              key={product.id}
               src={product.image}
               width={350}
               height={350}

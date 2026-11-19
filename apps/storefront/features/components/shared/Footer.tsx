@@ -8,17 +8,16 @@ import support from '@/public/assets/footer-7-24/support.webp';
 import siteLogo from '@/public/assets/header/site_logo.webp';
 import instagram from '@/public/assets/socials/instagram.webp';
 import telegram from '@/public/assets/socials/telegram.webp';
-import { nanoid } from 'nanoid';
 
 import e_namad from '@/public/assets/e-namad/e-namad-logo.png';
 import rezi from '@/public/assets/e-namad/rezi.webp';
 
 const images = [
-  { src: cashOnDelivery, text: 'ضمانت اصل بودن کالا' },
-  { src: daysReturn, text: 'هفت روز ضمانت بازگشت کالا' },
-  { src: expressDelivery, text: '7 روز هفته ، 24 ساعته' },
-  { src: originalProducts, text: 'امکان پرداخت در محل' },
-  { src: support, text: 'امکان تحویل اگسپرس' },
+  { id: 'cash-on-delivery', src: cashOnDelivery, text: 'ضمانت اصل بودن کالا' },
+  { id: 'days-return', src: daysReturn, text: 'هفت روز ضمانت بازگشت کالا' },
+  { id: 'express-delivery', src: expressDelivery, text: '7 روز هفته ، 24 ساعته' },
+  { id: 'original-products', src: originalProducts, text: 'امکان پرداخت در محل' },
+  { id: 'support', src: support, text: 'امکان تحویل اگسپرس' },
 ];
 
 export const Footer = () => {
@@ -44,7 +43,7 @@ export const Footer = () => {
           {images.map((image) => (
             <div
               className="flex flex-col items-center justify-center gap-1 overflow-hidden border border-gray-300 whitespace-normal"
-              key={nanoid()}
+              key={image.id}
             >
               <UiImage
                 alt={image.text}

@@ -4,7 +4,6 @@ import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { CollectionProductCard } from '@/features/components/shared';
 
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const AmazingProducts = () => {
@@ -42,7 +41,7 @@ export const AmazingProducts = () => {
             >
               {amazingProducts.map((product) => (
                 <CollectionProductCard
-                  key={nanoid()}
+                  key={product.id}
                   product={product}
                   className={{
                     wrapper:

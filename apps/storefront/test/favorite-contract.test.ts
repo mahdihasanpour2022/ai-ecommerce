@@ -64,3 +64,26 @@ void test('concurrent favorite operations for one product share one request', as
   assert.equal(await first, 'done');
   assert.equal(await second, 'done');
 });
+
+// شکست درخواست مشترک باید قفل محصول را آزاد کند تا تلاش بعدی مستقل اجرا شود.
+void test('failed concurrent favorite operation releases the product for retry', async () => {
+  let calls = 0;
+  const failure = new Error('favorite request failed');
+  const request = async () => {
+    calls += 1;
+    throw failure;
+  };
+
+  const first = runFavoriteSingleFlight('product-1', request);
+  const concurrent = runFavoriteSingleFlight('product-1', request);
+  const failedResults = await Promise.allSettled([first, concurrent]);
+
+  assert.equal(calls, 1);
+  assert.deepEqual(
+    failedResults.map((result) => result.status),
+    ['rejected', 'rejected'],
+  );
+
+  await assert.rejects(runFavoriteSingleFlight('product-1', request), failure);
+  assert.equal(calls, 2);
+});

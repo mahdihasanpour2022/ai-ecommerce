@@ -3,7 +3,6 @@ import { UiLink, UiP } from '@/components/shared/ui';
 import { PRODUCT_COLLECTIONS } from '@/constants/productCollections';
 import { CollectionProductCard } from '@/features/components/shared';
 import { useGetProducts } from '@/hooks/shared/useGetProducts';
-import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 
 export const OurSuggestion = () => {
@@ -32,7 +31,7 @@ export const OurSuggestion = () => {
         <div className="grid h-fit w-full grid-cols-5 gap-0">
           {ourSuggestProducts.map((product) => (
             <CollectionProductCard
-              key={nanoid()}
+              key={product.id}
               product={product}
               className={{
                 wrapper:
