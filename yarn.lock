@@ -5856,6 +5856,11 @@ remeda@2.33.4:
   resolved "https://registry.npmjs.org/remeda/-/remeda-2.33.4.tgz#eae3bb2ec9795db58a1b66249913772a1a2c7989"
   integrity sha512-ygHswjlc/opg2VrtiYvUOPLjxjtdKvjGz1/plDhkG66hjNjFr1xmfrs2ClNFo/E6TyUFiwYNh53bKV26oBoMGQ==
 
+reoverlay@1.1.0:
+  version "1.1.0"
+  resolved "https://registry.npmjs.org/reoverlay/-/reoverlay-1.1.0.tgz#e3e4ca31d1c2a0d69eab97d329e6b5b70580a30e"
+  integrity sha512-3xlTeNxRTObIKCfXH6J8QnuidxteKgCAWTmfhFE89DdDBooALm11OdpMzN4JUo1f9iamCdSLBMp0h0wbH7+qOQ==
+
 require-from-string@^2.0.2:
   version "2.0.2"
   resolved "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz#89a7fdd938261267318eafe14f9c32e598c36909"

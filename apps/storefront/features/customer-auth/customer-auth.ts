@@ -62,3 +62,11 @@ export function safeReturnDestination(value: string | null | undefined): string 
     return AppRoutes.home;
   }
 }
+
+// مقصد ورود را فقط از مسیر بازگشتِ پالایش‌شده می‌سازد تا ورودی ناامن به Router نرسد.
+export function customerAuthDestination(value: string | null | undefined): string {
+  const returnTo = safeReturnDestination(value);
+  return returnTo === AppRoutes.home
+    ? AppRoutes.auth
+    : `${AppRoutes.auth}?returnTo=${encodeURIComponent(returnTo)}`;
+}

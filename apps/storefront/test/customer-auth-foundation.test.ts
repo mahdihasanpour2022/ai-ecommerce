@@ -8,7 +8,10 @@ import {
   onCustomerAuthenticationRefresh,
   onTerminalCustomerAuthenticationLoss,
 } from '../app/http/http-client';
-import { safeReturnDestination } from '../features/customer-auth/customer-auth';
+import {
+  customerAuthDestination,
+  safeReturnDestination,
+} from '../features/customer-auth/customer-auth';
 
 function errorEnvelope(status: number, code: string) {
   return {
@@ -39,6 +42,15 @@ void test('accepts only safe same-origin return destinations outside auth routes
   assert.equal(safeReturnDestination('//attacker.example/path'), '/');
   assert.equal(safeReturnDestination('/auth/verify'), '/');
   assert.equal(safeReturnDestination('/\\attacker.example'), '/');
+  assert.equal(safeReturnDestination('/auth?returnTo=%2Fproducts'), '/');
+});
+
+void test('builds an auth destination from an encoded safe return path', () => {
+  assert.equal(
+    customerAuthDestination('/products/item?color=red#details'),
+    '/auth?returnTo=%2Fproducts%2Fitem%3Fcolor%3Dred%23details',
+  );
+  assert.equal(customerAuthDestination('https://attacker.example'), '/auth');
 });
 
 void test('shares one Refresh and replays each eligible request exactly once', async () => {
