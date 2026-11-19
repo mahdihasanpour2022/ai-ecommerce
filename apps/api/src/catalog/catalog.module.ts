@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { AuthenticationModule } from '../authentication/authentication.module.js';
+import { CustomerAuthenticationModule } from '../customer-authentication/customer-authentication.module.js';
 import { DatabaseModule } from '../database/database.module.js';
 import {
   BannerController,
@@ -46,7 +47,7 @@ import { PublicCatalogRepository } from './public-catalog.repository.js';
 import { PublicCatalogService } from './public-catalog.service.js';
 
 @Module({
-  imports: [AuthenticationModule, DatabaseModule],
+  imports: [AuthenticationModule, CustomerAuthenticationModule, DatabaseModule],
   controllers: [
     BannerController,
     PublicBannerController,

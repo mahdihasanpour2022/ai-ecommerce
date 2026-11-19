@@ -43,7 +43,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 const ACCESS_CLAIMS = ['aud', 'exp', 'iat', 'iss', 'jti', 'sid', 'sub'] as const;
 const ACCESS_HEADERS = ['alg', 'kid', 'typ'] as const;
 
-interface CurrentCustomerAuthentication {
+export interface CurrentCustomerAuthentication {
   readonly sessionId: string;
   readonly sessionExpiresAt: Date;
   readonly csrfTokenHash: Uint8Array<ArrayBuffer>;
@@ -82,12 +82,20 @@ export class CustomerSessionService {
     @Inject(API_ENVIRONMENT) private readonly environment: ApiEnvironment,
   ) {}
 
+  // Access مشتری را بدون ورود به جریان Refresh به context معتبر و قابل‌استفاده مجدد تبدیل می‌کند.
+  authenticateAccess(
+    request: IncomingMessage,
+    now = new Date(),
+  ): Promise<CurrentCustomerAuthentication> {
+    return this.verifyAccess(request, now);
+  }
+
   // نشست را با Access معتبر بازسازی می‌کند و فقط در خطای 401 از Refresh برای بازیابی استفاده می‌کند.
   async bootstrap(request: IncomingMessage, now = new Date()): Promise<CustomerBootstrapResult> {
     this.security.assertRequestBoundary(request);
     let authentication: CurrentCustomerAuthentication;
     try {
-      authentication = await this.authenticateAccess(request, now);
+      authentication = await this.verifyAccess(request, now);
     } catch (error) {
       if (!(error instanceof CustomerAuthenticationError) || error.statusCode !== 401) throw error;
       const credentials = await this.refreshInternal(request, now, false);
@@ -288,7 +296,7 @@ export class CustomerSessionService {
   }
 
   // ساختار، امضا، claims و اتصال Access به نشست جاری مشتری را سخت‌گیرانه بررسی می‌کند.
-  private async authenticateAccess(
+  private async verifyAccess(
     request: IncomingMessage,
     now: Date,
   ): Promise<CurrentCustomerAuthentication> {

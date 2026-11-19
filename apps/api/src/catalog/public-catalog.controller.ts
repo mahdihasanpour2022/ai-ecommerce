@@ -1,8 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiExtension, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { safeInternalHttpException } from '../authentication/authentication-http.js';
 import { ApiErrorDto } from '../authentication/login.dto.js';
+import { OptionalCustomerAccessGuard } from '../customer-authentication/customer-access.guard.js';
+import { OptionalCurrentCustomerContext } from '../customer-authentication/customer-authentication-context.js';
+import type { CurrentCustomerAuthentication } from '../customer-authentication/customer-session.service.js';
 import { ProductError, toProductHttpException } from './product.errors.js';
 import { ApiSuccess } from '../http/api-response.js';
 import {
@@ -160,16 +163,36 @@ export class PublicCatalogController {
   }
 
   @Get('products/:productId')
+  @UseGuards(OptionalCustomerAccessGuard)
   @ApiTags('site / products')
   @ApiSuccess({ code: 'PRODUCT_FETCHED', message: 'محصول با موفقیت دریافت شد.', kind: 'single' })
-  @ApiOperation({ summary: 'Return public detail for one Active Product' })
+  @ApiOperation({
+    summary: 'Return public detail for one Active Product with optional Customer Favorite state',
+  })
   @ApiParam({ name: 'productId', format: 'uuid' })
-  @ApiResponse({ status: 200, type: PublicProductDetailDto })
+  @ApiResponse({
+    status: 200,
+    type: PublicProductDetailDto,
+    headers: {
+      'Cache-Control': {
+        description: 'Personalized responses are never stored in a shared cache.',
+        schema: { type: 'string', example: 'private, no-store' },
+      },
+    },
+  })
   @ApiResponse({ status: 400, type: ApiErrorDto, description: 'VALIDATION_FAILED.' })
   @ApiResponse({ status: 404, type: ApiErrorDto, description: 'PRODUCT_NOT_FOUND.' })
   @ApiResponse({ status: 500, type: ApiErrorDto, description: 'Safe internal failure response.' })
-  product(@Param('productId') productId: string): Promise<PublicProductDetailDto> {
-    return this.handle(() => this.catalog.product(publicCatalogUuid(productId, 'productId')));
+  product(
+    @Param('productId') productId: string,
+    @OptionalCurrentCustomerContext() authentication: CurrentCustomerAuthentication | null,
+  ): Promise<PublicProductDetailDto> {
+    return this.handle(() =>
+      this.catalog.product(
+        publicCatalogUuid(productId, 'productId'),
+        authentication?.customer.id ?? null,
+      ),
+    );
   }
 
   private async handle<T>(work: () => Promise<T>): Promise<T> {

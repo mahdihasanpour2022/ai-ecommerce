@@ -166,6 +166,15 @@ export class PublicCatalogRepository {
     });
   }
 
+  // علاقه‌مندی همان مشتری و محصول را با کلید مرکب و بدون بارگذاری داده اضافی بررسی می‌کند.
+  async isFavorite(customerId: string, productId: string): Promise<boolean> {
+    const favorite = await this.prisma.customerFavoriteItem.findUnique({
+      where: { customerId_productId: { customerId, productId } },
+      select: { customerId: true },
+    });
+    return favorite !== null;
+  }
+
   categoryPath(categoryId: string): Promise<Array<{ readonly id: string; readonly name: string }>> {
     return this.prisma.$queryRaw`
       WITH RECURSIVE category_path AS (

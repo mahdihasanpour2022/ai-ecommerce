@@ -71,12 +71,14 @@ export class PublicCatalogService {
     };
   }
 
-  async product(id: string): Promise<PublicProductDetailDto> {
+  // جزئیات عمومی محصول را فقط در صورت وجود هویت معتبر با وضعیت علاقه‌مندی همان مشتری ترکیب می‌کند.
+  async product(id: string, customerId: string | null = null): Promise<PublicProductDetailDto> {
     const product = await this.repository.product(id);
     if (product === null) throw new ProductError('PRODUCT_NOT_FOUND');
-    const [categoryPath, colors] = await Promise.all([
+    const [categoryPath, colors, isFavorite] = await Promise.all([
       this.repository.categoryPath(product.categoryId),
       this.options.colors(),
+      customerId === null ? false : this.repository.isFavorite(customerId, id),
     ]);
     if (categoryPath.length === 0) throw new Error('Persisted Product Category is missing.');
     const colorOptions = new Map(
@@ -84,6 +86,7 @@ export class PublicCatalogService {
     );
     return {
       ...publicDetailSummary(product),
+      isFavorite,
       description: product.description ?? failPersistedProduct(),
       categoryPath,
       variants: product.variants.map((variant, index) =>

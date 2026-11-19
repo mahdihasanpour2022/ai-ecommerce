@@ -38,6 +38,13 @@ const customerAuthMigration = readFileSync(
   ),
   'utf8',
 );
+const customerFavoriteMigration = readFileSync(
+  resolve(
+    apiRoot,
+    'prisma/migrations/20261119120000_add_customer_favorite_items/migration.sql',
+  ),
+  'utf8',
+);
 
 const approvedModels = [
   'AdminUser',
@@ -56,6 +63,7 @@ const approvedModels = [
   'CustomerRefreshToken',
   'CustomerOtpMobileThrottle',
   'CustomerAuthSessionRefreshThrottle',
+  'CustomerFavoriteItem',
   'Category',
   'CategoryImage',
   'CategoryImageCleanup',
@@ -190,6 +198,25 @@ void describe('Prisma schema and reviewed migrations', () => {
       /WHERE "rotated_at" IS NULL AND "revoked_at" IS NULL;/u,
     );
     assert.match(customerAuthMigration, /FOREIGN KEY \("replaced_by_token_id", "session_id"\)/u);
+  });
+
+  // migration علاقه‌مندی باید فقط ساختار افزایشی و قیود مالکیت داده را اضافه کند.
+  void test('adds only the Customer Favorite association and its required constraints', () => {
+    const actualTables = [...customerFavoriteMigration.matchAll(/^CREATE TABLE "([^"]+)"/gmu)].map(
+      (match) => match[1],
+    );
+
+    assert.deepEqual(actualTables, ['customer_favorite_items']);
+    assert.match(customerFavoriteMigration, /^BEGIN;/u);
+    assert.match(customerFavoriteMigration, /"customer_favorite_items_pkey"/u);
+    assert.match(customerFavoriteMigration, /"customer_favorite_items_customer_created_product_idx"/u);
+    assert.match(customerFavoriteMigration, /"customer_favorite_items_product_id_idx"/u);
+    assert.equal(
+      (customerFavoriteMigration.match(/ON DELETE CASCADE ON UPDATE NO ACTION/gu) ?? []).length,
+      2,
+    );
+    assert.match(customerFavoriteMigration, /COMMIT;\s*$/u);
+    assert.doesNotMatch(customerFavoriteMigration, /\b(?:DROP|TRUNCATE)\b/iu);
   });
 
   void test('adds a required canonical unique Admin username with safe legacy backfill', () => {

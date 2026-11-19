@@ -24,6 +24,7 @@ const TERMINAL_AUTH_CODES = new Set([
   'CUSTOMER_ACCOUNT_DISABLED',
 ]);
 const terminalAuthenticationListeners = new Set<() => void>();
+const refreshedAuthenticationListeners = new Set<() => void>();
 
 export interface CustomerAuthRequestPolicy {
   readonly csrf?: boolean;
@@ -92,10 +93,21 @@ function notifyTerminalAuthenticationLoss(): void {
   for (const listener of terminalAuthenticationListeners) listener();
 }
 
+// صدور Access تازه را یک‌بار برای همگام‌سازی cacheهای شخصی‌سازی‌شده منتشر می‌کند.
+function notifyCustomerAuthenticationRefresh(): void {
+  for (const listener of refreshedAuthenticationListeners) listener();
+}
+
 // پایان قطعی نشست را بدون وابسته‌کردن لایه HTTP به React منتشر می‌کند.
 export function onTerminalCustomerAuthenticationLoss(listener: () => void): () => void {
   terminalAuthenticationListeners.add(listener);
   return () => terminalAuthenticationListeners.delete(listener);
+}
+
+// موفقیت Refresh را بدون وابسته‌کردن لایه HTTP به React Query در اختیار مصرف‌کننده می‌گذارد.
+export function onCustomerAuthenticationRefresh(listener: () => void): () => void {
+  refreshedAuthenticationListeners.add(listener);
+  return () => refreshedAuthenticationListeners.delete(listener);
 }
 
 // base URL کلاینت را به مسیر داخلی BFF محدود می‌کند تا مقصد خارجی قابل تزریق نباشد.
@@ -204,7 +216,7 @@ export function createHttpClient(options: CreateHttpClientOptions = {}): AxiosIn
               .post(CUSTOMER_REFRESH_PATH, undefined, {
                 customerAuth: { csrf: true },
               })
-              .then(() => undefined)
+              .then(() => notifyCustomerAuthenticationRefresh())
               .finally(() => {
                 refreshPromise = null;
               });

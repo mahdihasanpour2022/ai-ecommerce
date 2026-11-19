@@ -140,6 +140,12 @@ export class PublicProductVariantDto {
 }
 
 export class PublicProductDetailDto extends PublicProductSummaryDto {
+  @ApiProperty({
+    description: 'Whether the authenticated Customer has favorited this Product; false for guests.',
+    example: false,
+  })
+  isFavorite!: boolean;
+
   @ApiProperty({ type: () => PublicProductCategoryDto, isArray: true, maxItems: 6 })
   categoryPath!: PublicProductCategoryDto[];
 

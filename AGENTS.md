@@ -18,6 +18,7 @@ Start with [the project overview](docs/00-project-overview.md). Detailed archite
 
 - Do not load the full documentation set, architecture documentation, Codebase Memory, Context7, or the web unless a genuine blocker makes that source necessary.
 - Do not run lint, typecheck, tests, or builds. At the end of the task, provide only the commands the owner needs to run those checks.
+- در پایان هر تسک، دستورات پیشنهادی را داخل یک code block با زبان powershell ارائه بده؛ ابتدا Set-Location با مسیر دقیق پروژه را بنویس، سپس هر دستور قابل‌کپی را در یک خط جدا قرار بده. از توضیح، bullet، دستور inline و ترکیب چند فرمان در یک خط خودداری کن و برای ابزارهای محلی از مسیر مستقیم node_modules\.bin استفاده کن.
 - Keep all progress commentary and the final report to no more than five lines each.
 - Do not make any change outside the explicit scope of the task.
 

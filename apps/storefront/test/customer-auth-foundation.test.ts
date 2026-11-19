@@ -5,6 +5,7 @@ import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 import {
   StorefrontHttpError,
   createHttpClient,
+  onCustomerAuthenticationRefresh,
   onTerminalCustomerAuthenticationLoss,
 } from '../app/http/http-client';
 import { safeReturnDestination } from '../features/customer-auth/customer-auth';
@@ -47,6 +48,10 @@ void test('shares one Refresh and replays each eligible request exactly once', a
   });
   const calls = new Map<string, number>();
   let refreshCalls = 0;
+  let refreshEvents = 0;
+  const unsubscribe = onCustomerAuthenticationRefresh(() => {
+    refreshEvents += 1;
+  });
   const adapter: AxiosAdapter = async (config) => {
     const url = config.url ?? '';
     calls.set(url, (calls.get(url) ?? 0) + 1);
@@ -65,8 +70,10 @@ void test('shares one Refresh and replays each eligible request exactly once', a
     client.get('/orders', { customerAuth: { refreshEligible: true } }),
     client.get('/profile', { customerAuth: { refreshEligible: true } }),
   ]);
+  unsubscribe();
 
   assert.equal(refreshCalls, 1);
+  assert.equal(refreshEvents, 1);
   assert.equal(calls.get('/orders'), 2);
   assert.equal(calls.get('/profile'), 2);
 });

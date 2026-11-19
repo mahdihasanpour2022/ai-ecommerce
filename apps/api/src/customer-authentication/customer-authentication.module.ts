@@ -5,6 +5,10 @@ import type { ApiEnvironment } from '../config/environment.js';
 import { API_ENVIRONMENT } from '../config/tokens.js';
 import { DatabaseModule } from '../database/database.module.js';
 import { CustomerAuthenticationController } from './customer-authentication.controller.js';
+import {
+  CustomerAccessGuard,
+  OptionalCustomerAccessGuard,
+} from './customer-access.guard.js';
 import { CustomerRegistrationRepository } from './customer-registration.repository.js';
 import { CustomerRegistrationService } from './customer-registration.service.js';
 import { CustomerSessionCrypto } from './customer-session.crypto.js';
@@ -34,6 +38,8 @@ const otpSenderProvider = {
   controllers: [CustomerAuthenticationController],
   providers: [
     otpSenderProvider,
+    CustomerAccessGuard,
+    OptionalCustomerAccessGuard,
     CustomerRegistrationRepository,
     CustomerRegistrationService,
     CustomerSessionCrypto,
@@ -48,6 +54,12 @@ const otpSenderProvider = {
     OtpVerificationSecurity,
     OtpVerificationService,
   ],
-  exports: [OTP_SENDER],
+  exports: [
+    CustomerAccessGuard,
+    CustomerSessionSecurity,
+    CustomerSessionService,
+    OptionalCustomerAccessGuard,
+    OTP_SENDER,
+  ],
 })
 export class CustomerAuthenticationModule {}
