@@ -103,9 +103,13 @@ const PRODUCT_SUMMARY_SELECT = {
 export type ProductDetailRecord = Prisma.ProductGetPayload<{
   select: typeof PRODUCT_DETAIL_SELECT;
 }>;
-export type ProductSummaryRecord = Prisma.ProductGetPayload<{
+type ProductSummaryBaseRecord = Prisma.ProductGetPayload<{
   select: typeof PRODUCT_SUMMARY_SELECT;
 }>;
+export type ProductSummaryRecord = ProductSummaryBaseRecord & {
+  readonly mainSpecs: Readonly<Record<string, string>>;
+  readonly specificationCount: number;
+};
 export type ProductTransaction = Prisma.TransactionClient;
 
 @Injectable()
@@ -163,12 +167,20 @@ export class ProductRepository {
         ? 1
         : await this.prisma.category.count({ where: { id: query.categoryId } });
     const totalItems = await this.prisma.product.count({ where });
-    const rows = await this.prisma.product.findMany({
+    const baseRows = await this.prisma.product.findMany({
       where,
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: PRODUCT_SUMMARY_SELECT,
+    });
+    const specificationSummaries = await this.summarySpecifications(baseRows.map(({ id }) => id));
+    const rows = baseRows.map((row) => {
+      const summary = specificationSummaries.get(row.id);
+      if (summary === undefined) {
+        throw new Error('Persisted Product specification summary is missing.');
+      }
+      return { ...row, ...summary };
     });
     return { categoryExists: categoryCount === 1, rows, totalItems };
   }
@@ -231,6 +243,56 @@ export class ProductRepository {
     });
   }
 
+  // فهرست Admin فقط سه مقدار منتخب و شمارش کل مشخصات را از JSONB استخراج می‌کند.
+  private async summarySpecifications(productIds: readonly string[]): Promise<
+    Map<
+      string,
+      {
+        readonly mainSpecs: Readonly<Record<string, string>>;
+        readonly specificationCount: number;
+      }
+    >
+  > {
+    if (productIds.length === 0) return new Map();
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        readonly id: string;
+        readonly key: string | null;
+        readonly value: string | null;
+        readonly specificationCount: number;
+      }>
+    >`
+      SELECT
+        product.id::text AS "id",
+        selected.key AS "key",
+        selected.value AS "value",
+        jsonb_array_length(
+          jsonb_path_query_array(product.specifications, '$.keyvalue()')
+        )::integer AS "specificationCount"
+      FROM products product
+      LEFT JOIN LATERAL jsonb_each_text(product.specifications) AS selected(key, value)
+        ON selected.key = ANY(product.main_spec_keys)
+      WHERE product.id = ANY(ARRAY[${Prisma.join(productIds)}]::uuid[])
+      ORDER BY product.id, array_position(product.main_spec_keys, selected.key)
+    `;
+    const summaries = new Map<
+      string,
+      { readonly mainSpecs: Record<string, string>; readonly specificationCount: number }
+    >();
+    for (const row of rows) {
+      const summary = summaries.get(row.id) ?? {
+        mainSpecs: {},
+        specificationCount: row.specificationCount,
+      };
+      if ((row.key === null) !== (row.value === null)) {
+        throw new Error('Persisted main Product specification is malformed.');
+      }
+      if (row.key !== null && row.value !== null) summary.mainSpecs[row.key] = row.value;
+      summaries.set(row.id, summary);
+    }
+    return summaries;
+  }
+
   private async loadAggregate(
     transaction: ProductTransaction,
     productId: string,
@@ -267,7 +329,9 @@ export class ProductRepository {
     });
     // تصویر متصل به هر واریانت در aggregate محصول قرار می‌گیرد.
     const imagesByVariant = new Map(
-      images.flatMap((image) => (image.variantId === null ? [] : [[image.variantId, image] as const])),
+      images.flatMap((image) =>
+        image.variantId === null ? [] : [[image.variantId, image] as const],
+      ),
     );
     return {
       ...product,

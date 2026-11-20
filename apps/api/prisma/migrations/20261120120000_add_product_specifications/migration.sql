@@ -10,7 +10,11 @@ ALTER TABLE "products"
     ADD CONSTRAINT "products_specifications_object_check"
         CHECK (jsonb_typeof("specifications") = 'object'),
     ADD CONSTRAINT "products_specifications_count_check"
-        CHECK (jsonb_object_length("specifications") <= 30),
+        CHECK (
+            jsonb_array_length(
+                jsonb_path_query_array("specifications", '$.keyvalue()')
+            ) <= 30
+        ),
     ADD CONSTRAINT "products_specifications_values_check"
         CHECK (NOT jsonb_path_exists("specifications", '$.* ? (@.type() != "string")')),
     ADD CONSTRAINT "products_main_spec_keys_count_check"

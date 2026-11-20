@@ -1,18 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
-import type {
-  CreateProductInput,
-  InitialVariantInput,
-  ProductDetailDto,
-  ProductImageMetadataDto,
-  ProductListQuery,
-  ProductListResponseDto,
-  ProductSummaryDto,
-  ProductVariantResponseDto,
-  UpdateProductInput,
-  VariantInput,
-  VariantUpdateInput,
+import {
+  resolveMainSpecifications,
+  type CreateProductInput,
+  type InitialVariantInput,
+  type ProductDetailDto,
+  type ProductImageMetadataDto,
+  type ProductListQuery,
+  type ProductListResponseDto,
+  type ProductSpecifications,
+  type ProductSummaryDto,
+  type ProductVariantResponseDto,
+  type UpdateProductInput,
+  type VariantInput,
+  type VariantUpdateInput,
 } from './product.dto.js';
 import {
   ProductError,
@@ -26,6 +28,7 @@ import type {
 } from './product.repository.js';
 import { ProductRepository } from './product.repository.js';
 import { ProductImageStorage } from './product-image.storage.js';
+import { mainSpecificationsFromKeys, persistedSpecifications } from './product-specification.js';
 
 @Injectable()
 export class ProductService {
@@ -71,6 +74,8 @@ export class ProductService {
             originalPriceRial: input.originalPriceRial,
             discountPercent: input.discountPercent,
             categoryId: input.categoryId,
+            specifications: input.specifications,
+            mainSpecKeys: Object.keys(input.mainSpecs),
           },
           select: { id: true },
         });
@@ -90,6 +95,7 @@ export class ProductService {
         }
         const existing = await this.requiredAggregate(transaction, id);
         assertProductMutationAllowed(existing, input);
+        const specificationUpdate = productSpecificationUpdate(existing, input);
         if (
           input.categoryId !== undefined &&
           !(await this.repository.categoryExists(transaction, input.categoryId))
@@ -110,6 +116,7 @@ export class ProductService {
               : { discountPercent: input.discountPercent }),
             ...(input.categoryId === undefined ? {} : { categoryId: input.categoryId }),
             ...(input.status === undefined ? {} : { status: input.status }),
+            ...specificationUpdate,
           },
         });
         const updated = await this.requiredAggregate(transaction, id);
@@ -368,7 +375,9 @@ function assertProductMutationAllowed(
     input.tag !== undefined ||
     input.originalPriceRial !== undefined ||
     input.discountPercent !== undefined ||
-    input.categoryId !== undefined
+    input.categoryId !== undefined ||
+    input.specifications !== undefined ||
+    input.mainSpecs !== undefined
   ) {
     throw new ProductError('PRODUCT_LIFECYCLE_CONFLICT');
   }
@@ -473,6 +482,7 @@ function requiredVariant(
 }
 
 function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
+  const specifications = persistedSpecifications(product.specifications);
   return {
     id: product.id,
     name: product.name,
@@ -485,6 +495,8 @@ function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
     category: product.category,
     status: product.status,
     imageVersion: product.imageVersion,
+    specifications,
+    mainSpecs: mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
     variants: product.variants.map(toVariantDto),
     images: product.images.map(toImageDto),
     createdAt: product.createdAt.toISOString(),
@@ -518,9 +530,51 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
         return variant.inventory.onHandQuantity;
       }),
     ),
+    mainSpecs: product.mainSpecs,
+    specificationCount: product.specificationCount,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };
+}
+
+// replacement هر مجموعه را اعمال و از حذف ضمنی کلید اصلی در PATCH جلوگیری می‌کند.
+function productSpecificationUpdate(
+  product: ProductDetailRecord,
+  input: UpdateProductInput,
+): { readonly specifications?: ProductSpecifications; readonly mainSpecKeys?: string[] } {
+  if (input.specifications === undefined && input.mainSpecs === undefined) return {};
+  const currentSpecifications = persistedSpecifications(product.specifications);
+  const specifications = input.specifications ?? currentSpecifications;
+  const mainSpecs =
+    input.mainSpecs === undefined
+      ? retainedMainSpecifications(specifications, product.mainSpecKeys)
+      : resolveMainSpecifications(specifications, input.mainSpecs);
+  return {
+    ...(input.specifications === undefined ? {} : { specifications }),
+    mainSpecKeys: Object.keys(mainSpecs),
+  };
+}
+
+// انتخاب‌های اصلی فعلی را نگه می‌دارد و حذف کلیدشان از specifications را با خطای امن رد می‌کند.
+function retainedMainSpecifications(
+  specifications: ProductSpecifications,
+  keys: readonly string[],
+): ProductSpecifications {
+  const available = new Map(
+    Object.entries(specifications).map(([key, value]) => [
+      key.toUpperCase().toLowerCase(),
+      { key, value },
+    ]),
+  );
+  const mainSpecs: Record<string, string> = {};
+  for (const key of keys) {
+    const specification = available.get(key.toUpperCase().toLowerCase());
+    if (specification === undefined) {
+      throw new ProductError('VALIDATION_FAILED', ['specifications']);
+    }
+    mainSpecs[specification.key] = specification.value;
+  }
+  return mainSpecs;
 }
 
 function finalPriceRial(originalPriceRial: bigint, discountPercent: number): number {

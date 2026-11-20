@@ -49,6 +49,8 @@ const PUBLIC_LIST_SELECT = {
 const PUBLIC_DETAIL_SELECT = {
   ...PUBLIC_LIST_SELECT,
   categoryId: true,
+  specifications: true,
+  mainSpecKeys: true,
   variants: {
     where: { isActive: true },
     select: PUBLIC_VARIANT_SELECT,
@@ -111,12 +113,8 @@ export class PublicCatalogRepository {
         ? {}
         : {
             originalPriceRial: {
-              ...(query.minimumPriceRial === undefined
-                ? {}
-                : { gte: query.minimumPriceRial }),
-              ...(query.maximumPriceRial === undefined
-                ? {}
-                : { lte: query.maximumPriceRial }),
+              ...(query.minimumPriceRial === undefined ? {} : { gte: query.minimumPriceRial }),
+              ...(query.maximumPriceRial === undefined ? {} : { lte: query.maximumPriceRial }),
             },
           }),
       ...(hasVariantFilter

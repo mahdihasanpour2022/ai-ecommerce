@@ -40,6 +40,8 @@ void describe('Product and Variant contract parsing', () => {
           onHandQuantity: 5,
         },
       ],
+      specifications: { '  جنس   پارچه ': ' نخ   پنبه ', 'نوع یقه': ' گرد ' },
+      mainSpecs: { 'جنس پارچه': 'نخ پنبه' },
     });
     assert.equal(parsed.name, 'پیراهن نخی');
     assert.equal(parsed.description, 'توضیح خط اول\nتوضیح خط دوم');
@@ -49,6 +51,63 @@ void describe('Product and Variant contract parsing', () => {
     assert.equal(parsed.variants[0]?.onHandQuantity, 5);
     assert.equal(parsed.originalPriceRial, 120_000n);
     assert.equal(parsed.discountPercent, 15);
+    assert.deepEqual(parsed.specifications, { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' });
+    assert.deepEqual(parsed.mainSpecs, { 'جنس پارچه': 'نخ پنبه' });
+  });
+
+  void test('rejects malformed, unsafe, excessive, or inconsistent Product specifications', () => {
+    const categoryId = randomUUID();
+    const base = {
+      name: 'Product',
+      originalPriceRial: 1000,
+      discountPercent: 0,
+      categoryId,
+      variants: [{ size: 'M', color: 'Black', onHandQuantity: 1 }],
+    };
+    expectCode(
+      () =>
+        parseCreateProductRequest({
+          ...base,
+          specifications: { Material: { value: 'Cotton' } },
+        }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () =>
+        parseCreateProductRequest({
+          ...base,
+          specifications: Object.fromEntries(
+            Array.from({ length: 31 }, (_, index) => [`key-${index}`, 'value']),
+          ),
+        }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () =>
+        parseCreateProductRequest({
+          ...base,
+          specifications: { A: '1', B: '2', C: '3', D: '4' },
+          mainSpecs: { A: '1', B: '2', C: '3', D: '4' },
+        }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () =>
+        parseCreateProductRequest({
+          ...base,
+          specifications: { Material: 'Cotton' },
+          mainSpecs: { Material: 'Linen' },
+        }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () => parseUpdateProductRequest({ specifications: { Material: 'javascript:alert(1)' } }),
+      'VALIDATION_FAILED',
+    );
+    expectCode(
+      () => parseUpdateProductRequest({ specifications: { ' Key ': 'one', Key: 'two' } }),
+      'VALIDATION_FAILED',
+    );
   });
 
   void test('parses only bounded allowlisted Product list query values', () => {
@@ -88,20 +147,17 @@ void describe('Product and Variant contract parsing', () => {
     );
     expectCode(() => parseProductListQuery({ pageSize: '101' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ page: '01' }), 'VALIDATION_FAILED');
-    expectCode(() => parseProductListQuery({ tags: ['valid_tag', 'not-valid'] }), 'VALIDATION_FAILED');
+    expectCode(
+      () => parseProductListQuery({ tags: ['valid_tag', 'not-valid'] }),
+      'VALIDATION_FAILED',
+    );
     expectCode(
       () => parseProductListQuery({ tags: Array.from({ length: 51 }, () => 'valid_tag') }),
       'VALIDATION_FAILED',
     );
     expectCode(() => parseProductListQuery({ page: '2147483648' }), 'VALIDATION_FAILED');
-    expectCode(
-      () => parseProductListQuery({ maximumDiscountPercent: '101' }),
-      'VALIDATION_FAILED',
-    );
-    expectCode(
-      () => parseProductListQuery({ maximumDiscountPercent: '-1' }),
-      'VALIDATION_FAILED',
-    );
+    expectCode(() => parseProductListQuery({ maximumDiscountPercent: '101' }), 'VALIDATION_FAILED');
+    expectCode(() => parseProductListQuery({ maximumDiscountPercent: '-1' }), 'VALIDATION_FAILED');
     expectCode(() => parseProductListQuery({ sort: 'name' }), 'VALIDATION_FAILED');
     expectCode(
       () =>

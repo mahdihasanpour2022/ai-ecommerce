@@ -6,8 +6,11 @@ import { useCustomerAuth } from '@/features/customer-auth/auth-provider';
 import { showGuestFavoriteModal } from '@/features/favorite/storefront-modal-container';
 import { useAddFavorite, useRemoveFavorite } from '@/features/favorite/use-favorite';
 import emptyHeartIcon from '@/public/assets/product/empty-heart-icon.webp';
+import greenTick from '@/public/assets/product/green-tick-icon.webp';
 import heartIcon from '@/public/assets/product/heart-icon.webp';
 import yellowStar from '@/public/assets/product/star-yellow.webp';
+import whiteTick from '@/public/assets/product/white-tick-icon.webp';
+import clsx from 'clsx';
 import Image from 'next/image';
 import { useRef } from 'react';
 import { toast } from 'sonner';
@@ -26,9 +29,6 @@ export const Product = ({ productId }: ProductProps) => {
   const currentProduct = data?.singleResult ?? undefined;
   const selectedVariant = currentProduct?.variants[0];
 
-  console.log('currentProduct :', currentProduct);
-  console.log('selectedVariant :', selectedVariant);
-
   const colors = [
     ...new Set(
       currentProduct?.variants.flatMap(({ color }) => (color === null ? [] : [color])) ?? [],
@@ -38,6 +38,10 @@ export const Product = ({ productId }: ProductProps) => {
   const sizes = [
     ...new Set(currentProduct?.variants.flatMap(({ size }) => (size === null ? [] : [size])) ?? []),
   ];
+
+  console.log('currentProduct :', currentProduct);
+  console.log('selectedVariant :', selectedVariant);
+  console.log('sizes :', sizes);
 
   const isFavoriteMutationPending = addFavorite.isPending || removeFavorite.isPending;
 
@@ -107,7 +111,7 @@ export const Product = ({ productId }: ProductProps) => {
                   <Image
                     className="h-auto w-full rounded-xl object-contain"
                     src={currentProduct.isFavorite ? heartIcon : emptyHeartIcon}
-                    alt=""
+                    alt="like-icon"
                     width={350}
                     height={350}
                     unoptimized={false}
@@ -176,7 +180,15 @@ export const Product = ({ productId }: ProductProps) => {
                     variant="style_11"
                     className={`flex h-6 w-6 items-center justify-center text-white ${selectedVariant?.color === color ? 'outline-foreground/20 outline-4! outline-double' : ''}`}
                   >
-                    {selectedVariant?.color === color && '✔'}
+                    {selectedVariant?.color === color && (
+                      <Image
+                        src={whiteTick}
+                        alt="white-tick-icon"
+                        width={300}
+                        height={300}
+                        className="h-3 w-3"
+                      />
+                    )}
                   </UiSpan>
                 ))}
               </div>
@@ -189,16 +201,31 @@ export const Product = ({ productId }: ProductProps) => {
                   {selectedVariant?.size ? toEnglishDigits(selectedVariant.size) : null}
                 </UiSpan>
               </UiP>
-              {/* color bullets  */}
+              {/* sizes */}
               <div className="flex items-center justify-start gap-1 py-4">
                 {sizes?.map((size) => (
-                  <UiSpan
+                  <div
+                    className="border-foreground/20 flex items-start justify-between gap-0 rounded-xl border p-1"
                     key={size}
-                    variant="style_12"
-                    className={`flex w-fit items-center justify-center font-mono ${selectedVariant?.size === size ? 'outline-foreground/20' : ''}`}
                   >
-                    {size}
-                  </UiSpan>
+                    <Image
+                      src={greenTick}
+                      alt="green-tick-icon"
+                      width={300}
+                      height={300}
+                      className={clsx(
+                        'h-3 w-4 opacity-75',
+                        selectedVariant?.size !== size ? 'hidden!' : 'flex-initial!',
+                      )}
+                    />
+                    <UiSpan
+                      key={size}
+                      variant="style_12"
+                      className="outline-foreground/20 flex w-fit items-center justify-center font-mono"
+                    >
+                      {size}
+                    </UiSpan>
+                  </div>
                 ))}
               </div>
             </div>

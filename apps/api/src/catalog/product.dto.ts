@@ -1,3 +1,4 @@
+import { validatePlainText } from '@e-commerce/plain-text-security';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { ProductImageMediaType, ProductStatus } from '../generated/prisma/enums.js';
@@ -10,6 +11,12 @@ const PRODUCT_STATUSES = new Set<string>(Object.values(ProductStatus));
 const PRODUCT_AVAILABILITIES = new Set(['IN_STOCK', 'OUT_OF_STOCK'] as const);
 const MAX_DATABASE_INTEGER = 2_147_483_647;
 const MAX_PRODUCT_FILTER_VALUES = 50;
+const MAX_PRODUCT_SPECIFICATIONS = 30;
+const MAX_MAIN_PRODUCT_SPECIFICATIONS = 3;
+const MAX_SPECIFICATION_KEY_LENGTH = 60;
+const MAX_SPECIFICATION_VALUE_LENGTH = 200;
+
+export type ProductSpecifications = Readonly<Record<string, string>>;
 
 export type ProductAvailability = 'IN_STOCK' | 'OUT_OF_STOCK';
 
@@ -59,6 +66,8 @@ export interface CreateProductInput {
   readonly discountPercent: number;
   readonly categoryId: string;
   readonly variants: readonly InitialVariantInput[];
+  readonly specifications: ProductSpecifications;
+  readonly mainSpecs: ProductSpecifications;
 }
 
 export interface UpdateProductInput {
@@ -69,6 +78,8 @@ export interface UpdateProductInput {
   readonly discountPercent?: number;
   readonly categoryId?: string;
   readonly status?: ProductStatus;
+  readonly specifications?: ProductSpecifications;
+  readonly mainSpecs?: ProductSpecifications;
 }
 
 class VariantValuesRequestDto {
@@ -134,6 +145,34 @@ export class CreateProductRequestDto {
 
   @ApiProperty({ type: () => InitialVariantRequestDto, isArray: true, minItems: 1, maxItems: 9 })
   variants!: InitialVariantRequestDto[];
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+    },
+    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
+    default: {},
+    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+    description: 'جایگزین کامل مشخصات در ایجاد؛ کلیدها حداکثر ۶۰ نویسه هستند.',
+  })
+  specifications?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+    },
+    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    default: {},
+    example: { 'جنس پارچه': 'نخ پنبه' },
+    description: 'حداکثر سه مورد منتخب از specifications با همان مقدار normalized.',
+  })
+  mainSpecs?: Record<string, string>;
 }
 
 export class UpdateProductRequestDto {
@@ -163,6 +202,33 @@ export class UpdateProductRequestDto {
 
   @ApiPropertyOptional({ enum: ProductStatus })
   status?: ProductStatus;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+    },
+    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+    description:
+      'در صورت ارسال، جایگزین کامل specifications است؛ اگر کلید اصلی فعلی حذف شود درخواست رد می‌شود مگر mainSpecs نیز ارسال شود.',
+  })
+  specifications?: Record<string, string>;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+    },
+    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه' },
+    description: 'در صورت ارسال، جایگزین کامل mainSpecs و محدود به کلیدهای specifications است.',
+  })
+  mainSpecs?: Record<string, string>;
 }
 
 export class ProductCategoryDto {
@@ -291,6 +357,17 @@ export class ProductSummaryDto {
   @ApiProperty({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER })
   totalOnHandQuantity!: number;
 
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه' },
+  })
+  mainSpecs!: Record<string, string>;
+
+  @ApiProperty({ minimum: 0, maximum: MAX_PRODUCT_SPECIFICATIONS })
+  specificationCount!: number;
+
   @ApiProperty({ format: 'date-time' })
   createdAt!: string;
 
@@ -332,6 +409,22 @@ export class ProductDetailDto {
   @ApiProperty({ minimum: 1, maximum: MAX_DATABASE_INTEGER })
   imageVersion!: number;
 
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+  })
+  specifications!: Record<string, string>;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه' },
+  })
+  mainSpecs!: Record<string, string>;
+
   @ApiProperty({ type: () => ProductVariantResponseDto, isArray: true })
   variants!: ProductVariantResponseDto[];
 
@@ -372,6 +465,65 @@ function hasOnlyKeys(record: Record<string, unknown>, allowed: readonly string[]
 
 function fail(details: readonly string[] = []): never {
   throw new ProductError('VALIDATION_FAILED', details);
+}
+
+// متن کلید و مقدار مشخصات را با مرز امنیتی مشترک و سقف دامنه normalize می‌کند.
+function normalizeSpecificationText(value: unknown, field: string, maximum: number): string {
+  if (typeof value !== 'string') fail([field]);
+  const result = validatePlainText(value);
+  if (
+    !result.valid ||
+    Array.from(result.value).length < 1 ||
+    Array.from(result.value).length > maximum
+  ) {
+    fail([field]);
+  }
+  return result.value;
+}
+
+// object مشخصات را بدون پذیرش مقدار nested و با تشخیص کلیدهای تکراری normalized می‌سازد.
+function parseSpecifications(
+  value: unknown,
+  field: 'mainSpecs' | 'specifications',
+  maximumEntries: number,
+): ProductSpecifications {
+  if (!isRecord(value)) fail([field]);
+  const entries = Object.entries(value);
+  if (entries.length > maximumEntries) fail([field]);
+  const comparisonKeys = new Set<string>();
+  const normalized: Record<string, string> = {};
+  for (const [rawKey, rawValue] of entries) {
+    const key = normalizeSpecificationText(rawKey, field, MAX_SPECIFICATION_KEY_LENGTH);
+    const comparison = key.toUpperCase().toLowerCase();
+    if (comparisonKeys.has(comparison)) fail([field]);
+    comparisonKeys.add(comparison);
+    normalized[key] = normalizeSpecificationText(
+      rawValue,
+      field,
+      MAX_SPECIFICATION_VALUE_LENGTH,
+    );
+  }
+  return normalized;
+}
+
+// کلید و مقدار مشخصات اصلی را به نسخه canonical موجود در specifications متصل می‌کند.
+export function resolveMainSpecifications(
+  specifications: ProductSpecifications,
+  mainSpecs: ProductSpecifications,
+): ProductSpecifications {
+  const available = new Map(
+    Object.entries(specifications).map(([key, value]) => [
+      key.toUpperCase().toLowerCase(),
+      { key, value },
+    ]),
+  );
+  const resolved: Record<string, string> = {};
+  for (const [requestedKey, requestedValue] of Object.entries(mainSpecs)) {
+    const specification = available.get(requestedKey.toUpperCase().toLowerCase());
+    if (specification === undefined || specification.value !== requestedValue) fail(['mainSpecs']);
+    resolved[specification.key] = specification.value;
+  }
+  return resolved;
 }
 
 export function parseCatalogUuid(value: unknown, field: string): string {
@@ -519,6 +671,8 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
       'discountPercent',
       'categoryId',
       'variants',
+      'specifications',
+      'mainSpecs',
     ]) ||
     !('name' in body) ||
     !('originalPriceRial' in body) ||
@@ -534,6 +688,17 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
     if (!isRecord(variant)) fail(['variants']);
     return parseInitialVariant(variant);
   });
+  const specifications =
+    'specifications' in body
+      ? parseSpecifications(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
+      : {};
+  const mainSpecs =
+    'mainSpecs' in body
+      ? resolveMainSpecifications(
+          specifications,
+          parseSpecifications(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS),
+        )
+      : {};
   return {
     name: normalizeSingleLine(body.name, 'name', 200),
     description: 'description' in body ? normalizeDescription(body.description) : null,
@@ -542,6 +707,8 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
     discountPercent: parseDiscountPercent(body.discountPercent),
     categoryId: parseCatalogUuid(body.categoryId, 'categoryId'),
     variants,
+    specifications,
+    mainSpecs,
   };
 }
 
@@ -561,6 +728,8 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
       'discountPercent',
       'categoryId',
       'status',
+      'specifications',
+      'mainSpecs',
     ]) ||
     Object.keys(body).length === 0
   ) {
@@ -571,6 +740,14 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
     if (typeof body.status !== 'string' || !PRODUCT_STATUSES.has(body.status)) fail(['status']);
     status = body.status as ProductStatus;
   }
+  const specifications =
+    'specifications' in body
+      ? parseSpecifications(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
+      : undefined;
+  const mainSpecs =
+    'mainSpecs' in body
+      ? parseSpecifications(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS)
+      : undefined;
   return {
     ...('name' in body ? { name: normalizeSingleLine(body.name, 'name', 200) } : {}),
     ...('description' in body ? { description: normalizeDescription(body.description) } : {}),
@@ -585,6 +762,15 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
       ? { categoryId: parseCatalogUuid(body.categoryId, 'categoryId') }
       : {}),
     ...(status === undefined ? {} : { status }),
+    ...(specifications === undefined ? {} : { specifications }),
+    ...(mainSpecs === undefined
+      ? {}
+      : {
+          mainSpecs:
+            specifications === undefined
+              ? mainSpecs
+              : resolveMainSpecifications(specifications, mainSpecs),
+        }),
   };
 }
 

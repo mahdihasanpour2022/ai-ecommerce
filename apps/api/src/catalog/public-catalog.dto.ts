@@ -7,6 +7,8 @@ import { ProductError } from './product.errors.js';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const PRODUCT_TAG_PATTERN = /^[a-z]+(?:_[a-z]+)*$/u;
 const MAX_DATABASE_INTEGER = 2_147_483_647;
+const MAX_PRODUCT_SPECIFICATIONS = 30;
+const MAX_MAIN_PRODUCT_SPECIFICATIONS = 3;
 const MAX_FILTER_VALUES = 50;
 
 export interface PublicProductListQuery {
@@ -151,6 +153,22 @@ export class PublicProductDetailDto extends PublicProductSummaryDto {
 
   @ApiProperty({ type: () => PublicProductVariantDto, isArray: true, minItems: 1 })
   variants!: PublicProductVariantDto[];
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+  })
+  specifications!: Record<string, string>;
+
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: { 'جنس پارچه': 'نخ پنبه' },
+  })
+  mainSpecs!: Record<string, string>;
 }
 
 export class PublicProductListResponseDto {

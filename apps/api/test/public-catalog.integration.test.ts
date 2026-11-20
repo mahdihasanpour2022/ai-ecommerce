@@ -59,6 +59,8 @@ interface PublicListBody {
 }
 
 interface PublicDetailBody extends PublicSummaryBody {
+  readonly specifications: Record<string, string>;
+  readonly mainSpecs: Record<string, string>;
   readonly categoryPath: Array<{ readonly id: string; readonly name: string }>;
   readonly images: PublicImageBody[];
   readonly variants: Array<{
@@ -148,6 +150,8 @@ void describe(
       readonly tag?: string;
       readonly originalPriceRial?: number;
       readonly discountPercent?: number;
+      readonly specifications?: Record<string, string>;
+      readonly mainSpecKeys?: string[];
       readonly variants?: ReadonlyArray<{
         readonly active: boolean;
         readonly quantity: number;
@@ -169,6 +173,8 @@ void describe(
           originalPriceRial: options.originalPriceRial ?? 1000,
           discountPercent: options.discountPercent ?? 0,
           categoryId: options.categoryId,
+          specifications: options.specifications ?? {},
+          mainSpecKeys: options.mainSpecKeys ?? [],
           ...(options.createdAt === undefined ? {} : { createdAt: options.createdAt }),
           variants: {
             create: variants.map((variant) => ({
@@ -393,6 +399,26 @@ void describe(
       await request(server(app)).get('/api/v1/catalog/products?status=ACTIVE').expect(400);
     });
 
+    void test('projects Product specifications only into public detail', async () => {
+      const categoryId = await category('Specification projection');
+      const created = await product({
+        categoryId,
+        status: 'ACTIVE',
+        specifications: { Material: 'Cotton', Fit: 'Regular' },
+        mainSpecKeys: ['Fit'],
+      });
+      const detail = body<PublicDetailBody>(
+        await request(server(app)).get(`/api/v1/catalog/products/${created.id}`).expect(200),
+      );
+      assert.deepEqual(detail.specifications, { Material: 'Cotton', Fit: 'Regular' });
+      assert.deepEqual(detail.mainSpecs, { Fit: 'Regular' });
+      const list = body<PublicListBody>(
+        await request(server(app)).get('/api/v1/catalog/products').expect(200),
+      );
+      assert.equal('specifications' in (list.items[0] ?? {}), false);
+      assert.equal('mainSpecs' in (list.items[0] ?? {}), false);
+    });
+
     void test('returns field-minimal Active detail, ordered images, active Variants, and usable content URLs', async () => {
       const root = await category('Apparel');
       const child = await category('Shirts', root);
@@ -424,9 +450,11 @@ void describe(
         'image',
         'images',
         'isAvailable',
+        'mainSpecs',
         'name',
         'original_price',
         'quantity',
+        'specifications',
         'variants',
       ]);
       assert.deepEqual(detail.categoryPath, [
@@ -472,6 +500,21 @@ void describe(
         .expect((response: Response) =>
           assert.equal(body<ErrorBody>(response).code, 'VALIDATION_FAILED'),
         );
+    });
+
+    void test('publishes bounded public Product specification OpenAPI schemas', async () => {
+      const response = await request(server(app)).get('/api/docs-json').expect(200);
+      const document = body<OpenApiDocument>(response);
+      const detailSchema = document.components.schemas.PublicProductDetailDto as {
+        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+      };
+      assert.equal(detailSchema.properties?.specifications?.maxProperties, 30);
+      assert.equal(detailSchema.properties?.mainSpecs?.maxProperties, 3);
+      const summarySchema = document.components.schemas.PublicProductSummaryDto as {
+        readonly properties?: Record<string, unknown>;
+      };
+      assert.equal('specifications' in (summarySchema.properties ?? {}), false);
+      assert.equal('mainSpecs' in (summarySchema.properties ?? {}), false);
     });
 
     void test('publishes exact unauthenticated public OpenAPI contracts', async () => {

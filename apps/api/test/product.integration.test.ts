@@ -51,6 +51,8 @@ interface ProductBody {
   readonly category: { readonly id: string; readonly name: string };
   readonly status: 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
   readonly imageVersion: number;
+  readonly specifications: Record<string, string>;
+  readonly mainSpecs: Record<string, string>;
   readonly variants: VariantBody[];
   readonly images: Array<{ readonly id: string; readonly position: number }>;
 }
@@ -70,6 +72,8 @@ interface ProductListBody {
     readonly currency: 'IRR';
     readonly totalOnHandQuantity: number;
     readonly mainImage: { readonly id: string } | null;
+    readonly mainSpecs: Record<string, string>;
+    readonly specificationCount: number;
   }>;
   readonly page: number;
   readonly pageSize: number;
@@ -306,6 +310,8 @@ void describe(
               onHandQuantity: 1,
             },
           ],
+          specifications: { ' جنس   پارچه ': ' نخ   پنبه ', 'نوع یقه': ' گرد ' },
+          mainSpecs: { 'جنس پارچه': 'نخ پنبه' },
         })
         .expect(201)
         .expect('Cache-Control', 'no-store');
@@ -318,13 +324,18 @@ void describe(
         assert.match(variant.sku, /^SKU-[0-9A-F]{32}$/u);
       }
       assert.equal(product.variants[0]?.inventory.version, 1);
+      assert.deepEqual(product.specifications, { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' });
+      assert.deepEqual(product.mainSpecs, { 'جنس پارچه': 'نخ پنبه' });
       assert.equal(await prisma.inventory.count(), 2);
 
       const detail = await request(server(app))
         .get(`/api/v1/admin/catalog/products/${product.id}`)
         .set('Cookie', superAdmin.accessCookie)
         .expect(200);
-      assert.equal(responseBody<ProductBody>(detail).category.id, categoryId);
+      const detailBody = responseBody<ProductBody>(detail);
+      assert.equal(detailBody.category.id, categoryId);
+      assert.deepEqual(detailBody.specifications, product.specifications);
+      assert.deepEqual(detailBody.mainSpecs, product.mainSpecs);
 
       const list = await request(server(app))
         .get(
@@ -366,7 +377,50 @@ void describe(
       assert.equal(listBody.items[0]?.finalPriceRial, 126_000);
       assert.equal(listBody.items[0]?.discountPercent, 10);
       assert.equal(listBody.items[0]?.totalOnHandQuantity, 5);
+      assert.deepEqual(listBody.items[0]?.mainSpecs, { 'جنس پارچه': 'نخ پنبه' });
+      assert.equal(listBody.items[0]?.specificationCount, 2);
+      assert.equal('specifications' in (listBody.items[0] ?? {}), false);
       assert.equal('storageKey' in (listBody.items[0] ?? {}), false);
+    });
+
+    void test('replaces Product specification sets without implicit main-spec deletion', async () => {
+      const categoryId = await createCategory('Specification replacement');
+      const product = await createProduct(categoryId);
+      assert.deepEqual(product.specifications, {});
+      assert.deepEqual(product.mainSpecs, {});
+
+      const initialized = responseBody<ProductBody>(
+        await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
+          .send({
+            specifications: { Material: 'Cotton', Fit: 'Regular' },
+            mainSpecs: { Material: 'Cotton' },
+          })
+          .expect(200),
+      );
+      assert.deepEqual(initialized.mainSpecs, { Material: 'Cotton' });
+
+      const replaced = responseBody<ProductBody>(
+        await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
+          .send({ specifications: { material: 'Linen', Country: 'Iran' } })
+          .expect(200),
+      );
+      assert.deepEqual(replaced.specifications, { material: 'Linen', Country: 'Iran' });
+      assert.deepEqual(replaced.mainSpecs, { material: 'Linen' });
+
+      const reselection = responseBody<ProductBody>(
+        await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
+          .send({ mainSpecs: { Country: 'Iran' } })
+          .expect(200),
+      );
+      assert.deepEqual(reselection.specifications, replaced.specifications);
+      assert.deepEqual(reselection.mainSpecs, { Country: 'Iran' });
+
+      await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
+        .send({ specifications: { material: 'Linen' } })
+        .expect(400)
+        .expect((response: Response) =>
+          assert.equal(responseBody<ErrorBody>(response).code, 'VALIDATION_FAILED'),
+        );
     });
 
     void test('permanently deletes complete Product aggregates in every lifecycle status', async () => {
@@ -781,6 +835,41 @@ void describe(
         );
     });
 
+    void test('publishes bounded Product specification OpenAPI schemas', async () => {
+      const response = await request(server(app)).get('/api/docs-json').expect(200);
+      const document = responseBody<OpenApiDocument>(response);
+      const createProductSchema = document.components.schemas.CreateProductRequestDto as {
+        readonly required?: string[];
+        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+      };
+      assert.equal(createProductSchema.required?.includes('specifications') ?? false, false);
+      assert.equal(createProductSchema.required?.includes('mainSpecs') ?? false, false);
+      assert.equal(createProductSchema.properties?.specifications?.maxProperties, 30);
+      assert.equal(createProductSchema.properties?.mainSpecs?.maxProperties, 3);
+      const updateProductSchema = document.components.schemas.UpdateProductRequestDto as {
+        readonly required?: string[];
+        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+      };
+      assert.equal(updateProductSchema.required?.includes('specifications') ?? false, false);
+      assert.equal(updateProductSchema.required?.includes('mainSpecs') ?? false, false);
+      assert.equal(updateProductSchema.properties?.specifications?.maxProperties, 30);
+      assert.equal(updateProductSchema.properties?.mainSpecs?.maxProperties, 3);
+      const productDetailSchema = document.components.schemas.ProductDetailDto as {
+        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+      };
+      assert.equal(productDetailSchema.properties?.specifications?.maxProperties, 30);
+      assert.equal(productDetailSchema.properties?.mainSpecs?.maxProperties, 3);
+      const productSummarySchema = document.components.schemas.ProductSummaryDto as {
+        readonly properties?: Record<
+          string,
+          { readonly maximum?: number; readonly maxProperties?: number }
+        >;
+      };
+      assert.equal(productSummarySchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(productSummarySchema.properties?.specificationCount?.maximum, 30);
+      assert.equal('specifications' in (productSummarySchema.properties ?? {}), false);
+    });
+
     void test('publishes exact protected Product and Variant OpenAPI operations', async () => {
       const response = await request(server(app)).get('/api/docs-json').expect(200);
       const document = responseBody<OpenApiDocument>(response);
@@ -845,7 +934,12 @@ void describe(
         'tags',
       ]);
       const tagsParameter = listParameters.find((item) => item.name === 'tags') as
-        | { readonly schema?: { readonly type?: string; readonly items?: { readonly type?: string } } }
+        | {
+            readonly schema?: {
+              readonly type?: string;
+              readonly items?: { readonly type?: string };
+            };
+          }
         | undefined;
       assert.equal(tagsParameter?.schema?.type, 'array');
       assert.equal(tagsParameter?.schema?.items?.type, 'string');
@@ -913,8 +1007,10 @@ void describe(
         'categoryId',
         'description',
         'discountPercent',
+        'mainSpecs',
         'name',
         'originalPriceRial',
+        'specifications',
         'tag',
         'variants',
       ]);

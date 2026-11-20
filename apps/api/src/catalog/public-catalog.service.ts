@@ -17,10 +17,8 @@ import type {
   PublicProductSummaryRecord,
 } from './public-catalog.repository.js';
 import { PublicCatalogRepository } from './public-catalog.repository.js';
-import type {
-  PublicProductColorOption,
-  PublicProductSizeOption,
-} from './product-option.dto.js';
+import { mainSpecificationsFromKeys, persistedSpecifications } from './product-specification.js';
+import type { PublicProductColorOption, PublicProductSizeOption } from './product-option.dto.js';
 import { ProductOptionService } from './product-option.service.js';
 
 @Injectable()
@@ -81,13 +79,14 @@ export class PublicCatalogService {
       customerId === null ? false : this.repository.isFavorite(customerId, id),
     ]);
     if (categoryPath.length === 0) throw new Error('Persisted Product Category is missing.');
-    const colorOptions = new Map(
-      colors.map((color) => [color['english-color-name'], color]),
-    );
+    const colorOptions = new Map(colors.map((color) => [color['english-color-name'], color]));
+    const specifications = persistedSpecifications(product.specifications);
     return {
       ...publicDetailSummary(product),
       isFavorite,
       description: product.description ?? failPersistedProduct(),
+      specifications,
+      mainSpecs: mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
       categoryPath,
       variants: product.variants.map((variant, index) =>
         publicVariant(variant, colorOptions, index === 0 ? product.images[0] : undefined),
