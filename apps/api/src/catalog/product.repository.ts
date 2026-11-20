@@ -48,6 +48,8 @@ const PRODUCT_BASE_SELECT = {
   categoryId: true,
   status: true,
   imageVersion: true,
+  specifications: true,
+  mainSpecKeys: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -63,6 +65,8 @@ export const PRODUCT_DETAIL_SELECT = {
   category: { select: CATEGORY_SELECT },
   status: true,
   imageVersion: true,
+  specifications: true,
+  mainSpecKeys: true,
   variants: {
     select: VARIANT_SELECT,
     orderBy: VARIANT_ORDER_BY,

@@ -360,6 +360,8 @@ model Product {
   categoryId        String                 @map("category_id") @db.Uuid
   status            ProductStatus          @default(DRAFT)
   imageVersion      Int                    @default(1) @map("image_version")
+  specifications    Json                   @default("{}") @db.JsonB
+  mainSpecKeys      String[]               @default([]) @map("main_spec_keys")
   createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
   category          Category               @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "products_category_id_fkey")

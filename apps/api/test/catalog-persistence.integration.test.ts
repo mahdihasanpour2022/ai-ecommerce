@@ -190,6 +190,34 @@ void describe(
       );
     });
 
+    // مقدار پیش‌فرض امن و ترتیب کلیدهای اصلی را در رفت‌وبرگشت پایگاه داده حفظ می‌کند.
+    void test('persists Product specifications and ordered main specification keys', async () => {
+      const { productId } = await createDraftProduct();
+      const created = await primary.product.findUniqueOrThrow({
+        where: { id: productId },
+        select: { specifications: true, mainSpecKeys: true },
+      });
+      assert.deepEqual(created.specifications, {});
+      assert.deepEqual(created.mainSpecKeys, []);
+
+      const specifications = {
+        Material: 'Cotton',
+        Fit: 'Regular',
+        Country: 'Iran',
+      };
+      await primary.product.update({
+        where: { id: productId },
+        data: { specifications, mainSpecKeys: ['Fit', 'Material'] },
+      });
+
+      const persisted = await primary.product.findUniqueOrThrow({
+        where: { id: productId },
+        select: { specifications: true, mainSpecKeys: true },
+      });
+      assert.deepEqual(persisted.specifications, specifications);
+      assert.deepEqual(persisted.mainSpecKeys, ['Fit', 'Material']);
+    });
+
     void test('allows exactly one Inventory update from the same version', async () => {
       const { variantId } = await createDraftProduct();
 
