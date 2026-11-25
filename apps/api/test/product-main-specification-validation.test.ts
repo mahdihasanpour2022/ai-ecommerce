@@ -15,20 +15,20 @@ const base = {
 void test('enforces normalized allowlisted 20/100 Product specification text', () => {
   const parsed = parseCreateProductRequest({
     ...base,
-    specifications: { '  جنس   پارچه ': ' cotton_100 ' },
-    mainSpecs: { 'جنس پارچه': 'cotton_100' },
+    specifications: [{ title: '  جنس   پارچه ', description: ' cotton_100 ' }],
+    mainSpecs: [{ title: 'جنس پارچه', description: 'cotton_100' }],
   });
   assert.deepEqual(parsed.mainSpecs, { 'جنس پارچه': 'cotton_100' });
 
-  for (const specifications of [
-    { ['الف'.repeat(21)]: 'مقدار' },
-    { عنوان: 'الف'.repeat(101) },
-    { 'وزن:': '10' },
-    { عنوان: 'آبی/قرمز' },
-    { عنوان: 'ویژگی 😊' },
+  for (const specification of [
+    { title: 'الف'.repeat(21), description: 'مقدار' },
+    { title: 'عنوان', description: 'الف'.repeat(101) },
+    { title: 'وزن:', description: '10' },
+    { title: 'عنوان', description: 'آبی/قرمز' },
+    { title: 'عنوان', description: 'ویژگی 😊' },
   ]) {
     assert.throws(
-      () => parseCreateProductRequest({ ...base, specifications }),
+      () => parseCreateProductRequest({ ...base, specifications: [specification] }),
       (error: unknown) => error instanceof ProductError && error.code === 'VALIDATION_FAILED',
     );
   }

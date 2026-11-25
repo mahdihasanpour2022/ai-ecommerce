@@ -28,6 +28,8 @@ const productResponse = {
     quantity: 1,
     isAvailable: true,
     isFavorite: false,
+    specifications: [{ title: 'Material', description: 'Cotton' }],
+    mainSpecs: [{ title: 'Material', description: 'Cotton' }],
     categoryPath: [],
     variants: [],
   },

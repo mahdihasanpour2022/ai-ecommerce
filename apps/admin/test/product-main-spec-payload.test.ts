@@ -11,7 +11,13 @@ void test('maps ordered main and secondary specifications to the create request 
     [{ key: 'کشور سازنده', value: 'ایران' }],
   );
 
-  assert.deepEqual(payload.specifications, { جنس: 'نخ', مدل: '2', 'کشور سازنده': 'ایران' });
-  assert.deepEqual(payload.mainSpecs, { جنس: 'نخ', مدل: '2' });
-  assert.deepEqual(Object.keys(payload.mainSpecs), ['جنس', 'مدل']);
+  assert.deepEqual(payload.specifications, [
+    { title: 'جنس', description: 'نخ' },
+    { title: 'مدل', description: '2' },
+    { title: 'کشور سازنده', description: 'ایران' },
+  ]);
+  assert.deepEqual(payload.mainSpecs, [
+    { title: 'جنس', description: 'نخ' },
+    { title: 'مدل', description: '2' },
+  ]);
 });

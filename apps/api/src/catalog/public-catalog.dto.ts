@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { ProductImageMediaType } from '../generated/prisma/enums.js';
-import { normalizeSingleLine } from './product.dto.js';
+import { normalizeSingleLine, ProductSpecificationDto } from './product.dto.js';
 import { ProductError } from './product.errors.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
@@ -155,20 +155,23 @@ export class PublicProductDetailDto extends PublicProductSummaryDto {
   variants!: PublicProductVariantDto[];
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: { type: 'string' },
-    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_PRODUCT_SPECIFICATIONS,
+    example: [
+      { title: 'جنس پارچه', description: 'نخ پنبه' },
+      { title: 'نوع یقه', description: 'گرد' },
+    ],
   })
-  specifications!: Record<string, string>;
+  specifications!: ProductSpecificationDto[];
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: { type: 'string' },
-    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
   })
-  mainSpecs!: Record<string, string>;
+  mainSpecs!: ProductSpecificationDto[];
 }
 
 export class PublicProductListResponseDto {

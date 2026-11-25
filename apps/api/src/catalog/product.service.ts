@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import {
+  productSpecificationsToDto,
   resolveMainSpecifications,
   type CreateProductInput,
   type InitialVariantInput,
@@ -495,8 +496,10 @@ function toProductDetailDto(product: ProductDetailRecord): ProductDetailDto {
     category: product.category,
     status: product.status,
     imageVersion: product.imageVersion,
-    specifications,
-    mainSpecs: mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
+    specifications: productSpecificationsToDto(specifications),
+    mainSpecs: productSpecificationsToDto(
+      mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
+    ),
     variants: product.variants.map(toVariantDto),
     images: product.images.map(toImageDto),
     createdAt: product.createdAt.toISOString(),
@@ -530,7 +533,7 @@ function toProductSummaryDto(product: ProductSummaryRecord): ProductSummaryDto {
         return variant.inventory.onHandQuantity;
       }),
     ),
-    mainSpecs: product.mainSpecs,
+    mainSpecs: productSpecificationsToDto(product.mainSpecs),
     specificationCount: product.specificationCount,
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),

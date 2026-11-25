@@ -1,14 +1,15 @@
+import type { ProductSpecifications } from '../interfaces/product-contract';
+
 export function ProductMainSpecsCell({
   mainSpecs,
   ariaLabel = 'ویژگی‌های اصلی محصول',
   emptyLabel = 'بدون ویژگی اصلی',
 }: Readonly<{
-  mainSpecs: Readonly<Record<string, string>>;
+  mainSpecs: ProductSpecifications;
   ariaLabel?: string;
   emptyLabel?: string;
 }>) {
-  const entries = Object.entries(mainSpecs);
-  if (entries.length === 0) {
+  if (mainSpecs.length === 0) {
     return <span className="text-foreground-muted whitespace-nowrap">{emptyLabel}</span>;
   }
 
@@ -29,7 +30,7 @@ export function ProductMainSpecsCell({
           </tr>
         </thead>
         <tbody>
-          {entries.map(([title, value]) => (
+          {mainSpecs.map(({ title, description }) => (
             <tr key={title} className="border-border border-b last:border-b-0">
               <th
                 scope="row"
@@ -39,9 +40,9 @@ export function ProductMainSpecsCell({
               </th>
               <td
                 className="border-border truncate border-t px-2 py-1.5 wrap-break-word"
-                title={value}
+                title={description}
               >
-                {value}
+                {description}
               </td>
             </tr>
           ))}

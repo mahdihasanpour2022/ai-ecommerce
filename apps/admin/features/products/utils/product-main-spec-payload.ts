@@ -1,51 +1,56 @@
+import type { ProductSpecification, ProductSpecifications } from '../interfaces/product-contract';
 import type { ProductMainSpec } from '../schemas/product-main-spec-schema';
 
-export function mainSpecsToRecord(items: readonly ProductMainSpec[]): Record<string, string> {
-  return Object.fromEntries(items.map(({ key, value }) => [key, value]));
+function toSpecifications(items: readonly ProductMainSpec[]): ProductSpecification[] {
+  return items.map(({ key, value }) => ({ title: key, description: value }));
+}
+
+function specificationsEqual(current: ProductSpecifications, next: ProductSpecifications): boolean {
+  return (
+    current.length === next.length &&
+    current.every(
+      ({ title, description }, index) =>
+        title === next[index]?.title && description === next[index]?.description,
+    )
+  );
 }
 
 export function buildMainSpecificationsPayload(
   mainItems: readonly ProductMainSpec[],
   specificationItems: readonly ProductMainSpec[] = [],
 ): {
-  readonly specifications: Record<string, string>;
-  readonly mainSpecs: Record<string, string>;
+  readonly specifications: ProductSpecifications;
+  readonly mainSpecs: ProductSpecifications;
 } {
-  const mainSpecs = mainSpecsToRecord(mainItems);
+  const mainSpecs = toSpecifications(mainItems);
   return {
-    specifications: mainSpecsToRecord([...mainItems, ...specificationItems]),
+    specifications: toSpecifications([...mainItems, ...specificationItems]),
     mainSpecs,
   };
 }
 
 export function buildChangedMainSpecificationsPayload(
-  currentMainSpecs: Readonly<Record<string, string>>,
+  currentMainSpecs: ProductSpecifications,
   mainItems: readonly ProductMainSpec[],
-  currentSpecifications: Readonly<Record<string, string>> = currentMainSpecs,
+  currentSpecifications: ProductSpecifications = currentMainSpecs,
   specificationItems?: readonly ProductMainSpec[],
 ): ReturnType<typeof buildMainSpecificationsPayload> | undefined {
-  const next = mainSpecsToRecord(mainItems);
-  const currentEntries = Object.entries(currentMainSpecs);
-  const nextEntries = Object.entries(next);
-  const mainUnchanged =
-    currentEntries.length === nextEntries.length &&
-    currentEntries.every(
-      ([key, value], index) => key === nextEntries[index]?.[0] && value === nextEntries[index]?.[1],
-    );
+  const nextMainSpecs = toSpecifications(mainItems);
+  const mainUnchanged = specificationsEqual(currentMainSpecs, nextMainSpecs);
 
-  const currentMainKeys = new Set(currentEntries.map(([key]) => key.toLocaleLowerCase('en-US')));
-  const currentSecondaryEntries = Object.entries(currentSpecifications).filter(
-    ([key]) => !currentMainKeys.has(key.toLocaleLowerCase('en-US')),
+  const currentMainTitles = new Set(
+    currentMainSpecs.map(({ title }) => title.toLocaleLowerCase('en-US')),
+  );
+  const currentSecondarySpecifications = currentSpecifications.filter(
+    ({ title }) => !currentMainTitles.has(title.toLocaleLowerCase('en-US')),
   );
 
   if (specificationItems !== undefined) {
-    const nextSecondaryEntries = Object.entries(mainSpecsToRecord(specificationItems));
-    const secondaryUnchanged =
-      currentSecondaryEntries.length === nextSecondaryEntries.length &&
-      currentSecondaryEntries.every(
-        ([key, value], index) =>
-          key === nextSecondaryEntries[index]?.[0] && value === nextSecondaryEntries[index]?.[1],
-      );
+    const nextSecondarySpecifications = toSpecifications(specificationItems);
+    const secondaryUnchanged = specificationsEqual(
+      currentSecondarySpecifications,
+      nextSecondarySpecifications,
+    );
     return mainUnchanged && secondaryUnchanged
       ? undefined
       : buildMainSpecificationsPayload(mainItems, specificationItems);
@@ -53,13 +58,14 @@ export function buildChangedMainSpecificationsPayload(
 
   if (mainUnchanged) return undefined;
 
-  const nextMainKeys = new Set(nextEntries.map(([key]) => key.toLocaleLowerCase('en-US')));
-  const secondaryEntries = currentSecondaryEntries.filter(([key]) => {
-    const comparisonKey = key.toLocaleLowerCase('en-US');
-    return !nextMainKeys.has(comparisonKey);
-  });
+  const nextMainTitles = new Set(
+    nextMainSpecs.map(({ title }) => title.toLocaleLowerCase('en-US')),
+  );
+  const secondarySpecifications = currentSecondarySpecifications.filter(
+    ({ title }) => !nextMainTitles.has(title.toLocaleLowerCase('en-US')),
+  );
   return {
-    specifications: Object.fromEntries([...nextEntries, ...secondaryEntries]),
-    mainSpecs: { ...next },
+    specifications: [...nextMainSpecs, ...secondarySpecifications],
+    mainSpecs: nextMainSpecs,
   };
 }

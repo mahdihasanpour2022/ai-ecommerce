@@ -39,6 +39,11 @@ interface VariantBody {
   readonly inventory: { readonly onHandQuantity: number; readonly version: number };
 }
 
+interface SpecificationBody {
+  readonly title: string;
+  readonly description: string;
+}
+
 interface ProductBody {
   readonly id: string;
   readonly name: string;
@@ -51,8 +56,8 @@ interface ProductBody {
   readonly category: { readonly id: string; readonly name: string };
   readonly status: 'ACTIVE' | 'ARCHIVED' | 'DRAFT';
   readonly imageVersion: number;
-  readonly specifications: Record<string, string>;
-  readonly mainSpecs: Record<string, string>;
+  readonly specifications: SpecificationBody[];
+  readonly mainSpecs: SpecificationBody[];
   readonly variants: VariantBody[];
   readonly images: Array<{ readonly id: string; readonly position: number }>;
 }
@@ -72,7 +77,7 @@ interface ProductListBody {
     readonly currency: 'IRR';
     readonly totalOnHandQuantity: number;
     readonly mainImage: { readonly id: string } | null;
-    readonly mainSpecs: Record<string, string>;
+    readonly mainSpecs: SpecificationBody[];
     readonly specificationCount: number;
   }>;
   readonly page: number;
@@ -310,8 +315,11 @@ void describe(
               onHandQuantity: 1,
             },
           ],
-          specifications: { ' جنس   پارچه ': ' نخ   پنبه ', 'نوع یقه': ' گرد ' },
-          mainSpecs: { 'جنس پارچه': 'نخ پنبه' },
+          specifications: [
+            { title: ' جنس   پارچه ', description: ' نخ   پنبه ' },
+            { title: 'نوع یقه', description: ' گرد ' },
+          ],
+          mainSpecs: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
         })
         .expect(201)
         .expect('Cache-Control', 'no-store');
@@ -324,8 +332,11 @@ void describe(
         assert.match(variant.sku, /^SKU-[0-9A-F]{32}$/u);
       }
       assert.equal(product.variants[0]?.inventory.version, 1);
-      assert.deepEqual(product.specifications, { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' });
-      assert.deepEqual(product.mainSpecs, { 'جنس پارچه': 'نخ پنبه' });
+      assert.deepEqual(product.specifications, [
+        { title: 'جنس پارچه', description: 'نخ پنبه' },
+        { title: 'نوع یقه', description: 'گرد' },
+      ]);
+      assert.deepEqual(product.mainSpecs, [{ title: 'جنس پارچه', description: 'نخ پنبه' }]);
       assert.equal(await prisma.inventory.count(), 2);
 
       const detail = await request(server(app))
@@ -377,7 +388,9 @@ void describe(
       assert.equal(listBody.items[0]?.finalPriceRial, 126_000);
       assert.equal(listBody.items[0]?.discountPercent, 10);
       assert.equal(listBody.items[0]?.totalOnHandQuantity, 5);
-      assert.deepEqual(listBody.items[0]?.mainSpecs, { 'جنس پارچه': 'نخ پنبه' });
+      assert.deepEqual(listBody.items[0]?.mainSpecs, [
+        { title: 'جنس پارچه', description: 'نخ پنبه' },
+      ]);
       assert.equal(listBody.items[0]?.specificationCount, 2);
       assert.equal('specifications' in (listBody.items[0] ?? {}), false);
       assert.equal('storageKey' in (listBody.items[0] ?? {}), false);
@@ -386,37 +399,48 @@ void describe(
     void test('replaces Product specification sets without implicit main-spec deletion', async () => {
       const categoryId = await createCategory('Specification replacement');
       const product = await createProduct(categoryId);
-      assert.deepEqual(product.specifications, {});
-      assert.deepEqual(product.mainSpecs, {});
+      assert.deepEqual(product.specifications, []);
+      assert.deepEqual(product.mainSpecs, []);
 
       const initialized = responseBody<ProductBody>(
         await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
           .send({
-            specifications: { Material: 'Cotton', Fit: 'Regular' },
-            mainSpecs: { Material: 'Cotton' },
+            specifications: [
+              { title: 'Material', description: 'Cotton' },
+              { title: 'Fit', description: 'Regular' },
+            ],
+            mainSpecs: [{ title: 'Material', description: 'Cotton' }],
           })
           .expect(200),
       );
-      assert.deepEqual(initialized.mainSpecs, { Material: 'Cotton' });
+      assert.deepEqual(initialized.mainSpecs, [{ title: 'Material', description: 'Cotton' }]);
 
       const replaced = responseBody<ProductBody>(
         await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
-          .send({ specifications: { material: 'Linen', Country: 'Iran' } })
+          .send({
+            specifications: [
+              { title: 'material', description: 'Linen' },
+              { title: 'Country', description: 'Iran' },
+            ],
+          })
           .expect(200),
       );
-      assert.deepEqual(replaced.specifications, { material: 'Linen', Country: 'Iran' });
-      assert.deepEqual(replaced.mainSpecs, { material: 'Linen' });
+      assert.deepEqual(replaced.specifications, [
+        { title: 'material', description: 'Linen' },
+        { title: 'Country', description: 'Iran' },
+      ]);
+      assert.deepEqual(replaced.mainSpecs, [{ title: 'material', description: 'Linen' }]);
 
       const reselection = responseBody<ProductBody>(
         await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
-          .send({ mainSpecs: { Country: 'Iran' } })
+          .send({ mainSpecs: [{ title: 'Country', description: 'Iran' }] })
           .expect(200),
       );
       assert.deepEqual(reselection.specifications, replaced.specifications);
-      assert.deepEqual(reselection.mainSpecs, { Country: 'Iran' });
+      assert.deepEqual(reselection.mainSpecs, [{ title: 'Country', description: 'Iran' }]);
 
       await mutation('patch', `/api/v1/admin/catalog/products/${product.id}`)
-        .send({ specifications: { material: 'Linen' } })
+        .send({ specifications: [{ title: 'material', description: 'Linen' }] })
         .expect(400)
         .expect((response: Response) =>
           assert.equal(responseBody<ErrorBody>(response).code, 'VALIDATION_FAILED'),
@@ -840,34 +864,51 @@ void describe(
       const document = responseBody<OpenApiDocument>(response);
       const createProductSchema = document.components.schemas.CreateProductRequestDto as {
         readonly required?: string[];
-        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+        readonly properties?: Record<
+          string,
+          {
+            readonly type?: string;
+            readonly maxItems?: number;
+          }
+        >;
       };
       assert.equal(createProductSchema.required?.includes('specifications') ?? false, false);
       assert.equal(createProductSchema.required?.includes('mainSpecs') ?? false, false);
-      assert.equal(createProductSchema.properties?.specifications?.maxProperties, 30);
-      assert.equal(createProductSchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(createProductSchema.properties?.specifications?.type, 'array');
+      assert.equal(createProductSchema.properties?.specifications?.maxItems, 30);
+      assert.equal(createProductSchema.properties?.mainSpecs?.maxItems, 3);
       const updateProductSchema = document.components.schemas.UpdateProductRequestDto as {
         readonly required?: string[];
-        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+        readonly properties?: Record<string, { readonly maxItems?: number }>;
       };
       assert.equal(updateProductSchema.required?.includes('specifications') ?? false, false);
       assert.equal(updateProductSchema.required?.includes('mainSpecs') ?? false, false);
-      assert.equal(updateProductSchema.properties?.specifications?.maxProperties, 30);
-      assert.equal(updateProductSchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(updateProductSchema.properties?.specifications?.maxItems, 30);
+      assert.equal(updateProductSchema.properties?.mainSpecs?.maxItems, 3);
       const productDetailSchema = document.components.schemas.ProductDetailDto as {
-        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+        readonly properties?: Record<string, { readonly maxItems?: number }>;
       };
-      assert.equal(productDetailSchema.properties?.specifications?.maxProperties, 30);
-      assert.equal(productDetailSchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(productDetailSchema.properties?.specifications?.maxItems, 30);
+      assert.equal(productDetailSchema.properties?.mainSpecs?.maxItems, 3);
       const productSummarySchema = document.components.schemas.ProductSummaryDto as {
         readonly properties?: Record<
           string,
-          { readonly maximum?: number; readonly maxProperties?: number }
+          {
+            readonly maximum?: number;
+            readonly maxItems?: number;
+          }
         >;
       };
-      assert.equal(productSummarySchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(productSummarySchema.properties?.mainSpecs?.maxItems, 3);
       assert.equal(productSummarySchema.properties?.specificationCount?.maximum, 30);
       assert.equal('specifications' in (productSummarySchema.properties ?? {}), false);
+      const specificationSchema = document.components.schemas.ProductSpecificationDto as {
+        readonly required?: string[];
+        readonly properties?: Record<string, { readonly maxLength?: number }>;
+      };
+      assert.deepEqual(specificationSchema.required, ['title', 'description']);
+      assert.equal(specificationSchema.properties?.title?.maxLength, 20);
+      assert.equal(specificationSchema.properties?.description?.maxLength, 100);
     });
 
     void test('publishes exact protected Product and Variant OpenAPI operations', async () => {

@@ -11,9 +11,7 @@ import { categoryKeys } from '../features/categories/hooks/useGetCategories';
 import type { CategoriesResponse } from '../features/categories/interfaces/category-contract';
 import AddProduct from '../features/products/components/add-product';
 import { productOptionKeys } from '../hooks/shared/productOptionKeys';
-import type {
-  ProductColorsResponse,
-} from '../hooks/shared/useGetProductColors';
+import type { ProductColorsResponse } from '../hooks/shared/useGetProductColors';
 import type { ProductSizesResponse } from '../hooks/shared/useGetProductSizes';
 import type { ProductTagsResponse } from '../hooks/shared/useGetProductTags';
 import { createProductSchema } from '../features/products/schemas/create-product-schema';
@@ -373,8 +371,8 @@ void test('creates a Product, closes the modal, and reports the new first page',
           onHandQuantity: 12,
         },
       ],
-      specifications: {},
-      mainSpecs: {},
+      specifications: [],
+      mainSpecs: [],
     });
     const upload = calls.find(({ url }) => url === `/admin/catalog/products/${productId}/images`);
     assert.ok(upload?.data instanceof FormData);

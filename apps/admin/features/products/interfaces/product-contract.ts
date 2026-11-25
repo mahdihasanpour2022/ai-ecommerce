@@ -1,6 +1,11 @@
 import type { ApiResponse, PaginatedApiResponse } from '../../../app/http/api-response';
 
 export type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
+export interface ProductSpecification {
+  readonly title: string;
+  readonly description: string;
+}
+export type ProductSpecifications = readonly ProductSpecification[];
 
 export interface ProductCategory {
   readonly id: string;
@@ -36,7 +41,7 @@ export interface Product {
   readonly discountPercent: number;
   readonly currency: 'IRR';
   readonly totalOnHandQuantity: number;
-  readonly mainSpecs: Readonly<Record<string, string>>;
+  readonly mainSpecs: ProductSpecifications;
   readonly specificationCount: number;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -59,8 +64,8 @@ export interface CreateProductVariables {
   readonly discountPercent: number;
   readonly categoryId: string;
   readonly variants: readonly CreateProductVariantVariables[];
-  readonly specifications: Readonly<Record<string, string>>;
-  readonly mainSpecs: Readonly<Record<string, string>>;
+  readonly specifications: ProductSpecifications;
+  readonly mainSpecs: ProductSpecifications;
 }
 
 export interface ProductInventory {
@@ -102,8 +107,8 @@ export interface ProductDetail {
   readonly category: ProductCategory;
   readonly status: ProductStatus;
   readonly imageVersion: number;
-  readonly specifications: Readonly<Record<string, string>>;
-  readonly mainSpecs: Readonly<Record<string, string>>;
+  readonly specifications: ProductSpecifications;
+  readonly mainSpecs: ProductSpecifications;
   readonly variants: readonly ProductVariant[];
   readonly images: readonly ProductImage[];
   readonly createdAt: string;
@@ -140,8 +145,8 @@ export interface EditProductVariables {
   readonly originalPriceRial?: number;
   readonly discountPercent?: number;
   readonly categoryId?: string;
-  readonly specifications?: Readonly<Record<string, string>>;
-  readonly mainSpecs?: Readonly<Record<string, string>>;
+  readonly specifications?: ProductSpecifications;
+  readonly mainSpecs?: ProductSpecifications;
 }
 
 export type EditProductResponse = RawProductDetailResponse;

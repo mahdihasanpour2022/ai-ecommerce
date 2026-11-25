@@ -311,9 +311,9 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
 }
 
 function formValues(product: ProductDetail): EditProductFormValues {
-  const mainKeys = new Set(
-    Object.keys(product.mainSpecs).map((key) => key.toLocaleLowerCase('en-US')),
-  );
+  const mainSpecifications = product.mainSpecs;
+  const specifications = product.specifications;
+  const mainKeys = new Set(mainSpecifications.map(({ title }) => title.toLocaleLowerCase('en-US')));
   return {
     name: product.name,
     description: product.description ?? '',
@@ -321,10 +321,13 @@ function formValues(product: ProductDetail): EditProductFormValues {
     categoryId: product.category.id,
     originalPriceRial: String(product.originalPriceRial),
     discountPercent: String(product.discountPercent),
-    mainSpecs: Object.entries(product.mainSpecs).map(([key, value]) => ({ key, value })),
-    specifications: Object.entries(product.specifications)
-      .filter(([key]) => !mainKeys.has(key.toLocaleLowerCase('en-US')))
-      .map(([key, value]) => ({ key, value })),
+    mainSpecs: mainSpecifications.map(({ title, description }) => ({
+      key: title,
+      value: description,
+    })),
+    specifications: specifications
+      .filter(({ title }) => !mainKeys.has(title.toLocaleLowerCase('en-US')))
+      .map(({ title, description }) => ({ key: title, value: description })),
   };
 }
 

@@ -4,39 +4,61 @@ import { buildChangedMainSpecificationsPayload } from '../features/products/util
 
 void test('builds an edit replacement only when ordered main specifications change', () => {
   assert.equal(
-    buildChangedMainSpecificationsPayload({ جنس: 'نخ', مدل: '2' }, [
-      { key: 'جنس', value: 'نخ' },
-      { key: 'مدل', value: '2' },
-    ]),
+    buildChangedMainSpecificationsPayload(
+      [
+        { title: 'جنس', description: 'نخ' },
+        { title: 'مدل', description: '2' },
+      ],
+      [
+        { key: 'جنس', value: 'نخ' },
+        { key: 'مدل', value: '2' },
+      ],
+    ),
     undefined,
   );
 
   assert.deepEqual(
-    buildChangedMainSpecificationsPayload({ جنس: 'نخ' }, [{ key: 'مدل', value: '2' }], {
-      جنس: 'نخ',
-      'کشور سازنده': 'ایران',
-    }),
+    buildChangedMainSpecificationsPayload(
+      [{ title: 'جنس', description: 'نخ' }],
+      [{ key: 'مدل', value: '2' }],
+      [
+        { title: 'جنس', description: 'نخ' },
+        { title: 'کشور سازنده', description: 'ایران' },
+      ],
+    ),
     {
-      specifications: { مدل: '2', 'کشور سازنده': 'ایران' },
-      mainSpecs: { مدل: '2' },
+      specifications: [
+        { title: 'مدل', description: '2' },
+        { title: 'کشور سازنده', description: 'ایران' },
+      ],
+      mainSpecs: [{ title: 'مدل', description: '2' }],
     },
   );
 
-  assert.deepEqual(buildChangedMainSpecificationsPayload({ جنس: 'نخ' }, []), {
-    specifications: {},
-    mainSpecs: {},
-  });
+  assert.deepEqual(
+    buildChangedMainSpecificationsPayload([{ title: 'جنس', description: 'نخ' }], []),
+    {
+      specifications: [],
+      mainSpecs: [],
+    },
+  );
 
   assert.deepEqual(
     buildChangedMainSpecificationsPayload(
-      { جنس: 'نخ' },
+      [{ title: 'جنس', description: 'نخ' }],
       [{ key: 'جنس', value: 'نخ' }],
-      { جنس: 'نخ', 'کشور سازنده': 'ایران' },
+      [
+        { title: 'جنس', description: 'نخ' },
+        { title: 'کشور سازنده', description: 'ایران' },
+      ],
       [{ key: 'کشور سازنده', value: 'ترکیه' }],
     ),
     {
-      specifications: { جنس: 'نخ', 'کشور سازنده': 'ترکیه' },
-      mainSpecs: { جنس: 'نخ' },
+      specifications: [
+        { title: 'جنس', description: 'نخ' },
+        { title: 'کشور سازنده', description: 'ترکیه' },
+      ],
+      mainSpecs: [{ title: 'جنس', description: 'نخ' }],
     },
   );
 });

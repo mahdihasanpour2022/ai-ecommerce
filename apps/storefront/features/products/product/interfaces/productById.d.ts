@@ -4,6 +4,25 @@ export interface Colors {
   readonly englishColorName: string;
   readonly persianColorName: string | null;
 }
+export interface ProductSpecification {
+  readonly title: string;
+  readonly description: string;
+}
+
+export interface Variants {
+  readonly id: string;
+  readonly size: string | null;
+  readonly color: Colors | null;
+  readonly isAvailable: boolean;
+  readonly image: {
+    readonly id: string;
+    readonly url: string;
+    readonly width: number;
+    readonly height: number;
+    readonly mediaType: string;
+  } | null;
+}
+
 export interface ProductByID {
   readonly id: string;
   readonly name: string;
@@ -21,21 +40,11 @@ export interface ProductByID {
   readonly quantity: number;
   readonly isAvailable: boolean;
   readonly isFavorite: boolean;
+  readonly specifications: readonly ProductSpecification[];
+  readonly mainSpecs: readonly ProductSpecification[];
   readonly categoryPath: readonly {
     readonly id: string;
     readonly name: string;
   }[];
-  readonly variants: readonly {
-    readonly id: string;
-    readonly size: string | null;
-    readonly color: Colors | null;
-    readonly isAvailable: boolean;
-    readonly image: {
-      readonly id: string;
-      readonly url: string;
-      readonly width: number;
-      readonly height: number;
-      readonly mediaType: string;
-    } | null;
-  }[];
+  readonly variants: readonly Variants[];
 }

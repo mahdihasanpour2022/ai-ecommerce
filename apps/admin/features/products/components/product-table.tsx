@@ -252,10 +252,7 @@ export function ProductTable({
       key: 'secondarySpecifications',
       align: 'center',
       render: (_value, product) => {
-        const count = Math.max(
-          0,
-          product.specificationCount - Object.keys(product.mainSpecs).length,
-        );
+        const count = Math.max(0, product.specificationCount - product.mainSpecs.length);
         return (
           <div className="flex items-center gap-2 whitespace-nowrap">
             <span className="text-foreground w-full text-center!">

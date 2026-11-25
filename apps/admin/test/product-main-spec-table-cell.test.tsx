@@ -15,11 +15,15 @@ void test('renders Product main specifications in insertion order and handles an
     <div>
       <section aria-label="ویژگی‌های محصول">
         <ProductMainSpecsCell
-          mainSpecs={{ 'جنس پارچه': 'نخ پنبه', مدل: '2', سایز: '42' }}
+          mainSpecs={[
+            { title: 'جنس پارچه', description: 'نخ پنبه' },
+            { title: 'مدل', description: '2' },
+            { title: 'سایز', description: '42' },
+          ]}
         />
       </section>
       <section aria-label="محصول بدون ویژگی">
-        <ProductMainSpecsCell mainSpecs={{}} />
+        <ProductMainSpecsCell mainSpecs={[]} />
       </section>
     </div>,
   );
@@ -46,8 +50,6 @@ void test('renders Product main specifications in insertion order and handles an
     ],
   );
   assert.ok(
-    within(screen.getByRole('region', { name: 'محصول بدون ویژگی' })).getByText(
-      'بدون ویژگی اصلی',
-    ),
+    within(screen.getByRole('region', { name: 'محصول بدون ویژگی' })).getByText('بدون ویژگی اصلی'),
   );
 });

@@ -35,6 +35,11 @@ interface PublicImageBody {
   readonly mediaType: string;
 }
 
+interface SpecificationBody {
+  readonly title: string;
+  readonly description: string;
+}
+
 interface PublicSummaryBody {
   readonly id: string;
   readonly name: string;
@@ -59,8 +64,8 @@ interface PublicListBody {
 }
 
 interface PublicDetailBody extends PublicSummaryBody {
-  readonly specifications: Record<string, string>;
-  readonly mainSpecs: Record<string, string>;
+  readonly specifications: SpecificationBody[];
+  readonly mainSpecs: SpecificationBody[];
   readonly categoryPath: Array<{ readonly id: string; readonly name: string }>;
   readonly images: PublicImageBody[];
   readonly variants: Array<{
@@ -410,8 +415,11 @@ void describe(
       const detail = body<PublicDetailBody>(
         await request(server(app)).get(`/api/v1/catalog/products/${created.id}`).expect(200),
       );
-      assert.deepEqual(detail.specifications, { Material: 'Cotton', Fit: 'Regular' });
-      assert.deepEqual(detail.mainSpecs, { Fit: 'Regular' });
+      assert.deepEqual(detail.specifications, [
+        { title: 'Material', description: 'Cotton' },
+        { title: 'Fit', description: 'Regular' },
+      ]);
+      assert.deepEqual(detail.mainSpecs, [{ title: 'Fit', description: 'Regular' }]);
       const list = body<PublicListBody>(
         await request(server(app)).get('/api/v1/catalog/products').expect(200),
       );
@@ -506,10 +514,10 @@ void describe(
       const response = await request(server(app)).get('/api/docs-json').expect(200);
       const document = body<OpenApiDocument>(response);
       const detailSchema = document.components.schemas.PublicProductDetailDto as {
-        readonly properties?: Record<string, { readonly maxProperties?: number }>;
+        readonly properties?: Record<string, { readonly maxItems?: number }>;
       };
-      assert.equal(detailSchema.properties?.specifications?.maxProperties, 30);
-      assert.equal(detailSchema.properties?.mainSpecs?.maxProperties, 3);
+      assert.equal(detailSchema.properties?.specifications?.maxItems, 30);
+      assert.equal(detailSchema.properties?.mainSpecs?.maxItems, 3);
       const summarySchema = document.components.schemas.PublicProductSummaryDto as {
         readonly properties?: Record<string, unknown>;
       };

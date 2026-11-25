@@ -40,8 +40,11 @@ void describe('Product and Variant contract parsing', () => {
           onHandQuantity: 5,
         },
       ],
-      specifications: { '  جنس   پارچه ': ' نخ   پنبه ', 'نوع یقه': ' گرد ' },
-      mainSpecs: { 'جنس پارچه': 'نخ پنبه' },
+      specifications: [
+        { title: '  جنس   پارچه ', description: ' نخ   پنبه ' },
+        { title: 'نوع یقه', description: ' گرد ' },
+      ],
+      mainSpecs: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
     });
     assert.equal(parsed.name, 'پیراهن نخی');
     assert.equal(parsed.description, 'توضیح خط اول\nتوضیح خط دوم');
@@ -64,11 +67,21 @@ void describe('Product and Variant contract parsing', () => {
       categoryId,
       variants: [{ size: 'M', color: 'Black', onHandQuantity: 1 }],
     };
+    const cleared = parseUpdateProductRequest({ specifications: [], mainSpecs: [] });
+    assert.deepEqual(cleared.specifications, {});
+    assert.deepEqual(cleared.mainSpecs, {});
+    for (const specifications of [
+      { title: 'Material', description: 'Cotton' },
+      [{ Material: 'Cotton' }],
+      [{ title: 'Material', description: 'Cotton', extra: 'value' }],
+    ]) {
+      expectCode(() => parseCreateProductRequest({ ...base, specifications }), 'VALIDATION_FAILED');
+    }
     expectCode(
       () =>
         parseCreateProductRequest({
           ...base,
-          specifications: { Material: { value: 'Cotton' } },
+          specifications: [{ title: 'Material', description: { value: 'Cotton' } }],
         }),
       'VALIDATION_FAILED',
     );
@@ -76,9 +89,10 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           ...base,
-          specifications: Object.fromEntries(
-            Array.from({ length: 31 }, (_, index) => [`key-${index}`, 'value']),
-          ),
+          specifications: Array.from({ length: 31 }, (_, index) => ({
+            title: `key-${index}`,
+            description: 'value',
+          })),
         }),
       'VALIDATION_FAILED',
     );
@@ -86,8 +100,18 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           ...base,
-          specifications: { A: '1', B: '2', C: '3', D: '4' },
-          mainSpecs: { A: '1', B: '2', C: '3', D: '4' },
+          specifications: [
+            { title: 'A', description: '1' },
+            { title: 'B', description: '2' },
+            { title: 'C', description: '3' },
+            { title: 'D', description: '4' },
+          ],
+          mainSpecs: [
+            { title: 'A', description: '1' },
+            { title: 'B', description: '2' },
+            { title: 'C', description: '3' },
+            { title: 'D', description: '4' },
+          ],
         }),
       'VALIDATION_FAILED',
     );
@@ -95,17 +119,26 @@ void describe('Product and Variant contract parsing', () => {
       () =>
         parseCreateProductRequest({
           ...base,
-          specifications: { Material: 'Cotton' },
-          mainSpecs: { Material: 'Linen' },
+          specifications: [{ title: 'Material', description: 'Cotton' }],
+          mainSpecs: [{ title: 'Material', description: 'Linen' }],
         }),
       'VALIDATION_FAILED',
     );
     expectCode(
-      () => parseUpdateProductRequest({ specifications: { Material: 'javascript:alert(1)' } }),
+      () =>
+        parseUpdateProductRequest({
+          specifications: [{ title: 'Material', description: 'javascript:alert(1)' }],
+        }),
       'VALIDATION_FAILED',
     );
     expectCode(
-      () => parseUpdateProductRequest({ specifications: { ' Key ': 'one', Key: 'two' } }),
+      () =>
+        parseUpdateProductRequest({
+          specifications: [
+            { title: ' Key ', description: 'one' },
+            { title: 'Key', description: 'two' },
+          ],
+        }),
       'VALIDATION_FAILED',
     );
   });

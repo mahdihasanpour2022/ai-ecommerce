@@ -32,7 +32,7 @@ const product: Product = {
   discountPercent: 0,
   currency: 'IRR',
   totalOnHandQuantity: 0,
-  mainSpecs: { جنس: 'نخ' },
+  mainSpecs: [{ title: 'جنس', description: 'نخ' }],
   specificationCount: 2,
   createdAt: '2026-09-16T08:00:00.000Z',
   updatedAt: '2026-09-16T08:00:00.000Z',
@@ -54,7 +54,10 @@ void test('loads and displays main specifications before secondary specification
             singleResult: {
               ...product,
               imageVersion: 1,
-              specifications: { جنس: 'نخ', 'کشور سازنده': 'ایران' },
+              specifications: [
+                { title: 'جنس', description: 'نخ' },
+                { title: 'کشور سازنده', description: 'ایران' },
+              ],
               variants: [],
               images: [],
             },

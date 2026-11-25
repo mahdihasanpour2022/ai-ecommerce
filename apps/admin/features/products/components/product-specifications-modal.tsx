@@ -15,13 +15,11 @@ interface ProductSpecificationsModalProps {
 export function ProductSpecificationsModal({ product, onCancel }: ProductSpecificationsModalProps) {
   const detail = useGetProductDetail(product?.id ?? null);
   const productDetail = detail.data?.singleResult;
-  const mainKeys = new Set(
-    Object.keys(productDetail?.mainSpecs ?? {}).map((key) => key.toLocaleLowerCase('en-US')),
-  );
-  const secondarySpecifications = Object.fromEntries(
-    Object.entries(productDetail?.specifications ?? {}).filter(
-      ([key]) => !mainKeys.has(key.toLocaleLowerCase('en-US')),
-    ),
+  const mainSpecifications = productDetail?.mainSpecs ?? [];
+  const specifications = productDetail?.specifications ?? [];
+  const mainKeys = new Set(mainSpecifications.map(({ title }) => title.toLocaleLowerCase('en-US')));
+  const secondarySpecifications = specifications.filter(
+    ({ title }) => !mainKeys.has(title.toLocaleLowerCase('en-US')),
   );
 
   return (

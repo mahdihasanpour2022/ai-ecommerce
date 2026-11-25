@@ -19,6 +19,24 @@ const SPECIFICATION_TEXT_PATTERN = /^[\p{Script=Arabic}A-Za-z0-9\u06F0-\u06F9 _-
 
 export type ProductSpecifications = Readonly<Record<string, string>>;
 
+export class ProductSpecificationDto {
+  @ApiProperty({
+    minLength: 1,
+    maxLength: MAX_SPECIFICATION_KEY_LENGTH,
+    pattern: SPECIFICATION_TEXT_PATTERN.source,
+    example: 'جنس',
+  })
+  title!: string;
+
+  @ApiProperty({
+    minLength: 1,
+    maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+    pattern: SPECIFICATION_TEXT_PATTERN.source,
+    example: 'کتان',
+  })
+  description!: string;
+}
+
 export type ProductAvailability = 'IN_STOCK' | 'OUT_OF_STOCK';
 
 export interface ProductListQuery {
@@ -148,34 +166,29 @@ export class CreateProductRequestDto {
   variants!: InitialVariantRequestDto[];
 
   @ApiPropertyOptional({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
-    default: {},
-    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
-    description: 'جایگزین کامل مشخصات در ایجاد؛ کلیدها حداکثر ۲۰ نویسه و تابع الگوی مجاز متن هستند.',
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_PRODUCT_SPECIFICATIONS,
+    default: [],
+    example: [
+      { title: 'جنس پارچه', description: 'نخ پنبه' },
+      { title: 'نوع یقه', description: 'گرد' },
+    ],
+    description:
+      'جایگزین کامل مشخصات در ایجاد؛ کلیدها حداکثر ۲۰ نویسه و تابع الگوی مجاز متن هستند.',
   })
-  specifications?: Record<string, string>;
+  specifications?: ProductSpecificationDto[];
 
   @ApiPropertyOptional({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
-    default: {},
-    example: { 'جنس پارچه': 'نخ پنبه' },
-    description: 'حداکثر سه مورد منتخب از specifications با همان مقدار normalized و الگوی مجاز متن.',
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    default: [],
+    example: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
+    description:
+      'حداکثر سه مورد منتخب از specifications با همان مقدار normalized و الگوی مجاز متن.',
   })
-  mainSpecs?: Record<string, string>;
+  mainSpecs?: ProductSpecificationDto[];
 }
 
 export class UpdateProductRequestDto {
@@ -207,33 +220,26 @@ export class UpdateProductRequestDto {
   status?: ProductStatus;
 
   @ApiPropertyOptional({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_PRODUCT_SPECIFICATIONS,
+    example: [
+      { title: 'جنس پارچه', description: 'نخ پنبه' },
+      { title: 'نوع یقه', description: 'گرد' },
+    ],
     description:
       'در صورت ارسال، جایگزین کامل specifications است؛ اگر کلید اصلی فعلی حذف شود درخواست رد می‌شود مگر mainSpecs نیز ارسال شود.',
   })
-  specifications?: Record<string, string>;
+  specifications?: ProductSpecificationDto[];
 
   @ApiPropertyOptional({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
     description: 'در صورت ارسال، جایگزین کامل mainSpecs و محدود به کلیدهای specifications است.',
   })
-  mainSpecs?: Record<string, string>;
+  mainSpecs?: ProductSpecificationDto[];
 }
 
 export class ProductCategoryDto {
@@ -363,17 +369,12 @@ export class ProductSummaryDto {
   totalOnHandQuantity!: number;
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
   })
-  mainSpecs!: Record<string, string>;
+  mainSpecs!: ProductSpecificationDto[];
 
   @ApiProperty({ minimum: 0, maximum: MAX_PRODUCT_SPECIFICATIONS })
   specificationCount!: number;
@@ -420,30 +421,23 @@ export class ProductDetailDto {
   imageVersion!: number;
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_PRODUCT_SPECIFICATIONS,
+    example: [
+      { title: 'جنس پارچه', description: 'نخ پنبه' },
+      { title: 'نوع یقه', description: 'گرد' },
+    ],
   })
-  specifications!: Record<string, string>;
+  specifications!: ProductSpecificationDto[];
 
   @ApiProperty({
-    type: 'object',
-    additionalProperties: {
-      type: 'string',
-      minLength: 1,
-      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
-      pattern: SPECIFICATION_TEXT_PATTERN.source,
-    },
-    maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
-    example: { 'جنس پارچه': 'نخ پنبه' },
+    type: () => ProductSpecificationDto,
+    isArray: true,
+    maxItems: MAX_MAIN_PRODUCT_SPECIFICATIONS,
+    example: [{ title: 'جنس پارچه', description: 'نخ پنبه' }],
   })
-  mainSpecs!: Record<string, string>;
+  mainSpecs!: ProductSpecificationDto[];
 
   @ApiProperty({ type: () => ProductVariantResponseDto, isArray: true })
   variants!: ProductVariantResponseDto[];
@@ -502,29 +496,34 @@ function normalizeSpecificationText(value: unknown, field: string, maximum: numb
   return result.value;
 }
 
-// object مشخصات را بدون پذیرش مقدار nested و با تشخیص کلیدهای تکراری normalized می‌سازد.
-function parseSpecifications(
+// آرایهٔ آیتم‌های قرارداد را با رد فیلدهای ناشناخته به object داخلی normalized تبدیل می‌کند.
+function parseSpecificationItems(
   value: unknown,
   field: 'mainSpecs' | 'specifications',
   maximumEntries: number,
 ): ProductSpecifications {
-  if (!isRecord(value)) fail([field]);
-  const entries = Object.entries(value);
-  if (entries.length > maximumEntries) fail([field]);
+  if (!Array.isArray(value) || value.length > maximumEntries) fail([field]);
   const comparisonKeys = new Set<string>();
   const normalized: Record<string, string> = {};
-  for (const [rawKey, rawValue] of entries) {
-    const key = normalizeSpecificationText(rawKey, field, MAX_SPECIFICATION_KEY_LENGTH);
+  for (const item of value) {
+    if (!isRecord(item) || Object.keys(item).length !== 2) fail([field]);
+    const key = normalizeSpecificationText(item.title, field, MAX_SPECIFICATION_KEY_LENGTH);
     const comparison = key.toUpperCase().toLowerCase();
     if (comparisonKeys.has(comparison)) fail([field]);
     comparisonKeys.add(comparison);
     normalized[key] = normalizeSpecificationText(
-      rawValue,
+      item.description,
       field,
       MAX_SPECIFICATION_VALUE_LENGTH,
     );
   }
   return normalized;
+}
+
+export function productSpecificationsToDto(
+  specifications: ProductSpecifications,
+): ProductSpecificationDto[] {
+  return Object.entries(specifications).map(([title, description]) => ({ title, description }));
 }
 
 // کلید و مقدار مشخصات اصلی را به نسخه canonical موجود در specifications متصل می‌کند.
@@ -711,13 +710,13 @@ export function parseCreateProductRequest(body: unknown): CreateProductInput {
   });
   const specifications =
     'specifications' in body
-      ? parseSpecifications(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
+      ? parseSpecificationItems(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
       : {};
   const mainSpecs =
     'mainSpecs' in body
       ? resolveMainSpecifications(
           specifications,
-          parseSpecifications(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS),
+          parseSpecificationItems(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS),
         )
       : {};
   return {
@@ -763,11 +762,11 @@ export function parseUpdateProductRequest(body: unknown): UpdateProductInput {
   }
   const specifications =
     'specifications' in body
-      ? parseSpecifications(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
+      ? parseSpecificationItems(body.specifications, 'specifications', MAX_PRODUCT_SPECIFICATIONS)
       : undefined;
   const mainSpecs =
     'mainSpecs' in body
-      ? parseSpecifications(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS)
+      ? parseSpecificationItems(body.mainSpecs, 'mainSpecs', MAX_MAIN_PRODUCT_SPECIFICATIONS)
       : undefined;
   return {
     ...('name' in body ? { name: normalizeSingleLine(body.name, 'name', 200) } : {}),

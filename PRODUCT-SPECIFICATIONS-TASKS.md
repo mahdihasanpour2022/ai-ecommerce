@@ -16,6 +16,7 @@
 
 - `specifications` در ایجاد و ویرایش محصول اختیاری است و حداکثر ۳۰ جفت کلید/مقدار دارد.
 - `mainSpecs` در ایجاد و ویرایش محصول اختیاری است و حداکثر ۳ جفت کلید/مقدار دارد.
+- قرارداد HTTP هر دو فیلد را به‌صورت آرایه‌ای از آیتم‌های `{ title, description }` می‌پذیرد و برمی‌گرداند؛ ذخیره‌سازی داخلی همچنان object است.
 - نبود هر بخش در ورودی معادل مجموعهٔ خالی است.
 - هر دو بخش در پاسخ جزئیات Admin و `GET /api/v1/catalog/products/{productId}` وجود دارند.
 - در فرم‌های ایجاد و ویرایش، هر بخش با خط افقی از بخش‌های قبلی جدا می‌شود.
@@ -91,11 +92,11 @@
 - `Product.specifications` به‌صورت JSONB object ذخیره شود.
 - ترتیب مشخصات اصلی در فیلد جداگانهٔ `mainSpecKeys` نگهداری شود.
 - `mainSpecs` در پاسخ از `specifications` و `mainSpecKeys` ساخته شود تا مقدار تکراری و قابل ناسازگاری ذخیره نشود.
-- رکوردهای موجود با object و آرایهٔ خالی backward-compatible بمانند.
+- رکوردهای موجود بدون migration و همچنان به‌صورت JSONB object خوانده شوند؛ شکل آرایه فقط قرارداد HTTP است.
 
 ### قواعد persistence
 
-- فقط object شامل مقدارهای string پذیرفته شود.
+- در مرز HTTP فقط آرایهٔ آیتم‌های دارای دقیقاً دو فیلد string با نام‌های `title` و `description` پذیرفته شود؛ object خام و آیتم ناشناخته یا nested رد شوند و آرایهٔ خالی حذف کامل را نشان دهد.
 - حداکثر ۳۰ کلید برای `specifications` و حداکثر ۳ کلید برای `mainSpecKeys` اعمال شود.
 - هر کلید اصلی باید در `specifications` وجود داشته باشد.
 - ترتیب `mainSpecKeys` حفظ شود.
@@ -126,7 +127,7 @@
 ### ورودی create/update
 
 - `specifications` و `mainSpecs` اختیاری باشند.
-- اگر ارسال شدند، object دقیق string-to-string باشند و unknown/nested value رد شود.
+- اگر ارسال شدند، آرایهٔ مستقیم `{ title, description }` باشند و unknown/nested value رد شود.
 - create در نبود فیلدها مجموعهٔ خالی ایجاد کند.
 - PATCH در صورت ارسال، replacement کامل همان مجموعه را انجام دهد؛ merge ضمنی انجام نشود.
 - اگر فقط `specifications` تغییر کند و یکی از `mainSpecs`های فعلی حذف شود، درخواست باید به‌صورت صریح رد شود یا هر دو فیلد با هم ارسال شوند؛ رفتار انتخاب‌شده در قرارداد مستند شود و حذف ضمنی انجام نشود.
@@ -135,7 +136,7 @@
 ### خروجی‌ها
 
 - Product detail محافظت‌شده همیشه `specifications` و `mainSpecs` را برگرداند.
-- Public Product detail در `GET /api/v1/catalog/products/{productId}` همیشه این دو object را برگرداند.
+- Public Product detail در `GET /api/v1/catalog/products/{productId}` همیشه این دو آرایهٔ آیتم‌محور را برگرداند.
 - Public Product list تغییر نکند.
 - Product summary مربوط به جدول Admin فقط `mainSpecs` و `specificationCount` را برگرداند؛ بارگذاری تمام ۳۰ مقدار در هر ردیف جدول انجام نشود.
 - پاسخ create/update، DTO کامل و normalized را برگرداند تا Admin داده را حدس نزند.
@@ -149,7 +150,7 @@
 
 ### Swagger / OpenAPI Impact
 
-- DTOهای request/response، optional بودن، سقف ۳۰ و ۳، نمونهٔ object و رفتار replacement مستند شوند.
+- DTOهای request/response، optional بودن، سقف ۳۰ و ۳، نمونهٔ `{ title, description }` و رفتار replacement مستند شوند.
 - OpenAPI تولیدشده باید با رفتار تست‌شده یکسان باشد.
 
 ### Testing Impact
@@ -215,7 +216,7 @@
 - فرم ویرایش از Product detail مقدار اولیه بگیرد، نه summary ناقص جدول.
 - همان component یا primitive تأییدشدهٔ تسک ۵ استفاده شود؛ منطق مشابه کپی نشود.
 - diff فرم فقط در صورت تغییر، `specifications` و `mainSpecs` را برای PATCH ارسال کند.
-- object خالی حذف کامل مشخصات را به‌صورت صریح نمایش دهد.
+- آرایهٔ `[]` حذف کامل مشخصات را به‌صورت صریح نمایش دهد.
 - pending/single-flight، خطاهای inline، focus و Toast موجود حفظ شوند.
 
 ### Testing Impact
@@ -260,7 +261,7 @@ Storefront دو فیلد جدید Public Product detail را مصرف و به‌
 - interface پاسخ Product detail به `specifications` و `mainSpecs` گسترش یابد.
 - مشخصات اصلی نزدیک اطلاعات کلیدی محصول و همهٔ مشخصات در بخش جدا و خوانا نمایش داده شوند.
 - ترتیب `mainSpecs` حفظ شود.
-- اگر هر دو object خالی‌اند، بخش خالی نمایش داده نشود.
+- اگر هر دو آرایه خالی‌اند، بخش خالی نمایش داده نشود.
 - هیچ HTML از مقدارها render نشود و `dangerouslySetInnerHTML` استفاده نشود.
 - RTL، theme، mobile و متن بلند رعایت شوند.
 

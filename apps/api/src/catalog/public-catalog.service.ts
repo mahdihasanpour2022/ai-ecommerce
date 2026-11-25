@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { productSpecificationsToDto } from './product.dto.js';
 import { ProductError } from './product.errors.js';
 import type {
   PublicCategoryDto,
@@ -85,8 +86,10 @@ export class PublicCatalogService {
       ...publicDetailSummary(product),
       isFavorite,
       description: product.description ?? failPersistedProduct(),
-      specifications,
-      mainSpecs: mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
+      specifications: productSpecificationsToDto(specifications),
+      mainSpecs: productSpecificationsToDto(
+        mainSpecificationsFromKeys(specifications, product.mainSpecKeys),
+      ),
       categoryPath,
       variants: product.variants.map((variant, index) =>
         publicVariant(variant, colorOptions, index === 0 ? product.images[0] : undefined),
