@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  MAX_PRODUCT_SPECS,
+  productMainSpecsSchema,
+  productSpecificationsSchema,
+} from './product-main-spec-schema';
 
 const asciiInteger = /^\d+$/u;
 const maximumInventory = 2_147_483_647;
@@ -67,6 +72,8 @@ export const createProductSchema = z.object({
     .array(variantSchema)
     .min(1, 'حداقل یک واریانت محصول تعریف کنید.')
     .max(9, 'حداکثر ۹ واریانت می‌توانید تعریف کنید.'),
+  mainSpecs: productMainSpecsSchema,
+  specifications: productSpecificationsSchema,
   originalPriceRial: z
     .string()
     .trim()
@@ -83,6 +90,27 @@ export const createProductSchema = z.object({
       const discount = Number(value);
       return Number.isInteger(discount) && discount >= 0 && discount <= 100;
     }, 'درصد تخفیف باید عددی بین صفر تا صد باشد.'),
+}).superRefine((values, context) => {
+  if (values.mainSpecs.length + values.specifications.length > MAX_PRODUCT_SPECS) {
+    context.addIssue({
+      code: 'custom',
+      path: ['specifications'],
+      message: `مجموع ویژگی‌های اصلی و فرعی نمی‌تواند بیشتر از ${MAX_PRODUCT_SPECS} مورد باشد.`,
+    });
+  }
+
+  const mainKeys = new Set(
+    values.mainSpecs.map(({ key }) => key.toLocaleLowerCase('en-US')),
+  );
+  values.specifications.forEach(({ key }, index) => {
+    if (mainKeys.has(key.toLocaleLowerCase('en-US'))) {
+      context.addIssue({
+        code: 'custom',
+        path: ['specifications', index, 'key'],
+        message: 'این عنوان ویژگی قبلاً در ویژگی‌های اصلی اضافه شده است.',
+      });
+    }
+  });
 });
 
 export type CreateProductFormValues = z.infer<typeof createProductSchema>;

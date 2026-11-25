@@ -11,8 +11,8 @@ import { UiImageInput } from '../../../app/components/shared/ui-image-input';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
 import { normalizeHttpFailure } from '../../../app/http/http-client';
-import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
-import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
+import { useGetProductColors } from '../../../hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '../../../hooks/shared/useGetProductSizes';
 import { useAddProductVariant } from '../hooks/useAddProductVariant';
 import { useEditProductVariant } from '../hooks/useEditProductVariant';
 import { useUploadProductImage } from '../hooks/useUploadProductImage';
@@ -204,9 +204,7 @@ export function AddProductVariantModal({
               max={2147483647}
               disabled={submitting}
               aria-invalid={errors.onHandQuantity ? 'true' : 'false'}
-              aria-describedby={
-                errors.onHandQuantity ? 'new-variant-quantity-error' : undefined
-              }
+              aria-describedby={errors.onHandQuantity ? 'new-variant-quantity-error' : undefined}
               {...register('onHandQuantity')}
             />
             {errors.onHandQuantity ? (

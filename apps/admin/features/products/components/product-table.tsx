@@ -1,11 +1,12 @@
 'use client';
 
-import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
-import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
 import type { TableColumnsType } from 'antd';
 import { App, Table } from 'antd';
 import { useMemo, useState } from 'react';
+import { UiButton } from '../../../app/components/shared/ui-button';
 import { normalizeHttpFailure } from '../../../app/http/http-client';
+import { useGetProductColors } from '../../../hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '../../../hooks/shared/useGetProductSizes';
 import { formatPersianDateTime } from '../../../utils/date-time';
 import { formatPersianInteger } from '../../../utils/number';
 import { useChangeProductStatus } from '../hooks/useChangeProductStatus';
@@ -21,6 +22,7 @@ import { ChangeProductStatusModal } from './change-product-status-modal';
 import { DeleteProductModal } from './delete-product-modal';
 import { EditProductModal } from './edit-product-modal';
 import { ProductActionMenu } from './product-action-menu';
+import { ProductSpecificationsModal } from './product-specifications-modal';
 import { ProductVariantsExpandedRow } from './product-variants-expanded-row';
 import { ProductThumbnail } from './productThumbnail';
 
@@ -116,6 +118,7 @@ export function ProductTable({
   const sizeOptions = useGetProductSizes();
   const colorOptions = useGetProductColors();
   const [editing, setEditing] = useState<Product | null>(null);
+  const [viewingSpecifications, setViewingSpecifications] = useState<Product | null>(null);
   const [changingStatus, setChangingStatus] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
 
@@ -245,6 +248,36 @@ export function ProductTable({
         ),
     },
     {
+      title: 'ویژگی‌ها',
+      key: 'secondarySpecifications',
+      align: 'center',
+      render: (_value, product) => {
+        const count = Math.max(
+          0,
+          product.specificationCount - Object.keys(product.mainSpecs).length,
+        );
+        return (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <span className="text-foreground w-full text-center!">
+              {count === 0 && 'بدون ویژگی فرعی'}
+            </span>
+            {count > 0 ? (
+              <UiButton
+                type="button"
+                size="small"
+                variant="ghost"
+                className="min-h-0 p-0"
+                aria-label={`مشاهده ویژگی‌های فرعی ${product.name}`}
+                onClick={() => setViewingSpecifications(product)}
+              >
+                برای مشاهده <span className="text-red-500">کلیک</span> کنید.
+              </UiButton>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
       title: 'سایز',
       dataIndex: 'sizes',
       key: 'sizes',
@@ -304,7 +337,7 @@ export function ProductTable({
       ),
     },
     {
-      title: 'درصد تخفیف',
+      title: 'تخفیف',
       dataIndex: 'discountPercent',
       key: 'discountPercent',
       align: 'center',
@@ -387,6 +420,10 @@ export function ProductTable({
           onSubmit={submitEdit}
         />
       ) : null}
+      <ProductSpecificationsModal
+        product={viewingSpecifications}
+        onCancel={() => setViewingSpecifications(null)}
+      />
       {changingStatus ? (
         <ChangeProductStatusModal
           product={changingStatus}

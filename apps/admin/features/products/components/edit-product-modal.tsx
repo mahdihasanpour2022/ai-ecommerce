@@ -2,23 +2,28 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { useGetProductTags } from '@/hooks/shared/useGetProductTags';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
+import { useGetProductTags } from '../../../hooks/shared/useGetProductTags';
 import { formatPriceInput, normalizePriceInput } from '../../../utils/price-input';
 import { CATEGORY_OPTIONS_PAGE_SIZE } from '../../categories/constants/pagination';
 import { useGetCategories } from '../../categories/hooks/useGetCategories';
 import { categoryOptions } from '../../categories/utils/category-options';
+import { useGetProductDetail } from '../hooks/useGetProductDetail';
 import type {
   EditProductVariables,
   EditProductWorkflowVariables,
   Product,
+  ProductDetail,
 } from '../interfaces/product-contract';
 import type { EditProductFormValues } from '../schemas/edit-product-schema';
 import { editProductSchema } from '../schemas/edit-product-schema';
+import { buildChangedMainSpecificationsPayload } from '../utils/product-main-spec-payload';
+import { ProductMainSpecSection } from './product-main-spec-section';
+import { ProductSecondarySpecSection } from './product-secondary-spec-section';
 
 interface EditProductModalProps {
   readonly product: Product | null;
@@ -27,7 +32,7 @@ interface EditProductModalProps {
   readonly onSubmit: (variables: EditProductWorkflowVariables) => Promise<void>;
 }
 
-// این فرم فقط مشخصات اصلی محصول را ویرایش می‌کند و مدیریت واریانت‌ها در جدول انجام می‌شود.
+// مدیریت واریانت‌ها در جدول انجام می‌شود و این فرم فقط داده‌های پایه و ویژگی‌ها را ویرایش می‌کند.
 export function EditProductModal({ product, pending, onCancel, onSubmit }: EditProductModalProps) {
   const categories = useGetCategories({
     page: 1,
@@ -35,6 +40,8 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     enabled: product !== null,
   });
   const tags = useGetProductTags(product !== null);
+  const detail = useGetProductDetail(product?.id ?? null);
+  const editableProduct = detail.data?.singleResult ?? null;
   const {
     control,
     register,
@@ -50,18 +57,30 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
       categoryId: '',
       originalPriceRial: '',
       discountPercent: '0',
+      mainSpecs: [],
+      specifications: [],
     },
     mode: 'onChange',
     shouldFocusError: true,
   });
+  const {
+    fields: mainSpecFields,
+    append: appendMainSpec,
+    remove: removeMainSpec,
+  } = useFieldArray({ control, name: 'mainSpecs' });
+  const {
+    fields: specificationFields,
+    append: appendSpecification,
+    remove: removeSpecification,
+  } = useFieldArray({ control, name: 'specifications' });
 
   useEffect(() => {
-    if (product) reset(formValues(product));
-  }, [product, reset]);
+    if (editableProduct) reset(formValues(editableProduct));
+  }, [editableProduct, reset]);
 
   const submit = handleSubmit(async (values) => {
-    if (!product) return;
-    const changes = productChanges(product, values);
+    if (!editableProduct) return;
+    const changes = productChanges(editableProduct, values);
     await onSubmit(changes ? { product: changes } : {});
   });
   const categoryItems = categories.data ? categoryOptions(categories.data.result) : [];
@@ -70,7 +89,7 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
     value: tag['english-tag-name'],
     label: tag['english-tag-name'],
   }));
-  const submitting = pending || isSubmitting;
+  const submitting = pending || isSubmitting || detail.isFetching;
 
   return (
     <UiModal.Root
@@ -87,111 +106,83 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
       onCancel={onCancel}
     >
       <UiForm.Root onSubmit={(event) => void submit(event)}>
-        <div className="grid gap-5 md:grid-cols-2">
+        {detail.isError ? (
+          <UiForm.Error>
+            دریافت جزئیات محصول ناموفق بود. فرم را ببندید و دوباره تلاش کنید.
+          </UiForm.Error>
+        ) : null}
+        <fieldset className="border-border! grid gap-5 rounded-xl border! p-4!">
+          <div className="grid gap-5 md:grid-cols-2">
+            <UiForm.Field>
+              <UiForm.Label htmlFor="edit-product-name">نام محصول</UiForm.Label>
+              <UiForm.TextInput
+                id="edit-product-name"
+                autoComplete="off"
+                maxLength={200}
+                disabled={submitting}
+                aria-invalid={errors.name ? 'true' : 'false'}
+                aria-describedby={errors.name ? 'edit-product-name-error' : undefined}
+                {...register('name')}
+              />
+              {errors.name ? (
+                <UiForm.Error id="edit-product-name-error">{errors.name.message}</UiForm.Error>
+              ) : null}
+            </UiForm.Field>
+
+            <UiForm.Field>
+              <UiForm.Label htmlFor="edit-product-category">دسته‌بندی</UiForm.Label>
+              <Controller
+                name="categoryId"
+                control={control}
+                render={({ field }) => (
+                  <UiSelect.Root
+                    id="edit-product-category"
+                    ref={field.ref}
+                    value={field.value || null}
+                    options={categoryItems.map((option) => ({
+                      value: option.id,
+                      label: option.label,
+                      level: option.level,
+                    }))}
+                    placeholder="انتخاب دسته‌بندی"
+                    loading={categories.isFetching}
+                    disabled={submitting || categories.isFetching || categories.isError}
+                    status={errors.categoryId ? 'error' : ''}
+                    aria-invalid={errors.categoryId ? 'true' : 'false'}
+                    aria-describedby={errors.categoryId ? 'edit-product-category-error' : undefined}
+                    onBlur={field.onBlur}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
+              {errors.categoryId ? (
+                <UiForm.Error id="edit-product-category-error">
+                  {errors.categoryId.message}
+                </UiForm.Error>
+              ) : null}
+              {categories.isError ? (
+                <UiForm.Error>دریافت دسته‌بندی‌ها ناموفق بود.</UiForm.Error>
+              ) : null}
+            </UiForm.Field>
+          </div>
           <UiForm.Field>
-            <UiForm.Label htmlFor="edit-product-name">نام محصول</UiForm.Label>
-            <UiForm.TextInput
-              id="edit-product-name"
-              autoComplete="off"
+            <UiForm.Label htmlFor="edit-product-description">توضیحات (اختیاری)</UiForm.Label>
+            <UiForm.TextArea
+              id="edit-product-description"
               maxLength={200}
               disabled={submitting}
-              aria-invalid={errors.name ? 'true' : 'false'}
-              aria-describedby={errors.name ? 'edit-product-name-error' : undefined}
-              {...register('name')}
+              aria-invalid={errors.description ? 'true' : 'false'}
+              aria-describedby={errors.description ? 'edit-product-description-error' : undefined}
+              {...register('description')}
             />
-            {errors.name ? (
-              <UiForm.Error id="edit-product-name-error">{errors.name.message}</UiForm.Error>
-            ) : null}
-          </UiForm.Field>
-
-          <UiForm.Field>
-            <UiForm.Label htmlFor="edit-product-category">دسته‌بندی</UiForm.Label>
-            <Controller
-              name="categoryId"
-              control={control}
-              render={({ field }) => (
-                <UiSelect.Root
-                  id="edit-product-category"
-                  ref={field.ref}
-                  value={field.value || null}
-                  options={categoryItems.map((option) => ({
-                    value: option.id,
-                    label: option.label,
-                    level: option.level,
-                  }))}
-                  placeholder="انتخاب دسته‌بندی"
-                  loading={categories.isFetching}
-                  disabled={submitting || categories.isFetching || categories.isError}
-                  status={errors.categoryId ? 'error' : ''}
-                  aria-invalid={errors.categoryId ? 'true' : 'false'}
-                  aria-describedby={errors.categoryId ? 'edit-product-category-error' : undefined}
-                  onBlur={field.onBlur}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-            {errors.categoryId ? (
-              <UiForm.Error id="edit-product-category-error">
-                {errors.categoryId.message}
+            {errors.description ? (
+              <UiForm.Error id="edit-product-description-error">
+                {errors.description.message}
               </UiForm.Error>
             ) : null}
-            {categories.isError ? (
-              <UiForm.Error>دریافت دسته‌بندی‌ها ناموفق بود.</UiForm.Error>
-            ) : null}
           </UiForm.Field>
-        </div>
 
-        <UiForm.Field>
-          <UiForm.Label htmlFor="edit-product-description">توضیحات (اختیاری)</UiForm.Label>
-          <UiForm.TextArea
-            id="edit-product-description"
-            maxLength={200}
-            disabled={submitting}
-            aria-invalid={errors.description ? 'true' : 'false'}
-            aria-describedby={errors.description ? 'edit-product-description-error' : undefined}
-            {...register('description')}
-          />
-          {errors.description ? (
-            <UiForm.Error id="edit-product-description-error">
-              {errors.description.message}
-            </UiForm.Error>
-          ) : null}
-        </UiForm.Field>
-
-        <UiForm.Field>
-          <UiForm.Label htmlFor="edit-product-tag">تگ (اختیاری)</UiForm.Label>
-          <Controller
-            name="tag"
-            control={control}
-            render={({ field }) => (
-              <UiSelect.Root
-                id="edit-product-tag"
-                ref={field.ref}
-                value={field.value || null}
-                options={tagItems}
-                placeholder="انتخاب تگ"
-                allowClear
-                showSearch
-                optionFilterProp="label"
-                loading={tags.isFetching}
-                disabled={submitting || tags.isFetching || tags.isError}
-                status={errors.tag ? 'error' : ''}
-                aria-invalid={errors.tag ? 'true' : 'false'}
-                aria-describedby={errors.tag ? 'edit-product-tag-error' : undefined}
-                onBlur={field.onBlur}
-                onChange={(value) => field.onChange(value ?? '')}
-              />
-            )}
-          />
-          {errors.tag ? (
-            <UiForm.Error id="edit-product-tag-error">{errors.tag.message}</UiForm.Error>
-          ) : null}
-          {tags.isError ? <UiForm.Error>دریافت تگ‌ها ناموفق بود.</UiForm.Error> : null}
-        </UiForm.Field>
-
-        <fieldset className="border-border grid gap-5 rounded-xl border p-4">
-          <legend className="text-foreground px-2 text-sm font-bold">قیمت محصول</legend>
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-5 md:grid-cols-3">
             <UiForm.Field>
               <UiForm.Label htmlFor="edit-product-price">قیمت اصلی (ریال)</UiForm.Label>
               <Controller
@@ -251,14 +242,66 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
                 </UiForm.Error>
               ) : null}
             </UiForm.Field>
+
+            <UiForm.Field>
+              <UiForm.Label htmlFor="edit-product-tag">تگ (اختیاری)</UiForm.Label>
+              <Controller
+                name="tag"
+                control={control}
+                render={({ field }) => (
+                  <UiSelect.Root
+                    id="edit-product-tag"
+                    ref={field.ref}
+                    value={field.value || null}
+                    options={tagItems}
+                    placeholder="انتخاب تگ"
+                    allowClear
+                    showSearch
+                    optionFilterProp="label"
+                    loading={tags.isFetching}
+                    disabled={submitting || tags.isFetching || tags.isError}
+                    status={errors.tag ? 'error' : ''}
+                    aria-invalid={errors.tag ? 'true' : 'false'}
+                    aria-describedby={errors.tag ? 'edit-product-tag-error' : undefined}
+                    onBlur={field.onBlur}
+                    onChange={(value) => field.onChange(value ?? '')}
+                  />
+                )}
+              />
+              {errors.tag ? (
+                <UiForm.Error id="edit-product-tag-error">{errors.tag.message}</UiForm.Error>
+              ) : null}
+              {tags.isError ? <UiForm.Error>دریافت تگ‌ها ناموفق بود.</UiForm.Error> : null}
+            </UiForm.Field>
           </div>
         </fieldset>
+
+        <ProductMainSpecSection
+          fields={mainSpecFields}
+          disabled={submitting || detail.isError}
+          reservedKeys={specificationFields.map((field) => field.key)}
+          totalSpecificationCount={mainSpecFields.length + specificationFields.length}
+          onAdd={appendMainSpec}
+          onRemove={removeMainSpec}
+        />
+
+        <ProductSecondarySpecSection
+          fields={specificationFields}
+          mainSpecKeys={mainSpecFields.map((field) => field.key)}
+          disabled={submitting || detail.isError}
+          onAdd={appendSpecification}
+          onRemove={removeSpecification}
+        />
 
         <UiForm.Actions>
           <UiButton variant="secondary" disabled={submitting} onClick={onCancel}>
             انصراف
           </UiButton>
-          <UiButton type="submit" disabled={submitting} loading={submitting}>
+          <UiButton
+            type="submit"
+            disabled={submitting || detail.isError || editableProduct === null}
+            loading={submitting}
+          >
             {submitting ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
           </UiButton>
         </UiForm.Actions>
@@ -267,7 +310,10 @@ export function EditProductModal({ product, pending, onCancel, onSubmit }: EditP
   );
 }
 
-function formValues(product: Product): EditProductFormValues {
+function formValues(product: ProductDetail): EditProductFormValues {
+  const mainKeys = new Set(
+    Object.keys(product.mainSpecs).map((key) => key.toLocaleLowerCase('en-US')),
+  );
   return {
     name: product.name,
     description: product.description ?? '',
@@ -275,17 +321,27 @@ function formValues(product: Product): EditProductFormValues {
     categoryId: product.category.id,
     originalPriceRial: String(product.originalPriceRial),
     discountPercent: String(product.discountPercent),
+    mainSpecs: Object.entries(product.mainSpecs).map(([key, value]) => ({ key, value })),
+    specifications: Object.entries(product.specifications)
+      .filter(([key]) => !mainKeys.has(key.toLocaleLowerCase('en-US')))
+      .map(([key, value]) => ({ key, value })),
   };
 }
 
 function productChanges(
-  product: Product,
+  product: ProductDetail,
   values: EditProductFormValues,
 ): EditProductVariables | undefined {
   const description = values.description || null;
   const tag = values.tag || null;
   const originalPriceRial = Number(values.originalPriceRial);
   const discountPercent = Number(values.discountPercent);
+  const specificationChanges = buildChangedMainSpecificationsPayload(
+    product.mainSpecs,
+    values.mainSpecs,
+    product.specifications,
+    values.specifications,
+  );
   const changes = {
     ...(values.name === product.name ? {} : { name: values.name }),
     ...(description === product.description ? {} : { description }),
@@ -293,6 +349,7 @@ function productChanges(
     ...(originalPriceRial === product.originalPriceRial ? {} : { originalPriceRial }),
     ...(discountPercent === product.discountPercent ? {} : { discountPercent }),
     ...(values.categoryId === product.category.id ? {} : { categoryId: values.categoryId }),
+    ...(specificationChanges ?? {}),
   };
   return Object.keys(changes).length === 0 ? undefined : { productId: product.id, ...changes };
 }

@@ -7,7 +7,7 @@ import { UiButton } from '../../../app/components/shared/ui-button';
 import { UiForm } from '../../../app/components/shared/ui-form';
 import { UiModal } from '../../../app/components/shared/ui-modal';
 import { UiSelect } from '../../../app/components/shared/ui-select';
-import { useGetProductStatuses } from '@/hooks/shared/useGetProductStatuses';
+import { useGetProductStatuses } from '../../../hooks/shared/useGetProductStatuses';
 import type { ChangeProductStatusVariables, Product } from '../interfaces/product-contract';
 import type { ChangeProductStatusFormValues } from '../schemas/change-product-status-schema';
 import { changeProductStatusSchema } from '../schemas/change-product-status-schema';
@@ -68,7 +68,7 @@ export function ChangeProductStatusModal({
       onCancel={onCancel}
     >
       <UiForm.Root onSubmit={(event) => void submit(event)}>
-        <p className="m-0 leading-8 text-foreground">
+        <p className="text-foreground m-0 leading-8">
           وضعیت فعلی «{product?.name}»:{' '}
           <strong>{currentStatus?.status_persian_name ?? product?.status}</strong>
         </p>

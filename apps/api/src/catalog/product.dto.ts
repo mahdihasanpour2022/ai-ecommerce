@@ -13,8 +13,9 @@ const MAX_DATABASE_INTEGER = 2_147_483_647;
 const MAX_PRODUCT_FILTER_VALUES = 50;
 const MAX_PRODUCT_SPECIFICATIONS = 30;
 const MAX_MAIN_PRODUCT_SPECIFICATIONS = 3;
-const MAX_SPECIFICATION_KEY_LENGTH = 60;
-const MAX_SPECIFICATION_VALUE_LENGTH = 200;
+const MAX_SPECIFICATION_KEY_LENGTH = 20;
+const MAX_SPECIFICATION_VALUE_LENGTH = 100;
+const SPECIFICATION_TEXT_PATTERN = /^[\p{Script=Arabic}A-Za-z0-9\u06F0-\u06F9 _-]+$/u;
 
 export type ProductSpecifications = Readonly<Record<string, string>>;
 
@@ -152,11 +153,12 @@ export class CreateProductRequestDto {
       type: 'string',
       minLength: 1,
       maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
     },
     maxProperties: MAX_PRODUCT_SPECIFICATIONS,
     default: {},
     example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
-    description: 'جایگزین کامل مشخصات در ایجاد؛ کلیدها حداکثر ۶۰ نویسه هستند.',
+    description: 'جایگزین کامل مشخصات در ایجاد؛ کلیدها حداکثر ۲۰ نویسه و تابع الگوی مجاز متن هستند.',
   })
   specifications?: Record<string, string>;
 
@@ -166,11 +168,12 @@ export class CreateProductRequestDto {
       type: 'string',
       minLength: 1,
       maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
     },
     maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
     default: {},
     example: { 'جنس پارچه': 'نخ پنبه' },
-    description: 'حداکثر سه مورد منتخب از specifications با همان مقدار normalized.',
+    description: 'حداکثر سه مورد منتخب از specifications با همان مقدار normalized و الگوی مجاز متن.',
   })
   mainSpecs?: Record<string, string>;
 }
@@ -209,6 +212,7 @@ export class UpdateProductRequestDto {
       type: 'string',
       minLength: 1,
       maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
     },
     maxProperties: MAX_PRODUCT_SPECIFICATIONS,
     example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
@@ -223,6 +227,7 @@ export class UpdateProductRequestDto {
       type: 'string',
       minLength: 1,
       maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
     },
     maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
     example: { 'جنس پارچه': 'نخ پنبه' },
@@ -359,7 +364,12 @@ export class ProductSummaryDto {
 
   @ApiProperty({
     type: 'object',
-    additionalProperties: { type: 'string' },
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
+    },
     maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
     example: { 'جنس پارچه': 'نخ پنبه' },
   })
@@ -411,7 +421,12 @@ export class ProductDetailDto {
 
   @ApiProperty({
     type: 'object',
-    additionalProperties: { type: 'string' },
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
+    },
     maxProperties: MAX_PRODUCT_SPECIFICATIONS,
     example: { 'جنس پارچه': 'نخ پنبه', 'نوع یقه': 'گرد' },
   })
@@ -419,7 +434,12 @@ export class ProductDetailDto {
 
   @ApiProperty({
     type: 'object',
-    additionalProperties: { type: 'string' },
+    additionalProperties: {
+      type: 'string',
+      minLength: 1,
+      maxLength: MAX_SPECIFICATION_VALUE_LENGTH,
+      pattern: SPECIFICATION_TEXT_PATTERN.source,
+    },
     maxProperties: MAX_MAIN_PRODUCT_SPECIFICATIONS,
     example: { 'جنس پارچه': 'نخ پنبه' },
   })
@@ -474,7 +494,8 @@ function normalizeSpecificationText(value: unknown, field: string, maximum: numb
   if (
     !result.valid ||
     Array.from(result.value).length < 1 ||
-    Array.from(result.value).length > maximum
+    Array.from(result.value).length > maximum ||
+    !SPECIFICATION_TEXT_PATTERN.test(result.value)
   ) {
     fail([field]);
   }

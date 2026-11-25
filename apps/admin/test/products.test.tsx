@@ -37,6 +37,8 @@ const product: Product = {
   discountPercent: 10,
   currency: 'IRR',
   totalOnHandQuantity: 12,
+  mainSpecs: { 'جنس پارچه': 'نخ پنبه', مدل: 'تابستانی' },
+  specificationCount: 3,
   createdAt: '2026-09-16T08:00:00.000Z',
   updatedAt: '2026-09-16T08:00:00.000Z',
 };
@@ -104,6 +106,8 @@ void test('loads and displays the protected Product summaries', async () => {
             discountPercent: 10,
             currency: 'IRR',
             totalOnHandQuantity: 12,
+            mainSpecs: { 'جنس پارچه': 'نخ پنبه', مدل: 'تابستانی' },
+            specificationCount: 3,
             createdAt: '2026-09-16T08:00:00.000Z',
             updatedAt: '2026-09-16T08:00:00.000Z',
           },
@@ -129,7 +133,11 @@ void test('loads and displays the protected Product summaries', async () => {
         <QueryClientProvider client={queryClient}>
           <Products
             page={2}
-            filters={{ name: 'پیراهن', tags: ['featured_product', 'seasonal_sale'], availability: 'IN_STOCK' }}
+            filters={{
+              name: 'پیراهن',
+              tags: ['featured_product', 'seasonal_sale'],
+              availability: 'IN_STOCK',
+            }}
           />
         </QueryClientProvider>
       </App>,
@@ -141,6 +149,8 @@ void test('loads and displays the protected Product summaries', async () => {
       assert.ok(view.getByRole('columnheader', { name: 'تصویر' }));
       assert.ok(view.getByRole('rowheader', { name: /پیراهن لینن/ }));
       assert.ok(view.getByRole('columnheader', { name: 'توضیحات' }));
+      assert.ok(view.getByRole('columnheader', { name: 'ویژگی‌های اصلی' }));
+      assert.ok(view.getByRole('columnheader', { name: 'ویژگی‌های فرعی' }));
       assert.ok(view.getByRole('columnheader', { name: 'سایز' }));
       assert.ok(view.getByRole('columnheader', { name: 'رنگ' }));
       assert.ok(view.getByRole('columnheader', { name: 'قیمت اصلی' }));
@@ -149,6 +159,8 @@ void test('loads and displays the protected Product summaries', async () => {
       assert.ok(view.getByRole('cell', { name: '۱۶' }));
       assert.ok(view.getByText('پیراهن'));
       assert.ok(view.getByText('پیراهن سبک مناسب تابستان'));
+      assert.ok(view.getByText('۱ مورد'));
+      assert.ok(view.getByRole('button', { name: 'مشاهده ویژگی‌های فرعی پیراهن لینن' }));
       assert.ok(view.getByText('M'));
       assert.ok(view.getByText('L'));
       assert.ok(view.getByText('مشکی'));

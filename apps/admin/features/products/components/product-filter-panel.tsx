@@ -1,8 +1,8 @@
 'use client';
 
-import { useGetProductColors } from '@/hooks/shared/useGetProductColors';
-import { useGetProductSizes } from '@/hooks/shared/useGetProductSizes';
-import { useGetProductStatuses } from '@/hooks/shared/useGetProductStatuses';
+import { useGetProductColors } from '../../../hooks/shared/useGetProductColors';
+import { useGetProductSizes } from '../../../hooks/shared/useGetProductSizes';
+import { useGetProductStatuses } from '../../../hooks/shared/useGetProductStatuses';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Select } from 'antd';
 import { useEffect, useId, useState } from 'react';

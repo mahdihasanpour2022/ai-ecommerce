@@ -15,6 +15,7 @@ import type {
   ProductColorsResponse,
 } from '../hooks/shared/useGetProductColors';
 import type { ProductSizesResponse } from '../hooks/shared/useGetProductSizes';
+import type { ProductTagsResponse } from '../hooks/shared/useGetProductTags';
 import { createProductSchema } from '../features/products/schemas/create-product-schema';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { formatPriceInput, normalizePriceInput } from '../utils/price-input';
@@ -95,18 +96,35 @@ const colorsResponse: ProductColorsResponse = {
   details: null,
 };
 
+const tagsResponse: ProductTagsResponse = {
+  statusCode: 200,
+  hasError: false,
+  message: 'تگ‌های محصول دریافت شدند.',
+  code: 'PRODUCT_TAGS_FETCHED',
+  count: 0,
+  result: [],
+  singleResult: null,
+  details: null,
+};
+
 void test('validates Product fields against the Backend boundaries', () => {
   const valid = {
-    image: validProductImage(),
     name: ' پیراهن لینن ',
     description: '',
     tag: '',
     categoryId,
-    size: 'medium',
-    color: 'blue',
+    variants: [
+      {
+        image: validProductImage(),
+        size: 'medium',
+        color: 'blue',
+        onHandQuantity: '12',
+      },
+    ],
+    mainSpecs: [],
+    specifications: [],
     originalPriceRial: '1200000',
     discountPercent: '0',
-    onHandQuantity: '12',
   };
   assert.deepEqual(createProductSchema.parse(valid), {
     ...valid,
@@ -118,10 +136,34 @@ void test('validates Product fields against the Backend boundaries', () => {
   );
   assert.equal(createProductSchema.safeParse({ ...valid, discountPercent: '101' }).success, false);
   assert.equal(createProductSchema.safeParse({ ...valid, categoryId: 'invalid' }).success, false);
-  assert.equal(createProductSchema.safeParse({ ...valid, size: '' }).success, false);
-  assert.equal(createProductSchema.safeParse({ ...valid, color: '' }).success, false);
-  assert.equal(createProductSchema.safeParse({ ...valid, onHandQuantity: '' }).success, false);
-  assert.equal(createProductSchema.safeParse({ ...valid, onHandQuantity: '0' }).success, false);
+  assert.equal(
+    createProductSchema.safeParse({
+      ...valid,
+      variants: [{ ...valid.variants[0], size: '' }],
+    }).success,
+    false,
+  );
+  assert.equal(
+    createProductSchema.safeParse({
+      ...valid,
+      variants: [{ ...valid.variants[0], color: '' }],
+    }).success,
+    false,
+  );
+  assert.equal(
+    createProductSchema.safeParse({
+      ...valid,
+      variants: [{ ...valid.variants[0], onHandQuantity: '' }],
+    }).success,
+    false,
+  );
+  assert.equal(
+    createProductSchema.safeParse({
+      ...valid,
+      variants: [{ ...valid.variants[0], onHandQuantity: '0' }],
+    }).success,
+    false,
+  );
   assert.equal(createProductSchema.safeParse({ ...valid, tag: 'my|_amazing' }).success, false);
   assert.equal(
     createProductSchema.parse({ ...valid, tag: ' Featured_Product ' }).tag,
@@ -140,20 +182,18 @@ void test('validates Product fields against the Backend boundaries', () => {
 async function completeRequiredFields(dialog: HTMLElement) {
   const user = userEvent.setup({ document: globalThis.document });
   await user.type(within(dialog).getByRole('textbox', { name: 'نام محصول' }), 'پیراهن لینن');
-  await user.click(within(dialog).getByRole('combobox', { name: 'دسته‌بندی' }));
-  await user.click(await within(document.body).findByText('پیراهن'));
+  fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'دسته‌بندی' }));
+  fireEvent.click(await within(document.body).findByText('پیراهن'));
   const price = within(dialog).getByRole('textbox', { name: 'قیمت اصلی (ریال)' });
   await user.type(price, '1200000');
   assert.equal(price.getAttribute('value'), '1,200,000');
-  await user.click(within(dialog).getByRole('combobox', { name: 'سایز' }));
+  fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'سایز' }));
   const mediumOptions = await within(document.body).findAllByText('medium');
-  await user.click(mediumOptions.at(-1)!);
-  await user.click(within(dialog).getByRole('combobox', { name: 'رنگ' }));
-  const blueOptions = await within(document.body).findAllByText('blue');
-  await user.click(blueOptions.at(-1)!);
-  await user.clear(within(dialog).getByRole('spinbutton', { name: 'موجودی اولیه' }));
+  fireEvent.click(mediumOptions.at(-1)!);
+  fireEvent.mouseDown(within(dialog).getByRole('combobox', { name: 'رنگ' }));
+  const blueOptions = await within(document.body).findAllByText('آبی');
+  fireEvent.click(blueOptions.at(-1)!);
   await user.type(within(dialog).getByRole('spinbutton', { name: 'موجودی اولیه' }), '12');
-  return user;
 }
 
 void test('loads form options only after opening and shows loading on each related input', async () => {
@@ -168,7 +208,9 @@ void test('loads form options only after opening and shows loading on each relat
         ? categoriesResponse
         : config.url === '/admin/catalog/product-options/sizes'
           ? sizesResponse
-          : colorsResponse;
+          : config.url === '/admin/catalog/product-options/colors'
+            ? colorsResponse
+            : tagsResponse;
     return {
       data,
       status: 200,
@@ -192,17 +234,18 @@ void test('loads form options only after opening and shows loading on each relat
     const user = userEvent.setup({ document: globalThis.document });
     await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
-    await waitFor(() => assert.equal(calls.length, 3));
+    await waitFor(() => assert.equal(calls.length, 4));
     assert.deepEqual(
       new Set(calls),
       new Set([
         '/admin/catalog/categories',
         '/admin/catalog/product-options/sizes',
         '/admin/catalog/product-options/colors',
+        '/admin/catalog/product-options/tags',
       ]),
     );
 
-    for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+    for (const name of ['دسته‌بندی', 'تگ (اختیاری)', 'سایز', 'رنگ']) {
       const input = within(dialog).getByRole('combobox', { name });
       assert.equal(input.hasAttribute('disabled'), true);
       assert.equal(input.closest('.ant-select')?.classList.contains('ant-select-loading'), true);
@@ -210,7 +253,7 @@ void test('loads form options only after opening and shows loading on each relat
 
     for (const release of releases) release();
     await waitFor(() => {
-      for (const name of ['دسته‌بندی', 'سایز', 'رنگ']) {
+      for (const name of ['دسته‌بندی', 'تگ (اختیاری)', 'سایز', 'رنگ']) {
         const input = within(dialog).getByRole('combobox', { name });
         assert.equal(input.hasAttribute('disabled'), false);
         assert.equal(input.closest('.ant-select')?.classList.contains('ant-select-loading'), false);
@@ -260,7 +303,17 @@ void test('creates a Product, closes the modal, and reports the new first page',
         code: 'PRODUCT_CREATED',
         count: 1,
         result: null,
-        singleResult: { id: productId, imageVersion: 1 },
+        singleResult: {
+          id: productId,
+          imageVersion: 1,
+          variants: [
+            {
+              id: '30000000-0000-4000-8000-000000000001',
+              size: 'medium',
+              color: 'blue',
+            },
+          ],
+        },
         details: null,
       },
       status: 201,
@@ -277,6 +330,7 @@ void test('creates a Product, closes the modal, and reports the new first page',
   );
   queryClient.setQueryData(productOptionKeys.sizes, sizesResponse);
   queryClient.setQueryData(productOptionKeys.colors, colorsResponse);
+  queryClient.setQueryData(productOptionKeys.tags, tagsResponse);
   let created = 0;
 
   try {
@@ -294,16 +348,12 @@ void test('creates a Product, closes the modal, and reports the new first page',
     const user = userEvent.setup({ document: globalThis.document });
     await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
-    fireEvent.change(within(dialog).getByLabelText('تصویر محصول'), {
+    fireEvent.change(within(dialog).getByLabelText('تصویر واریانت'), {
       target: { files: [validProductImage()] },
     });
     const submitButton = within(dialog).getByRole('button', { name: 'ایجاد محصول' });
-    await user.click(submitButton);
-    assert.ok((await within(dialog).findAllByRole('alert')).length >= 4);
-    assert.equal(calls.length, 0);
-
-    const formUser = await completeRequiredFields(dialog);
-    await formUser.click(submitButton);
+    await completeRequiredFields(dialog);
+    fireEvent.click(submitButton);
     await waitFor(() => assert.equal(screen.queryByRole('dialog'), null));
 
     const post = calls.find(({ url }) => url === '/admin/catalog/products');
@@ -323,6 +373,8 @@ void test('creates a Product, closes the modal, and reports the new first page',
           onHandQuantity: 12,
         },
       ],
+      specifications: {},
+      mainSpecs: {},
     });
     const upload = calls.find(({ url }) => url === `/admin/catalog/products/${productId}/images`);
     assert.ok(upload?.data instanceof FormData);
@@ -377,11 +429,11 @@ void test('keeps the Product modal open and shows the safe Persian service failu
     const user = userEvent.setup({ document: globalThis.document });
     await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
-    fireEvent.change(within(dialog).getByLabelText('تصویر محصول'), {
+    fireEvent.change(within(dialog).getByLabelText('تصویر واریانت'), {
       target: { files: [validProductImage()] },
     });
-    const formUser = await completeRequiredFields(dialog);
-    await formUser.click(within(dialog).getByRole('button', { name: 'ایجاد محصول' }));
+    await completeRequiredFields(dialog);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'ایجاد محصول' }));
 
     await waitFor(() => {
       assert.ok(screen.getByRole('dialog', { name: 'ایجاد محصول' }));
@@ -415,7 +467,7 @@ void test('rejects an unsafe selected image immediately and shows a toast error'
     const user = userEvent.setup({ document: globalThis.document });
     await user.click(screen.getByRole('button', { name: 'افزودن محصول' }));
     const dialog = await screen.findByRole('dialog', { name: 'ایجاد محصول' });
-    fireEvent.change(within(dialog).getByLabelText('تصویر محصول'), {
+    fireEvent.change(within(dialog).getByLabelText('تصویر واریانت'), {
       target: {
         files: [new File(['<svg><script /></svg>'], 'attack.svg', { type: 'image/svg+xml' })],
       },

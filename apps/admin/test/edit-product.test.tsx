@@ -1,12 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import {
-  act,
-  cleanup,
-  render,
-  renderHook,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { act, cleanup, render, renderHook, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { App } from 'antd';
 import assert from 'node:assert/strict';
@@ -21,6 +14,7 @@ import { useEditProductWorkflow } from '../features/products/hooks/useEditProduc
 import type {
   EditProductWorkflowVariables,
   Product,
+  RawProductDetailResponse,
 } from '../features/products/interfaces/product-contract';
 import { createAdminQueryClient } from '../providers/react-query-provider';
 import { installDomEnvironment } from './dom-environment';
@@ -51,6 +45,8 @@ const product: Product = {
   discountPercent: 10,
   currency: 'IRR',
   totalOnHandQuantity: 20,
+  mainSpecs: { جنس: 'نخ' },
+  specificationCount: 2,
   createdAt: timestamp,
   updatedAt: timestamp,
 };
@@ -76,15 +72,67 @@ const categoriesResponse: CategoriesResponse = {
   details: null,
 };
 
+const productDetailResponse: RawProductDetailResponse = {
+  statusCode: 200,
+  hasError: false,
+  message: 'جزئیات محصول دریافت شد.',
+  code: 'PRODUCT_FETCHED',
+  count: 1,
+  result: null,
+  singleResult: {
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    tag: product.tag,
+    originalPriceRial: product.originalPriceRial,
+    finalPriceRial: product.finalPriceRial,
+    discountPercent: product.discountPercent,
+    currency: product.currency,
+    category: product.category,
+    status: product.status,
+    imageVersion: 1,
+    specifications: { جنس: 'نخ', 'کشور سازنده': 'ایران' },
+    mainSpecs: { جنس: 'نخ' },
+    variants: [],
+    images: [],
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  },
+  details: null,
+};
+
+const emptyOptionsResponse = {
+  statusCode: 200,
+  hasError: false,
+  message: 'گزینه‌ها دریافت شدند.',
+  code: 'PRODUCT_OPTIONS_FETCHED',
+  count: 0,
+  result: [],
+  singleResult: null,
+  details: null,
+};
+
 void test('loads Category options when the Product edit modal opens', async () => {
   const originalAdapter = httpClient.defaults.adapter;
   const queryClient = createAdminQueryClient();
   const optionCalls: string[] = [];
   const releases: Array<() => void> = [];
   httpClient.defaults.adapter = async (config) => {
-    optionCalls.push(config.url ?? '');
-    await new Promise<void>((resolve) => releases.push(resolve));
-    return { data: categoriesResponse, status: 200, statusText: 'OK', headers: {}, config };
+    if (config.url === '/admin/catalog/categories') {
+      optionCalls.push(config.url);
+      await new Promise<void>((resolve) => releases.push(resolve));
+      return { data: categoriesResponse, status: 200, statusText: 'OK', headers: {}, config };
+    }
+    return {
+      data:
+        config.url === `/admin/catalog/products/${productId}`
+          ? productDetailResponse
+          : emptyOptionsResponse,
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
   };
 
   try {
@@ -129,7 +177,12 @@ void test('renders Product fields and submits only changed Product values', asyn
     categoriesResponse,
   );
   httpClient.defaults.adapter = async (config) => ({
-    data: categoriesResponse,
+    data:
+      config.url === `/admin/catalog/products/${productId}`
+        ? productDetailResponse
+        : config.url === '/admin/catalog/categories'
+          ? categoriesResponse
+          : emptyOptionsResponse,
     status: 200,
     statusText: 'OK',
     headers: {},
@@ -156,10 +209,19 @@ void test('renders Product fields and submits only changed Product values', asyn
     const dialog = await screen.findByRole('dialog', { name: 'ویرایش محصول' });
     const user = userEvent.setup({ document: globalThis.document });
 
+    await waitFor(() => {
+      assert.equal(
+        (within(dialog).getByRole('textbox', { name: 'نام محصول' }) as HTMLInputElement).value,
+        product.name,
+      );
+    });
+
     assert.ok(within(dialog).getByRole('textbox', { name: 'نام محصول' }));
     assert.ok(within(dialog).getByRole('textbox', { name: 'توضیحات (اختیاری)' }));
     assert.ok(within(dialog).getByRole('combobox', { name: 'دسته‌بندی' }));
     assert.ok(within(dialog).getByRole('textbox', { name: 'قیمت اصلی (ریال)' }));
+    assert.ok(within(dialog).getByText('جنس'));
+    assert.ok(within(dialog).getByText('کشور سازنده'));
 
     const name = within(dialog).getByRole('textbox', { name: 'نام محصول' });
     await user.clear(name);
