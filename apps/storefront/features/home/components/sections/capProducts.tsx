@@ -9,7 +9,7 @@ export const CapProducts = () => {
   const products = data?.result ?? [];
 
   return (
-    <section className="px w-full sm:px-12 sm:py-8 lg:px-24 2xl:px-36">
+    <section className="w-full sm:px-12 sm:py-8 lg:px-24 2xl:px-36">
       <div className="border-foreground/10 flex w-full flex-col items-start justify-center gap-4 rounded-2xl border px-6 py-6">
         <div className="flex h-auto w-full items-start justify-between gap-4">
           <div className="flex flex-col items-start justify-start gap-2">

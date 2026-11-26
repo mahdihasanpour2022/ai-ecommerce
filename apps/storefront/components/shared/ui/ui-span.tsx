@@ -16,6 +16,9 @@ const VARIANT_CLASSES = {
   style_10: 'whitespace-nowrap text-foreground/70 w-fit text-xs sm:text-base pt-0.5 font-semibold',
   style_11: 'rounded-full! border border-foreground/5',
   style_12: 'text-sm font-medium text-foreground/70 px-2 py-1',
+  style_13: 'text-nice-green font-bold text-2xs sm:text-xs py-0 whitespace-nowrap',
+  style_14: 'text-sm font-bold text-foreground/50 px-2 py-1 whitespace-nowrap',
+  style_15: 'text-base whitespace-nowrap',
 } as const;
 
 interface UiSpanProps extends ComponentPropsWithoutRef<'span'> {

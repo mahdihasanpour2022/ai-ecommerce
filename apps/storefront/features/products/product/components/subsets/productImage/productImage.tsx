@@ -1,18 +1,18 @@
-import { UiButton } from '@/components/shared/ui';
+import { UiButton, UiImage } from '@/components/shared/ui';
 import { useCustomerAuth } from '@/features/customer-auth/auth-provider';
-import { showGuestFavoriteModal } from '@/features/favorite/storefront-modal-container';
 import { useAddFavorite, useRemoveFavorite } from '@/features/favorite/use-favorite';
-import emptyHeartIcon from '@/public/assets/product/empty-heart-icon.webp';
-import heartIcon from '@/public/assets/product/heart-icon.webp';
+import { showGuestFavoriteModal } from '@/providers/storefront-modal-container';
+import emptyHeartIcon from '@/public/assets/product/favorite/empty-heart-icon.webp';
+import heartIcon from '@/public/assets/product/favorite/heart-icon.webp';
 import Image from 'next/image';
 import { useRef } from 'react';
 import { toast } from 'sonner';
-import { ProductByID, Variants } from '../../interfaces/productById';
+import { ProductByID, Variants } from '../../../interfaces/productById';
 
 interface Props {
   productId: string;
   selectedVariant: Variants | undefined;
-  currentProduct: ProductByID | undefined;
+  currentProduct: ProductByID;
 }
 
 export const ProductImage = ({ productId, selectedVariant, currentProduct }: Props) => {
@@ -31,7 +31,6 @@ export const ProductImage = ({ productId, selectedVariant, currentProduct }: Pro
     }
     if (
       authStatus !== 'authenticated' ||
-      !currentProduct ||
       isFavoriteMutationPending ||
       favoriteActionPendingRef.current
     )
@@ -57,7 +56,7 @@ export const ProductImage = ({ productId, selectedVariant, currentProduct }: Pro
   };
 
   return (
-    <div className="flex w-1/2! items-start justify-start gap-2">
+    <div className="flex w-full items-start justify-start gap-2 md:w-1/2">
       <div className="flex h-full w-1/12! flex-col items-center justify-start gap-1 py-2">
         <UiButton
           type="button"
@@ -68,29 +67,29 @@ export const ProductImage = ({ productId, selectedVariant, currentProduct }: Pro
             (authStatus !== 'authenticated' && authStatus !== 'anonymous')
           }
           aria-label={
-            currentProduct?.isFavorite
-              ? 'حذف از لیست علاقه‌مندی‌ها'
-              : 'افزودن به لیست علاقه‌مندی‌ها'
+            currentProduct.isFavorite ? 'حذف از لیست علاقه‌مندی‌ها' : 'افزودن به لیست علاقه‌مندی‌ها'
           }
-          aria-pressed={currentProduct?.isFavorite}
+          aria-pressed={currentProduct.isFavorite}
+          aria-busy={isFavoriteMutationPending}
           onClick={handleFavoriteClick}
         >
           <Image
             className="h-auto w-full rounded-xl object-contain"
-            src={currentProduct?.isFavorite ? heartIcon : emptyHeartIcon}
-            alt="like-icon"
-            width={350}
-            height={350}
+            src={currentProduct.isFavorite ? heartIcon : emptyHeartIcon}
+            alt=""
+            width={32}
+            height={32}
             unoptimized={false}
           />
         </UiButton>
       </div>
-      <Image
+      <UiImage
         className="h-auto w-11/12! rounded-xl object-contain"
-        src={selectedVariant?.image?.url ?? currentProduct?.image ?? ''}
-        alt={currentProduct?.alt ?? ''}
+        src={selectedVariant?.image?.url ?? currentProduct.image}
+        alt={currentProduct.alt || currentProduct.name}
         width={350}
         height={350}
+        fetchPriority="high"
         unoptimized={true}
       />
     </div>

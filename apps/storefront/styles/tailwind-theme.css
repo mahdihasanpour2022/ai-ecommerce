@@ -9,10 +9,14 @@
   --color-border: var(--border);
   --color-danger: var(--danger);
   --color-nice-red: var(--nice-red);
+  --color-nice-gray: var(--nice-gray);
+  --color-nice-green: var(--nice-green);
+  --color-nice-blue: var(--nice-blue);
+
   --shadow-product-card: 0 1px 7px 4px rgba(0, 0, 0, 0.05);
 
   --font-sans: var(--font-iran-sans), Tahoma, Arial, sans-serif;
-  --font-mono: Tahoma , ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  --font-mono: Tahoma, ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
 
   --text-2xs: 0.625rem;
   --breakpoint-3xs: 21.25rem;

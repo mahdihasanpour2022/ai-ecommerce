@@ -1,10 +1,10 @@
 import { UiP, UiSpan } from '@/components/shared/ui';
-import greenTick from '@/public/assets/product/green-tick-icon.webp';
+import blueTick from '@/public/assets/product/blue-tick-icon.webp';
 import { toEnglishDigits } from '@/utils/toEnglishDigits';
 import clsx from 'clsx';
 import Image from 'next/image';
 import { Fragment } from 'react/jsx-runtime';
-import { ProductByID, Variants } from '../../interfaces/productById';
+import { ProductByID, Variants } from '../../../../interfaces/productById';
 
 interface Props {
   currentProduct: ProductByID | undefined;
@@ -30,11 +30,14 @@ export const ProductSize = ({ currentProduct, selectedVariant }: Props) => {
       <div className="flex items-center justify-start gap-1 py-4">
         {sizes?.map((size) => (
           <div
-            className="border-foreground/20 flex items-start justify-between gap-0 rounded-xl border p-1"
+            className={clsx(
+              'flex items-start justify-between gap-0 rounded-xl border p-1',
+              selectedVariant?.size === size ? 'border-2 border-blue-300' : 'border-foreground/20',
+            )}
             key={size}
           >
             <Image
-              src={greenTick}
+              src={blueTick}
               alt="green-tick-icon"
               width={300}
               height={300}
@@ -46,7 +49,9 @@ export const ProductSize = ({ currentProduct, selectedVariant }: Props) => {
             <UiSpan
               key={size}
               variant="style_12"
-              className="outline-foreground/20 flex w-fit items-center justify-center font-mono"
+              className={clsx(
+                'outline-foreground/20 flex w-fit items-center justify-center font-mono',
+              )}
             >
               {size}
             </UiSpan>

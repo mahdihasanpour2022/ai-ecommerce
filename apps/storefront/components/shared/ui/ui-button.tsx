@@ -3,19 +3,20 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react';
 
 const VARIANT_CLASSES = {
   style_1:
-    'focus-visible:outline-brand inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border font-bold transition-colors duration-200 focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:border-gray-300! disabled:bg-gray-200! disabled:text-gray-500! disabled:shadow-none dark:disabled:border-gray-600! dark:disabled:bg-gray-700! dark:disabled:text-gray-300! w-full py-1 text-xs sm:text-sm leading-4 font-normal text-foreground/70 h-full border-none whitespace-nowrap',
+    'focus-visible:outline-brand inline-flex items-center justify-center gap-2 rounded-xl border font-bold transition-colors duration-200 focus-visible:outline-3 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:border-gray-300! disabled:bg-gray-200! disabled:text-gray-500! disabled:shadow-none dark:disabled:border-gray-600! dark:disabled:bg-gray-700! dark:disabled:text-gray-300! w-full py-1 text-xs sm:text-sm leading-4 font-normal text-foreground/70 h-full border-none whitespace-nowrap',
   style_2: '',
   style_3:
-    'bg-white border-0 text-foreground/60 text-xs py-1! px-4! whitespace-nowrap leading-4 font-medium rounded-lg sm:rounded-xl cursor-pointer',
-  style_4: 'w-full h-fit cursor-pointer z-10 over:z-20',
+    'bg-white border-0 text-foreground/60 text-xs py-1! px-4! whitespace-nowrap leading-4 font-medium rounded-lg sm:rounded-xl',
+  style_4: 'w-full h-fit z-10 over:z-20',
   style_5:
-    'w-fit bg-nice-red text-white rounded-xl text-xs font-medium cursor-pointer hover:bg-foreground/10 transition-colors hover:text-foreground/80',
-  style_6: 'w-full h-fit cursor-pointer z-10 over:z-20 w-fit! text-nice-red',
-  style_7: 'w-full h-fit cursor-pointer text-sm! text-foreground/70',
+    'w-fit bg-nice-red text-white rounded-xl text-xs font-medium hover:bg-foreground/10 transition-colors hover:text-foreground/80',
+  style_6: 'w-full h-fit z-10 over:z-20 w-fit! text-nice-red',
+  style_7: 'w-full h-fit text-sm! text-foreground/70',
   style_8:
     'bg-foreground/10 text-foreground/70! font-bold rounded-full px-2! py-0! flex items-center justify-start gap-1 whitespace-nowrap text-xs',
-  style_9:
-    'px-0! py-0 w-full min-h-fit! sm:px-0! sm:py-0! w-full! h-fit sm:min-h-fit cursor-pointer',
+  style_9: 'px-0! py-0 w-full min-h-fit! sm:px-0! sm:py-0! w-full! h-fit sm:min-h-fit',
+  style_10:
+    'w-fit bg-transparent rounded-xl text-xs font-medium hover:bg-foreground/10 transition-colors border-nice-red border text-nice-red hover:bg-transparent!',
 } as const;
 
 const SIZE_CLASSES = {
@@ -51,7 +52,7 @@ export const UiButton = forwardRef<HTMLButtonElement, UiButtonProps>(function Ui
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={clsx('', VARIANT_CLASSES[variant], SIZE_CLASSES[size], className)}
+      className={clsx('cursor-pointer', VARIANT_CLASSES[variant], SIZE_CLASSES[size], className)}
       {...attributes}
     >
       {loading ? (

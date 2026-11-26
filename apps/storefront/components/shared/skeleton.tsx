@@ -2,7 +2,5 @@
 import clsx from 'clsx';
 
 export const Skeleton = ({ className }: { className?: string }) => {
-  return <div className={clsx('bg-foreground/5 w-full animate-pulse', className)} />;
+  return <div className={clsx('bg-nice-gray w-full animate-pulse', className)} />;
 };
-
-

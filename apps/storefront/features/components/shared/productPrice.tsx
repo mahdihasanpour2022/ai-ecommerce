@@ -2,11 +2,24 @@ import { UiImage, UiSpan } from '@/components/shared/ui';
 import { Product } from '@/interfaces/product';
 import rial from '@/public/assets/currency/rial.svg';
 import toman from '@/public/assets/currency/toman.svg';
+import clsx from 'clsx';
 
-export const ProductPrice = ({ product }: { product: Product }) => {
+interface Props {
+  product: Product;
+  className?: {
+    wrapper?: string;
+  };
+}
+
+export const ProductPrice = ({ product, className }: Props) => {
   const { final_price, original_price, discount, currency } = product;
   return (
-    <div className="mt-auto flex h-fit w-full flex-col items-end justify-center">
+    <div
+      className={clsx(
+        'mt-auto flex h-fit w-full flex-col items-end justify-center',
+        className?.wrapper,
+      )}
+    >
       <div className="flex items-center justify-end gap-2">
         {discount > 0 && (
           <UiSpan variant="style_4" className="">

@@ -1,8 +1,9 @@
 import { UiP, UiSpan } from '@/components/shared/ui';
 import whiteTick from '@/public/assets/product/white-tick-icon.webp';
+import clsx from 'clsx';
 import Image from 'next/image';
 import { Fragment } from 'react/jsx-runtime';
-import { ProductByID, Variants } from '../../interfaces/productById';
+import { ProductByID, Variants } from '../../../../interfaces/productById';
 
 interface Props {
   selectedVariant: Variants | undefined;
@@ -31,24 +32,32 @@ export const ProductColor = ({ selectedVariant, currentProduct }: Props) => {
           variant="style_11"
         />
       </UiP>
-      <div className="flex items-center justify-start gap-3 py-4">
+      <div className="flex items-center justify-start gap-5 py-4">
         {colors?.map((color, index) => (
-          <UiSpan
-            key={`${color}-${index}`}
-            style={{ background: color.englishColorName }}
-            variant="style_11"
-            className={`outline-foreground/10 flex h-6 w-6 items-center justify-center text-white outline-4 ${selectedVariant?.color === color ? 'ring-4 ring-blue-300 outline-0!' : ''}`}
-          >
-            {selectedVariant?.color === color && (
-              <Image
-                src={whiteTick}
-                alt="white-tick-icon"
-                width={300}
-                height={300}
-                className="h-3 w-3"
-              />
+          <div
+            className={clsx(
+              selectedVariant?.color !== color
+                ? 'border-foreground/30 rounded-full border p-1'
+                : '',
             )}
-          </UiSpan>
+            key={`${color}-${index}`}
+          >
+            <UiSpan
+              style={{ background: color.englishColorName }}
+              variant="style_11"
+              className={`flex h-6 w-6 items-center justify-center text-white sm:h-7 sm:w-7 ${selectedVariant?.color === color ? 'ring-5 ring-blue-300 outline-0!' : ''}`}
+            >
+              {selectedVariant?.color === color && (
+                <Image
+                  src={whiteTick}
+                  alt="white-tick-icon"
+                  width={300}
+                  height={300}
+                  className="h-3 w-3"
+                />
+              )}
+            </UiSpan>
+          </div>
         ))}
       </div>
     </Fragment>

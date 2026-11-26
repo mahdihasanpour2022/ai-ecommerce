@@ -1,12 +1,12 @@
 import { StorefrontConnectivityGuard } from '@/components/shared';
-import { StorefrontModalContainer } from '@/features/favorite/storefront-modal-container';
+import { StorefrontModalContainer } from '@/providers/storefront-modal-container';
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import NextTopLoader from 'nextjs-toploader';
-import { Toaster } from 'sonner';
-import { ReactQueryProvider } from '../providers/react-query-provider';
-import { CustomerAuthProvider } from '../features/customer-auth/auth-provider';
 import 'reoverlay/ModalWrapper.css';
+import { Toaster } from 'sonner';
+import { CustomerAuthProvider } from '../features/customer-auth/auth-provider';
+import { ReactQueryProvider } from '../providers/react-query-provider';
 import '../styles/globals.css';
 
 const iranSans = localFont({
