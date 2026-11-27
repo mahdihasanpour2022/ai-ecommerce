@@ -40,6 +40,24 @@ enum CustomerOtpDeliveryStatus {
   @@map("customer_otp_delivery_status")
 }
 
+enum OrderStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+  FAILED
+
+  @@map("order_status")
+}
+
+enum OrderItemStatus {
+  PENDING
+  FULFILLED
+  CANCELLED
+  FAILED
+
+  @@map("order_item_status")
+}
+
 model AdminUser {
   id           String          @id(map: "admin_users_pkey") @default(uuid()) @db.Uuid
   email        String          @unique(map: "admin_users_email_key") @db.VarChar(254)
@@ -176,8 +194,42 @@ model Customer {
   updatedAt     DateTime               @updatedAt @map("updated_at") @db.Timestamptz(3)
   sessions      CustomerAuthSession[]
   favoriteItems CustomerFavoriteItem[]
+  orders        Order[]
 
   @@map("customers")
+}
+
+/// واقعیت پایدار چرخهٔ سفارش را برای تصمیم‌های وابسته به سابقهٔ خرید نگه می‌دارد.
+model Order {
+  id         String      @id(map: "orders_pkey") @default(uuid()) @db.Uuid
+  customerId String      @map("customer_id") @db.Uuid
+  status     OrderStatus @default(PENDING) @map("status")
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "orders_customer_id_fkey")
+  items      OrderItem[]
+
+  @@index([customerId, status], map: "orders_customer_id_status_idx")
+  @@map("orders")
+}
+
+/// کمیت‌های fulfil‌شده و خنثی‌شده را بدون امکان کسر دوباره ثبت می‌کند.
+model OrderItem {
+  id                String          @id(map: "order_items_pkey") @default(uuid()) @db.Uuid
+  orderId           String          @map("order_id") @db.Uuid
+  variantId         String          @map("variant_id") @db.Uuid
+  status            OrderItemStatus @default(PENDING) @map("status")
+  fulfilledQuantity Int             @default(0) @map("fulfilled_quantity")
+  refundedQuantity  Int             @default(0) @map("refunded_quantity")
+  returnedQuantity  Int             @default(0) @map("returned_quantity")
+  fulfilledAt       DateTime?       @map("fulfilled_at") @db.Timestamptz(3)
+  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "order_items_order_id_fkey")
+  variant           ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "order_items_variant_id_fkey")
+
+  @@index([orderId, variantId], map: "order_items_order_id_variant_id_idx")
+  @@map("order_items")
 }
 
 model CustomerOtpChallenge {
@@ -394,19 +446,20 @@ model CustomerFavoriteItem {
 }
 
 model ProductVariant {
-  id        String        @id(map: "product_variants_pkey") @default(uuid()) @db.Uuid
-  productId String        @map("product_id") @db.Uuid
-  sku       String        @unique(map: "product_variants_sku_key") @db.VarChar(64)
-  size      String?       @db.VarChar(80)
-  sizeKey   String?       @map("size_key") @db.VarChar(160)
-  color     String?       @db.VarChar(80)
-  colorKey  String?       @map("color_key") @db.VarChar(160)
-  isActive  Boolean       @default(true) @map("is_active")
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
-  product   Product       @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_variants_product_id_fkey")
-  inventory Inventory?
-  image     ProductImage?
+  id         String        @id(map: "product_variants_pkey") @default(uuid()) @db.Uuid
+  productId  String        @map("product_id") @db.Uuid
+  sku        String        @unique(map: "product_variants_sku_key") @db.VarChar(64)
+  size       String?       @db.VarChar(80)
+  sizeKey    String?       @map("size_key") @db.VarChar(160)
+  color      String?       @db.VarChar(80)
+  colorKey   String?       @map("color_key") @db.VarChar(160)
+  isActive   Boolean       @default(true) @map("is_active")
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  product    Product       @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "product_variants_product_id_fkey")
+  inventory  Inventory?
+  image      ProductImage?
+  orderItems OrderItem[]
 
   @@unique([productId, sizeKey, colorKey], map: "product_variants_product_size_color_key")
   @@index([productId, isActive, id], map: "product_variants_product_active_id_idx")

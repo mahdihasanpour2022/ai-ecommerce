@@ -7,6 +7,7 @@ import type { ApiEnvironment } from './config/environment.js';
 import { CustomerAuthenticationModule } from './customer-authentication/customer-authentication.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { FavoriteModule } from './favorite/favorite.module.js';
+import { OrderModule } from './order/order.module.js';
 
 @Module({})
 export class AppModule {
@@ -20,6 +21,7 @@ export class AppModule {
         CustomerAuthenticationModule,
         CatalogModule,
         FavoriteModule,
+        OrderModule,
       ],
     };
   }

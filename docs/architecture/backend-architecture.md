@@ -2,9 +2,11 @@
 
 ## Shape
 
-The Backend API is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It contains the root application boundary, Admin authentication module, and catalog module with implemented protected Category, Product, Product Variant, Inventory, Product Image, and global price-display-setting contracts plus controlled public Category/Product/Image/setting reads. Broader Storefront discovery, order, and customer capabilities are added only by their approved tasks; this architecture is not a directive to create empty modules.
+The Backend API is a strict-TypeScript NestJS Modular Monolith at `apps/api`. It contains the root application boundary, Admin and Customer authentication modules, the catalog module with implemented protected/public catalog contracts, and an internal Order module that provides persisted purchase facts plus a shared boolean eligibility service. The Order module intentionally has no controller or production writer; broader Checkout, Payment, fulfillment/refund/return, public order history, and Admin order capabilities require separately approved tasks. This architecture is not a directive to create empty modules.
 
 Each implemented module owns a cohesive capability and exposes narrow interfaces. NestJS dependency injection wires explicit dependencies; circular module relationships are a design signal. Use pragmatic domain modeling—do not add aggregates, generic repositories, or other DDD layers solely for pattern purity.
+
+Rating and Review consume `PurchaseEligibilityService` one-way from `OrderModule` for both authenticated eligibility reads and final write-time checks. They do not access Order persistence directly, repeat lifecycle/quantity arithmetic, or treat cached/public Product data as authorization. The durable boundary is defined in the [Order Purchase Eligibility specification](../features/order-purchase-eligibility/specification.md).
 
 ## Request flow and responsibilities
 
