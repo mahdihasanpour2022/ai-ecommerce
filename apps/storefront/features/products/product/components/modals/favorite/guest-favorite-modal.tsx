@@ -5,16 +5,10 @@ import {
   customerAuthDestination,
   safeReturnDestination,
 } from '@/features/customer-auth/customer-auth';
+import { hideGuestFavoriteModal } from '@/features/products/product/components/modals/favorite/guest-favorite-modal-controller';
 import { useRouter } from 'next/navigation';
-import { ModalWrapper, Reoverlay } from 'reoverlay';
+import { ModalWrapper } from 'reoverlay';
 import { useEffect, useRef } from 'react';
-
-export const GUEST_FAVORITE_MODAL_NAME = 'GuestFavoriteModal';
-
-// پنجره نام‌دار مهمان را بدون وابستگی به محل فراخوانی می‌بندد.
-export function hideGuestFavoriteModal(): void {
-  Reoverlay.hideModal(GUEST_FAVORITE_MODAL_NAME);
-}
 
 // پنجره ورود، focus اولیه، گردش keyboard و بازگشت focus را مدیریت می‌کند.
 export function GuestFavoriteModal() {

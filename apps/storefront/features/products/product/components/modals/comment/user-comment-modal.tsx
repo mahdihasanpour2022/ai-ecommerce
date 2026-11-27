@@ -6,16 +6,10 @@ import {
   customerAuthDestination,
   safeReturnDestination,
 } from '@/features/customer-auth/customer-auth';
+import { hideUserCommentModal } from '@/features/products/product/components/modals/comment/user-comment-modal-controller';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { ModalWrapper, Reoverlay } from 'reoverlay';
-
-export const USER_COMMENT_MODAL_NAME = 'UserCommentModal';
-
-// پنجره نام‌دار مهمان را بدون وابستگی به محل فراخوانی می‌بندد.
-export function hideUserCommentModal(): void {
-  Reoverlay.hideModal(USER_COMMENT_MODAL_NAME);
-}
+import { ModalWrapper } from 'reoverlay';
 
 // پنجره ورود، focus اولیه، گردش keyboard و بازگشت focus را مدیریت می‌کند.
 export function UserCommentModal() {
@@ -79,7 +73,7 @@ export function UserCommentModal() {
             ثبت دیدگاه
           </UiHeading>
         </div>
-        <Seperator className="bg-nice-gray h-1! my-3!" />
+        <Seperator className="bg-nice-gray h-1! my-10!" />
         <UiP id="user-comment-description" className="text-muted mt-4 leading-7">
           برای ثبت دیدگاه این محصول باید ابتدا وارد سایت شوید.
         </UiP>

@@ -4,7 +4,7 @@ import {
   useAddFavorite,
   useRemoveFavorite,
 } from '@/features/products/product/components/modals/favorite/use-favorite';
-import { showGuestFavoriteModal } from '@/providers/storefront-modal-container';
+import { showGuestFavoriteModal } from '@/features/products/product/components/modals/favorite/guest-favorite-modal-controller';
 import emptyHeartIcon from '@/public/assets/product/favorite/empty-heart-icon.webp';
 import heartIcon from '@/public/assets/product/favorite/heart-icon.webp';
 import Image from 'next/image';

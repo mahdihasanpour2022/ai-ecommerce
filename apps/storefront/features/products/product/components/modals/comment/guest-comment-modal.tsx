@@ -5,16 +5,10 @@ import {
   customerAuthDestination,
   safeReturnDestination,
 } from '@/features/customer-auth/customer-auth';
+import { hideGuestCommentModal } from '@/features/products/product/components/modals/comment/guest-comment-modal-controller';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { ModalWrapper, Reoverlay } from 'reoverlay';
-
-export const GUEST_COMMENT_MODAL_NAME = 'GuestCommentModal';
-
-// پنجره نام‌دار مهمان را بدون وابستگی به محل فراخوانی می‌بندد.
-export function hideGuestCommentModal(): void {
-  Reoverlay.hideModal(GUEST_COMMENT_MODAL_NAME);
-}
+import { ModalWrapper } from 'reoverlay';
 
 // پنجره ورود، focus اولیه، گردش keyboard و بازگشت focus را مدیریت می‌کند.
 export function GuestCommentModal() {

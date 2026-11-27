@@ -1,9 +1,7 @@
 import { UiButton, UiP, UiSpan } from '@/components/shared/ui';
 import { useCustomerAuth } from '@/features/customer-auth/auth-provider';
-import {
-  showGuestCommentModal,
-  showUserCommentModal,
-} from '@/providers/storefront-modal-container';
+import { showGuestCommentModal } from '@/features/products/product/components/modals/comment/guest-comment-modal-controller';
+import { showUserCommentModal } from '@/features/products/product/components/modals/comment/user-comment-modal-controller';
 import { StarRating } from './starRating';
 
 export const ProductRateComments = () => {
