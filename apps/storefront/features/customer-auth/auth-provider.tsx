@@ -7,11 +7,11 @@ import {
   onTerminalCustomerAuthenticationLoss,
 } from '@/app/http/http-client';
 import { ApiRoutes } from '@/constants/apiRoues';
-import { favoriteKeys } from '@/features/favorite/favorite';
+import { favoriteKeys } from '@/features/products/product/components/modals/favorite/favorite';
 import { productKeys } from '@/features/products/product/queries/product-query';
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { CustomerAuthResponse, CustomerSnapshot } from './customer-auth';
 import { customerQueryKeys } from './customer-auth';
 

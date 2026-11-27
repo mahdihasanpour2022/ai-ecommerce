@@ -79,7 +79,7 @@ export function UserCommentModal() {
             ثبت دیدگاه
           </UiHeading>
         </div>
-        <Seperator className="bg-nice-geay h-2!" />
+        <Seperator className="bg-nice-gray h-1! my-3!" />
         <UiP id="user-comment-description" className="text-muted mt-4 leading-7">
           برای ثبت دیدگاه این محصول باید ابتدا وارد سایت شوید.
         </UiP>

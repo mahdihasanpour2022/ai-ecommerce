@@ -3,15 +3,18 @@
 import {
   GUEST_FAVORITE_MODAL_NAME,
   GuestFavoriteModal,
-} from '@/features/favorite/guest-favorite-modal';
+} from '@/features/products/product/components/modals/favorite/guest-favorite-modal';
 import { ModalContainer, Reoverlay } from 'reoverlay';
 
 import {
   GUEST_COMMENT_MODAL_NAME,
   GuestCommentModal,
-} from '@/features/comment/guest-comment-modal';
+} from '@/features/products/product/components/modals/comment/guest-comment-modal';
 
-import { USER_COMMENT_MODAL_NAME, UserCommentModal } from '@/features/comment/user-comment-modal';
+import {
+  USER_COMMENT_MODAL_NAME,
+  UserCommentModal,
+} from '@/features/products/product/components/modals/comment/user-comment-modal';
 
 Reoverlay.config([
   { name: GUEST_FAVORITE_MODAL_NAME, component: GuestFavoriteModal },

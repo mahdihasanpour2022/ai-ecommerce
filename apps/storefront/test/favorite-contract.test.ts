@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { FavoriteProductResponse } from '../features/favorite/favorite';
+import type { FavoriteProductResponse } from '../features/products/product/components/modals/favorite/favorite';
 import {
   favoriteKeys,
   runFavoriteSingleFlight,
   withFavoriteStatus,
-} from '../features/favorite/favorite';
+} from '../features/products/product/components/modals/favorite/favorite';
 
 const productResponse = {
   statusCode: 200,

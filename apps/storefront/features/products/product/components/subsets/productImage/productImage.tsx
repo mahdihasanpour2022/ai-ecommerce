@@ -1,6 +1,9 @@
 import { UiButton, UiImage } from '@/components/shared/ui';
 import { useCustomerAuth } from '@/features/customer-auth/auth-provider';
-import { useAddFavorite, useRemoveFavorite } from '@/features/favorite/use-favorite';
+import {
+  useAddFavorite,
+  useRemoveFavorite,
+} from '@/features/products/product/components/modals/favorite/use-favorite';
 import { showGuestFavoriteModal } from '@/providers/storefront-modal-container';
 import emptyHeartIcon from '@/public/assets/product/favorite/empty-heart-icon.webp';
 import heartIcon from '@/public/assets/product/favorite/heart-icon.webp';
