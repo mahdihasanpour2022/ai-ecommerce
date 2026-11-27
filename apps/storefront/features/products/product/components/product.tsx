@@ -63,7 +63,14 @@ console.log("product-data :",data);
       <Seperator className="my-0! h-1!" />
       <RelatedProducts category={currentProduct.category} />
       <Seperator className="my-0! h-1!" />
-      <ProductRateComments />
+      <ProductRateComments
+        product={{
+          id: currentProduct.id,
+          name: currentProduct.name,
+          image: selectedVariant?.image?.url ?? currentProduct.image,
+          alt: currentProduct.alt,
+        }}
+      />
     </article>
   );
 };

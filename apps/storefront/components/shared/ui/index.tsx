@@ -1,6 +1,7 @@
 export * from './UiHeading';
 export * from './ui-image';
 export * from './ui-input-textField';
+export * from './ui-input-textarea';
 export * from './ui-span';
 export * from './ui-p';
 export * from './ui-button';

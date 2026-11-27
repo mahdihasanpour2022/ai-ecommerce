@@ -2,23 +2,22 @@ import clsx from 'clsx';
 import type { ComponentPropsWithoutRef } from 'react';
 
 const VARIANT_CLASSES = {
-  style_1: 'w-full py-1 text-xs leading-5 font-normal text-foreground/70',
+  style_1: 'py-1 text-xs leading-5 font-normal text-foreground/70',
   style_2: 'text-[10px] sm:text-sm text-foreground/50 font-medium leading-4',
   style_3: 'text-foreground/30 w-fit text-sm line-through',
   style_4: 'text-white w-fit text-[10px] sm:text-xs bg-nice-red px-1.5 py-0.5 rounded-2xl',
-  style_5:
-    'whitespace-nowrap text-foreground/80 w-fit text-xs sm:text-base pt-0.5 rounded-2xl font-bold',
-  style_6: 'py-0 whitespace-normal text-foreground/40! text-xs leading-5 font-normal w-full',
+  style_5: ' text-foreground/80 w-fit text-xs sm:text-base pt-0.5 rounded-2xl font-bold',
+  style_6: 'py-0 whitespace-normal text-foreground/40! text-xs leading-5 font-normal',
   style_7:
-    'py-0 whitespace-nowrap text-foreground/40! text-2xs sm:text-xs leading-5 font-normal w-fit text-gray-500!',
+    'py-0  text-foreground/40! text-2xs sm:text-xs leading-5 font-normal w-fit text-gray-500!',
   style_8: 'text-sm font-medium text-foreground/70',
   style_9: 'text-xs font-medium text-foreground/10',
-  style_10: 'whitespace-nowrap text-foreground/70 w-fit text-xs sm:text-base pt-0.5 font-semibold',
+  style_10: ' text-foreground/70 w-fit text-xs sm:text-base pt-0.5 font-semibold',
   style_11: 'rounded-full! border border-foreground/5',
   style_12: 'text-sm font-medium text-foreground/70 px-2 py-1',
-  style_13: 'text-nice-green font-bold text-2xs sm:text-xs py-0 whitespace-nowrap',
-  style_14: 'text-sm font-bold text-foreground/50 px-2 py-1 whitespace-nowrap',
-  style_15: 'text-base whitespace-nowrap',
+  style_13: 'text-nice-green font-bold text-2xs sm:text-xs py-0 ',
+  style_14: 'text-sm font-bold text-foreground/50 px-2 py-1 ',
+  style_15: 'text-base ',
 } as const;
 
 interface UiSpanProps extends ComponentPropsWithoutRef<'span'> {
@@ -27,7 +26,10 @@ interface UiSpanProps extends ComponentPropsWithoutRef<'span'> {
 
 export const UiSpan = ({ children, className, variant = 'style_1', ...props }: UiSpanProps) => {
   return (
-    <span className={clsx(VARIANT_CLASSES[variant], className)} {...props}>
+    <span
+      className={clsx('w-fit whitespace-nowrap', VARIANT_CLASSES[variant], className)}
+      {...props}
+    >
       {children}
     </span>
   );

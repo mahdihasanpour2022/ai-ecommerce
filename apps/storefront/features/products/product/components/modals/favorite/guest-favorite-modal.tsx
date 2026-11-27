@@ -7,8 +7,8 @@ import {
 } from '@/features/customer-auth/customer-auth';
 import { hideGuestFavoriteModal } from '@/features/products/product/components/modals/favorite/guest-favorite-modal-controller';
 import { useRouter } from 'next/navigation';
-import { ModalWrapper } from 'reoverlay';
 import { useEffect, useRef } from 'react';
+import { ModalWrapper } from 'reoverlay';
 
 // پنجره ورود، focus اولیه، گردش keyboard و بازگشت focus را مدیریت می‌کند.
 export function GuestFavoriteModal() {
@@ -73,7 +73,7 @@ export function GuestFavoriteModal() {
           </UiHeading>
           <UiButton
             type="button"
-            variant="style_9"
+            variant="style_2"
             size="icon"
             className="w-fit! shrink-0 text-xl"
             aria-label="بستن پنجره ورود"
